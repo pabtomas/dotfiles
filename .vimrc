@@ -328,7 +328,7 @@ let g:NERDTreeNaturalSort = v:true
 " highlight line where the cursor is
 let g:NERDTreeHighlightCursorline = v:true
 
-" single mouse click while open directories and files
+" single mouse click opens directories and files
 let g:NERDTreeMouseMode = 3
 
 " }}}
