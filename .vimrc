@@ -39,12 +39,15 @@ set ignorecase
 " display number of selected lines in visual mode
 set showcmd
 
-function! CheckVimVersion()
+function! CheckDependencies()
   if v:version < 800
-    echoe "This VimRC needs minimal Vim 8.0 to be functionnal"
+    echoe "Your VimRC needs Vim 8.0 to be functionnal"
     quit
   elseif v:version < 801
-    echoe "This VimRC needs minimal Vim 8.1 to load color scheme"
+    echoe "Your VimRC needs Vim 8.1 to be fully supported"
+  endif
+  if exists("g:NERDTree") == v:false
+    echoe "Your VimRC needs NERDTree plugin to be functionnal"
   endif
 endfunction
 
@@ -59,7 +62,7 @@ augroup vimenter_group
     autocmd SourcePost * nohlsearch
   endif
 
-  autocmd VimEnter * :call CheckVimVersion()
+  autocmd VimEnter * :call CheckDependencies()
 augroup END
 
 " }}}
@@ -190,8 +193,7 @@ function! Quit()
   if &modified == 0
     if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
       let l:first_buf = bufnr("%")
-      if winnr('$') == 1 ||
-      \ (winnr('$') == 2 && len(win_findbuf(bufnr('NERD_tree_\d\+'))) == 1)
+      if winnr('$') == 1 || (winnr('$') == 2 && g:NERDTree.IsOpen())
         execute "normal! \<C-O>"
       else
         quit
@@ -259,14 +261,14 @@ endfunction
 function! BufNav(direction)
   let s:timer = 0
 
-  let l:range = []
+  let l:cycle = []
   if a:direction == 1
-    let l:range = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
+    let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
   elseif a:direction == -1
-    let l:range = range(bufnr('%'), 1, -1) + range(bufnr('$'), bufnr('%'), -1)
+    let l:cycle = range(bufnr('%'), 1, -1) + range(bufnr('$'), bufnr('%'), -1)
   endif
 
-  for l:buf in filter(l:range, 'buflisted(v:val)')
+  for l:buf in filter(l:cycle, 'buflisted(v:val)')
     if len(win_findbuf(l:buf)) == 0
       execute "silent " . l:buf . "buffer"
       break
@@ -289,7 +291,7 @@ call timer_start(s:callback_time, function('s:ResizeCmdWin'), {'repeat': -1})
 
 " close Vim if NERDTree is the only window remaining in it
 function! CloseLonelyNERDTreeWindow()
-  if winnr('$') == 1 && len(win_findbuf(bufnr('NERD_tree_\d\+'))) == 1
+  if winnr('$') == 1 && g:NERDTree.IsOpen()
     quit
   endif
 endfunction
@@ -298,7 +300,7 @@ endfunction
 " and bring back NERDTree.
 function! BringBackNERDTree()
   if bufname('#') =~ 'NERD_tree_\d\+' && bufname('%') !~ 'NERD_tree_\d\+' &&
-  \ winnr('$') > 1 && len(win_findbuf(bufnr('#'))) == 0
+  \ winnr('$') > 1 && (g:NERDTree.IsOpen() == v:false)
     let buf = bufnr()
     buffer#
     execute "normal! \<C-W>w"
@@ -316,8 +318,18 @@ augroup nerdtree_group
     \ nnoremap <buffer> : <Esc> | endif
 augroup END
 
+" unused NERDTree tabpage commands
 let g:NERDTreeMapOpenInTab = ''
 let g:NERDTreeMapOpenInTabSilent = ''
+
+" sort files by number order
+let g:NERDTreeNaturalSort = v:true
+
+" highlight line where the cursor is
+let g:NERDTreeHighlightCursorline = v:true
+
+" single mouse click while open directories and files
+let g:NERDTreeMouseMode = 3
 
 " }}}
 " Mapping -------------------------------------{{{
