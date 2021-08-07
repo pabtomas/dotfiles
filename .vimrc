@@ -19,7 +19,7 @@ set statusline=%f\ -\ FileType:\ %y%=%c,\ [%l/%L]
 set laststatus=2
 
 " highlight corresponding patterns during a search
-set hlsearch incsearch
+set incsearch
 
 " line number
 set number
@@ -56,11 +56,6 @@ augroup vimenter_group
 
   " clear jump list
   autocmd VimEnter * clearjump
-
-  if v:version >= 801
-    " avoid highlight after vimrc sourcing
-    autocmd SourcePost * nohlsearch
-  endif
 
   autocmd VimEnter * :call CheckDependencies()
 augroup END
@@ -235,11 +230,6 @@ cnoreabbrev TABN tabnew
 cnoreabbrev TABE tabedit
 cnoreabbrev TABF tabfind
 
-" timer variables
-let s:timer = 0
-let s:callback_time = 1000
-let s:nb_period = 10
-
 " resize the command window, display listed buffers and hilight current
 " buffer
 function DisplayBuf()
@@ -259,8 +249,6 @@ endfunction
 
 " go to the next/previous undisplayed listed buffer
 function! BufNav(direction)
-  let s:timer = 0
-
   let l:cycle = []
   if a:direction == 1
     let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
@@ -274,6 +262,15 @@ function! BufNav(direction)
       break
     endif
   endfor
+endfunction
+
+" timer variables
+let s:timer = 0
+let s:callback_time = 1000
+let s:nb_period = 10
+
+function! ResetTimer()
+  let s:timer = 0
 endfunction
 
 function! s:ResizeCmdWin(timer_id)
@@ -356,12 +353,14 @@ nnoremap <leader>" :nohlsearch<CR>
 " open NERDTree in a vertical split window
 nnoremap <leader>' :NERDTreeToggle<CR>
 
-" buffer navigation
-nnoremap <leader>a :call BufNav(1) <bar> :call DisplayBuf()<CR>
-nnoremap <leader>z :call BufNav(-1) <bar> :call DisplayBuf()<CR>
+" buffer menu
+nnoremap <leader>( :buffers<CR>:buffer<Space>
 
-" buffers menu
-nnoremap <leader>e :buffers<CR>:buffer<Space>
+" buffer navigation
+nnoremap <Tab> :call ResetTimer() <bar> :call BufNav(1) <bar>
+  \ :call DisplayBuf()<CR>
+nnoremap <S-Tab> :call ResetTimer() <bar> :call BufNav(-1) <bar>
+  \ :call DisplayBuf()<CR>
 
 " make space more useful
 nnoremap <space> za
