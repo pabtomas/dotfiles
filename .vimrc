@@ -19,7 +19,7 @@ set statusline=%f\ -\ FileType:\ %y%=%c,\ [%l/%L]
 set laststatus=2
 
 " highlight corresponding patterns during a search
-set incsearch
+set hlsearch incsearch
 
 " line number
 set number
@@ -65,7 +65,7 @@ augroup END
 "   Scheme --------------------{{{
 
 " Red -> 196
-" Pink -> 203
+" Orange -> 202
 " Purple -> 140
 " Blue -> 69 - 105 - 111
 " Green -> 42
@@ -87,35 +87,37 @@ if v:version >= 801
     autocmd WinEnter set wincolor=NormalAlt
   augroup END
 
-  highlight Normal     term=bold      cterm=bold      ctermfg=196   ctermbg=232
-  highlight NormalAlt  term=NONE      cterm=NONE      ctermfg=153   ctermbg=232
+  highlight Normal     term=bold         cterm=bold          ctermfg=196   ctermbg=232
+  highlight NormalAlt  term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
 else
-  highlight Normal     term=NONE      cterm=NONE      ctermfg=153   ctermbg=232
+  highlight Normal     term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
 endif
 
-highlight ModeMsg      term=NONE      cterm=NONE      ctermfg=105   ctermbg=232
-highlight MoreMsg      term=NONE      cterm=NONE      ctermfg=111   ctermbg=232
-highlight Question     term=NONE      cterm=NONE      ctermfg=111   ctermbg=232
-highlight NonText      term=NONE      cterm=NONE      ctermfg=105   ctermbg=232
-highlight Comment      term=NONE      cterm=NONE      ctermfg=140   ctermbg=232
-highlight Constant     term=NONE      cterm=NONE      ctermfg=69    ctermbg=232
-highlight Special      term=NONE      cterm=NONE      ctermfg=105   ctermbg=232
-highlight Identifier   term=NONE      cterm=NONE      ctermfg=111   ctermbg=232
-highlight Statement    term=NONE      cterm=NONE      ctermfg=196   ctermbg=232
-highlight PreProc      term=NONE      cterm=NONE      ctermfg=140   ctermbg=232
-highlight Type         term=NONE      cterm=NONE      ctermfg=111   ctermbg=232
-highlight Visual       term=reverse   cterm=reverse                 ctermbg=232
-highlight LineNr       term=NONE      cterm=NONE      ctermfg=42    ctermbg=232
-highlight Search       term=reverse   cterm=reverse   ctermfg=42    ctermbg=232
-highlight IncSearch    term=reverse   cterm=reverse   ctermfg=42    ctermbg=232
-highlight Tag          term=NONE      cterm=NONE      ctermfg=111   ctermbg=232
-highlight Error        term=reverse   cterm=reverse   ctermfg=15    ctermbg=9
-highlight ErrorMsg     term=bold      cterm=bold      ctermfg=196   ctermbg=232
-highlight Todo         term=standout                  ctermfg=232   ctermbg=69
-highlight StatusLine   term=NONE      cterm=NONE      ctermfg=111   ctermbg=236
-highlight StatusLineNC term=NONE      cterm=NONE      ctermfg=69    ctermbg=235
-highlight Folded       term=NONE      cterm=NONE      ctermfg=232   ctermbg=203
-highlight VertSplit    term=NONE      cterm=NONE      ctermfg=140   ctermbg=232
+highlight ModeMsg      term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+highlight MoreMsg      term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight Question     term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight NonText      term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+highlight Comment      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+highlight Constant     term=NONE         cterm=NONE          ctermfg=69    ctermbg=232
+highlight Special      term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+highlight Identifier   term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight Statement    term=NONE         cterm=NONE          ctermfg=196   ctermbg=232
+highlight PreProc      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+highlight Type         term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight Visual       term=reverse      cterm=reverse                     ctermbg=232
+highlight LineNr       term=NONE         cterm=NONE          ctermfg=42    ctermbg=232
+highlight Search       term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
+highlight IncSearch    term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
+highlight Tag          term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight Error                                              ctermfg=232   ctermbg=196
+highlight ErrorMsg     term=bold         cterm=bold          ctermfg=196   ctermbg=232
+highlight Todo         term=standout                         ctermfg=232   ctermbg=69
+highlight StatusLine   term=NONE         cterm=NONE          ctermfg=111   ctermbg=236
+highlight StatusLineNC term=NONE         cterm=NONE          ctermfg=69    ctermbg=235
+highlight Folded       term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
+highlight VertSplit    term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+highlight CursorLine   term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
+highlight MatchParen   term=bold         cterm=bold          ctermfg=202   ctermbg=232
 highlight! link WarningMsg ErrorMsg
 highlight link String Constant
 highlight link Character Constant
@@ -232,8 +234,13 @@ cnoreabbrev TABF tabfind
 
 " resize the command window, display listed buffers and hilight current
 " buffer
-function DisplayBuf()
-  let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) + 1
+function DisplayBuf(prompt_hitting)
+  let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+
+  if a:prompt_hitting == v:false
+    let l:buf_nb = l:buf_nb + 1
+  endif
+
   execute "set cmdheight=" . l:buf_nb
   for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
     let l:result = " " . buf . ": \"" . bufname(l:buf) . "\""
@@ -267,7 +274,7 @@ endfunction
 " timer variables
 let s:timer = 0
 let s:callback_time = 1000
-let s:nb_period = 10
+let s:nb_period = 100
 
 function! ResetTimer()
   let s:timer = 0
@@ -354,13 +361,13 @@ nnoremap <leader>" :nohlsearch<CR>
 nnoremap <leader>' :NERDTreeToggle<CR>
 
 " buffer menu
-nnoremap <leader>( :buffers<CR>:buffer<Space>
+nnoremap <leader>( :call DisplayBuf(v:true)<CR>:buffer<Space>
 
 " buffer navigation
 nnoremap <Tab> :call ResetTimer() <bar> :call BufNav(1) <bar>
-  \ :call DisplayBuf()<CR>
+  \ :call DisplayBuf(v:false)<CR>
 nnoremap <S-Tab> :call ResetTimer() <bar> :call BufNav(-1) <bar>
-  \ :call DisplayBuf()<CR>
+  \ :call DisplayBuf(v:false)<CR>
 
 " make space more useful
 nnoremap <space> za
