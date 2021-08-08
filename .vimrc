@@ -154,61 +154,6 @@ endfunction
 
 "   }}}
 " }}}
-" Performance -----------------------------{{{
-
-" draw only when needed
-set lazyredraw
-
-" indicates terminal connection, Vim will be faster
-set ttyfast
-
-" max column where syntax is applied (default: 3000)
-set synmaxcol=300
-
-"   Autocommands -------------------------------------------{{{
-
-augroup vimrc_automands
-  autocmd!
-"     VimEnter Autocommands Group -----------------------------------------{{{
-
-  " clear jump list
-  autocmd VimEnter * clearjump
-
-  " check vim dependencies before opening
-  autocmd VimEnter * :call CheckDependencies()
-
-"     }}}
-"     Color Autocommands Group -------------------------------------------{{{
-
-  if v:version >= 801
-    autocmd WinEnter set wincolor=NormalAlt
-  endif
-
-"     }}}
-"     Good Practices Autocommands Group -----------------------------------{{{
-
-  autocmd BufEnter * :call ExtraSpaces() | call OverLength()
-
-"     }}}
-"     NERDTree Autocommand Groups ----------------------------------------{{{
-
-  autocmd BufEnter * :call CloseLonelyNERDTreeWindow()
-  autocmd BufEnter * :call BringBackNERDTree()
-
-  " avoid commandline for NERDTree buffers
-  autocmd BufEnter * :if bufname('%') =~ 'NERD_tree_\d\+' |
-    \ nnoremap <buffer> : <Esc> | endif
-
-"     }}}
-"     Vimscript fyletype Autocommand Group---------------------------------{{{
-
-  autocmd FileType vim setlocal foldmethod=marker
-
-"     }}}
-augroup END
-
-"   }}}
-" }}}
 " Buffers -----------------------------{{{
 
 " allow to switch between buffers without writting them
@@ -228,11 +173,11 @@ function! Quit()
       if winnr('$') == 1 || (winnr('$') == 2 && g:NERDTree.IsOpen())
         execute "normal! \<C-O>"
       else
-        quit
+        silent quit
       endif
       execute "silent bdelete" . l:first_buf
     else
-      quit
+      silent quit
     endif
     return v:true
   else
@@ -241,9 +186,9 @@ function! Quit()
   endif
 endfunction
 
-function! WQuit()
+function! WriteQuit()
   update
-  call Quit()
+  return Quit()
 endfunction
 
 function! QuitAll()
@@ -251,8 +196,8 @@ function! QuitAll()
   endwhile
 endfunction
 
-function! WQuitAll()
-  while WQuit()
+function! WriteQuitAll()
+  while WriteQuit()
   endwhile
 endfunction
 
@@ -298,7 +243,7 @@ endfunction
 " timer variables
 let s:timer = 0
 let s:callback_time = 1000
-let s:nb_period = 50
+let s:nb_period = 10
 
 function! ResetTimer()
   let s:timer = 0
@@ -349,6 +294,8 @@ let g:NERDTreeHighlightCursorline = v:true
 " single mouse click opens directories and files
 let g:NERDTreeMouseMode = 3
 
+" }}}
+" FileType-specific -----------------------------------{{{
 " }}}
 " Mappings -------------------------------------{{{
 
@@ -411,24 +358,41 @@ cnoreabbrev tabfi silent tabonly
 cnoreabbrev tabfin silent tabonly
 cnoreabbrev tabfind silent tabonly
 
-" allow intuitive usage of Quit and WQuit functions
-cnoreabbrev q call Quit()
-cnoreabbrev qu call Quit()
-cnoreabbrev qui call Quit()
-cnoreabbrev quit call Quit()
-cnoreabbrev bd call Quit()
-cnoreabbrev bde call Quit()
-cnoreabbrev bdel call Quit()
-cnoreabbrev bdele call Quit()
-cnoreabbrev bdelet call Quit()
-cnoreabbrev bdelete call Quit()
-cnoreabbrev wq call WQuit()
+" allow intuitive usage of Quit and WriteQuit functions
+cnoreabbrev q silent call Quit()
+cnoreabbrev qu silent call Quit()
+cnoreabbrev qui silent call Quit()
+cnoreabbrev quit silent call Quit()
+cnoreabbrev wq silent call WriteQuit()
+
+cnoreabbrev bd silent call Quit()
+cnoreabbrev bde silent call Quit()
+cnoreabbrev bdel silent call Quit()
+cnoreabbrev bdele silent call Quit()
+cnoreabbrev bdelet silent call Quit()
+cnoreabbrev bdelete silent call Quit()
+
+cnoreabbrev bw silent call Quit()
+cnoreabbrev bwi silent call Quit()
+cnoreabbrev bwip silent call Quit()
+cnoreabbrev bwipe silent call Quit()
+cnoreabbrev bwipeo silent call Quit()
+cnoreabbrev bwipeou silent call Quit()
+cnoreabbrev bwipeout silent call Quit()
+
+cnoreabbrev bu silent call Quit()
+cnoreabbrev bun silent call Quit()
+cnoreabbrev bunl silent call Quit()
+cnoreabbrev bunlo silent call Quit()
+cnoreabbrev bunloa silent call Quit()
+cnoreabbrev bunload silent call Quit()
+
 cnoreabbrev qa call QuitAll()
 cnoreabbrev qal call QuitAll()
 cnoreabbrev qall call QuitAll()
-cnoreabbrev wqa call WQuitAll()
-cnoreabbrev wqal call WQuitAll()
-cnoreabbrev wqall call WQuitAll()
+cnoreabbrev wqa call WriteQuitAll()
+cnoreabbrev wqal call WriteQuitAll()
+cnoreabbrev wqall call WriteQuitAll()
 
 " disable intuitive usage of unused commands
 cnoreabbrev Q quit
@@ -437,11 +401,68 @@ cnoreabbrev W write
 cnoreabbrev WQ wq
 cnoreabbrev WQA wqall
 cnoreabbrev BD bdelete
+cnoreabbrev BW bwipeout
+cnoreabbrev BU bunload
 cnoreabbrev TAB tab
 cnoreabbrev TABN tabnew
 cnoreabbrev TABE tabedit
 cnoreabbrev TABF tabfind
 
 " }}}
-" FileType-specific -----------------------------------{{{
+" Performance -----------------------------{{{
+
+" draw only when needed
+set lazyredraw
+
+" indicates terminal connection, Vim will be faster
+set ttyfast
+
+" max column where syntax is applied (default: 3000)
+set synmaxcol=300
+
+"   Autocommands -------------------------------------------{{{
+let s:created_buffer = v:false
+augroup vimrc_automands
+  autocmd!
+"     VimEnter Autocommands Group -----------------------------------------{{{
+
+  " clear jump list
+  autocmd VimEnter * silent clearjump
+
+  " check vim dependencies before opening
+  autocmd VimEnter * :call CheckDependencies()
+
+ "     }}}
+"     Color Autocommands Group -------------------------------------------{{{
+
+  if v:version >= 801
+    autocmd WinEnter set wincolor=NormalAlt
+  endif
+
+"     }}}
+"     Good Practices Autocommands Group -----------------------------------{{{
+
+  autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
+
+"     }}}
+"     NERDTree Autocommand Groups ----------------------------------------{{{
+
+  autocmd BufEnter * :silent call CloseLonelyNERDTreeWindow()
+  autocmd BufEnter * :silent call BringBackNERDTree()
+
+  " avoid commandline for NERDTree buffers
+  autocmd BufEnter * :if bufname('%') =~ 'NERD_tree_\d\+' |
+    \ nnoremap <buffer> : <Esc> | endif
+
+"     }}}
+"     Vimscript fyletype Autocommand Group---------------------------------{{{
+
+  autocmd FileType vim setlocal foldmethod=marker
+
+"     }}}
+augroup END
+
+"   }}}
 " }}}
+  "autocmd BufCreate * let s:created_buffer = v:true
+  "autocmd BufLeave * if s:created_buffer | call ResetTimer() | call DisplayBuf(v:false) | let s:created_buffer = v:false | endif
