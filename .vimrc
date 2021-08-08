@@ -56,17 +56,9 @@ function! CheckDependencies()
   \ exists(":NERDTreeToggle") == v:false ||
   \ exists("*g:NERDTree.IsOpen") == v:false
     echoe "Your VimRC needs NERDTree plugin to be functionnal"
+    quit
   endif
 endfunction
-
-augroup vimenter_group
-  autocmd!
-
-  " clear jump list
-  autocmd VimEnter * clearjump
-
-  autocmd VimEnter * :call CheckDependencies()
-augroup END
 
 " }}}
 " Color --------------------------{{{
@@ -94,12 +86,6 @@ highlight       RedHighlight                                         ctermfg=232
 " predefined highlight groups
 if v:version >= 801
   set wincolor=NormalAlt
-
-  augroup colorscheme_group
-    autocmd!
-    autocmd WinEnter set wincolor=NormalAlt
-  augroup END
-
   highlight     Normal         term=bold         cterm=bold          ctermfg=176   ctermbg=232
   highlight     NormalAlt      term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
 else
@@ -169,29 +155,56 @@ function! OverLength()
   let OverLength = matchadd("RedHighlight", '\v%80v.*')
 endfunction
 
-augroup good_practices_group
-  autocmd!
-  autocmd BufEnter * :call ExtraSpaces() | call OverLength()
-augroup END
 
+"   }}}
+" }}}
+" Performance -----------------------------{{{
+
+" draw only when needed
+set lazyredraw
+
+" indicates terminal connection, Vim will be faster
+set ttyfast
+
+" max column where syntax is applied (default: 3000)
+set synmaxcol=300
+
+"   Autocommands -------------------------------------------{{{
+augroup vimrc_automands
+  autocmd!
+"     VimEnter Autocommands Group -----------------------------------------{{{
+  " clear jump list
+  autocmd VimEnter * clearjump
+
+  " check vim dependencies before opening
+  autocmd VimEnter * :call CheckDependencies()
+"     }}}
+"     Color Autocommands Group -------------------------------------------{{{
+  if v:version >= 801
+    autocmd WinEnter set wincolor=NormalAlt
+  endif
+"     }}}
+"     Good Practices Autocommands Group -----------------------------------{{{
+  autocmd BufEnter * :call ExtraSpaces() | call OverLength()
+"     }}}
+"     NERDTree Autocommand Groups ----------------------------------------{{{
+  autocmd BufEnter * :call CloseLonelyNERDTreeWindow()
+  autocmd BufEnter * :call BringBackNERDTree()
+
+  " avoid commandline for NERDTree buffers
+  autocmd BufEnter * :if bufname('%') =~ 'NERD_tree_\d\+' |
+    \ nnoremap <buffer> : <Esc> | endif
+"     }}}
+"     Vimscript fyletype Autocommand Group---------------------------------{{{
+  autocmd FileType vim setlocal foldmethod=marker
+"     }}}
+augroup END
 "   }}}
 " }}}
 " Buffers -----------------------------{{{
 
 " allow to switch between buffers without writting them
 set hidden
-
-" avoid tabpage usage
-cnoreabbrev tabnew silent tabonly
-cnoreabbrev tabe silent tabonly
-cnoreabbrev tabed silent tabonly
-cnoreabbrev tabedi silent tabonly
-cnoreabbrev tabedit silent tabonly
-cnoreabbrev tab silent tabonly
-cnoreabbrev tabf silent tabonly
-cnoreabbrev tabfi silent tabonly
-cnoreabbrev tabfin silent tabonly
-cnoreabbrev tabfind silent tabonly
 
 " - quit current window & delete buffer inside, IF there are 2 non-NERDTree
 "   windows or more,
@@ -219,32 +232,21 @@ function! Quit()
 endfunction
 
 function! WQuit()
-  write
+  update
   call Quit()
 endfunction
 
-" allow intuitive usage of Quit and WQuit functions
-cnoreabbrev q call Quit()
-cnoreabbrev qu call Quit()
-cnoreabbrev qui call Quit()
-cnoreabbrev quit call Quit()
-cnoreabbrev bd call Quit()
-cnoreabbrev bde call Quit()
-cnoreabbrev bdel call Quit()
-cnoreabbrev bdele call Quit()
-cnoreabbrev bdelet call Quit()
-cnoreabbrev bdelete call Quit()
-cnoreabbrev wq call WQuit()
-cnoreabbrev wbd call WQuit()
+function! QuitAll()
+  while winnr('$') > 0
+    call Quit()
+  endwhile
+endfunction
 
-" disable intuitive usage of unused commands
-cnoreabbrev Q quit
-cnoreabbrev WQ wq
-cnoreabbrev BD bdelete
-cnoreabbrev TAB tab
-cnoreabbrev TABN tabnew
-cnoreabbrev TABE tabedit
-cnoreabbrev TABF tabfind
+function! WQuitAll()
+  while winnr('$') > 0
+    call WQuit()
+  endwhile
+endfunction
 
 " resize the command window, display listed buffers and hilight current
 " buffer
@@ -326,15 +328,6 @@ function! BringBackNERDTree()
   endif
 endfunction
 
-augroup nerdtree_group
-  autocmd!
-  autocmd BufEnter * :call CloseLonelyNERDTreeWindow()
-  autocmd BufEnter * :call BringBackNERDTree()
-
-  " avoid commandline for NERDTree buffers
-  autocmd BufEnter * :if bufname('%') =~ 'NERD_tree_\d\+' |
-    \ nnoremap <buffer> : <Esc> | endif
-augroup END
 
 " unused NERDTree tabpage commands
 let g:NERDTreeMapOpenInTab = ''
@@ -350,7 +343,7 @@ let g:NERDTreeHighlightCursorline = v:true
 let g:NERDTreeMouseMode = 3
 
 " }}}
-" Mapping -------------------------------------{{{
+" Mappings -------------------------------------{{{
 
 " leader key
 let mapleader = "²"
@@ -387,13 +380,61 @@ nnoremap <S-Tab> :call ResetTimer() <bar> :call BufNav(-1) <bar>
 nnoremap <space> za
 
 " }}}
+" Abbreviations --------------------------------------{{{
+
+" disable write usage
+cnoreabbrev w update
+cnoreabbrev wr update
+cnoreabbrev wri update
+cnoreabbrev writ update
+cnoreabbrev write update
+cnoreabbrev wa update all
+cnoreabbrev wal update all
+cnoreabbrev wall update all
+
+" avoid tabpage usage
+cnoreabbrev tabnew silent tabonly
+cnoreabbrev tabe silent tabonly
+cnoreabbrev tabed silent tabonly
+cnoreabbrev tabedi silent tabonly
+cnoreabbrev tabedit silent tabonly
+cnoreabbrev tab silent tabonly
+cnoreabbrev tabf silent tabonly
+cnoreabbrev tabfi silent tabonly
+cnoreabbrev tabfin silent tabonly
+cnoreabbrev tabfind silent tabonly
+
+" allow intuitive usage of Quit and WQuit functions
+cnoreabbrev q call Quit()
+cnoreabbrev qu call Quit()
+cnoreabbrev qui call Quit()
+cnoreabbrev quit call Quit()
+cnoreabbrev bd call Quit()
+cnoreabbrev bde call Quit()
+cnoreabbrev bdel call Quit()
+cnoreabbrev bdele call Quit()
+cnoreabbrev bdelet call Quit()
+cnoreabbrev bdelete call Quit()
+cnoreabbrev wq call WQuit()
+cnoreabbrev qa call QuitAll()
+cnoreabbrev qal call QuitAll()
+cnoreabbrev qall call QuitAll()
+cnoreabbrev wqa call WQuitAll()
+cnoreabbrev wqal call WQuitAll()
+cnoreabbrev wqall call WQuitAll()
+
+" disable intuitive usage of unused commands
+cnoreabbrev Q quit
+cnoreabbrev QA qall
+cnoreabbrev W write
+cnoreabbrev WQ wq
+cnoreabbrev WQA wqall
+cnoreabbrev BD bdelete
+cnoreabbrev TAB tab
+cnoreabbrev TABN tabnew
+cnoreabbrev TABE tabedit
+cnoreabbrev TABF tabfind
+
+" }}}
 " FileType-specific -----------------------------------{{{
-"   Vimscript ---------------{{{
-
-augroup filetype_vimscript_group
-  autocmd!
-  autocmd FileType vim setlocal foldmethod=marker
-augroup END
-
-"   }}}
 " }}}
