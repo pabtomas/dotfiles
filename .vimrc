@@ -74,10 +74,10 @@ augroup END
 
 " Red -> 196
 " Orange -> 202
-" Purple -> 140
+" Purple -> 62 - 140
 " Blue -> 69 - 105 - 111
 " Green -> 42
-" White -> 153
+" White -> 147 - 153
 " Dark-Gray -> 235 - 236 - 237
 " Black -> 232
 
@@ -87,8 +87,11 @@ if exists("syntax_on")
   syntax reset
 endif
 
-highlight CurrentBuffer term=bold cterm=bold ctermbg=140 ctermfg=Black
+" custom highlight groups
+highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=232   ctermbg=140
+highlight       RedHighlight                                         ctermfg=232   ctermbg=DarkRed
 
+" predefined highlight groups
 if v:version >= 801
   set wincolor=NormalAlt
 
@@ -97,67 +100,64 @@ if v:version >= 801
     autocmd WinEnter set wincolor=NormalAlt
   augroup END
 
-  highlight Normal     term=bold         cterm=bold          ctermfg=176   ctermbg=232
-  highlight NormalAlt  term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
+  highlight     Normal         term=bold         cterm=bold          ctermfg=176   ctermbg=232
+  highlight     NormalAlt      term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
 else
-  highlight Normal     term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
+  highlight     Normal         term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
 endif
 
-highlight ModeMsg      term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-highlight MoreMsg      term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight Question     term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight NonText      term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-highlight Comment      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-highlight Constant     term=NONE         cterm=NONE          ctermfg=69    ctermbg=232
-highlight Special      term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-highlight Identifier   term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight Statement    term=NONE         cterm=NONE          ctermfg=196   ctermbg=232
-highlight PreProc      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-highlight Type         term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight Visual       term=reverse      cterm=reverse                     ctermbg=232
-highlight LineNr       term=NONE         cterm=NONE          ctermfg=42    ctermbg=232
-highlight Search       term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
-highlight IncSearch    term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
-highlight Tag          term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight Error                                              ctermfg=232   ctermbg=196
-highlight ErrorMsg     term=bold         cterm=bold          ctermfg=196   ctermbg=232
-highlight Todo         term=standout                         ctermfg=232   ctermbg=69
-highlight StatusLine   term=NONE         cterm=NONE          ctermfg=111   ctermbg=236
-highlight StatusLineNC term=NONE         cterm=NONE          ctermfg=69    ctermbg=235
-highlight Folded       term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
-highlight VertSplit    term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-highlight CursorLine   term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
-highlight MatchParen   term=bold         cterm=bold          ctermfg=62    ctermbg=147
-highlight! link WarningMsg ErrorMsg
-highlight link String Constant
-highlight link Character Constant
-highlight link Number Constant
-highlight link Boolean Constant
-highlight link Float Number
-highlight link Function Identifier
-highlight link Conditional Statement
-highlight link Repeat Statement
-highlight link Label Statement
-highlight link Operator Statement
-highlight link Keyword Statement
-highlight link Exception Statement
-highlight link Include PreProc
-highlight link Define PreProc
-highlight link Macro PreProc
-highlight link PreCondit PreProc
-highlight link StorageClass Type
-highlight link Structure Type
-highlight link Typedef Type
-highlight link SpecialChar Special
-highlight link Delimiter Special
-highlight link SpecialComment Special
-highlight link Debug Special
+highlight       ModeMsg        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+highlight       MoreMsg        term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight       Question       term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight       NonText        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+highlight       Comment        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+highlight       Constant       term=NONE         cterm=NONE          ctermfg=69    ctermbg=232
+highlight       Special        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+highlight       Identifier     term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight       Statement      term=NONE         cterm=NONE          ctermfg=196   ctermbg=232
+highlight       PreProc        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+highlight       Type           term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight       Visual         term=reverse      cterm=reverse                     ctermbg=232
+highlight       LineNr         term=NONE         cterm=NONE          ctermfg=42    ctermbg=232
+highlight       Search         term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
+highlight       IncSearch      term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
+highlight       Tag            term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+highlight       Error                                                ctermfg=232   ctermbg=196
+highlight       ErrorMsg       term=bold         cterm=bold          ctermfg=196   ctermbg=232
+highlight       Todo           term=standout                         ctermfg=232   ctermbg=69
+highlight       StatusLine     term=NONE         cterm=NONE          ctermfg=111   ctermbg=236
+highlight       StatusLineNC   term=NONE         cterm=NONE          ctermfg=69    ctermbg=235
+highlight       Folded         term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
+highlight       VertSplit      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+highlight       CursorLine     term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
+highlight       MatchParen     term=bold         cterm=bold          ctermfg=62    ctermbg=147
+highlight! link WarningMsg     ErrorMsg
+highlight  link String         Constant
+highlight  link Character      Constant
+highlight  link Number         Constant
+highlight  link Boolean        Constant
+highlight  link Float          Number
+highlight  link Function       Identifier
+highlight  link Conditional    Statement
+highlight  link Repeat         Statement
+highlight  link Label          Statement
+highlight  link Operator       Statement
+highlight  link Keyword        Statement
+highlight  link Exception      Statement
+highlight  link Include        PreProc
+highlight  link Define         PreProc
+highlight  link Macro          PreProc
+highlight  link PreCondit      PreProc
+highlight  link StorageClass   Type
+highlight  link Structure      Type
+highlight  link Typedef        Type
+highlight  link SpecialChar    Special
+highlight  link Delimiter      Special
+highlight  link SpecialComment Special
+highlight  link Debug          Special
 
 "   }}}
 "   Good practices -------------------------{{{
-
-" define a highlight group
-highlight RedHighlight ctermbg=DarkRed ctermfg=Black
 
 " highlight unused spaces before the end of the line
 function! ExtraSpaces()
@@ -169,7 +169,7 @@ function! OverLength()
   let OverLength = matchadd("RedHighlight", '\v%80v.*')
 endfunction
 
-augroup red_highlight
+augroup good_practices_group
   autocmd!
   autocmd BufEnter * :call ExtraSpaces() | call OverLength()
 augroup END
@@ -390,7 +390,7 @@ nnoremap <space> za
 " FileType-specific -----------------------------------{{{
 "   Vimscript ---------------{{{
 
-augroup filetype_vim
+augroup filetype_vimscript_group
   autocmd!
   autocmd FileType vim setlocal foldmethod=marker
 augroup END
