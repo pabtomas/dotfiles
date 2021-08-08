@@ -234,8 +234,10 @@ function! Quit()
     else
       quit
     endif
+    return v:true
   else
-    echo "Current buffer has unsaved modifications"
+    echo bufname(bufnr('%')) . " has unsaved modifications"
+    return v:false
   endif
 endfunction
 
@@ -245,14 +247,12 @@ function! WQuit()
 endfunction
 
 function! QuitAll()
-  while winnr('$') > 0
-    call Quit()
+  while Quit()
   endwhile
 endfunction
 
 function! WQuitAll()
-  while winnr('$') > 0
-    call WQuit()
+  while WQuit()
   endwhile
 endfunction
 
@@ -375,7 +375,7 @@ nnoremap <leader>" :nohlsearch<CR>
 nnoremap <leader>' :NERDTreeToggle<CR>
 
 " buffer menu
-nnoremap <leader>( :call DisplayBuf(v:true)<CR>:buffer<Space>
+nnoremap <leader>a :call DisplayBuf(v:true)<CR>:buffer<Space>
 
 " buffer navigation
 nnoremap <Tab> :call ResetTimer() <bar> :call BufNav(1) <bar>
