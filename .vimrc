@@ -30,10 +30,7 @@ set splitright
 " tabulation
 set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 
-" smart searchs : if no uppercase letter, search will be case-insensitive
-set smartcase
-
-" never be case sensitive
+" search never be case sensitive
 set ignorecase
 
 " display number of selected lines in visual mode
@@ -155,7 +152,6 @@ function! OverLength()
   let OverLength = matchadd("RedHighlight", '\v%80v.*')
 endfunction
 
-
 "   }}}
 " }}}
 " Performance -----------------------------{{{
@@ -170,35 +166,47 @@ set ttyfast
 set synmaxcol=300
 
 "   Autocommands -------------------------------------------{{{
+
 augroup vimrc_automands
   autocmd!
 "     VimEnter Autocommands Group -----------------------------------------{{{
+
   " clear jump list
   autocmd VimEnter * clearjump
 
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
+
 "     }}}
 "     Color Autocommands Group -------------------------------------------{{{
+
   if v:version >= 801
     autocmd WinEnter set wincolor=NormalAlt
   endif
+
 "     }}}
 "     Good Practices Autocommands Group -----------------------------------{{{
+
   autocmd BufEnter * :call ExtraSpaces() | call OverLength()
+
 "     }}}
 "     NERDTree Autocommand Groups ----------------------------------------{{{
+
   autocmd BufEnter * :call CloseLonelyNERDTreeWindow()
   autocmd BufEnter * :call BringBackNERDTree()
 
   " avoid commandline for NERDTree buffers
   autocmd BufEnter * :if bufname('%') =~ 'NERD_tree_\d\+' |
     \ nnoremap <buffer> : <Esc> | endif
+
 "     }}}
 "     Vimscript fyletype Autocommand Group---------------------------------{{{
+
   autocmd FileType vim setlocal foldmethod=marker
+
 "     }}}
 augroup END
+
 "   }}}
 " }}}
 " Buffers -----------------------------{{{
@@ -327,7 +335,6 @@ function! BringBackNERDTree()
     execute 'buffer'.buf
   endif
 endfunction
-
 
 " unused NERDTree tabpage commands
 let g:NERDTreeMapOpenInTab = ''
