@@ -46,7 +46,15 @@ function! CheckDependencies()
   elseif v:version < 801
     echoe "Your VimRC needs Vim 8.1 to be fully supported"
   endif
-  if exists("g:NERDTree") == v:false
+
+  if exists("g:NERDTree") == v:false ||
+  \ exists("g:NERDTreeMapOpenInTab") == v:false ||
+  \ exists("g:NERDTreeMapOpenInTabSilent") == v:false ||
+  \ exists("g:NERDTreeNaturalSort") == v:false ||
+  \ exists("g:NERDTreeMouseMode") == v:false ||
+  \ exists("g:NERDTreeHighlightCursorline") == v:false ||
+  \ exists(":NERDTreeToggle") == v:false ||
+  \ exists("*g:NERDTree.IsOpen") == v:false
     echoe "Your VimRC needs NERDTree plugin to be functionnal"
   endif
 endfunction
@@ -79,6 +87,8 @@ if exists("syntax_on")
   syntax reset
 endif
 
+highlight CurrentBuffer term=bold cterm=bold ctermbg=140 ctermfg=Black
+
 if v:version >= 801
   set wincolor=NormalAlt
 
@@ -87,7 +97,7 @@ if v:version >= 801
     autocmd WinEnter set wincolor=NormalAlt
   augroup END
 
-  highlight Normal     term=bold         cterm=bold          ctermfg=196   ctermbg=232
+  highlight Normal     term=bold         cterm=bold          ctermfg=176   ctermbg=232
   highlight NormalAlt  term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
 else
   highlight Normal     term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
@@ -117,7 +127,7 @@ highlight StatusLineNC term=NONE         cterm=NONE          ctermfg=69    cterm
 highlight Folded       term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
 highlight VertSplit    term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
 highlight CursorLine   term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
-highlight MatchParen   term=bold         cterm=bold          ctermfg=202   ctermbg=232
+highlight MatchParen   term=bold         cterm=bold          ctermfg=62    ctermbg=147
 highlight! link WarningMsg ErrorMsg
 highlight link String Constant
 highlight link Character Constant
@@ -183,9 +193,13 @@ cnoreabbrev tabfi silent tabonly
 cnoreabbrev tabfin silent tabonly
 cnoreabbrev tabfind silent tabonly
 
-" close current window if there are only 1 listed buffer,
-" otherwise delete current buffer
-"   AND if there are more than 1 window, close current window
+" - quit current window & delete buffer inside, IF there are 2 non-NERDTree
+"   windows or more,
+" - come back to the previous listed buffer and delete current buffer IF
+"   there are 1 non-NERDTree window (OR 1 non-NERDTree window + 1 NERDTree
+"   window),
+" - quit Vim IF there are 1 non-NERDTree window (OR 1 non-NERDTree window +
+"   1 NERDTree window) AND no previous listed buffer.
 function! Quit()
   if &modified == 0
     if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
@@ -247,7 +261,7 @@ function DisplayBuf(prompt_hitting)
     let l:result = l:result .
       \ repeat(" ", winwidth(0) - 1 - strlen(l:result)) . "\n"
     if l:buf == bufnr("%")
-      echohl RedHighlight | echon l:result | echohl None
+      echohl CurrentBuffer | echon l:result | echohl None
     else
       echon l:result
     endif
@@ -274,7 +288,7 @@ endfunction
 " timer variables
 let s:timer = 0
 let s:callback_time = 1000
-let s:nb_period = 100
+let s:nb_period = 50
 
 function! ResetTimer()
   let s:timer = 0
