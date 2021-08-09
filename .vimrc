@@ -30,12 +30,6 @@ set splitright
 " tabulation
 set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 
-" search never be case sensitive
-set ignorecase
-
-" display number of selected lines in visual mode
-set showcmd
-
 function! CheckDependencies()
   if v:version < 800
     echoe "Your VimRC needs Vim 8.0 to be functionnal"
@@ -159,18 +153,24 @@ endfunction
 " allow to switch between buffers without writting them
 set hidden
 
-" - quit current window & delete buffer inside, IF there are 2 non-NERDTree
+function! NbDisplayedListedBuffers()
+  return len(filter(range(1, bufnr('$')),
+  \ 'buflisted(v:val) && (len(win_findbuf(v:val)) > 0)'))
+endfunction
+
+" - quit current window & delete buffer inside, IF there are 2 listed-buffers
 "   windows or more,
-" - come back to the previous listed buffer and delete current buffer IF
-"   there are 1 non-NERDTree window (OR 1 non-NERDTree window + 1 NERDTree
-"   window),
-" - quit Vim IF there are 1 non-NERDTree window (OR 1 non-NERDTree window +
-"   1 NERDTree window) AND no previous listed buffer.
+" - come back to the previous listed-buffer and delete current buffer IF
+"   there are 1 listed-buffer window (OR 1 or more unlisted-buffer windows + 1
+"   listed-buffer window),
+" - quit Vim IF there are 1 listed-buffer window (OR 1 or more unlisted-buffer
+"   windows + 1 listed-buffer window) AND no other listed-buffer.
 function! Quit()
   if &modified == 0
     if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
       let l:first_buf = bufnr("%")
-      if winnr('$') == 1 || (winnr('$') == 2 && g:NERDTree.IsOpen())
+      if winnr('$') == 1 || (winnr('$') > 1 &&
+      \ (NbDisplayedListedBuffers() == 1))
         execute "normal! \<C-O>"
       else
         silent quit
@@ -203,7 +203,7 @@ endfunction
 
 " resize the command window, display listed buffers and hilight current
 " buffer
-function DisplayBuf(prompt_hitting)
+function DisplayBuffersList(prompt_hitting)
   let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
 
   if a:prompt_hitting == v:false
@@ -224,7 +224,7 @@ function DisplayBuf(prompt_hitting)
 endfunction
 
 " go to the next/previous undisplayed listed buffer
-function! BufNav(direction)
+function! BuffersNavigation(direction)
   let l:cycle = []
   if a:direction == 1
     let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
@@ -241,23 +241,52 @@ function! BufNav(direction)
 endfunction
 
 " timer variables
-let s:timer = 0
-let s:callback_time = 1000
-let s:nb_period = 10
+let s:check_cb = 100
+let s:update_cb = 100
+let s:nb_period = 100
+let s:timer = s:nb_period * s:update_cb
 
 function! ResetTimer()
   let s:timer = 0
 endfunction
 
-function! s:ResizeCmdWin(timer_id)
-  let s:timer = s:timer + s:callback_time
-  if s:timer >= s:nb_period * s:callback_time
+function! s:EraseBuffersList(timer_id)
+  if s:timer >= s:nb_period * s:update_cb
     set cmdheight=1
   endif
 endfunction
 
-" resize the command window when listed buffers is undisplayed
-call timer_start(s:callback_time, function('s:ResizeCmdWin'), {'repeat': -1})
+let s:size_buffers = 1
+let s:bufferslist_changed = v:false
+
+function! s:MonitorBuffersList(timer_id)
+  if s:bufferslist_changed == v:true
+    let l:tmp = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+    if s:size_buffers != l:tmp
+      let s:size_buffers = l:tmp
+      call ResetTimer()
+    endif
+    let s:bufferslist_changed = v:false
+  endif
+endfunction
+
+function! s:UpdateBuffersList(timer_id)
+  if s:timer < s:nb_period * s:update_cb
+    let s:timer = s:timer + s:update_cb
+    redraw
+    set cmdheight=1
+    call DisplayBuffersList(v:false)
+  endif
+endfunction
+
+" detect buffers list modifications
+call timer_start(s:check_cb, function('s:MonitorBuffersList'), {'repeat': -1})
+
+" update the displayed buffers list in the command window
+call timer_start(s:update_cb, function('s:UpdateBuffersList'), {'repeat': -1})
+
+" erase the displayed buffers list by resizing the command window
+call timer_start(s:update_cb, function('s:EraseBuffersList'), {'repeat': -1})
 
 " }}}
 " NERDTree ---------------------------------------{{{
@@ -302,33 +331,59 @@ let g:NERDTreeMouseMode = 3
 " leader key
 let mapleader = "²"
 
-" search and replace between visual mode and line command mode
+" search and replace
 vnoremap : :s/\%V//g<Left><Left><Left>
+
+" search and replace (case-insensitive)
+vnoremap <leader>: :s/\%V\c//g<Left><Left><Left>
+
+" search (case-insensitive)
+nnoremap <leader>/ /\c
 
 " copy the unnamed register's content in the command line
 " unnamed register = any text deleted or yank (with y)
 cnoremap <leader>p <C-R><C-O>"
 
 " open .vimrc in a vertical split window
-nnoremap <leader>& :vsplit $MYVIMRC<CR>
+nnoremap <silent> <leader>& :vsplit $MYVIMRC<CR>
 
 " compile .vimrc
 nnoremap <leader>é :source $MYVIMRC<CR>
 
 " stop highlighting from the last search
-nnoremap <leader>" :nohlsearch<CR>
+nnoremap <silent> <leader>" :nohlsearch<CR>
 
 " open NERDTree in a vertical split window
-nnoremap <leader>' :NERDTreeToggle<CR>
+nnoremap <silent> <leader>' :NERDTreeToggle<CR>
 
-" buffer menu
-nnoremap <leader>a :call DisplayBuf(v:true)<CR>:buffer<Space>
+" buffers menu
+nnoremap <leader>a :call DisplayBuffersList(v:true)<CR>:buffer<Space>
 
-" buffer navigation
-nnoremap <Tab> :call ResetTimer() <bar> :call BufNav(1) <bar>
-  \ :call DisplayBuf(v:false)<CR>
-nnoremap <S-Tab> :call ResetTimer() <bar> :call BufNav(-1) <bar>
-  \ :call DisplayBuf(v:false)<CR>
+" buffers navigation
+nnoremap <silent> <Tab> :call ResetTimer() <bar>
+  \ :call BuffersNavigation(1)<CR>
+nnoremap <silent> <S-Tab> :call ResetTimer() <bar>
+  \ :call BuffersNavigation(-1)<CR>
+
+function! NextWindow()
+  if winnr() < winnr('$')
+    execute winnr() + 1 . "wincmd w"
+  else
+    1wincmd w
+  endif
+endfunction
+
+function! PreviousWindow()
+  if winnr() > 1
+    execute winnr() - 1 . "wincmd w"
+  else
+    execute winnr('$') . "wincmd w"
+  endif
+endfunction
+
+" windows navigation
+nnoremap <silent> <leader><Up> :call NextWindow()<CR>
+nnoremap <silent> <leader><Down> :call PreviousWindow()<CR>
 
 " make space more useful
 nnoremap <space> za
@@ -337,6 +392,7 @@ nnoremap <space> za
 " Abbreviations --------------------------------------{{{
 
 " disable write usage
+cnoreabbrev wincmd wincmd w
 cnoreabbrev w update
 cnoreabbrev wr update
 cnoreabbrev wri update
@@ -359,33 +415,33 @@ cnoreabbrev tabfin silent tabonly
 cnoreabbrev tabfind silent tabonly
 
 " allow intuitive usage of Quit and WriteQuit functions
-cnoreabbrev q silent call Quit()
-cnoreabbrev qu silent call Quit()
-cnoreabbrev qui silent call Quit()
-cnoreabbrev quit silent call Quit()
-cnoreabbrev wq silent call WriteQuit()
+cnoreabbrev q call Quit()
+cnoreabbrev qu call Quit()
+cnoreabbrev qui call Quit()
+cnoreabbrev quit call Quit()
+cnoreabbrev wq call WriteQuit()
 
-cnoreabbrev bd silent call Quit()
-cnoreabbrev bde silent call Quit()
-cnoreabbrev bdel silent call Quit()
-cnoreabbrev bdele silent call Quit()
-cnoreabbrev bdelet silent call Quit()
-cnoreabbrev bdelete silent call Quit()
+cnoreabbrev bd call Quit()
+cnoreabbrev bde call Quit()
+cnoreabbrev bdel call Quit()
+cnoreabbrev bdele call Quit()
+cnoreabbrev bdelet call Quit()
+cnoreabbrev bdelete call Quit()
 
-cnoreabbrev bw silent call Quit()
-cnoreabbrev bwi silent call Quit()
-cnoreabbrev bwip silent call Quit()
-cnoreabbrev bwipe silent call Quit()
-cnoreabbrev bwipeo silent call Quit()
-cnoreabbrev bwipeou silent call Quit()
-cnoreabbrev bwipeout silent call Quit()
+cnoreabbrev bw call Quit()
+cnoreabbrev bwi call Quit()
+cnoreabbrev bwip call Quit()
+cnoreabbrev bwipe call Quit()
+cnoreabbrev bwipeo call Quit()
+cnoreabbrev bwipeou call Quit()
+cnoreabbrev bwipeout call Quit()
 
-cnoreabbrev bu silent call Quit()
-cnoreabbrev bun silent call Quit()
-cnoreabbrev bunl silent call Quit()
-cnoreabbrev bunlo silent call Quit()
-cnoreabbrev bunloa silent call Quit()
-cnoreabbrev bunload silent call Quit()
+cnoreabbrev bu call Quit()
+cnoreabbrev bun call Quit()
+cnoreabbrev bunl call Quit()
+cnoreabbrev bunlo call Quit()
+cnoreabbrev bunloa call Quit()
+cnoreabbrev bunload call Quit()
 
 cnoreabbrev qa call QuitAll()
 cnoreabbrev qal call QuitAll()
@@ -395,18 +451,18 @@ cnoreabbrev wqal call WriteQuitAll()
 cnoreabbrev wqall call WriteQuitAll()
 
 " disable intuitive usage of unused commands
-cnoreabbrev Q quit
-cnoreabbrev QA qall
-cnoreabbrev W write
-cnoreabbrev WQ wq
-cnoreabbrev WQA wqall
-cnoreabbrev BD bdelete
-cnoreabbrev BW bwipeout
-cnoreabbrev BU bunload
-cnoreabbrev TAB tab
-cnoreabbrev TABN tabnew
-cnoreabbrev TABE tabedit
-cnoreabbrev TABF tabfind
+cnoreabbrev UNUSED_quit quit
+cnoreabbrev UNUSED_qall qall
+cnoreabbrev UNUSED_write write
+cnoreabbrev UNUSED_wq wq
+cnoreabbrev UNUSED_wqall wqall
+cnoreabbrev UNUSED_bdelete bdelete
+cnoreabbrev UNUSED_bwipeout bwipeout
+cnoreabbrev UNUSED_bunload bunload
+cnoreabbrev UNUSED_tab tab
+cnoreabbrev UNUSED_tabnew tabnew
+cnoreabbrev UNUSED_tabedit tabedit
+cnoreabbrev UNUSED_tabfind tabfind
 
 " }}}
 " Performance -----------------------------{{{
@@ -420,9 +476,12 @@ set ttyfast
 " max column where syntax is applied (default: 3000)
 set synmaxcol=300
 
+" avoid visual mod lags
+set noshowcmd
+
 "   Autocommands -------------------------------------------{{{
-let s:created_buffer = v:false
-augroup vimrc_automands
+
+augroup vimrc_autocomands
   autocmd!
 "     VimEnter Autocommands Group -----------------------------------------{{{
 
@@ -445,6 +504,15 @@ augroup vimrc_automands
   autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
 
 "     }}}
+"     Buffers Autocommand Groups ----------------------------------------{{{
+
+  " display buffers list when a buffer is added/deleted to buffers list
+  autocmd BufAdd,BufDelete * execute "let s:bufferslist_changed = v:true"
+
+  " entering commandline erase displayed buffers list
+  autocmd CmdlineEnter * execute "let s:timer = s:nb_period * s:update_cb"
+
+"     }}}
 "     NERDTree Autocommand Groups ----------------------------------------{{{
 
   autocmd BufEnter * :silent call CloseLonelyNERDTreeWindow()
@@ -464,5 +532,3 @@ augroup END
 
 "   }}}
 " }}}
-  "autocmd BufCreate * let s:created_buffer = v:true
-  "autocmd BufLeave * if s:created_buffer | call ResetTimer() | call DisplayBuf(v:false) | let s:created_buffer = v:false | endif
