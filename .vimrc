@@ -153,9 +153,9 @@ endfunction
 " allow to switch between buffers without writting them
 set hidden
 
-function! NbDisplayedListedBuffers()
-  return len(filter(range(1, bufnr('$')),
-  \ 'buflisted(v:val) && (len(win_findbuf(v:val)) > 0)'))
+" return number of listed-buffers displayed in a window
+function! WindowedListedBuffers()
+  return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
 endfunction
 
 " - quit current window & delete buffer inside, IF there are 2 listed-buffers
@@ -169,8 +169,7 @@ function! Quit()
   if &modified == 0
     if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
       let l:first_buf = bufnr("%")
-      if winnr('$') == 1 || (winnr('$') > 1 &&
-      \ (NbDisplayedListedBuffers() == 1))
+      if winnr('$') == 1 || (winnr('$') > 1 && (WindowedListedBuffers() == 1))
         execute "normal! \<C-O>"
       else
         silent quit
@@ -224,7 +223,7 @@ function DisplayBuffersList(prompt_hitting)
 endfunction
 
 " go to the next/previous undisplayed listed buffer
-function! BuffersNavigation(direction)
+function! BuffersListNavigation(direction)
   let l:cycle = []
   if a:direction == 1
     let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
@@ -244,14 +243,14 @@ endfunction
 let s:check_cb = 100
 let s:update_cb = 100
 let s:nb_period = 100
-let s:timer = s:nb_period * s:update_cb
+let s:clock = s:nb_period * s:update_cb
 
 function! ResetTimer()
-  let s:timer = 0
+  let s:clock = 0
 endfunction
 
 function! s:EraseBuffersList(timer_id)
-  if s:timer >= s:nb_period * s:update_cb
+  if s:clock >= s:nb_period * s:update_cb
     set cmdheight=1
   endif
 endfunction
@@ -271,8 +270,8 @@ function! s:MonitorBuffersList(timer_id)
 endfunction
 
 function! s:UpdateBuffersList(timer_id)
-  if s:timer < s:nb_period * s:update_cb
-    let s:timer = s:timer + s:update_cb
+  if s:clock < s:nb_period * s:update_cb
+    let s:clock = s:clock + s:update_cb
     redraw
     set cmdheight=1
     call DisplayBuffersList(v:false)
@@ -280,13 +279,16 @@ function! s:UpdateBuffersList(timer_id)
 endfunction
 
 " detect buffers list modifications
-call timer_start(s:check_cb, function('s:MonitorBuffersList'), {'repeat': -1})
+let s:monitor_timer =
+  \ timer_start(s:check_cb, function('s:MonitorBuffersList'), {'repeat': -1})
 
 " update the displayed buffers list in the command window
-call timer_start(s:update_cb, function('s:UpdateBuffersList'), {'repeat': -1})
+let s:update_timer =
+  \ timer_start(s:update_cb, function('s:UpdateBuffersList'), {'repeat': -1})
 
 " erase the displayed buffers list by resizing the command window
-call timer_start(s:update_cb, function('s:EraseBuffersList'), {'repeat': -1})
+let s:erase_timer =
+  \ timer_start(s:update_cb, function('s:EraseBuffersList'), {'repeat': -1})
 
 " }}}
 " NERDTree ---------------------------------------{{{
@@ -361,9 +363,9 @@ nnoremap <leader>a :call DisplayBuffersList(v:true)<CR>:buffer<Space>
 
 " buffers navigation
 nnoremap <silent> <Tab> :call ResetTimer() <bar>
-  \ :call BuffersNavigation(1)<CR>
+  \ :call BuffersListNavigation(1)<CR>
 nnoremap <silent> <S-Tab> :call ResetTimer() <bar>
-  \ :call BuffersNavigation(-1)<CR>
+  \ :call BuffersListNavigation(-1)<CR>
 
 function! NextWindow()
   if winnr() < winnr('$')
@@ -474,7 +476,7 @@ set lazyredraw
 set ttyfast
 
 " max column where syntax is applied (default: 3000)
-set synmaxcol=300
+set synmaxcol=81
 
 " avoid visual mod lags
 set noshowcmd
@@ -510,7 +512,16 @@ augroup vimrc_autocomands
   autocmd BufAdd,BufDelete * execute "let s:bufferslist_changed = v:true"
 
   " entering commandline erase displayed buffers list
-  autocmd CmdlineEnter * execute "let s:timer = s:nb_period * s:update_cb"
+  autocmd CmdlineEnter * execute "let s:clock = s:nb_period * s:update_cb" |
+    \ call s:EraseBuffersList(s:erase_timer) | redraw
+
+  " timer stops incremental search, those lines renable this feature
+  autocmd CmdlineEnter * call timer_pause(s:monitor_timer, v:true) |
+    \ call timer_pause(s:update_timer, v:true) |
+    \ call timer_pause(s:erase_timer, v:true)
+  autocmd CmdlineLeave * call timer_pause(s:monitor_timer, v:false) |
+    \ call timer_pause(s:update_timer, v:false) |
+    \ call timer_pause(s:erase_timer, v:false)
 
 "     }}}
 "     NERDTree Autocommand Groups ----------------------------------------{{{
