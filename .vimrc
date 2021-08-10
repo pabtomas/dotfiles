@@ -378,6 +378,8 @@ nnoremap <silent> <leader>' :NERDTreeToggle<CR>
 " Quit() functions
 nnoremap <silent> ZQ :call Quit()<CR>
 nnoremap <silent> ZZ :call WriteQuit()<CR>
+nnoremap <silent> <leader>q :call Quit()<CR>
+nnoremap <silent> <leader>w :call WriteQuit()<CR>
 
 " buffers menu
 nnoremap <leader>a :call DisplayBuffersList(v:true)<CR>:buffer<Space>
@@ -434,25 +436,17 @@ cnoreabbrev tabfi silent tabonly
 cnoreabbrev tabfin silent tabonly
 cnoreabbrev tabfind silent tabonly
 
-" allow intuitive usage of Quit and WriteQuit functions
+" allow intuitive usage of Quit function
 cnoreabbrev q call Quit()
 cnoreabbrev qu call Quit()
 cnoreabbrev qui call Quit()
 cnoreabbrev quit call Quit()
-cnoreabbrev wq call WriteQuit()
-cnoreabbrev x call WriteQuit()
-cnoreabbrev xi call WriteQuit()
-cnoreabbrev xit call WriteQuit()
-cnoreabbrev exi call WriteQuit()
-cnoreabbrev exit call WriteQuit()
-
 cnoreabbrev bd call Quit()
 cnoreabbrev bde call Quit()
 cnoreabbrev bdel call Quit()
 cnoreabbrev bdele call Quit()
 cnoreabbrev bdelet call Quit()
 cnoreabbrev bdelete call Quit()
-
 cnoreabbrev bw call Quit()
 cnoreabbrev bwi call Quit()
 cnoreabbrev bwip call Quit()
@@ -460,7 +454,6 @@ cnoreabbrev bwipe call Quit()
 cnoreabbrev bwipeo call Quit()
 cnoreabbrev bwipeou call Quit()
 cnoreabbrev bwipeout call Quit()
-
 cnoreabbrev bu call Quit()
 cnoreabbrev bun call Quit()
 cnoreabbrev bunl call Quit()
@@ -468,12 +461,23 @@ cnoreabbrev bunlo call Quit()
 cnoreabbrev bunloa call Quit()
 cnoreabbrev bunload call Quit()
 
+" allow intuitive usage of WriteQuit function
+cnoreabbrev wq call WriteQuit()
+cnoreabbrev x call WriteQuit()
+cnoreabbrev xi call WriteQuit()
+cnoreabbrev xit call WriteQuit()
+cnoreabbrev exi call WriteQuit()
+cnoreabbrev exit call WriteQuit()
+
+" allow intuitive usage of QuitAll function
 cnoreabbrev qa call QuitAll()
 cnoreabbrev qal call QuitAll()
 cnoreabbrev qall call QuitAll()
 cnoreabbrev quita call QuitAll()
 cnoreabbrev quital call QuitAll()
 cnoreabbrev quitall call QuitAll()
+
+" allow intuitive usage of WriteQuitAll function
 cnoreabbrev wqa call WriteQuitAll()
 cnoreabbrev wqal call WriteQuitAll()
 cnoreabbrev wqall call WriteQuitAll()
