@@ -360,6 +360,9 @@ nnoremap <leader>/ /\c
 " unnamed register = any text deleted or yank (with y)
 cnoremap <leader>p <C-R><C-O>"
 
+" for debug purpose
+nnoremap <leader>m :messages<CR>
+
 " open .vimrc in a vertical split window
 nnoremap <silent> <leader>& :vsplit $MYVIMRC<CR>
 
@@ -371,6 +374,10 @@ nnoremap <silent> <leader>" :nohlsearch<CR>
 
 " open NERDTree in a vertical split window
 nnoremap <silent> <leader>' :NERDTreeToggle<CR>
+
+" Quit() functions
+nnoremap <silent> ZQ :call Quit()<CR>
+nnoremap <silent> ZZ :call WriteQuit()<CR>
 
 " buffers menu
 nnoremap <leader>a :call DisplayBuffersList(v:true)<CR>:buffer<Space>
@@ -433,6 +440,11 @@ cnoreabbrev qu call Quit()
 cnoreabbrev qui call Quit()
 cnoreabbrev quit call Quit()
 cnoreabbrev wq call WriteQuit()
+cnoreabbrev x call WriteQuit()
+cnoreabbrev xi call WriteQuit()
+cnoreabbrev xit call WriteQuit()
+cnoreabbrev exi call WriteQuit()
+cnoreabbrev exit call WriteQuit()
 
 cnoreabbrev bd call Quit()
 cnoreabbrev bde call Quit()
@@ -459,16 +471,24 @@ cnoreabbrev bunload call Quit()
 cnoreabbrev qa call QuitAll()
 cnoreabbrev qal call QuitAll()
 cnoreabbrev qall call QuitAll()
+cnoreabbrev quita call QuitAll()
+cnoreabbrev quital call QuitAll()
+cnoreabbrev quitall call QuitAll()
 cnoreabbrev wqa call WriteQuitAll()
 cnoreabbrev wqal call WriteQuitAll()
 cnoreabbrev wqall call WriteQuitAll()
+cnoreabbrev xa call WriteQuitAll()
+cnoreabbrev xal call WriteQuitAll()
+cnoreabbrev xall call WriteQuitAll()
 
 " disable intuitive usage of unused commands
 cnoreabbrev UNUSED_quit quit
-cnoreabbrev UNUSED_qall qall
+cnoreabbrev UNUSED_quitall qall
 cnoreabbrev UNUSED_write write
 cnoreabbrev UNUSED_wq wq
+cnoreabbrev UNUSED_exit exit
 cnoreabbrev UNUSED_wqall wqall
+cnoreabbrev UNUSED_xall xall
 cnoreabbrev UNUSED_bdelete bdelete
 cnoreabbrev UNUSED_bwipeout bwipeout
 cnoreabbrev UNUSED_bunload bunload
