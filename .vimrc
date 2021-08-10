@@ -30,6 +30,9 @@ set splitright
 " tabulation
 set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 
+" always display the number of changes after a command
+set report=0
+
 function! CheckDependencies()
   if v:version < 800
     echoe "Your VimRC needs Vim 8.0 to be functionnal"
