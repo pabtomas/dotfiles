@@ -34,11 +34,9 @@ set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 set report=0
 
 function! CheckDependencies()
-  if v:version < 800
-    echoe "Your VimRC needs Vim 8.0 to be functionnal"
+  if v:version < 801
+    echoe "Your VimRC needs Vim 8.1 to be functionnal"
     quit
-  elseif v:version < 801
-    echoe "Your VimRC needs Vim 8.1 to be fully supported"
   endif
 
   if exists("g:NERDTree") == v:false ||
@@ -78,14 +76,9 @@ highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=232
 highlight       RedHighlight                                         ctermfg=232   ctermbg=DarkRed
 
 " predefined highlight groups
-if v:version >= 801
-  set wincolor=NormalAlt
-  highlight     Normal         term=bold         cterm=bold          ctermfg=176   ctermbg=232
-  highlight     NormalAlt      term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
-else
-  highlight     Normal         term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
-endif
-
+set wincolor=NormalAlt
+highlight       Normal         term=bold         cterm=bold          ctermfg=176   ctermbg=232
+highlight       NormalAlt      term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
 highlight       ModeMsg        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
 highlight       MoreMsg        term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
 highlight       Question       term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
@@ -534,9 +527,7 @@ augroup vimrc_autocomands
  "     }}}
 "     Color Autocommands Group -------------------------------------------{{{
 
-  if v:version >= 801
-    autocmd WinEnter set wincolor=NormalAlt
-  endif
+  autocmd WinEnter set wincolor=NormalAlt
 
 "     }}}
 "     Good Practices Autocommands Group -----------------------------------{{{
