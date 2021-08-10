@@ -295,7 +295,8 @@ let s:monitor_timer =
   \ timer_start(s:tick, function('s:MonitorBuffersList'), {'repeat': -1})
 
 " }}}
-" NERDTree ---------------------------------------{{{
+" Plugins ---------------------------------------{{{
+"   NERDTree ---------------------------------------{{{
 
 " close Vim if NERDTree is the only window remaining in it
 function! CloseLonelyNERDTreeWindow()
@@ -329,8 +330,17 @@ let g:NERDTreeHighlightCursorline = v:true
 " single mouse click opens directories and files
 let g:NERDTreeMouseMode = 3
 
+"   }}}
 " }}}
-" FileType-specific -----------------------------------{{{
+" FileType-specific -------------------------------------{{{
+"   Bash -------------------------------------{{{
+
+function! FilledShFile()
+  call append(0, [ '#!/bin/bash',
+  \                '', ])
+endfunction
+
+"   }}}
 " }}}
 " Mappings -------------------------------------{{{
 
@@ -395,8 +405,7 @@ nnoremap <space> za
 " }}}
 " Abbreviations --------------------------------------{{{
 
-" disable write usage
-cnoreabbrev wincmd wincmd w
+" avoid write usage
 cnoreabbrev w update
 cnoreabbrev wr update
 cnoreabbrev wri update
@@ -510,8 +519,8 @@ augroup vimrc_autocomands
 "     }}}
 "     Buffers Autocommand Groups ----------------------------------------{{{
 
-  " 1) entering commandline erase displayed buffers list,
-  " 2) timer stops incremental search, those lines renable this feature
+  " 1) entering commandline erases displayed buffers list,
+  " 2) renable incremental search
   autocmd CmdlineEnter * call StopTimer() |
     \ call timer_pause(s:monitor_timer, v:true)
   autocmd CmdlineLeave * call timer_pause(s:monitor_timer, v:false)
@@ -530,6 +539,11 @@ augroup vimrc_autocomands
 "     Vimscript fyletype Autocommand Group---------------------------------{{{
 
   autocmd FileType vim setlocal foldmethod=marker
+
+"     }}}
+"     Bash fyletype Autocommand Group---------------------------------{{{
+
+  autocmd BufNewFile *.sh :call FilledShFile()
 
 "     }}}
 augroup END
