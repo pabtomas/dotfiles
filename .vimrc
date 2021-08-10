@@ -240,55 +240,59 @@ function! BuffersListNavigation(direction)
 endfunction
 
 " timer variables
-let s:check_cb = 100
-let s:update_cb = 100
-let s:nb_period = 100
-let s:clock = s:nb_period * s:update_cb
+let s:tick = 100
+let s:nb_ticks = 100
+let s:elapsed_time = s:nb_ticks * s:tick
 
-function! ResetTimer()
-  let s:clock = 0
-endfunction
+let s:lasttick_sizebuflist =
+  \ len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+let s:lasttick_buffer = bufnr('%')
 
-function! s:EraseBuffersList(timer_id)
-  if s:clock >= s:nb_period * s:update_cb
-    set cmdheight=1
-  endif
-endfunction
-
-let s:size_buffers = 1
-let s:bufferslist_changed = v:false
-
-function! s:MonitorBuffersList(timer_id)
-  if s:bufferslist_changed == v:true
-    let l:tmp = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
-    if s:size_buffers != l:tmp
-      let s:size_buffers = l:tmp
-      call ResetTimer()
-    endif
-    let s:bufferslist_changed = v:false
-  endif
-endfunction
-
-function! s:UpdateBuffersList(timer_id)
-  if s:clock < s:nb_period * s:update_cb
-    let s:clock = s:clock + s:update_cb
+" update the buffers list displayed in commandline
+function! s:UpdateCommandline(timer_id)
+  if s:elapsed_time < s:nb_ticks * s:tick
+    let s:elapsed_time = s:elapsed_time + s:tick
     redraw
     set cmdheight=1
     call DisplayBuffersList(v:false)
+  else
+    call StopTimer()
   endif
 endfunction
 
-" detect buffers list modifications
-let s:monitor_timer =
-  \ timer_start(s:check_cb, function('s:MonitorBuffersList'), {'repeat': -1})
-
-" update the displayed buffers list in the command window
+" run when displaying buffers list is needed
 let s:update_timer =
-  \ timer_start(s:update_cb, function('s:UpdateBuffersList'), {'repeat': -1})
+  \ timer_start(s:tick, function('s:UpdateCommandline'), {'repeat': -1})
 
-" erase the displayed buffers list by resizing the command window
-let s:erase_timer =
-  \ timer_start(s:update_cb, function('s:EraseBuffersList'), {'repeat': -1})
+function! StartTimer()
+  call timer_pause(s:update_timer, v:false)
+  let s:elapsed_time = 0
+endfunction
+
+function! StopTimer()
+  call timer_pause(s:update_timer, v:true)
+  let s:elapsed_time = s:nb_ticks * s:tick
+  set cmdheight=1
+  redraw
+endfunction
+
+" allow to monitor 2 events:
+" - buffers list adding/deleting
+" - current listed-buffer entering
+function! s:MonitorBuffersList(timer_id)
+  let l:tmp = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+  let l:current_buffer = bufnr('%')
+  if (s:lasttick_sizebuflist != l:tmp) ||
+  \ ((s:lasttick_buffer != l:current_buffer) && buflisted(l:current_buffer))
+    let s:lasttick_sizebuflist = l:tmp
+    let s:lasttick_buffer = l:current_buffer
+    call StartTimer()
+  endif
+endfunction
+
+" always running except during commandline mode
+let s:monitor_timer =
+  \ timer_start(s:tick, function('s:MonitorBuffersList'), {'repeat': -1})
 
 " }}}
 " NERDTree ---------------------------------------{{{
@@ -362,10 +366,8 @@ nnoremap <silent> <leader>' :NERDTreeToggle<CR>
 nnoremap <leader>a :call DisplayBuffersList(v:true)<CR>:buffer<Space>
 
 " buffers navigation
-nnoremap <silent> <Tab> :call ResetTimer() <bar>
-  \ :call BuffersListNavigation(1)<CR>
-nnoremap <silent> <S-Tab> :call ResetTimer() <bar>
-  \ :call BuffersListNavigation(-1)<CR>
+nnoremap <silent> <Tab> :call BuffersListNavigation(1)<CR>
+nnoremap <silent> <S-Tab> :call BuffersListNavigation(-1)<CR>
 
 function! NextWindow()
   if winnr() < winnr('$')
@@ -508,20 +510,11 @@ augroup vimrc_autocomands
 "     }}}
 "     Buffers Autocommand Groups ----------------------------------------{{{
 
-  " display buffers list when a buffer is added/deleted to buffers list
-  autocmd BufAdd,BufDelete * execute "let s:bufferslist_changed = v:true"
-
-  " entering commandline erase displayed buffers list
-  autocmd CmdlineEnter * execute "let s:clock = s:nb_period * s:update_cb" |
-    \ call s:EraseBuffersList(s:erase_timer) | redraw
-
-  " timer stops incremental search, those lines renable this feature
-  autocmd CmdlineEnter * call timer_pause(s:monitor_timer, v:true) |
-    \ call timer_pause(s:update_timer, v:true) |
-    \ call timer_pause(s:erase_timer, v:true)
-  autocmd CmdlineLeave * call timer_pause(s:monitor_timer, v:false) |
-    \ call timer_pause(s:update_timer, v:false) |
-    \ call timer_pause(s:erase_timer, v:false)
+  " 1) entering commandline erase displayed buffers list,
+  " 2) timer stops incremental search, those lines renable this feature
+  autocmd CmdlineEnter * call StopTimer() |
+    \ call timer_pause(s:monitor_timer, v:true)
+  autocmd CmdlineLeave * call timer_pause(s:monitor_timer, v:false)
 
 "     }}}
 "     NERDTree Autocommand Groups ----------------------------------------{{{
