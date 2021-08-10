@@ -527,7 +527,7 @@ augroup vimrc_autocomands
  "     }}}
 "     Color Autocommands Group -------------------------------------------{{{
 
-  autocmd WinEnter set wincolor=NormalAlt
+  autocmd WinEnter * set wincolor=NormalAlt
 
 "     }}}
 "     Good Practices Autocommands Group -----------------------------------{{{
