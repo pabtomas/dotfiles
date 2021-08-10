@@ -335,7 +335,7 @@ let g:NERDTreeMouseMode = 3
 " FileType-specific -------------------------------------{{{
 "   Bash -------------------------------------{{{
 
-function! FilledShFile()
+function! PrefillShFile()
   call append(0, [ '#!/bin/bash',
   \                '', ])
 endfunction
@@ -536,14 +536,14 @@ augroup vimrc_autocomands
     \ nnoremap <buffer> : <Esc> | endif
 
 "     }}}
-"     Vimscript fyletype Autocommand Group---------------------------------{{{
+"     Vimscript filetype Autocommand Group---------------------------------{{{
 
   autocmd FileType vim setlocal foldmethod=marker
 
 "     }}}
-"     Bash fyletype Autocommand Group---------------------------------{{{
+"     Bash filetype Autocommand Group---------------------------------{{{
 
-  autocmd BufNewFile *.sh :call FilledShFile()
+  autocmd BufNewFile *.sh :call PrefillShFile()
 
 "     }}}
 augroup END
