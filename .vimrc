@@ -100,8 +100,8 @@ if &term[-9:] =~ '-256color'
   highlight       Error                                                ctermfg=232   ctermbg=196
   highlight       ErrorMsg       term=bold         cterm=bold          ctermfg=196   ctermbg=232
   highlight       Todo           term=standout                         ctermfg=232   ctermbg=69
-  highlight       StatusLine     term=NONE         cterm=NONE          ctermfg=111   ctermbg=236
-  highlight       StatusLineNC   term=NONE         cterm=NONE          ctermfg=69    ctermbg=235
+  highlight       StatusLine     term=bold         cterm=bold          ctermfg=111   ctermbg=236
+  highlight       StatusLineNC   term=bold         cterm=bold          ctermfg=69    ctermbg=235
   highlight       Folded         term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
   highlight       VertSplit      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
   highlight       CursorLine     term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
@@ -217,7 +217,7 @@ function DisplayBuffersList(prompt_hitting)
   for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
     let l:result = " " . buf . ": \"" . bufname(l:buf) . "\""
     let l:result = l:result .
-      \ repeat(" ", winwidth(0) - 1 - strlen(l:result)) . "\n"
+      \ repeat(" ", &columns - 1 - strlen(l:result)) . "\n"
     if l:buf == bufnr("%")
       echohl CurrentBuffer | echon l:result | echohl None
     else
