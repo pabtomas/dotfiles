@@ -65,69 +65,77 @@ endfunction
 " Dark-Gray -> 235 - 236
 " Black -> 232
 
-set background=dark
-highlight clear
-if exists("syntax_on")
-  syntax reset
+if &term[-9:] =~ '-256color'
+
+  set background=dark
+  highlight clear
+  if exists("syntax_on")
+    syntax reset
+  endif
+
+  " custom highlight groups
+  highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=232   ctermbg=140
+  highlight       RedHighlight                                         ctermfg=232   ctermbg=DarkRed
+
+  " predefined highlight groups
+  set wincolor=NormalAlt
+  highlight       Normal         term=bold         cterm=bold          ctermfg=176   ctermbg=232
+  highlight       NormalAlt      term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
+  highlight       ModeMsg        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+  highlight       MoreMsg        term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+  highlight       Question       term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+  highlight       NonText        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+  highlight       Comment        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+  highlight       Constant       term=NONE         cterm=NONE          ctermfg=69    ctermbg=232
+  highlight       Special        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
+  highlight       Identifier     term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+  highlight       Statement      term=NONE         cterm=NONE          ctermfg=196   ctermbg=232
+  highlight       PreProc        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+  highlight       Type           term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+  highlight       Visual         term=reverse      cterm=reverse                     ctermbg=232
+  highlight       LineNr         term=NONE         cterm=NONE          ctermfg=42    ctermbg=232
+  highlight       Search         term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
+  highlight       IncSearch      term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
+  highlight       Tag            term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
+  highlight       Error                                                ctermfg=232   ctermbg=196
+  highlight       ErrorMsg       term=bold         cterm=bold          ctermfg=196   ctermbg=232
+  highlight       Todo           term=standout                         ctermfg=232   ctermbg=69
+  highlight       StatusLine     term=NONE         cterm=NONE          ctermfg=111   ctermbg=236
+  highlight       StatusLineNC   term=NONE         cterm=NONE          ctermfg=69    ctermbg=235
+  highlight       Folded         term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
+  highlight       VertSplit      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
+  highlight       CursorLine     term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
+  highlight       MatchParen     term=bold         cterm=bold          ctermfg=62    ctermbg=147
+  highlight! link WarningMsg     ErrorMsg
+  highlight  link String         Constant
+  highlight  link Character      Constant
+  highlight  link Number         Constant
+  highlight  link Boolean        Constant
+  highlight  link Float          Number
+  highlight  link Function       Identifier
+  highlight  link Conditional    Statement
+  highlight  link Repeat         Statement
+  highlight  link Label          Statement
+  highlight  link Operator       Statement
+  highlight  link Keyword        Statement
+  highlight  link Exception      Statement
+  highlight  link Include        PreProc
+  highlight  link Define         PreProc
+  highlight  link Macro          PreProc
+  highlight  link PreCondit      PreProc
+  highlight  link StorageClass   Type
+  highlight  link Structure      Type
+  highlight  link Typedef        Type
+  highlight  link SpecialChar    Special
+  highlight  link Delimiter      Special
+  highlight  link SpecialComment Special
+  highlight  link Debug          Special
+else
+
+  " custom highlight groups
+  highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=White   ctermbg=Magenta
+  highlight       RedHighlight                                         ctermfg=Black   ctermbg=DarkRed
 endif
-
-" custom highlight groups
-highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=232   ctermbg=140
-highlight       RedHighlight                                         ctermfg=232   ctermbg=DarkRed
-
-" predefined highlight groups
-set wincolor=NormalAlt
-highlight       Normal         term=bold         cterm=bold          ctermfg=176   ctermbg=232
-highlight       NormalAlt      term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
-highlight       ModeMsg        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-highlight       MoreMsg        term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight       Question       term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight       NonText        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-highlight       Comment        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-highlight       Constant       term=NONE         cterm=NONE          ctermfg=69    ctermbg=232
-highlight       Special        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-highlight       Identifier     term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight       Statement      term=NONE         cterm=NONE          ctermfg=196   ctermbg=232
-highlight       PreProc        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-highlight       Type           term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight       Visual         term=reverse      cterm=reverse                     ctermbg=232
-highlight       LineNr         term=NONE         cterm=NONE          ctermfg=42    ctermbg=232
-highlight       Search         term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
-highlight       IncSearch      term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
-highlight       Tag            term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-highlight       Error                                                ctermfg=232   ctermbg=196
-highlight       ErrorMsg       term=bold         cterm=bold          ctermfg=196   ctermbg=232
-highlight       Todo           term=standout                         ctermfg=232   ctermbg=69
-highlight       StatusLine     term=NONE         cterm=NONE          ctermfg=111   ctermbg=236
-highlight       StatusLineNC   term=NONE         cterm=NONE          ctermfg=69    ctermbg=235
-highlight       Folded         term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
-highlight       VertSplit      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-highlight       CursorLine     term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
-highlight       MatchParen     term=bold         cterm=bold          ctermfg=62    ctermbg=147
-highlight! link WarningMsg     ErrorMsg
-highlight  link String         Constant
-highlight  link Character      Constant
-highlight  link Number         Constant
-highlight  link Boolean        Constant
-highlight  link Float          Number
-highlight  link Function       Identifier
-highlight  link Conditional    Statement
-highlight  link Repeat         Statement
-highlight  link Label          Statement
-highlight  link Operator       Statement
-highlight  link Keyword        Statement
-highlight  link Exception      Statement
-highlight  link Include        PreProc
-highlight  link Define         PreProc
-highlight  link Macro          PreProc
-highlight  link PreCondit      PreProc
-highlight  link StorageClass   Type
-highlight  link Structure      Type
-highlight  link Typedef        Type
-highlight  link SpecialChar    Special
-highlight  link Delimiter      Special
-highlight  link SpecialComment Special
-highlight  link Debug          Special
 
 "   }}}
 "   Good practices -------------------------{{{
