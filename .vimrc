@@ -57,11 +57,11 @@ endfunction
 
 " Red -> 196
 " Orange -> 202
-" Purple -> 62 - 140
+" Purple -> 62 - 140 - 176
 " Blue -> 69 - 105 - 111
 " Green -> 42
 " White -> 147 - 153
-" Dark-Gray -> 235 - 236 - 237
+" Dark-Gray -> 235 - 236
 " Black -> 232
 
 set background=dark
@@ -478,7 +478,7 @@ set lazyredraw
 set ttyfast
 
 " max column where syntax is applied (default: 3000)
-set synmaxcol=81
+set synmaxcol=79
 
 " avoid visual mod lags
 set noshowcmd
