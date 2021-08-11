@@ -2,6 +2,8 @@
 
 " - disable opening directories
 " - test unlisted-buffers autocmd
+" - avoid same buffer to be reopened ?
+" - snipsets to disable risky commands ?
 " - rewrite <leader>a mapping:
 "   1) to display only hidden listed-buffers
 "   2) to open only hidden listed-buffer
@@ -195,8 +197,8 @@ function! OpenedListedBuffers()
   return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
 endfunction
 
-" resize the command window, display listed buffers and hilight current
-" buffer
+" resize the command window, display listed buffers, highlight current
+" buffer and underline opened buffers
 function DisplayBuffersList(prompt_hitting)
   let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) + 1
 
