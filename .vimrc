@@ -1,5 +1,6 @@
 " TODO -----------------------------------{{{
 
+" - see sbnext, sbuffer, sbNext ...
 " - test unlisted-buffers autocmd
 " - rewrite <leader>a mapping:
 "   1) to display only hidden listed-buffers
@@ -194,7 +195,7 @@ endfunction
 
 " resize the command window, display listed buffers and hilight current
 " buffer
-function DisplayBuffersList(prompt_hitting)
+function DisplayBuffersList(prompt_hitting, only_hidden)
   let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
 
   if a:prompt_hitting == v:false
@@ -203,13 +204,19 @@ function DisplayBuffersList(prompt_hitting)
 
   execute 'set cmdheight=' . l:buf_nb
   for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
-    let l:result = ' ' . buf . ': "' . bufname(l:buf) . '"'
+    let l:result = ' ' . l:buf . ': "' . bufname(l:buf) . '"'
     let l:result = l:result .
       \ repeat(' ', &columns - 1 - strlen(l:result)) . "\n"
     if l:buf == bufnr('%')
       echohl CurrentBuffer | echon l:result | echohl None
     else
-      echon l:result
+      if a:only_hidden
+        if len(win_findbuf(l:buf)) == 0
+          echon l:result
+        endif
+      else
+        echon l:result
+      endif
     endif
   endfor
 endfunction
@@ -431,7 +438,7 @@ function! s:UpdateCommandline(timer_id)
     let s:elapsed_time = s:elapsed_time + s:tick
     redraw
     set cmdheight=1
-    call DisplayBuffersList(v:false)
+    call DisplayBuffersList(v:false, v:false)
   else
     call StopTimer()
   endif
@@ -446,11 +453,19 @@ function! StartTimer()
   let s:elapsed_time = 0
 endfunction
 
+let s:redraw_allowed = v:true
+
+function! DisableRedraw()
+  let s:redraw_allowed = v:false
+endfunction
+
 function! StopTimer()
   call timer_pause(s:update_timer, v:true)
   let s:elapsed_time = s:nb_ticks * s:tick
   set cmdheight=1
-  redraw
+  if s:redraw_allowed
+    redraw
+  endif
 endfunction
 
 " allow to monitor 2 events:
@@ -549,7 +564,8 @@ nnoremap <silent> <leader>q :call Quit()<CR>
 nnoremap <silent> <leader>w :call WriteQuit()<CR>
 
 " buffers menu
-nnoremap <leader>a :call DisplayBuffersList(v:true)<CR>:buffer<Space>
+nnoremap <leader>a :call DisableRedraw() <bar>
+  \ call DisplayBuffersList(v:true, v:true)<CR>:buffer<Space>
 
 " buffers navigation
 nnoremap <silent> <Tab> :call BuffersListNavigation(1)<CR>
