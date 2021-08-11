@@ -1,3 +1,11 @@
+" TODO -----------------------------------{{{
+
+" - test unlisted-buffers autocmd
+" - rewrite <leader>a mapping:
+"   1) to display only hidden listed-buffers
+"   2) to open only hidden listed-buffer
+
+" }}}
 " Basic -----------------------------{{{
 
 " Vi default options unused
@@ -35,77 +43,87 @@ set report=0
 
 function! CheckDependencies()
   if v:version < 801
-    echoe "Your VimRC needs Vim 8.1 to be functionnal"
+    echoe 'Your VimRC needs Vim 8.1 to be functionnal'
     quit
   endif
 
-  if exists("g:NERDTree") == v:false ||
-  \ exists("g:NERDTreeMapOpenInTab") == v:false ||
-  \ exists("g:NERDTreeMapOpenInTabSilent") == v:false ||
-  \ exists("g:NERDTreeNaturalSort") == v:false ||
-  \ exists("g:NERDTreeMouseMode") == v:false ||
-  \ exists("g:NERDTreeHighlightCursorline") == v:false ||
-  \ exists(":NERDTreeToggle") == v:false ||
-  \ exists("*g:NERDTree.IsOpen") == v:false
-    echoe "Your VimRC needs NERDTree plugin to be functionnal"
+  if exists('g:NERDTree') == v:false ||
+  \ exists('g:NERDTreeMapOpenInTab') == v:false ||
+  \ exists('g:NERDTreeMapOpenInTabSilent') == v:false ||
+  \ exists('g:NERDTreeNaturalSort') == v:false ||
+  \ exists('g:NERDTreeMouseMode') == v:false ||
+  \ exists('g:NERDTreeHighlightCursorline') == v:false ||
+  \ exists(':NERDTreeToggle') == v:false
+    echoe 'Your VimRC needs NERDTree plugin to be functionnal'
     quit
   endif
 endfunction
 
 " }}}
-" Color --------------------------{{{
+" Colors --------------------------{{{
+"   Palette --------------------------{{{
+
+let s:red = 196
+let s:orange = 202
+let s:purple_1 = 62
+let s:purple_2 = 140
+let s:purple_3 = 176
+let s:blue_1 = 69
+let s:blue_2 = 105
+let s:blue_3 = 111
+let s:green = 42
+let s:white_1 = 147
+let s:white_2 = 153
+let s:grey_1 = 235
+let s:grey_2 = 236
+let s:black = 232
+
+"   }}}
 "   Scheme --------------------{{{
 
-" Red -> 196
-" Orange -> 202
-" Purple -> 62 - 140 - 176
-" Blue -> 69 - 105 - 111
-" Green -> 42
-" White -> 147 - 153
-" Dark-Gray -> 235 - 236
-" Black -> 232
+let s:redhighlight_cmd =
+  \ 'highlight RedHighlight ctermfg=Black ctermbg=DarkRed'
 
 if &term[-9:] =~ '-256color'
 
+  let s:redhighlight_cmd =
+    \ 'highlight RedHighlight ctermfg=' . s:black . ' ctermbg=DarkRed'
+
   set background=dark
   highlight clear
-  if exists("syntax_on")
+  if exists('syntax_on')
     syntax reset
   endif
 
-  " custom highlight groups
-  highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=232   ctermbg=140
-  highlight       RedHighlight                                         ctermfg=232   ctermbg=DarkRed
-
-  " predefined highlight groups
   set wincolor=NormalAlt
-  highlight       Normal         term=bold         cterm=bold          ctermfg=176   ctermbg=232
-  highlight       NormalAlt      term=NONE         cterm=NONE          ctermfg=153   ctermbg=232
-  highlight       ModeMsg        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-  highlight       MoreMsg        term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-  highlight       Question       term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-  highlight       NonText        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-  highlight       Comment        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-  highlight       Constant       term=NONE         cterm=NONE          ctermfg=69    ctermbg=232
-  highlight       Special        term=NONE         cterm=NONE          ctermfg=105   ctermbg=232
-  highlight       Identifier     term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-  highlight       Statement      term=NONE         cterm=NONE          ctermfg=196   ctermbg=232
-  highlight       PreProc        term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-  highlight       Type           term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-  highlight       Visual         term=reverse      cterm=reverse                     ctermbg=232
-  highlight       LineNr         term=NONE         cterm=NONE          ctermfg=42    ctermbg=232
-  highlight       Search         term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
-  highlight       IncSearch      term=reverse      cterm=reverse       ctermfg=42    ctermbg=232
-  highlight       Tag            term=NONE         cterm=NONE          ctermfg=111   ctermbg=232
-  highlight       Error                                                ctermfg=232   ctermbg=196
-  highlight       ErrorMsg       term=bold         cterm=bold          ctermfg=196   ctermbg=232
-  highlight       Todo           term=standout                         ctermfg=232   ctermbg=69
-  highlight       StatusLine     term=bold         cterm=bold          ctermfg=111   ctermbg=236
-  highlight       StatusLineNC   term=bold         cterm=bold          ctermfg=69    ctermbg=235
-  highlight       Folded         term=NONE         cterm=NONE          ctermfg=232   ctermbg=202
-  highlight       VertSplit      term=NONE         cterm=NONE          ctermfg=140   ctermbg=232
-  highlight       CursorLine     term=bold,reverse cterm=bold,reverse  ctermfg=105   ctermbg=232
-  highlight       MatchParen     term=bold         cterm=bold          ctermfg=62    ctermbg=147
+  execute 'highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
+    \      highlight       Normal         term=bold         cterm=bold          ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
+    \      highlight       NormalAlt      term=NONE         cterm=NONE          ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+    \      highlight       ModeMsg        term=NONE         cterm=NONE          ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       MoreMsg        term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Question       term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       NonText        term=NONE         cterm=NONE          ctermfg=' . s:orange   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Comment        term=NONE         cterm=NONE          ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Constant       term=NONE         cterm=NONE          ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Special        term=NONE         cterm=NONE          ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Identifier     term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Statement      term=NONE         cterm=NONE          ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+    \      highlight       PreProc        term=NONE         cterm=NONE          ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Type           term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Visual         term=reverse      cterm=reverse                                  ctermbg=' . s:black    . ' |
+    \      highlight       LineNr         term=NONE         cterm=NONE          ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       Search         term=reverse      cterm=reverse       ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       IncSearch      term=reverse      cterm=reverse       ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       Tag            term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Error                                                ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
+    \      highlight       ErrorMsg       term=bold         cterm=bold          ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+    \      highlight       Todo           term=standout                         ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+    \      highlight       StatusLine     term=bold         cterm=bold          ctermfg=' . s:blue_3   . ' ctermbg=' . s:grey_2   . ' |
+    \      highlight       StatusLineNC   term=bold         cterm=bold          ctermfg=' . s:blue_1   . ' ctermbg=' . s:grey_1   . ' |
+    \      highlight       Folded         term=NONE         cterm=NONE          ctermfg=' . s:black    . ' ctermbg=' . s:orange   . ' |
+    \      highlight       VertSplit      term=NONE         cterm=NONE          ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       CursorLine     term=bold,reverse cterm=bold,reverse  ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       MatchParen     term=bold         cterm=bold          ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1
   highlight! link WarningMsg     ErrorMsg
   highlight  link String         Constant
   highlight  link Character      Constant
@@ -132,59 +150,250 @@ if &term[-9:] =~ '-256color'
   highlight  link Debug          Special
 else
 
-  " custom highlight groups
   highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=White   ctermbg=Magenta
-  highlight       RedHighlight                                         ctermfg=Black   ctermbg=DarkRed
 endif
+
+execute s:redhighlight_cmd
 
 "   }}}
 "   Good practices -------------------------{{{
 
+let s:redhighlight = v:true
+
 " highlight unused spaces before the end of the line
 function! ExtraSpaces()
-  let ExtraSpaces = matchadd("RedHighlight", '\v +$')
+  call matchadd('RedHighlight', '\v\s+$')
 endfunction
 
 " highlight characters which overpass 80 columns
 function! OverLength()
-  let OverLength = matchadd("RedHighlight", '\v%80v.*')
+  call matchadd('RedHighlight', '\v%80v.*')
+endfunction
+
+" clear/add red highlight matching patterns
+function! ToggleRedHighlight()
+  if s:redhighlight
+    highlight clear RedHighlight
+    let s:redhighlight = v:false
+    set synmaxcol=3000
+  else
+    execute s:redhighlight_cmd
+    let s:redhighlight = v:true
+    set synmaxcol=79
+  endif
 endfunction
 
 "   }}}
 " }}}
-" Buffers -----------------------------{{{
+" Listed-Buffers -----------------------------{{{
+
+" return number of opened listed-buffers
+function! OpenedListedBuffers()
+  return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
+endfunction
+
+" resize the command window, display listed buffers and hilight current
+" buffer
+function DisplayBuffersList(prompt_hitting)
+  let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+
+  if a:prompt_hitting == v:false
+    let l:buf_nb = l:buf_nb + 1
+  endif
+
+  execute 'set cmdheight=' . l:buf_nb
+  for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
+    let l:result = ' ' . buf . ': "' . bufname(l:buf) . '"'
+    let l:result = l:result .
+      \ repeat(' ', &columns - 1 - strlen(l:result)) . "\n"
+    if l:buf == bufnr('%')
+      echohl CurrentBuffer | echon l:result | echohl None
+    else
+      echon l:result
+    endif
+  endfor
+endfunction
+
+" go to the next/previous undisplayed listed buffer
+function! BuffersListNavigation(direction)
+  let l:cycle = []
+  if a:direction == 1
+    let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
+  elseif a:direction == -1
+    let l:cycle = range(bufnr('%'), 1, -1) + range(bufnr('$'), bufnr('%'), -1)
+  endif
+
+  for l:buf in filter(l:cycle, 'buflisted(v:val)')
+    if len(win_findbuf(l:buf)) == 0
+      execute 'silent buffer ' . l:buf
+      break
+    endif
+  endfor
+endfunction
+
+" }}}
+" Unlisted-Buffers ---------------------------{{{
+
+" close Vim if only unlisted-buffers are opened
+function! CloseLonelyUnlistedBuffers()
+  if OpenedListedBuffers() == 0
+    quitall
+  endif
+endfunction
+
+" disable risky keys for unlisted-buffers
+function! DisableMappingsUnlistedBuffer()
+  if buflisted(bufnr('%')) == v:false
+
+    let l:dict = maparg(':', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> : <Esc>
+      endif
+    else
+      nnoremap <buffer> : <Esc>
+    endif
+
+    let l:dict = maparg('q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> q :quit<CR>
+      endif
+    else
+      nnoremap <buffer> q :quit<CR>
+    endif
+
+    let l:dict = maparg('<Tab>', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> <Tab> <Esc>
+      endif
+    else
+      nnoremap <buffer> <Tab> <Esc>
+    endif
+
+    let l:dict = maparg('<S-Tab>', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> <S-Tab> <Esc>
+      endif
+    else
+      nnoremap <buffer> <S-Tab> <Esc>
+    endif
+
+    let l:dict = maparg('<leader>a', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> <leader>a <Esc>
+      endif
+    else
+      nnoremap <buffer> <leader>a <Esc>
+    endif
+
+    let l:dict = maparg("<leader>'", 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> <leader>' <Esc>
+      endif
+    else
+      nnoremap <buffer> <leader>' <Esc>
+    endif
+
+    let l:dict = maparg(':', 'v', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        vnoremap <buffer> : <Esc>
+      endif
+    else
+      vnoremap <buffer> : <Esc>
+    endif
+
+    let l:dict = maparg('<leader>:', 'v', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        vnoremap <buffer> <leader>: <Esc>
+      endif
+    else
+      vnoremap <buffer> <leader>: <Esc>
+    endif
+
+    let l:dict = maparg('<leader>&', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> <leader>& <Esc>
+      endif
+    else
+      nnoremap <buffer> <leader>& <Esc>
+    endif
+
+    let l:dict = maparg('ZQ', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> ZQ <Esc>
+      endif
+    else
+      nnoremap <buffer> ZQ <Esc>
+    endif
+
+    let l:dict = maparg('ZZ', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> ZZ <Esc>
+      endif
+    else
+      nnoremap <buffer> ZZ <Esc>
+    endif
+
+    let l:dict = maparg('<leader>q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        vnoremap <buffer> <leader>q <Esc>
+      endif
+    else
+      vnoremap <buffer> <leader>q <Esc>
+    endif
+
+    let l:dict = maparg('<leader>w', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        vnoremap <buffer> <leader>w <Esc>
+      endif
+    else
+      vnoremap <buffer> <leader>w <Esc>
+    endif
+
+  endif
+endfunction
+
+" }}}
+" Quit Buffers -----------------------------{{{
 
 " allow to switch between buffers without writting them
 set hidden
 
-" return number of listed-buffers displayed in a window
-function! WindowedListedBuffers()
-  return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
-endfunction
-
-" - quit current window & delete buffer inside, IF there are 2 listed-buffers
-"   windows or more,
+" - quit current window & delete buffer inside, IF there are 2 opened
+"   listed-buffers or more,
 " - come back to the previous listed-buffer and delete current buffer IF
-"   there are 1 listed-buffer window (OR 1 or more unlisted-buffer windows + 1
-"   listed-buffer window),
-" - quit Vim IF there are 1 listed-buffer window (OR 1 or more unlisted-buffer
-"   windows + 1 listed-buffer window) AND no other listed-buffer.
+"   there are 1 opened listed-buffer (OR 1 or more opened unlisted-buffer + 1
+"   opened listed-buffer),
+" - quit Vim IF there are 1 opened listed-buffer (OR 1 or more opened
+"   unlisted-buffer + 1 opened listed-buffer) AND no other listed-buffer.
 function! Quit()
   if &modified == 0
     if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
-      let l:first_buf = bufnr("%")
-      if winnr('$') == 1 || (winnr('$') > 1 && (WindowedListedBuffers() == 1))
+      let l:first_buf = bufnr('%')
+      if winnr('$') == 1 || (winnr('$') > 1 && (OpenedListedBuffers() == 1))
         execute "normal! \<C-O>"
       else
         silent quit
       endif
-      execute "silent bdelete" . l:first_buf
+      execute 'silent bdelete' . l:first_buf
     else
       silent quit
     endif
     return v:true
   else
-    echo bufname(bufnr('%')) . " has unsaved modifications"
+    echo bufname('%') . ' has unsaved modifications'
     return v:false
   endif
 endfunction
@@ -204,44 +413,8 @@ function! WriteQuitAll()
   endwhile
 endfunction
 
-" resize the command window, display listed buffers and hilight current
-" buffer
-function DisplayBuffersList(prompt_hitting)
-  let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
-
-  if a:prompt_hitting == v:false
-    let l:buf_nb = l:buf_nb + 1
-  endif
-
-  execute "set cmdheight=" . l:buf_nb
-  for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
-    let l:result = " " . buf . ": \"" . bufname(l:buf) . "\""
-    let l:result = l:result .
-      \ repeat(" ", &columns - 1 - strlen(l:result)) . "\n"
-    if l:buf == bufnr("%")
-      echohl CurrentBuffer | echon l:result | echohl None
-    else
-      echon l:result
-    endif
-  endfor
-endfunction
-
-" go to the next/previous undisplayed listed buffer
-function! BuffersListNavigation(direction)
-  let l:cycle = []
-  if a:direction == 1
-    let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
-  elseif a:direction == -1
-    let l:cycle = range(bufnr('%'), 1, -1) + range(bufnr('$'), bufnr('%'), -1)
-  endif
-
-  for l:buf in filter(l:cycle, 'buflisted(v:val)')
-    if len(win_findbuf(l:buf)) == 0
-      execute "silent " . l:buf . "buffer"
-      break
-    endif
-  endfor
-endfunction
+" }}}
+" Timers --------------------------------{{{
 
 " timer variables
 let s:tick = 100
@@ -284,14 +457,21 @@ endfunction
 " - buffers list adding/deleting
 " - current listed-buffer entering
 function! s:MonitorBuffersList(timer_id)
-  let l:tmp = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+  let l:current_sizebufist =
+    \ len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
   let l:current_buffer = bufnr('%')
-  if (s:lasttick_sizebuflist != l:tmp) ||
+  if (s:lasttick_sizebuflist != l:current_sizebufist) ||
   \ ((s:lasttick_buffer != l:current_buffer) && buflisted(l:current_buffer))
-    let s:lasttick_sizebuflist = l:tmp
+    let s:lasttick_sizebuflist = l:current_sizebufist
     let s:lasttick_buffer = l:current_buffer
     call StartTimer()
   endif
+
+  " avoid commandline and risky commands for unlisted-buffers
+  if buflisted(l:current_buffer) == v:false
+    call DisableMappingsUnlistedBuffer()
+  endif
+
 endfunction
 
 " always running except during commandline mode
@@ -299,27 +479,7 @@ let s:monitor_timer =
   \ timer_start(s:tick, function('s:MonitorBuffersList'), {'repeat': -1})
 
 " }}}
-" Plugins ---------------------------------------{{{
-"   NERDTree ---------------------------------------{{{
-
-" close Vim if NERDTree is the only window remaining in it
-function! CloseLonelyNERDTreeWindow()
-  if winnr('$') == 1 && g:NERDTree.IsOpen()
-    quit
-  endif
-endfunction
-
-" if another buffer tries to replace NERDTree, put it in the other window,
-" and bring back NERDTree.
-function! BringBackNERDTree()
-  if bufname('#') =~ 'NERD_tree_\d\+' && bufname('%') !~ 'NERD_tree_\d\+' &&
-  \ winnr('$') > 1 && (g:NERDTree.IsOpen() == v:false)
-    let buf = bufnr()
-    buffer#
-    execute "normal! \<C-W>w"
-    execute 'buffer'.buf
-  endif
-endfunction
+" NERDTree ---------------------------------------{{{
 
 " unused NERDTree tabpage commands
 let g:NERDTreeMapOpenInTab = ''
@@ -334,7 +494,6 @@ let g:NERDTreeHighlightCursorline = v:true
 " single mouse click opens directories and files
 let g:NERDTreeMouseMode = 3
 
-"   }}}
 " }}}
 " FileType-specific -------------------------------------{{{
 "   Bash -------------------------------------{{{
@@ -349,7 +508,7 @@ endfunction
 " Mappings -------------------------------------{{{
 
 " leader key
-let mapleader = "²"
+let mapleader = '²'
 
 " search and replace
 vnoremap : :s/\%V//g<Left><Left><Left>
@@ -360,12 +519,16 @@ vnoremap <leader>: :s/\%V\c//g<Left><Left><Left>
 " search (case-insensitive)
 nnoremap <leader>/ /\c
 
+" hide/show good practices
+nnoremap <leader>z :call ToggleRedHighlight()<CR>
+
 " copy the unnamed register's content in the command line
 " unnamed register = any text deleted or yank (with y)
 cnoremap <leader>p <C-R><C-O>"
 
-" for debug purpose
-nnoremap <leader>m :messages<CR>
+" for debug purposes
+nnoremap <leader>M :messages<CR>
+nnoremap <leader>m :map<CR>
 
 " open .vimrc in a vertical split window
 nnoremap <silent> <leader>& :vsplit $MYVIMRC<CR>
@@ -394,7 +557,7 @@ nnoremap <silent> <S-Tab> :call BuffersListNavigation(-1)<CR>
 
 function! NextWindow()
   if winnr() < winnr('$')
-    execute winnr() + 1 . "wincmd w"
+    execute winnr() + 1 . 'wincmd w'
   else
     1wincmd w
   endif
@@ -402,9 +565,9 @@ endfunction
 
 function! PreviousWindow()
   if winnr() > 1
-    execute winnr() - 1 . "wincmd w"
+    execute winnr() - 1 . 'wincmd w'
   else
-    execute winnr('$') . "wincmd w"
+    execute winnr('$') . 'wincmd w'
   endif
 endfunction
 
@@ -489,21 +652,37 @@ cnoreabbrev xa call WriteQuitAll()
 cnoreabbrev xal call WriteQuitAll()
 cnoreabbrev xall call WriteQuitAll()
 
-" disable intuitive usage of unused commands
-cnoreabbrev UNUSED_quit quit
-cnoreabbrev UNUSED_quitall qall
-cnoreabbrev UNUSED_write write
-cnoreabbrev UNUSED_wq wq
-cnoreabbrev UNUSED_exit exit
-cnoreabbrev UNUSED_wqall wqall
-cnoreabbrev UNUSED_xall xall
-cnoreabbrev UNUSED_bdelete bdelete
-cnoreabbrev UNUSED_bwipeout bwipeout
-cnoreabbrev UNUSED_bunload bunload
-cnoreabbrev UNUSED_tab tab
-cnoreabbrev UNUSED_tabnew tabnew
-cnoreabbrev UNUSED_tabedit tabedit
-cnoreabbrev UNUSED_tabfind tabfind
+" allow intuitive usage of BuffersListNavigation function
+cnoreabbrev bn call BuffersListNavigation(1)
+cnoreabbrev bne call BuffersListNavigation(1)
+cnoreabbrev bnex call BuffersListNavigation(1)
+cnoreabbrev bnext call BuffersListNavigation(1)
+cnoreabbrev bp call BuffersListNavigation(-1)
+cnoreabbrev bpr call BuffersListNavigation(-1)
+cnoreabbrev bpre call BuffersListNavigation(-1)
+cnoreabbrev bprev call BuffersListNavigation(-1)
+cnoreabbrev bprevi call BuffersListNavigation(-1)
+cnoreabbrev bprevio call BuffersListNavigation(-1)
+cnoreabbrev bpreviou BuffersListNavigation(-1)
+cnoreabbrev bprevious call BuffersListNavigation(-1)
+
+" disable intuitive usage of risky commands
+cnoreabbrev RISKY_quit quit
+cnoreabbrev RISKY_quitall quitall
+cnoreabbrev RISKY_write write
+cnoreabbrev RISKY_wq wq
+cnoreabbrev RISKY_exit exit
+cnoreabbrev RISKY_wqall wqall
+cnoreabbrev RISKY_xall xall
+cnoreabbrev RISKY_bnext bnext
+cnoreabbrev RISKY_bprevious bprevious
+cnoreabbrev RISKY_bdelete bdelete
+cnoreabbrev RISKY_bwipeout bwipeout
+cnoreabbrev RISKY_bunload bunload
+cnoreabbrev RISKY_tab tab
+cnoreabbrev RISKY_tabnew tabnew
+cnoreabbrev RISKY_tabedit tabedit
+cnoreabbrev RISKY_tabfind tabfind
 
 " }}}
 " Performance -----------------------------{{{
@@ -532,7 +711,7 @@ augroup vimrc_autocomands
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
 
- "     }}}
+"     }}}
 "     Color Autocommands Group -------------------------------------------{{{
 
   autocmd WinEnter * set wincolor=NormalAlt
@@ -543,7 +722,7 @@ augroup vimrc_autocomands
   autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
 
 "     }}}
-"     Buffers Autocommand Groups ----------------------------------------{{{
+"     Listed-Buffers Autocommands Group ----------------------------------{{{
 
   " 1) entering commandline erases displayed buffers list,
   " 2) renable incremental search
@@ -552,22 +731,17 @@ augroup vimrc_autocomands
   autocmd CmdlineLeave * call timer_pause(s:monitor_timer, v:false)
 
 "     }}}
-"     NERDTree Autocommand Groups ----------------------------------------{{{
+"     Unlisted-Buffers Autocommands Group ---------------------------------{{{
 
-  autocmd BufEnter * :silent call CloseLonelyNERDTreeWindow()
-  autocmd BufEnter * :silent call BringBackNERDTree()
-
-  " avoid commandline for NERDTree buffers
-  autocmd BufEnter * :if bufname('%') =~ 'NERD_tree_\d\+' |
-    \ nnoremap <buffer> : <Esc> | endif
+  autocmd BufEnter * :silent call CloseLonelyUnlistedBuffers()
 
 "     }}}
-"     Vimscript filetype Autocommand Group---------------------------------{{{
+"     Vimscript filetype Autocommands Group -------------------------------{{{
 
   autocmd FileType vim setlocal foldmethod=marker
 
 "     }}}
-"     Bash filetype Autocommand Group---------------------------------{{{
+"     Bash filetype Autocommands Group --------------------------------{{{
 
   autocmd BufNewFile *.sh :call PrefillShFile()
 
