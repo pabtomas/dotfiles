@@ -520,7 +520,7 @@ vnoremap <leader>: :s/\%V\c//g<Left><Left><Left>
 nnoremap <leader>/ /\c
 
 " hide/show good practices
-nnoremap <leader>z :call ToggleRedHighlight()<CR>
+nnoremap <silent> <leader>z :call ToggleRedHighlight()<CR>
 
 " copy the unnamed register's content in the command line
 " unnamed register = any text deleted or yank (with y)
