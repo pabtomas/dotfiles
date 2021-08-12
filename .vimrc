@@ -1,10 +1,9 @@
 " TODO -----------------------------------{{{
 
-" - see sbnext, sbuffer, sbNext ...
+" - disable opening directories
 " - test unlisted-buffers autocmd
-" - rewrite <leader>a mapping:
-"   1) to display only hidden listed-buffers
-"   2) to open only hidden listed-buffer
+" - test OpenBuffer command and <leader>a mapping
+" - avoid same buffer to be reopened ?
 
 " }}}
 " Basic -----------------------------{{{
@@ -97,34 +96,35 @@ if &term[-9:] =~ '-256color'
   endif
 
   set wincolor=NormalAlt
-  execute 'highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
-    \      highlight       Normal         term=bold         cterm=bold          ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
-    \      highlight       NormalAlt      term=NONE         cterm=NONE          ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       ModeMsg        term=NONE         cterm=NONE          ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MoreMsg        term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Question       term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       NonText        term=NONE         cterm=NONE          ctermfg=' . s:orange   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Comment        term=NONE         cterm=NONE          ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Constant       term=NONE         cterm=NONE          ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Special        term=NONE         cterm=NONE          ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Identifier     term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Statement      term=NONE         cterm=NONE          ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       PreProc        term=NONE         cterm=NONE          ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Type           term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Visual         term=reverse      cterm=reverse                                  ctermbg=' . s:black    . ' |
-    \      highlight       LineNr         term=NONE         cterm=NONE          ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
-    \      highlight       Search         term=reverse      cterm=reverse       ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
-    \      highlight       IncSearch      term=reverse      cterm=reverse       ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
-    \      highlight       Tag            term=NONE         cterm=NONE          ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Error                                                ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
-    \      highlight       ErrorMsg       term=bold         cterm=bold          ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       Todo           term=standout                         ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
-    \      highlight       StatusLine     term=bold         cterm=bold          ctermfg=' . s:blue_3   . ' ctermbg=' . s:grey_2   . ' |
-    \      highlight       StatusLineNC   term=bold         cterm=bold          ctermfg=' . s:blue_1   . ' ctermbg=' . s:grey_1   . ' |
-    \      highlight       Folded         term=NONE         cterm=NONE          ctermfg=' . s:black    . ' ctermbg=' . s:orange   . ' |
-    \      highlight       VertSplit      term=NONE         cterm=NONE          ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       CursorLine     term=bold,reverse cterm=bold,reverse  ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MatchParen     term=bold         cterm=bold          ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1
+  execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
+    \      highlight       OpenedBuffer   term=bold           cterm=bold         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
+    \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+    \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       MoreMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Question       term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       NonText        term=NONE           cterm=NONE         ctermfg=' . s:orange   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Comment        term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Constant       term=NONE           cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Special        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Identifier     term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Statement      term=NONE           cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+    \      highlight       PreProc        term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Type           term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Visual         term=reverse        cterm=reverse                                 ctermbg=' . s:black    . ' |
+    \      highlight       LineNr         term=NONE           cterm=NONE         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       Search         term=reverse        cterm=reverse      ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       IncSearch      term=reverse        cterm=reverse      ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       Tag            term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Error                                                 ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
+    \      highlight       ErrorMsg       term=bold           cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+    \      highlight       Todo           term=standout                          ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+    \      highlight       StatusLine     term=bold           cterm=bold         ctermfg=' . s:blue_3   . ' ctermbg=' . s:grey_2   . ' |
+    \      highlight       StatusLineNC   term=bold           cterm=bold         ctermfg=' . s:blue_1   . ' ctermbg=' . s:grey_1   . ' |
+    \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange   . ' |
+    \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1
   highlight! link WarningMsg     ErrorMsg
   highlight  link String         Constant
   highlight  link Character      Constant
@@ -151,7 +151,8 @@ if &term[-9:] =~ '-256color'
   highlight  link Debug          Special
 else
 
-  highlight       CurrentBuffer  term=bold         cterm=bold          ctermfg=White   ctermbg=Magenta
+  highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=White   ctermbg=Magenta
+  highlight       OpenedBuffer   term=bold           cterm=bold           ctermfg=Red
 endif
 
 execute s:redhighlight_cmd
@@ -193,30 +194,29 @@ function! OpenedListedBuffers()
   return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
 endfunction
 
-" resize the command window, display listed buffers and hilight current
-" buffer
-function DisplayBuffersList(prompt_hitting, only_hidden)
-  let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+" resize the command window, display listed buffers, highlight current
+" buffer and underline opened buffers
+function DisplayBuffersList(prompt_hitting)
+  let l:buf_nr = len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) + 1
 
-  if a:prompt_hitting == v:false
-    let l:buf_nb = l:buf_nb + 1
+  if a:prompt_hitting == v:true
+    let l:buf_nr = len(filter(range(1, bufnr('$')),
+    \ 'buflisted(v:val) && (len(win_findbuf(v:val)) == 0)')) + 1
   endif
 
-  execute 'set cmdheight=' . l:buf_nb
+  execute 'set cmdheight=' . l:buf_nr
   for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
-    let l:result = ' ' . l:buf . ': "' . bufname(l:buf) . '"'
+    let l:result = " " . l:buf . ": \"" . bufname(l:buf) . "\""
     let l:result = l:result .
-      \ repeat(' ', &columns - 1 - strlen(l:result)) . "\n"
+      \ repeat(" ", &columns - 1 - strlen(l:result)) . "\n"
     if l:buf == bufnr('%')
       echohl CurrentBuffer | echon l:result | echohl None
-    else
-      if a:only_hidden
-        if len(win_findbuf(l:buf)) == 0
-          echon l:result
-        endif
-      else
-        echon l:result
+    elseif len(win_findbuf(l:buf)) > 0
+      if a:prompt_hitting == v:false
+        echohl OpenedBuffer | echon l:result | echohl None
       endif
+    else
+      echon l:result
     endif
   endfor
 endfunction
@@ -237,6 +237,18 @@ function! BuffersListNavigation(direction)
     endif
   endfor
 endfunction
+
+" check if buffer is listed and hidden before to open it
+function! OpenBuffer(buf)
+  if s:redraw_allowed == v:false
+    if buflisted(a:buf) && (len(win_findbuf(a:buf)) == 0)
+      execute 'silent buffer ' . a:buf
+    endif
+    call EnableRedraw()
+  endif
+endfunction
+
+command -nargs=1 OpenBuffer call OpenBuffer(<args>)
 
 " }}}
 " Unlisted-Buffers ---------------------------{{{
@@ -259,6 +271,24 @@ function! DisableMappingsUnlistedBuffer()
       endif
     else
       nnoremap <buffer> : <Esc>
+    endif
+
+    let l:dict = maparg('Q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> Q <Esc>
+      endif
+    else
+      nnoremap <buffer> Q <Esc>
+    endif
+
+    let l:dict = maparg('gQ', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer') == v:true
+      if l:dict.buffer == v:false
+        nnoremap <buffer> gQ <Esc>
+      endif
+    else
+      nnoremap <buffer> gQ <Esc>
     endif
 
     let l:dict = maparg('q', 'n', v:false, v:true)
@@ -425,7 +455,7 @@ endfunction
 
 " timer variables
 let s:tick = 100
-let s:nb_ticks = 100
+let s:nb_ticks = 50
 let s:elapsed_time = s:nb_ticks * s:tick
 
 let s:lasttick_sizebuflist =
@@ -438,7 +468,7 @@ function! s:UpdateCommandline(timer_id)
     let s:elapsed_time = s:elapsed_time + s:tick
     redraw
     set cmdheight=1
-    call DisplayBuffersList(v:false, v:false)
+    call DisplayBuffersList(v:false)
   else
     call StopTimer()
   endif
@@ -455,15 +485,23 @@ endfunction
 
 let s:redraw_allowed = v:true
 
+function! EnableRedraw()
+  if s:redraw_allowed == v:false
+    let s:redraw_allowed = v:true
+  endif
+endfunction
+
 function! DisableRedraw()
-  let s:redraw_allowed = v:false
+  if s:redraw_allowed
+    let s:redraw_allowed = v:false
+  endif
 endfunction
 
 function! StopTimer()
   call timer_pause(s:update_timer, v:true)
   let s:elapsed_time = s:nb_ticks * s:tick
-  set cmdheight=1
   if s:redraw_allowed
+    set cmdheight=1
     redraw
   endif
 endfunction
@@ -565,7 +603,7 @@ nnoremap <silent> <leader>w :call WriteQuit()<CR>
 
 " buffers menu
 nnoremap <leader>a :call DisableRedraw() <bar>
-  \ call DisplayBuffersList(v:true, v:true)<CR>:buffer<Space>
+  \ call DisplayBuffersList(v:true)<CR>:OpenBuffer<Space>
 
 " buffers navigation
 nnoremap <silent> <Tab> :call BuffersListNavigation(1)<CR>
@@ -588,8 +626,8 @@ function! PreviousWindow()
 endfunction
 
 " windows navigation
-nnoremap <silent> <leader><Up> :call NextWindow()<CR>
-nnoremap <silent> <leader><Down> :call PreviousWindow()<CR>
+nnoremap <silent> <leader><Right> :call NextWindow()<CR>
+nnoremap <silent> <leader><Left> :call PreviousWindow()<CR>
 
 " make space more useful
 nnoremap <space> za
@@ -597,108 +635,33 @@ nnoremap <space> za
 " }}}
 " Abbreviations --------------------------------------{{{
 
-" avoid write usage
+" avoid intuitive write usage
 cnoreabbrev w update
-cnoreabbrev wr update
-cnoreabbrev wri update
-cnoreabbrev writ update
-cnoreabbrev write update
-cnoreabbrev wa update all
-cnoreabbrev wal update all
-cnoreabbrev wall update all
 
-" avoid tabpage usage
-cnoreabbrev tabnew silent tabonly
+" avoid intuitive tabpage usage
 cnoreabbrev tabe silent tabonly
-cnoreabbrev tabed silent tabonly
-cnoreabbrev tabedi silent tabonly
-cnoreabbrev tabedit silent tabonly
-cnoreabbrev tab silent tabonly
-cnoreabbrev tabf silent tabonly
-cnoreabbrev tabfi silent tabonly
-cnoreabbrev tabfin silent tabonly
-cnoreabbrev tabfind silent tabonly
 
-" allow intuitive usage of Quit function
+" avoid intuitive quit usage
 cnoreabbrev q call Quit()
-cnoreabbrev qu call Quit()
-cnoreabbrev qui call Quit()
-cnoreabbrev quit call Quit()
-cnoreabbrev bd call Quit()
-cnoreabbrev bde call Quit()
-cnoreabbrev bdel call Quit()
-cnoreabbrev bdele call Quit()
-cnoreabbrev bdelet call Quit()
-cnoreabbrev bdelete call Quit()
-cnoreabbrev bw call Quit()
-cnoreabbrev bwi call Quit()
-cnoreabbrev bwip call Quit()
-cnoreabbrev bwipe call Quit()
-cnoreabbrev bwipeo call Quit()
-cnoreabbrev bwipeou call Quit()
-cnoreabbrev bwipeout call Quit()
-cnoreabbrev bu call Quit()
-cnoreabbrev bun call Quit()
-cnoreabbrev bunl call Quit()
-cnoreabbrev bunlo call Quit()
-cnoreabbrev bunloa call Quit()
-cnoreabbrev bunload call Quit()
 
-" allow intuitive usage of WriteQuit function
+" avoid intuitive exit usage
 cnoreabbrev wq call WriteQuit()
 cnoreabbrev x call WriteQuit()
-cnoreabbrev xi call WriteQuit()
-cnoreabbrev xit call WriteQuit()
-cnoreabbrev exi call WriteQuit()
-cnoreabbrev exit call WriteQuit()
 
-" allow intuitive usage of QuitAll function
+" avoid intuitive quitall usage
 cnoreabbrev qa call QuitAll()
-cnoreabbrev qal call QuitAll()
-cnoreabbrev qall call QuitAll()
-cnoreabbrev quita call QuitAll()
-cnoreabbrev quital call QuitAll()
-cnoreabbrev quitall call QuitAll()
 
-" allow intuitive usage of WriteQuitAll function
+" avoid intuitive exitall usage
 cnoreabbrev wqa call WriteQuitAll()
-cnoreabbrev wqal call WriteQuitAll()
-cnoreabbrev wqall call WriteQuitAll()
 cnoreabbrev xa call WriteQuitAll()
-cnoreabbrev xal call WriteQuitAll()
-cnoreabbrev xall call WriteQuitAll()
 
-" allow intuitive usage of BuffersListNavigation function
+" avoid intuitive bnext/bprevious usage
 cnoreabbrev bn call BuffersListNavigation(1)
-cnoreabbrev bne call BuffersListNavigation(1)
-cnoreabbrev bnex call BuffersListNavigation(1)
-cnoreabbrev bnext call BuffersListNavigation(1)
 cnoreabbrev bp call BuffersListNavigation(-1)
-cnoreabbrev bpr call BuffersListNavigation(-1)
-cnoreabbrev bpre call BuffersListNavigation(-1)
-cnoreabbrev bprev call BuffersListNavigation(-1)
-cnoreabbrev bprevi call BuffersListNavigation(-1)
-cnoreabbrev bprevio call BuffersListNavigation(-1)
-cnoreabbrev bpreviou BuffersListNavigation(-1)
-cnoreabbrev bprevious call BuffersListNavigation(-1)
 
-" disable intuitive usage of risky commands
-cnoreabbrev RISKY_quit quit
-cnoreabbrev RISKY_quitall quitall
-cnoreabbrev RISKY_write write
-cnoreabbrev RISKY_wq wq
-cnoreabbrev RISKY_exit exit
-cnoreabbrev RISKY_wqall wqall
-cnoreabbrev RISKY_xall xall
-cnoreabbrev RISKY_bnext bnext
-cnoreabbrev RISKY_bprevious bprevious
-cnoreabbrev RISKY_bdelete bdelete
-cnoreabbrev RISKY_bwipeout bwipeout
-cnoreabbrev RISKY_bunload bunload
-cnoreabbrev RISKY_tab tab
-cnoreabbrev RISKY_tabnew tabnew
-cnoreabbrev RISKY_tabedit tabedit
-cnoreabbrev RISKY_tabfind tabfind
+" avoid intuitive buffer usage
+cnoreabbrev b
+  \ call DisableRedraw()<CR>:call DisplayBuffersList(v:true)<CR>:OpenBuffer
 
 " }}}
 " Performance -----------------------------{{{
