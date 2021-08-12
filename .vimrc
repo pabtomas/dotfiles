@@ -4,7 +4,6 @@
 " - test unlisted-buffers autocmd
 " - test OpenBuffer command and <leader>a mapping
 " - avoid same buffer to be active more than 1 time ?
-" - Quit() shouldn't use jumplist
 
 " }}}
 " Basic -----------------------------{{{
@@ -421,7 +420,10 @@ function! Quit()
     if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
       let l:first_buf = bufnr('%')
       if winnr('$') == 1 || (winnr('$') > 1 && (ActiveListedBuffers() == 1))
-        execute "normal! \<C-O>"
+        let l:lastused_hiddenbuf = map(sort(filter(getbufinfo(
+          \ {'buflisted':1}), 'v:val.hidden'),
+          \ {x, y -> y.lastused - x.lastused}), {key, val -> val.bufnr})[0]
+        execute 'silent buffer ' . l:lastused_hiddenbuf
       else
         silent quit
       endif
