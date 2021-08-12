@@ -3,7 +3,8 @@
 " - disable opening directories
 " - test unlisted-buffers autocmd
 " - test OpenBuffer command and <leader>a mapping
-" - avoid same buffer to be reopened ?
+" - avoid same buffer to be active more than 1 time ?
+" - Quit() shouldn't use jumplist
 
 " }}}
 " Basic -----------------------------{{{
@@ -97,7 +98,7 @@ if &term[-9:] =~ '-256color'
 
   set wincolor=NormalAlt
   execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
-    \      highlight       OpenedBuffer   term=bold           cterm=bold         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
     \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
     \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -152,7 +153,7 @@ if &term[-9:] =~ '-256color'
 else
 
   highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=White   ctermbg=Magenta
-  highlight       OpenedBuffer   term=bold           cterm=bold           ctermfg=Red
+  highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red
 endif
 
 execute s:redhighlight_cmd
@@ -189,19 +190,19 @@ endfunction
 " }}}
 " Listed-Buffers -----------------------------{{{
 
-" return number of opened listed-buffers
-function! OpenedListedBuffers()
+" return number of active listed-buffers
+function! ActiveListedBuffers()
   return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
 endfunction
 
 " resize the command window, display listed buffers, highlight current
-" buffer and underline opened buffers
+" buffer and underline active buffers
 function DisplayBuffersList(prompt_hitting)
   let l:buf_nr = len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) + 1
 
   if a:prompt_hitting == v:true
     let l:buf_nr = len(filter(range(1, bufnr('$')),
-    \ 'buflisted(v:val) && (len(win_findbuf(v:val)) == 0)')) + 1
+    \ 'buflisted(v:val) && empty(win_findbuf(v:val)))')) + 1
   endif
 
   execute 'set cmdheight=' . l:buf_nr
@@ -211,9 +212,9 @@ function DisplayBuffersList(prompt_hitting)
       \ repeat(" ", &columns - 1 - strlen(l:result)) . "\n"
     if l:buf == bufnr('%')
       echohl CurrentBuffer | echon l:result | echohl None
-    elseif len(win_findbuf(l:buf)) > 0
+    elseif empty(win_findbuf(l:buf)) == v:false
       if a:prompt_hitting == v:false
-        echohl OpenedBuffer | echon l:result | echohl None
+        echohl ActiveBuffer | echon l:result | echohl None
       endif
     else
       echon l:result
@@ -231,7 +232,7 @@ function! BuffersListNavigation(direction)
   endif
 
   for l:buf in filter(l:cycle, 'buflisted(v:val)')
-    if len(win_findbuf(l:buf)) == 0
+    if empty(win_findbuf(l:buf))
       execute 'silent buffer ' . l:buf
       break
     endif
@@ -241,7 +242,7 @@ endfunction
 " check if buffer is listed and hidden before to open it
 function! OpenBuffer(buf)
   if s:redraw_allowed == v:false
-    if buflisted(a:buf) && (len(win_findbuf(a:buf)) == 0)
+    if buflisted(a:buf) && empty(win_findbuf(a:buf))
       execute 'silent buffer ' . a:buf
     endif
     call EnableRedraw()
@@ -253,9 +254,9 @@ command -nargs=1 OpenBuffer call OpenBuffer(<args>)
 " }}}
 " Unlisted-Buffers ---------------------------{{{
 
-" close Vim if only unlisted-buffers are opened
+" close Vim if only unlisted-buffers are active
 function! CloseLonelyUnlistedBuffers()
-  if OpenedListedBuffers() == 0
+  if ActiveListedBuffers() == 0
     quitall
   endif
 endfunction
@@ -408,18 +409,18 @@ endfunction
 " allow to switch between buffers without writting them
 set hidden
 
-" - quit current window & delete buffer inside, IF there are 2 opened
+" - quit current window & delete buffer inside, IF there are 2 active
 "   listed-buffers or more,
 " - come back to the previous listed-buffer and delete current buffer IF
-"   there are 1 opened listed-buffer (OR 1 or more opened unlisted-buffer + 1
-"   opened listed-buffer),
-" - quit Vim IF there are 1 opened listed-buffer (OR 1 or more opened
-"   unlisted-buffer + 1 opened listed-buffer) AND no other listed-buffer.
+"   there are 1 active listed-buffer (OR 1 or more active unlisted-buffer + 1
+"   active listed-buffer),
+" - quit Vim IF there are 1 active listed-buffer (OR 1 or more active
+"   unlisted-buffer + 1 active listed-buffer) AND no other listed-buffer.
 function! Quit()
   if &modified == 0
     if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
       let l:first_buf = bufnr('%')
-      if winnr('$') == 1 || (winnr('$') > 1 && (OpenedListedBuffers() == 1))
+      if winnr('$') == 1 || (winnr('$') > 1 && (ActiveListedBuffers() == 1))
         execute "normal! \<C-O>"
       else
         silent quit
@@ -683,9 +684,6 @@ set noshowcmd
 augroup vimrc_autocomands
   autocmd!
 "     VimEnter Autocommands Group -----------------------------------------{{{
-
-  " clear jump list
-  autocmd VimEnter * silent clearjump
 
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
