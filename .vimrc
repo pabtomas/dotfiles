@@ -191,32 +191,32 @@ endfunction
 
 " return number of active listed-buffers
 function! ActiveListedBuffers()
-  return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
+  return len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden == v.false'))
 endfunction
 
 " resize the command window, display listed buffers, highlight current
 " buffer and underline active buffers
 function DisplayBuffersList(prompt_hitting)
-  let l:buf_nr = len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) + 1
+  let l:listed_buf = getbufinfo({'buflisted':1})
+  let l:buffers_nb = len(l:listed_buf) + 1
 
-  if a:prompt_hitting == v:true
-    let l:buf_nr = len(filter(range(1, bufnr('$')),
-    \ 'buflisted(v:val) && empty(win_findbuf(v:val)))')) + 1
+  if a:prompt_hitting
+    let l:buffers_nb = len(filter(l:listed_buf, 'v:val.hidden')) + 1
   endif
 
-  execute 'set cmdheight=' . l:buf_nr
-  for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
-    let l:result = " " . l:buf . ": \"" . bufname(l:buf) . "\""
-    let l:result = l:result .
-      \ repeat(" ", &columns - 1 - strlen(l:result)) . "\n"
-    if l:buf == bufnr('%')
-      echohl CurrentBuffer | echon l:result | echohl None
-    elseif empty(win_findbuf(l:buf)) == v:false
+  execute 'set cmdheight=' . l:buffers_nb
+  for l:buf in l:listed_buf
+    let l:line = " " . l:buf.bufnr . ": \"" . l:buf.name . "\""
+    let l:line = l:line .
+      \ repeat(" ", &columns - 1 - strlen(l:line)) . "\n"
+    if l:buf.bufnr == bufnr('%')
+      echohl CurrentBuffer | echon l:line | echohl None
+    elseif l:buf.hidden == v:false
       if a:prompt_hitting == v:false
-        echohl ActiveBuffer | echon l:result | echohl None
+        echohl ActiveBuffer | echon l:line | echohl None
       endif
     else
-      echon l:result
+      echon l:line:
     endif
   endfor
 endfunction
@@ -417,8 +417,8 @@ set hidden
 "   unlisted-buffer + 1 active listed-buffer) AND no other listed-buffer.
 function! Quit()
   if &modified == 0
-    if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
-      let l:first_buf = bufnr('%')
+    if len(getbufinfo({'buflisted':1})) > 1
+      let l:current_buf = bufnr('%')
       if winnr('$') == 1 || (winnr('$') > 1 && (ActiveListedBuffers() == 1))
         let l:lastused_hiddenbuf = map(sort(filter(getbufinfo(
           \ {'buflisted':1}), 'v:val.hidden'),
@@ -427,7 +427,7 @@ function! Quit()
       else
         silent quit
       endif
-      execute 'silent bdelete' . l:first_buf
+      execute 'silent bdelete' . l:current_buf
     else
       silent quit
     endif
@@ -461,8 +461,7 @@ let s:tick = 100
 let s:nb_ticks = 50
 let s:elapsed_time = s:nb_ticks * s:tick
 
-let s:lasttick_sizebuflist =
-  \ len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+let s:lasttick_sizebuflist = len(getbufinfo({'buflisted':1}))
 let s:lasttick_buffer = bufnr('%')
 
 " update the buffers list displayed in commandline
@@ -513,8 +512,7 @@ endfunction
 " - buffers list adding/deleting
 " - current listed-buffer entering
 function! s:MonitorBuffersList(timer_id)
-  let l:current_sizebufist =
-    \ len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
+  let l:current_sizebufist = len(getbufinfo({'buflisted':1}))
   let l:current_buffer = bufnr('%')
   if (s:lasttick_sizebuflist != l:current_sizebufist) ||
   \ ((s:lasttick_buffer != l:current_buffer) && buflisted(l:current_buffer))
