@@ -191,7 +191,7 @@ endfunction
 
 " return number of active listed-buffers
 function! ActiveListedBuffers()
-  return len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden == v.false'))
+  return len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden == v:false'))
 endfunction
 
 " resize the command window, display listed buffers, highlight current
