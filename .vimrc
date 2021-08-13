@@ -3,7 +3,6 @@
 " - disable opening directories
 " - test unlisted-buffers autocmd
 " - test ActivateBuffer command and <leader>a mapping
-" - avoid same buffer to be active more than 1 time ?
 
 " }}}
 " Basic -----------------------------{{{
@@ -190,6 +189,9 @@ endfunction
 " }}}
 " Listed-Buffers -----------------------------{{{
 
+" allow to switch between buffers without writting them
+set hidden
+
 " return number of active listed-buffers
 function! ActiveListedBuffers()
   return len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden == v:false'))
@@ -199,56 +201,35 @@ endfunction
 " buffer and underline active buffers
 function DisplayBuffersList(prompt_hitting)
   let l:listed_buf = getbufinfo({'buflisted':1})
-  let l:buffers_nb = len(l:listed_buf) + 1
+  let l:buffers_nb = len(l:listed_buf)
 
-  if a:prompt_hitting
-    let l:buffers_nb = len(filter(l:listed_buf, 'v:val.hidden')) + 1
+  if a:prompt_hitting == v:false
+    let l:buffers_nb = l:buffers_nb + 1
   endif
 
   execute 'set cmdheight=' . l:buffers_nb
   for l:buf in l:listed_buf
-    let l:line = " " . l:buf.bufnr . ": \"" . l:buf.name . "\""
+    let l:line = " " . l:buf.bufnr . ": \"" . fnamemodify(l:buf.name, ':.')
+      \ . "\""
     let l:line = l:line .
       \ repeat(" ", &columns - 1 - strlen(l:line)) . "\n"
-    if l:buf.bufnr == bufnr('%')
+    if l:buf.bufnr == bufnr()
       echohl CurrentBuffer | echon l:line | echohl None
     elseif l:buf.hidden == v:false
-      if a:prompt_hitting == v:false
-        echohl ActiveBuffer | echon l:line | echohl None
-      endif
+      echohl ActiveBuffer | echon l:line | echohl None
     else
       echon l:line
     endif
   endfor
 endfunction
 
-" go to the next/previous undisplayed listed buffer
-function! BuffersListNavigation(direction)
-  let l:cycle = []
-  if a:direction == 1
-    let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
-  elseif a:direction == -1
-    let l:cycle = range(bufnr('%'), 1, -1) + range(bufnr('$'), bufnr('%'), -1)
-  else
-    echoe 'Personal Error Message: unknown direction'
-  endif
-
-  for l:buf in filter(l:cycle, 'buflisted(v:val)')
-    if empty(win_findbuf(l:buf))
-      execute 'silent buffer ' . l:buf
-      break
-    endif
-  endfor
-endfunction
-
-" check if buffer is listed and hidden before to open it
+" check if buffer is listed before to open it
 function! ActivateBuffer(buf)
   if s:redraw_allowed == v:false
-    if buflisted(a:buf) && empty(win_findbuf(a:buf))
+    if buflisted(a:buf)
       execute 'silent buffer ' . a:buf
     else
-      echoe 'Personal Error Message: selected buffer is already opened or
-        \ is not listed'
+      echoe 'Personal Error Message: selected buffer is not listed'
     endif
     call EnableRedraw()
   else
@@ -271,7 +252,7 @@ endfunction
 
 " disable risky keys for unlisted-buffers
 function! DisableMappingsUnlistedBuffer()
-  if buflisted(bufnr('%')) == v:false
+  if buflisted(bufnr()) == v:false
 
     let l:dict = maparg(':', 'n', v:false, v:true)
     if has_key(l:dict, 'buffer') == v:true
@@ -414,29 +395,15 @@ endfunction
 " }}}
 " Quit Buffers -----------------------------{{{
 
-" allow to switch between buffers without writting them
-set hidden
-
-" - quit current window & delete buffer inside, IF there are 2 active
-"   listed-buffers or more,
-" - come back to the previous listed-buffer and delete current buffer IF
-"   there are 1 active listed-buffer (OR 1 or more active unlisted-buffer + 1
-"   active listed-buffer),
-" - quit Vim IF there are 1 active listed-buffer (OR 1 or more active
-"   unlisted-buffer + 1 active listed-buffer) AND no other listed-buffer.
+" - use bdelete if current buffer is active only once AND if there are other
+"   listed-buffers,
+" - quit current window if current buffer is active several times,
+" - quit Vim IF there are 1 active listed-buffer AND no other listed-buffer.
 function! Quit()
   if &modified == 0
-    if len(getbufinfo({'buflisted':1})) > 1
-      let l:current_buf = bufnr('%')
-      if winnr('$') == 1 || (winnr('$') > 1 && (ActiveListedBuffers() == 1))
-        let l:lastused_hiddenbuf = map(sort(filter(getbufinfo(
-          \ {'buflisted':1}), 'v:val.hidden'),
-          \ {x, y -> y.lastused - x.lastused}), {key, val -> val.bufnr})[0]
-        execute 'silent buffer ' . l:lastused_hiddenbuf
-      else
-        silent quit
-      endif
-      execute 'silent bdelete' . l:current_buf
+    if (len(win_findbuf(bufnr())) == 1) &&
+    \ (len(getbufinfo({'buflisted':1})) > 1)
+      silent bdelete
     else
       silent quit
     endif
@@ -472,7 +439,7 @@ let s:nb_ticks = 50
 let s:elapsed_time = s:nb_ticks * s:tick
 
 let s:lasttick_sizebuflist = len(getbufinfo({'buflisted':1}))
-let s:lasttick_buffer = bufnr('%')
+let s:lasttick_buffer = bufnr()
 
 " update the buffers list displayed in commandline
 function! s:UpdateCommandline(timer_id)
@@ -523,10 +490,10 @@ endfunction
 " - current listed-buffer entering
 function! s:MonitorBuffersList(timer_id)
   let l:current_sizebufist = len(getbufinfo({'buflisted':1}))
-  let l:current_buffer = bufnr('%')
+  let l:current_buffer = bufnr()
 
   if (s:lasttick_sizebuflist != l:current_sizebufist) ||
-  \ ((s:lasttick_buffer != l:current_buffer) && buflisted(l:current_buffer))
+  \ (s:lasttick_buffer != l:current_buffer)
     call StartTimer()
   endif
 
@@ -550,6 +517,9 @@ let s:monitor_timer =
 let g:NERDTreeMapOpenInTab = ''
 let g:NERDTreeMapOpenInTabSilent = ''
 
+" unused directory exploration command
+let g:NERDTreeMapOpenExpl = ''
+
 " sort files by number order
 let g:NERDTreeNaturalSort = v:true
 
@@ -558,6 +528,9 @@ let g:NERDTreeHighlightCursorline = v:true
 
 " single mouse click opens directories and files
 let g:NERDTreeMouseMode = 3
+
+" disable NERDTree to replace netrw
+let g:NERDTreeHijackNetrw = v:false
 
 " }}}
 " FileType-specific -------------------------------------{{{
@@ -618,8 +591,8 @@ nnoremap <leader>a :call DisableRedraw() <bar>
   \ call DisplayBuffersList(v:true)<CR>:ActivateBuffer<Space>
 
 " buffers navigation
-nnoremap <silent> <Tab> :call BuffersListNavigation(1)<CR>
-nnoremap <silent> <S-Tab> :call BuffersListNavigation(-1)<CR>
+nnoremap <silent> <leader><Down> :bnext<CR>
+nnoremap <silent> <leader><Up> :bprevious<CR>
 
 function! NextWindow()
   if winnr() < winnr('$')
@@ -667,10 +640,6 @@ cnoreabbrev qa call QuitAll()
 cnoreabbrev wqa call WriteQuitAll()
 cnoreabbrev xa call WriteQuitAll()
 
-" avoid intuitive bnext/bprevious usage
-cnoreabbrev bn call BuffersListNavigation(1)
-cnoreabbrev bp call BuffersListNavigation(-1)
-
 " avoid intuitive buffer usage
 cnoreabbrev b
   \ call DisableRedraw()<CR>:call DisplayBuffersList(v:true)<CR>:ActivateBuffer
@@ -695,6 +664,9 @@ set noshowcmd
 augroup vimrc_autocomands
   autocmd!
 "     VimEnter Autocommands Group -----------------------------------------{{{
+
+  " disable netrw plugin
+  autocmd VimEnter * silent! autocmd! FileExplorer
 
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
