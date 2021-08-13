@@ -2,7 +2,7 @@
 
 " - disable opening directories
 " - test unlisted-buffers autocmd
-" - test OpenBuffer command and <leader>a mapping
+" - test ActivateBuffer command and <leader>a mapping
 " - avoid same buffer to be active more than 1 time ?
 
 " }}}
@@ -43,7 +43,7 @@ set report=0
 
 function! CheckDependencies()
   if v:version < 801
-    echoe 'Your VimRC needs Vim 8.1 to be functionnal'
+    echoe 'Personal Error Message: your VimRC needs Vim 8.1 to be functionnal'
     quit
   endif
 
@@ -54,7 +54,8 @@ function! CheckDependencies()
   \ exists('g:NERDTreeMouseMode') == v:false ||
   \ exists('g:NERDTreeHighlightCursorline') == v:false ||
   \ exists(':NERDTreeToggle') == v:false
-    echoe 'Your VimRC needs NERDTree plugin to be functionnal'
+    echoe 'Personal Error Message: your VimRC needs NERDTree plugin
+      \ to be functionnal'
     quit
   endif
 endfunction
@@ -216,7 +217,7 @@ function DisplayBuffersList(prompt_hitting)
         echohl ActiveBuffer | echon l:line | echohl None
       endif
     else
-      echon l:line:
+      echon l:line
     endif
   endfor
 endfunction
@@ -228,6 +229,8 @@ function! BuffersListNavigation(direction)
     let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
   elseif a:direction == -1
     let l:cycle = range(bufnr('%'), 1, -1) + range(bufnr('$'), bufnr('%'), -1)
+  else
+    echoe 'Personal Error Message: unknown direction'
   endif
 
   for l:buf in filter(l:cycle, 'buflisted(v:val)')
@@ -239,16 +242,22 @@ function! BuffersListNavigation(direction)
 endfunction
 
 " check if buffer is listed and hidden before to open it
-function! OpenBuffer(buf)
+function! ActivateBuffer(buf)
   if s:redraw_allowed == v:false
     if buflisted(a:buf) && empty(win_findbuf(a:buf))
       execute 'silent buffer ' . a:buf
+    else
+      echoe 'Personal Error Message: selected buffer is already opened or
+        \ is not listed'
     endif
     call EnableRedraw()
+  else
+    echoe 'Personal Error Message: redraw must be disabled before calling
+      \ ActivateBuffer command'
   endif
 endfunction
 
-command -nargs=1 OpenBuffer call OpenBuffer(<args>)
+command -nargs=1 ActivateBuffer call ActivateBuffer(<args>)
 
 " }}}
 " Unlisted-Buffers ---------------------------{{{
@@ -433,7 +442,8 @@ function! Quit()
     endif
     return v:true
   else
-    echo bufname('%') . ' has unsaved modifications'
+    echo 'Personal Warning Message: ' . bufname('%') . ' has unsaved
+      \ modifications'
     return v:false
   endif
 endfunction
@@ -514,10 +524,9 @@ endfunction
 function! s:MonitorBuffersList(timer_id)
   let l:current_sizebufist = len(getbufinfo({'buflisted':1}))
   let l:current_buffer = bufnr('%')
+
   if (s:lasttick_sizebuflist != l:current_sizebufist) ||
   \ ((s:lasttick_buffer != l:current_buffer) && buflisted(l:current_buffer))
-    let s:lasttick_sizebuflist = l:current_sizebufist
-    let s:lasttick_buffer = l:current_buffer
     call StartTimer()
   endif
 
@@ -526,6 +535,8 @@ function! s:MonitorBuffersList(timer_id)
     call DisableMappingsUnlistedBuffer()
   endif
 
+  let s:lasttick_sizebuflist = l:current_sizebufist
+  let s:lasttick_buffer = l:current_buffer
 endfunction
 
 " always running except during commandline mode
@@ -604,7 +615,7 @@ nnoremap <silent> <leader>w :call WriteQuit()<CR>
 
 " buffers menu
 nnoremap <leader>a :call DisableRedraw() <bar>
-  \ call DisplayBuffersList(v:true)<CR>:OpenBuffer<Space>
+  \ call DisplayBuffersList(v:true)<CR>:ActivateBuffer<Space>
 
 " buffers navigation
 nnoremap <silent> <Tab> :call BuffersListNavigation(1)<CR>
@@ -662,7 +673,7 @@ cnoreabbrev bp call BuffersListNavigation(-1)
 
 " avoid intuitive buffer usage
 cnoreabbrev b
-  \ call DisableRedraw()<CR>:call DisplayBuffersList(v:true)<CR>:OpenBuffer
+  \ call DisableRedraw()<CR>:call DisplayBuffersList(v:true)<CR>:ActivateBuffer
 
 " }}}
 " Performance -----------------------------{{{
