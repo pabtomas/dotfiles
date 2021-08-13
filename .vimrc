@@ -591,8 +591,8 @@ nnoremap <leader>a :call DisableRedraw() <bar>
   \ call DisplayBuffersList(v:true)<CR>:ActivateBuffer<Space>
 
 " buffers navigation
-nnoremap <silent> <leader><Down> :bnext<CR>
-nnoremap <silent> <leader><Up> :bprevious<CR>
+nnoremap <silent> <S-Down> :silent bnext<CR>
+nnoremap <silent> <S-Up> :silent bprevious<CR>
 
 function! NextWindow()
   if winnr() < winnr('$')
@@ -611,8 +611,8 @@ function! PreviousWindow()
 endfunction
 
 " windows navigation
-nnoremap <silent> <leader><Right> :call NextWindow()<CR>
-nnoremap <silent> <leader><Left> :call PreviousWindow()<CR>
+nnoremap <silent> <S-Right> :silent call NextWindow()<CR>
+nnoremap <silent> <S-Left> :silent call PreviousWindow()<CR>
 
 " make space more useful
 nnoremap <space> za
