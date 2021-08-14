@@ -1,15 +1,6 @@
-" TODO -----------------------------------{{{
-
-" - disable opening directories
-" - test unlisted-buffers autocmd
-" - avoid same buffer to be reopened ?
-" - snipsets to disable risky commands ?
-" - rewrite <leader>a mapping:
-"   1) to display only hidden listed-buffers
-"   2) to open only hidden listed-buffer
-
+" TODO {{{1
 " }}}
-" Basic -----------------------------{{{
+" Quality of Life {{{1
 
 " Vi default options unused
 set nocompatible
@@ -44,45 +35,42 @@ set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 " always display the number of changes after a command
 set report=0
 
-function! CheckDependencies()
-  if v:version < 801
-    echoe 'Your VimRC needs Vim 8.1 to be functionnal'
-    quit
-  endif
+" }}}
+" Performance {{{1
 
-  if exists('g:NERDTree') == v:false ||
-  \ exists('g:NERDTreeMapOpenInTab') == v:false ||
-  \ exists('g:NERDTreeMapOpenInTabSilent') == v:false ||
-  \ exists('g:NERDTreeNaturalSort') == v:false ||
-  \ exists('g:NERDTreeMouseMode') == v:false ||
-  \ exists('g:NERDTreeHighlightCursorline') == v:false ||
-  \ exists(':NERDTreeToggle') == v:false
-    echoe 'Your VimRC needs NERDTree plugin to be functionnal'
-    quit
-  endif
-endfunction
+" draw only when needed
+set lazyredraw
+
+" indicates terminal connection, Vim will be faster
+set ttyfast
+
+" max column where syntax is applied (default: 3000)
+set synmaxcol=79
+
+" avoid visual mod lags
+set noshowcmd
 
 " }}}
-" Colors --------------------------{{{
-"   Palette --------------------------{{{
+" Colors {{{1
+"   Palette {{{2
 
-let s:red = 196
-let s:orange = 202
-let s:purple_1 = 62
-let s:purple_2 = 140
-let s:purple_3 = 176
-let s:blue_1 = 69
-let s:blue_2 = 105
-let s:blue_3 = 111
-let s:green = 42
-let s:white_1 = 147
-let s:white_2 = 153
-let s:grey_1 = 235
-let s:grey_2 = 236
-let s:black = 232
+if exists('s:red') | unlet s:red | endif | const s:red = 196
+if exists('s:orange') | unlet s:orange | endif | const s:orange = 202
+if exists('s:purple_1') | unlet s:purple_1 | endif | const s:purple_1 = 62
+if exists('s:purple_2') | unlet s:purple_2 | endif | const s:purple_2 = 140
+if exists('s:purple_3') | unlet s:purple_3 | endif | const s:purple_3 = 176
+if exists('s:blue_1') | unlet s:blue_1 | endif | const s:blue_1 = 69
+if exists('s:blue_2') | unlet s:blue_2 | endif | const s:blue_2 = 105
+if exists('s:blue_3') | unlet s:blue_3 | endif | const s:blue_3 = 111
+if exists('s:green') | unlet s:green | endif | const s:green = 42
+if exists('s:white_1') | unlet s:white_1 | endif | const s:white_1 = 147
+if exists('s:white_2') | unlet s:white_2 | endif | const s:white_2 = 153
+if exists('s:grey_1') | unlet s:grey_1 | endif | const s:grey_1 = 235
+if exists('s:grey_2') | unlet s:grey_2 | endif | const s:grey_2 = 236
+if exists('s:black') | unlet s:black | endif | const s:black = 232
 
 "   }}}
-"   Scheme --------------------{{{
+"   Scheme {{{2
 
 let s:redhighlight_cmd =
   \ 'highlight RedHighlight ctermfg=Black ctermbg=DarkRed'
@@ -100,7 +88,7 @@ if &term[-9:] =~ '-256color'
 
   set wincolor=NormalAlt
   execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
-    \      highlight       OpenedBuffer   term=bold           cterm=bold         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
     \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
     \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -153,15 +141,14 @@ if &term[-9:] =~ '-256color'
   highlight  link SpecialComment Special
   highlight  link Debug          Special
 else
-
   highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=White   ctermbg=Magenta
-  highlight       OpenedBuffer   term=bold           cterm=bold           ctermfg=Red
+  highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red
 endif
 
 execute s:redhighlight_cmd
 
 "   }}}
-"   Good practices -------------------------{{{
+"   Good practices {{{2
 
 let s:redhighlight = v:true
 
@@ -190,73 +177,132 @@ endfunction
 
 "   }}}
 " }}}
-" Listed-Buffers -----------------------------{{{
+" Buffers {{{1
 
-" return number of opened listed-buffers
-function! OpenedListedBuffers()
-  return len(filter(range(1, winnr('$')), 'buflisted(winbufnr(v:val))'))
+" allow to switch between buffers without writting them
+set hidden
+
+" return number of active listed-buffers
+function! ActiveListedBuffers()
+  return len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden == v:false'))
 endfunction
 
-" resize the command window, display listed buffers, highlight current
-" buffer and underline opened buffers
-function DisplayBuffersList(prompt_hitting)
-  let l:buf_nb = len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) + 1
+"   Listed-Buffers {{{2
 
-  if a:prompt_hitting == v:true
-    let l:buf_nb = len(filter(range(1, bufnr('$')),
-    \ 'buflisted(v:val) && (len(win_findbuf(v:val)) == 0)')) + 1
-  endif
+" enable mappings for listed-buffers activated by unlisted-buffers
+function! EnableMappingsListedBuffer()
+  if buflisted(bufnr())
 
-  execute 'set cmdheight=' . l:buf_nb
-  for l:buf in filter(range(1, bufnr('$')), 'buflisted(v:val)')
-    let l:result = " " . l:buf . ": \"" . bufname(l:buf) . "\""
-    let l:result = l:result .
-      \ repeat(" ", &columns - 1 - strlen(l:result)) . "\n"
-    if l:buf == bufnr('%')
-      echohl CurrentBuffer | echon l:result | echohl None
-    elseif len(win_findbuf(l:buf)) > 0
-      if a:prompt_hitting == v:false
-        echohl OpenedBuffer | echon l:result | echohl None
+    let l:dict = maparg(':', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> :
       endif
-    else
-      echon l:result
     endif
-  endfor
-endfunction
 
-" go to the next/previous undisplayed listed buffer
-function! BuffersListNavigation(direction)
-  let l:cycle = []
-  if a:direction == 1
-    let l:cycle = range(bufnr('%'), bufnr('$')) + range(1, bufnr('%'))
-  elseif a:direction == -1
-    let l:cycle = range(bufnr('%'), 1, -1) + range(bufnr('$'), bufnr('%'), -1)
+    let l:dict = maparg('Q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> Q
+      endif
+    endif
+
+    let l:dict = maparg('gQ', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> gQ
+      endif
+    endif
+
+    let l:dict = maparg('q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> q
+      endif
+    endif
+
+    let l:dict = maparg('<S-Up>', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> <S-Up>
+      endif
+    endif
+
+    let l:dict = maparg('<S-Down>', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> <S-Down>
+      endif
+    endif
+
+    let l:dict = maparg('<leader>a', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> <leader>a
+      endif
+    endif
+
+    let l:dict = maparg("<leader>'", 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> <leader>'
+      endif
+    endif
+
+    let l:dict = maparg(':', 'v', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        vunmap <buffer> :
+      endif
+    endif
+
+    let l:dict = maparg('<leader>:', 'v', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        vunmap <buffer> <leader>:
+      endif
+    endif
+
+    let l:dict = maparg('<leader>&', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> <leader>&
+      endif
+    endif
+
+    let l:dict = maparg('<leader>q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> <leader>q
+      endif
+    endif
+
+    let l:dict = maparg('<leader>w', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> <leader>w
+      endif
+    endif
+
   endif
-
-  for l:buf in filter(l:cycle, 'buflisted(v:val)')
-    if len(win_findbuf(l:buf)) == 0
-      execute 'silent buffer ' . l:buf
-      break
-    endif
-  endfor
 endfunction
 
-" }}}
-" Unlisted-Buffers ---------------------------{{{
+"   }}}
+"   Unlisted-Buffers {{{2
 
-" close Vim if only unlisted-buffers are opened
+" close Vim if only unlisted-buffers are active
 function! CloseLonelyUnlistedBuffers()
-  if OpenedListedBuffers() == 0
+  if ActiveListedBuffers() == 0
     quitall
   endif
 endfunction
 
-" disable risky keys for unlisted-buffers
+" disable risky mappings for unlisted-buffers
 function! DisableMappingsUnlistedBuffer()
-  if buflisted(bufnr('%')) == v:false
+  if buflisted(bufnr()) == v:false
 
     let l:dict = maparg(':', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
         nnoremap <buffer> : <Esc>
       endif
@@ -264,8 +310,26 @@ function! DisableMappingsUnlistedBuffer()
       nnoremap <buffer> : <Esc>
     endif
 
+    let l:dict = maparg('Q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        nnoremap <buffer> Q <Esc>
+      endif
+    else
+      nnoremap <buffer> Q <Esc>
+    endif
+
+    let l:dict = maparg('gQ', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        nnoremap <buffer> gQ <Esc>
+      endif
+    else
+      nnoremap <buffer> gQ <Esc>
+    endif
+
     let l:dict = maparg('q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
         nnoremap <buffer> q :quit<CR>
       endif
@@ -273,26 +337,26 @@ function! DisableMappingsUnlistedBuffer()
       nnoremap <buffer> q :quit<CR>
     endif
 
-    let l:dict = maparg('<Tab>', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    let l:dict = maparg('<S-Up>', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
-        nnoremap <buffer> <Tab> <Esc>
+        nnoremap <buffer> <S-Up> <Esc>
       endif
     else
-      nnoremap <buffer> <Tab> <Esc>
+      nnoremap <buffer> <S-Up> <Esc>
     endif
 
-    let l:dict = maparg('<S-Tab>', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    let l:dict = maparg('<S-Down>', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
-        nnoremap <buffer> <S-Tab> <Esc>
+        nnoremap <buffer> <S-Down> <Esc>
       endif
     else
-      nnoremap <buffer> <S-Tab> <Esc>
+      nnoremap <buffer> <S-Down> <Esc>
     endif
 
     let l:dict = maparg('<leader>a', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
         nnoremap <buffer> <leader>a <Esc>
       endif
@@ -301,7 +365,7 @@ function! DisableMappingsUnlistedBuffer()
     endif
 
     let l:dict = maparg("<leader>'", 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
         nnoremap <buffer> <leader>' <Esc>
       endif
@@ -310,7 +374,7 @@ function! DisableMappingsUnlistedBuffer()
     endif
 
     let l:dict = maparg(':', 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
         vnoremap <buffer> : <Esc>
       endif
@@ -319,7 +383,7 @@ function! DisableMappingsUnlistedBuffer()
     endif
 
     let l:dict = maparg('<leader>:', 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
         vnoremap <buffer> <leader>: <Esc>
       endif
@@ -328,7 +392,7 @@ function! DisableMappingsUnlistedBuffer()
     endif
 
     let l:dict = maparg('<leader>&', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
         nnoremap <buffer> <leader>& <Esc>
       endif
@@ -336,74 +400,50 @@ function! DisableMappingsUnlistedBuffer()
       nnoremap <buffer> <leader>& <Esc>
     endif
 
-    let l:dict = maparg('ZQ', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
-      if l:dict.buffer == v:false
-        nnoremap <buffer> ZQ <Esc>
-      endif
-    else
-      nnoremap <buffer> ZQ <Esc>
-    endif
-
-    let l:dict = maparg('ZZ', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
-      if l:dict.buffer == v:false
-        nnoremap <buffer> ZZ <Esc>
-      endif
-    else
-      nnoremap <buffer> ZZ <Esc>
-    endif
-
     let l:dict = maparg('<leader>q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
-        vnoremap <buffer> <leader>q <Esc>
+        nnoremap <buffer> <leader>q <Esc>
       endif
     else
-      vnoremap <buffer> <leader>q <Esc>
+      nnoremap <buffer> <leader>q <Esc>
     endif
 
     let l:dict = maparg('<leader>w', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer') == v:true
+    if has_key(l:dict, 'buffer')
       if l:dict.buffer == v:false
-        vnoremap <buffer> <leader>w <Esc>
+        nnoremap <buffer> <leader>w <Esc>
       endif
     else
-      vnoremap <buffer> <leader>w <Esc>
+      nnoremap <buffer> <leader>w <Esc>
+    endif
+
+    if g:NERDTree.IsOpen()
+      file
     endif
 
   endif
 endfunction
 
-" }}}
-" Quit Buffers -----------------------------{{{
+"   }}}
+"   Quit functions {{{2
 
-" allow to switch between buffers without writting them
-set hidden
-
-" - quit current window & delete buffer inside, IF there are 2 opened
-"   listed-buffers or more,
-" - come back to the previous listed-buffer and delete current buffer IF
-"   there are 1 opened listed-buffer (OR 1 or more opened unlisted-buffer + 1
-"   opened listed-buffer),
-" - quit Vim IF there are 1 opened listed-buffer (OR 1 or more opened
-"   unlisted-buffer + 1 opened listed-buffer) AND no other listed-buffer.
+" - use bdelete if current buffer is active only once AND if there are other
+"   listed-buffers,
+" - quit current window if current buffer is active several times,
+" - quit Vim IF there are 1 active listed-buffer AND no other listed-buffer.
 function! Quit()
   if &modified == 0
-    if len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) > 1
-      let l:first_buf = bufnr('%')
-      if winnr('$') == 1 || (winnr('$') > 1 && (OpenedListedBuffers() == 1))
-        execute "normal! \<C-O>"
-      else
-        silent quit
-      endif
-      execute 'silent bdelete' . l:first_buf
+    if (len(win_findbuf(bufnr())) == 1) &&
+    \ (len(getbufinfo({'buflisted':1})) > 1)
+      silent bdelete
     else
       silent quit
     endif
     return v:true
   else
-    echo bufname('%') . ' has unsaved modifications'
+    echo 'Personal Warning Message: ' . bufname('%') . ' has unsaved
+      \ modifications'
     return v:false
   endif
 endfunction
@@ -423,47 +463,73 @@ function! WriteQuitAll()
   endwhile
 endfunction
 
-" }}}
-" Timers --------------------------------{{{
+"   }}}
+"   Timer & Drawing functions {{{2
 
 " timer variables
-let s:tick = 100
-let s:nb_ticks = 100
+if exists('s:tick') | unlet s:tick | endif | const s:tick = 100
+if exists('s:nb_ticks') | unlet s:nb_ticks | endif | const s:nb_ticks = 50
 let s:elapsed_time = s:nb_ticks * s:tick
+let s:lasttick_sizebuflist = len(getbufinfo({'buflisted':1}))
+let s:lasttick_buffer = bufnr()
 
-let s:lasttick_sizebuflist =
-  \ len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
-let s:lasttick_buffer = bufnr('%')
+" resize the command window, display listed buffers, highlight current
+" buffer and underline active buffers
+function! DisplayBuffersList(prompt_hitting)
+  let l:listed_buf = getbufinfo({'buflisted':1})
+  let l:buffers_nb = len(l:listed_buf)
+
+  if a:prompt_hitting == v:false
+    let l:buffers_nb = l:buffers_nb + 1
+  endif
+
+  execute 'set cmdheight=' . l:buffers_nb
+  for l:buf in l:listed_buf
+    let l:line = " " . l:buf.bufnr . ": \"" . fnamemodify(l:buf.name, ':.')
+      \ . "\""
+    let l:line = l:line .
+      \ repeat(" ", &columns - 1 - strlen(l:line)) . "\n"
+    if l:buf.bufnr == bufnr()
+      echohl CurrentBuffer | echon l:line | echohl None
+    elseif l:buf.hidden == v:false
+      echohl ActiveBuffer | echon l:line | echohl None
+    else
+      echon l:line
+    endif
+  endfor
+endfunction
 
 " update the buffers list displayed in commandline
-function! s:UpdateCommandline(timer_id)
+function! UpdateCommandline()
   if s:elapsed_time < s:nb_ticks * s:tick
     let s:elapsed_time = s:elapsed_time + s:tick
     redraw
     set cmdheight=1
     call DisplayBuffersList(v:false)
   else
-    call StopTimer()
+    call StopDrawing()
   endif
 endfunction
 
-" run when displaying buffers list is needed
-let s:update_timer =
-  \ timer_start(s:tick, function('s:UpdateCommandline'), {'repeat': -1})
-
-function! StartTimer()
-  call timer_pause(s:update_timer, v:false)
+function! StartDrawing()
   let s:elapsed_time = 0
 endfunction
 
 let s:redraw_allowed = v:true
 
-function! DisableRedraw()
-  let s:redraw_allowed = v:false
+function! EnableRedraw()
+  if s:redraw_allowed == v:false
+    let s:redraw_allowed = v:true
+  endif
 endfunction
 
-function! StopTimer()
-  call timer_pause(s:update_timer, v:true)
+function! DisableRedraw()
+  if s:redraw_allowed
+    let s:redraw_allowed = v:false
+  endif
+endfunction
+
+function! StopDrawing()
   let s:elapsed_time = s:nb_ticks * s:tick
   if s:redraw_allowed
     set cmdheight=1
@@ -475,33 +541,88 @@ endfunction
 " - buffers list adding/deleting
 " - current listed-buffer entering
 function! s:MonitorBuffersList(timer_id)
-  let l:current_sizebufist =
-    \ len(filter(range(1, bufnr('$')), 'buflisted(v:val)'))
-  let l:current_buffer = bufnr('%')
+  let l:current_sizebufist = len(getbufinfo({'buflisted':1}))
+  let l:current_buffer = bufnr()
+
   if (s:lasttick_sizebuflist != l:current_sizebufist) ||
-  \ ((s:lasttick_buffer != l:current_buffer) && buflisted(l:current_buffer))
-    let s:lasttick_sizebuflist = l:current_sizebufist
-    let s:lasttick_buffer = l:current_buffer
-    call StartTimer()
+  \ (s:lasttick_buffer != l:current_buffer)
+    call StartDrawing()
   endif
 
+  call UpdateCommandline()
+
   " avoid commandline and risky commands for unlisted-buffers
-  if buflisted(l:current_buffer) == v:false
+  if buflisted(l:current_buffer)
+    call EnableMappingsListedBuffer()
+  else
     call DisableMappingsUnlistedBuffer()
   endif
 
+  let s:lasttick_sizebuflist = l:current_sizebufist
+  let s:lasttick_buffer = l:current_buffer
 endfunction
 
-" always running except during commandline mode
-let s:monitor_timer =
+let s:timer =
   \ timer_start(s:tick, function('s:MonitorBuffersList'), {'repeat': -1})
 
+"   }}}
 " }}}
-" NERDTree ---------------------------------------{{{
+" Windows {{{1
+
+function! NextWindow()
+  if winnr() < winnr('$')
+    execute winnr() + 1 . 'wincmd w'
+  else
+    1wincmd w
+  endif
+endfunction
+
+function! PreviousWindow()
+  if winnr() > 1
+    execute winnr() - 1 . 'wincmd w'
+  else
+    execute winnr('$') . 'wincmd w'
+  endif
+endfunction
+
+" }}}
+" Plugins and Dependencies {{{1
+
+function! CheckDependencies()
+  if v:version < 801
+    echoe 'Personal Error Message: your VimRC needs Vim 8.1 to be functionnal'
+    quit
+  endif
+
+  if exists('g:NERDTree') == v:false ||
+  \ exists('g:NERDTreeMapOpenInTab') == v:false ||
+  \ exists('g:NERDTreeMapOpenInTabSilent') == v:false ||
+  \ exists('g:NERDTreeMapOpenSplit') == v:false ||
+  \ exists('g:NERDTreeMapOpenVSplit') == v:false ||
+  \ exists('g:NERDTreeMapOpenExpl') == v:false ||
+  \ exists('g:NERDTreeNaturalSort') == v:false ||
+  \ exists('g:NERDTreeHighlightCursorline') == v:false ||
+  \ exists('g:NERDTreeMouseMode') == v:false ||
+  \ exists('g:NERDTreeHijackNetrw') == v:false ||
+  \ exists(':NERDTreeToggle') == v:false
+    echoe 'Personal Error Message: your VimRC needs NERDTree plugin
+      \ to be functionnal'
+    quit
+  endif
+endfunction
+
+"   NERDTree {{{2
 
 " unused NERDTree tabpage commands
 let g:NERDTreeMapOpenInTab = ''
 let g:NERDTreeMapOpenInTabSilent = ''
+
+" disable splitting window with NERDTree
+let g:NERDTreeMapOpenSplit = ""
+let g:NERDTreeMapOpenVSplit = ""
+
+" unused directory exploration command
+let g:NERDTreeMapOpenExpl = ''
 
 " sort files by number order
 let g:NERDTreeNaturalSort = v:true
@@ -512,9 +633,13 @@ let g:NERDTreeHighlightCursorline = v:true
 " single mouse click opens directories and files
 let g:NERDTreeMouseMode = 3
 
+" disable NERDTree to replace netrw
+let g:NERDTreeHijackNetrw = v:true
+
+"   }}}
 " }}}
-" FileType-specific -------------------------------------{{{
-"   Bash -------------------------------------{{{
+" FileType-specific {{{1
+"   Bash {{{2
 
 function! PrefillShFile()
   call append(0, [ '#!/bin/bash',
@@ -523,7 +648,27 @@ endfunction
 
 "   }}}
 " }}}
-" Mappings -------------------------------------{{{
+" Commands {{{1
+
+" check if buffer is listed before to open it
+function! ActivateBuffer(buf)
+  if s:redraw_allowed == v:false
+    if buflisted(a:buf)
+      execute 'silent buffer ' . a:buf
+    else
+      echoe 'Personal Error Message: selected buffer is not listed'
+    endif
+    call EnableRedraw()
+  else
+    echoe 'Personal Error Message: redraw must be disabled before calling
+      \ ActivateBuffer command'
+  endif
+endfunction
+
+command -nargs=1 ActivateBuffer call ActivateBuffer(<args>)
+
+" }}}
+" Mappings {{{1
 
 " leader key
 let mapleader = '²'
@@ -544,10 +689,6 @@ nnoremap <silent> <leader>z :call ToggleRedHighlight()<CR>
 " unnamed register = any text deleted or yank (with y)
 cnoremap <leader>p <C-R><C-O>"
 
-" for debug purposes
-nnoremap <leader>M :messages<CR>
-nnoremap <leader>m :map<CR>
-
 " open .vimrc in a vertical split window
 nnoremap <silent> <leader>& :vsplit $MYVIMRC<CR>
 
@@ -561,44 +702,37 @@ nnoremap <silent> <leader>" :nohlsearch<CR>
 nnoremap <silent> <leader>' :NERDTreeToggle<CR>
 
 " Quit() functions
-nnoremap <silent> ZQ :call Quit()<CR>
-nnoremap <silent> ZZ :call WriteQuit()<CR>
 nnoremap <silent> <leader>q :call Quit()<CR>
 nnoremap <silent> <leader>w :call WriteQuit()<CR>
 
 " buffers menu
 nnoremap <leader>a :call DisableRedraw() <bar>
-  \ call DisplayBuffersList(v:true)<CR>:buffer<Space>
+  \ call DisplayBuffersList(v:true)<CR>:ActivateBuffer<Space>
 
 " buffers navigation
-nnoremap <silent> <Tab> :call BuffersListNavigation(1)<CR>
-nnoremap <silent> <S-Tab> :call BuffersListNavigation(-1)<CR>
-
-function! NextWindow()
-  if winnr() < winnr('$')
-    execute winnr() + 1 . 'wincmd w'
-  else
-    1wincmd w
-  endif
-endfunction
-
-function! PreviousWindow()
-  if winnr() > 1
-    execute winnr() - 1 . 'wincmd w'
-  else
-    execute winnr('$') . 'wincmd w'
-  endif
-endfunction
+nnoremap <silent> <S-Down> :silent bnext<CR>
+nnoremap <silent> <S-Up> :silent bprevious<CR>
 
 " windows navigation
-nnoremap <silent> <leader><Right> :call NextWindow()<CR>
-nnoremap <silent> <leader><Left> :call PreviousWindow()<CR>
+nnoremap <silent> <S-Right> :silent call NextWindow()<CR>
+nnoremap <silent> <S-Left> :silent call PreviousWindow()<CR>
 
-" make space more useful
+" unfold vimscipt's folds
 nnoremap <space> za
 
+" for debug purposes
+nnoremap <leader>m :call DisableRedraw() <bar> messages<CR>
+  \:call EnableRedraw()
+nnoremap <leader>mm :call DisableRedraw() <bar> map<CR>:call EnableRedraw()
+nnoremap <leader>mmm :call DisableRedraw() <bar> abbreviate<CR>
+  \:call EnableRedraw()
+nnoremap <leader>mmmm :call DisableRedraw() <bar> command<CR>
+  \:call EnableRedraw()
+nnoremap <leader>mmmmm :call DisableRedraw() <bar> autocmd<CR>
+  \:call EnableRedraw()
+
 " }}}
-" Abbreviations --------------------------------------{{{
+" Abbreviations {{{1
 
 " avoid intuitive write usage
 cnoreabbrev w update
@@ -620,76 +754,55 @@ cnoreabbrev qa call QuitAll()
 cnoreabbrev wqa call WriteQuitAll()
 cnoreabbrev xa call WriteQuitAll()
 
-" avoid intuitive bnext/bprevious usage
-cnoreabbrev bn call BuffersListNavigation(1)
-cnoreabbrev bp call BuffersListNavigation(-1)
-
 " avoid intuitive buffer usage
-cnoreabbrev b Buffer
+cnoreabbrev b call DisableRedraw()<CR>:call DisplayBuffersList(v:true)<CR>
+  \:ActivateBuffer
 
 " }}}
-" Performance -----------------------------{{{
-
-" draw only when needed
-set lazyredraw
-
-" indicates terminal connection, Vim will be faster
-set ttyfast
-
-" max column where syntax is applied (default: 3000)
-set synmaxcol=79
-
-" avoid visual mod lags
-set noshowcmd
-
-"   Autocommands -------------------------------------------{{{
+" Autocommands {{{1
 
 augroup vimrc_autocomands
   autocmd!
-"     VimEnter Autocommands Group -----------------------------------------{{{
-
-  " clear jump list
-  autocmd VimEnter * silent clearjump
+"   VimEnter Autocommands Group {{{2
 
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
 
-"     }}}
-"     Color Autocommands Group -------------------------------------------{{{
+"   }}}
+"   Color Autocommands Group {{{2
 
   autocmd WinEnter * set wincolor=NormalAlt
 
-"     }}}
-"     Good Practices Autocommands Group -----------------------------------{{{
+"   }}}
+"   Good Practices Autocommands Group {{{2
 
   autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
 
-"     }}}
-"     Listed-Buffers Autocommands Group ----------------------------------{{{
+"   }}}
+"   Listed-Buffers Autocommands Group {{{2
 
   " 1) entering commandline erases displayed buffers list,
   " 2) renable incremental search
-  autocmd CmdlineEnter * call StopTimer() |
-    \ call timer_pause(s:monitor_timer, v:true)
-  autocmd CmdlineLeave * call timer_pause(s:monitor_timer, v:false)
+  autocmd CmdlineEnter * call StopDrawing() |
+    \ call timer_pause(s:timer, v:true)
+  autocmd CmdlineLeave * call timer_pause(s:timer, v:false)
 
-"     }}}
-"     Unlisted-Buffers Autocommands Group ---------------------------------{{{
+"   }}}
+"   Unlisted-Buffers Autocommands Group {{{2
 
   autocmd BufEnter * :silent call CloseLonelyUnlistedBuffers()
 
-"     }}}
-"     Vimscript filetype Autocommands Group -------------------------------{{{
+"   }}}
+"   Vimscript filetype Autocommands Group {{{2
 
   autocmd FileType vim setlocal foldmethod=marker
 
-"     }}}
-"     Bash filetype Autocommands Group --------------------------------{{{
+"   }}}
+"   Bash filetype Autocommands Group {{{2
 
   autocmd BufNewFile *.sh :call PrefillShFile()
 
-"     }}}
+"   }}}
 augroup END
 
-"   }}}
 " }}}
