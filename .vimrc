@@ -187,109 +187,6 @@ function! ActiveListedBuffers()
   return len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden == v:false'))
 endfunction
 
-"   Listed-Buffers {{{2
-
-" enable mappings for listed-buffers activated by unlisted-buffers
-function! EnableMappingsListedBuffer()
-  if buflisted(bufnr())
-
-    let l:dict = maparg(':', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> :
-      endif
-    endif
-
-    let l:dict = maparg('Q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> Q
-      endif
-    endif
-
-    let l:dict = maparg('gQ', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> gQ
-      endif
-    endif
-
-    let l:dict = maparg('q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> q
-      endif
-    endif
-
-    let l:dict = maparg('<S-Up>', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> <S-Up>
-      endif
-    endif
-
-    let l:dict = maparg('<S-Down>', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> <S-Down>
-      endif
-    endif
-
-    let l:dict = maparg('<leader>a', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> <leader>a
-      endif
-    endif
-
-    let l:dict = maparg("<leader>'", 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> <leader>'
-      endif
-    endif
-
-    let l:dict = maparg(':', 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        vunmap <buffer> :
-      endif
-    endif
-
-    let l:dict = maparg('<leader>:', 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        vunmap <buffer> <leader>:
-      endif
-    endif
-
-    let l:dict = maparg('<leader>&', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> <leader>&
-      endif
-    endif
-
-    let l:dict = maparg('<leader>q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> <leader>q
-      endif
-    endif
-
-    let l:dict = maparg('<leader>w', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> <leader>w
-      endif
-    endif
-
-  endif
-endfunction
-
-"   }}}
-"   Unlisted-Buffers {{{2
-
 " close Vim if only unlisted-buffers are active
 function! CloseLonelyUnlistedBuffers()
   if ActiveListedBuffers() == 0
@@ -297,135 +194,6 @@ function! CloseLonelyUnlistedBuffers()
   endif
 endfunction
 
-" disable risky mappings for unlisted-buffers
-function! DisableMappingsUnlistedBuffer()
-  if buflisted(bufnr()) == v:false
-
-    let l:dict = maparg(':', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> : <Esc>
-      endif
-    else
-      nnoremap <buffer> : <Esc>
-    endif
-
-    let l:dict = maparg('Q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> Q <Esc>
-      endif
-    else
-      nnoremap <buffer> Q <Esc>
-    endif
-
-    let l:dict = maparg('gQ', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> gQ <Esc>
-      endif
-    else
-      nnoremap <buffer> gQ <Esc>
-    endif
-
-    let l:dict = maparg('q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> q :quit<CR>
-      endif
-    else
-      nnoremap <buffer> q :quit<CR>
-    endif
-
-    let l:dict = maparg('<S-Up>', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> <S-Up> <Esc>
-      endif
-    else
-      nnoremap <buffer> <S-Up> <Esc>
-    endif
-
-    let l:dict = maparg('<S-Down>', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> <S-Down> <Esc>
-      endif
-    else
-      nnoremap <buffer> <S-Down> <Esc>
-    endif
-
-    let l:dict = maparg('<leader>a', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> <leader>a <Esc>
-      endif
-    else
-      nnoremap <buffer> <leader>a <Esc>
-    endif
-
-    let l:dict = maparg("<leader>'", 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> <leader>' <Esc>
-      endif
-    else
-      nnoremap <buffer> <leader>' <Esc>
-    endif
-
-    let l:dict = maparg(':', 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        vnoremap <buffer> : <Esc>
-      endif
-    else
-      vnoremap <buffer> : <Esc>
-    endif
-
-    let l:dict = maparg('<leader>:', 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        vnoremap <buffer> <leader>: <Esc>
-      endif
-    else
-      vnoremap <buffer> <leader>: <Esc>
-    endif
-
-    let l:dict = maparg('<leader>&', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> <leader>& <Esc>
-      endif
-    else
-      nnoremap <buffer> <leader>& <Esc>
-    endif
-
-    let l:dict = maparg('<leader>q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> <leader>q <Esc>
-      endif
-    else
-      nnoremap <buffer> <leader>q <Esc>
-    endif
-
-    let l:dict = maparg('<leader>w', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> <leader>w <Esc>
-      endif
-    else
-      nnoremap <buffer> <leader>w <Esc>
-    endif
-
-    if g:NERDTree.IsOpen()
-      file
-    endif
-
-  endif
-endfunction
-
-"   }}}
 "   Quit functions {{{2
 
 " - use bdelete if current buffer is active only once AND if there are other
@@ -652,16 +420,10 @@ endfunction
 
 " check if buffer is listed before to open it
 function! ActivateBuffer(buf)
-  if s:redraw_allowed == v:false
-    if buflisted(a:buf)
-      execute 'silent buffer ' . a:buf
-    else
-      echoe 'Personal Error Message: selected buffer is not listed'
-    endif
-    call EnableRedraw()
+  if buflisted(a:buf)
+    execute 'silent buffer ' . a:buf
   else
-    echoe 'Personal Error Message: redraw must be disabled before calling
-      \ ActivateBuffer command'
+    echoe 'Personal Error Message: selected buffer is not listed'
   endif
 endfunction
 
@@ -670,66 +432,345 @@ command -nargs=1 ActivateBuffer call ActivateBuffer(<args>)
 " }}}
 " Mappings {{{1
 
-" leader key
-let mapleader = '²'
+" leader keys
+if exists('s:leader') | unlet s:leader | endif | const s:leader =                                                                                                                             '²'
+if exists('s:shift_leader') | unlet s:shift_leader | endif | const s:shift_leader =                                                                                                           '³'
+
+if exists('s:search_and_replace_mapping') | unlet s:search_and_replace_mapping | endif | const s:search_and_replace_mapping =                                                                 ':'
+if exists('s:search_and_replace_insensitive_mapping') | unlet s:search_and_replace_insensitive_mapping | endif | const s:search_and_replace_insensitive_mapping = s:leader       .            ':'
+if exists('s:search_insensitive_mapping') | unlet s:search_insensitive_mapping | endif | const s:search_insensitive_mapping =                                     s:leader       .            '/'
+if exists('s:past_unnamed_reg_in_cli_mapping') | unlet s:past_unnamed_reg_in_cli_mapping | endif | const s:past_unnamed_reg_in_cli_mapping =                      s:leader       .            'p'
+if exists('s:vsplit_vimrc_mapping') | unlet s:vsplit_vimrc_mapping | endif | const s:vsplit_vimrc_mapping =                                                       s:leader       .            '&'
+if exists('s:source_vimrc_mapping') | unlet s:source_vimrc_mapping | endif | const s:source_vimrc_mapping =                                                       s:shift_leader .            '1'
+if exists('s:nohighlight_search_mapping') | unlet s:nohighlight_search_mapping | endif | const s:nohighlight_search_mapping =                                     s:leader       .            'é'
+if exists('s:toggle_good_practices_mapping') | unlet s:toggle_good_practices_mapping | endif | const s:toggle_good_practices_mapping =                            s:leader       .            '"'
+if exists('s:toggle_nerdtree_mapping') | unlet s:toggle_nerdtree_mapping | endif | const s:toggle_nerdtree_mapping =                                              s:shift_leader . s:shift_leader
+if exists('s:call_quit_function_mapping') | unlet s:call_quit_function_mapping | endif | const s:call_quit_function_mapping =                                     s:leader       .            'q'
+if exists('s:call_writequit_function_mapping') | unlet s:call_writequit_function_mapping | endif | const s:call_writequit_function_mapping =                      s:leader       .            'w'
+if exists('s:buffers_menu_mapping') | unlet s:buffers_menu_mapping | endif | const s:buffers_menu_mapping =                                                       s:leader       .       s:leader
+if exists('s:buffer_next_mapping') | unlet s:buffer_next_mapping | endif | const s:buffer_next_mapping =                                                                               '<S-Down>'
+if exists('s:buffer_previous_mapping') | unlet s:buffer_previous_mapping | endif | const s:buffer_previous_mapping =                                                                     '<S-Up>'
+if exists('s:window_next_mapping') | unlet s:window_next_mapping | endif | const s:window_next_mapping =                                                                              '<S-Right>'
+if exists('s:window_previous_mapping') | unlet s:window_previous_mapping | endif | const s:window_previous_mapping =                                                                   '<S-Left>'
+if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif | const s:unfold_vim_fold_mapping =                                                                    '<Space>'
+if exists('s:message_command_mapping') | unlet s:message_command_mapping | endif | const s:message_command_mapping =                                              s:leader       .            'm'
+if exists('s:map_command_mapping') | unlet s:map_command_mapping | endif | const s:map_command_mapping =                                                          s:leader       .           'mm'
+if exists('s:abbreviate_command_mapping') | unlet s:abbreviate_command_mapping | endif | const s:abbreviate_command_mapping =                                     s:leader       .          'mmm'
+if exists('s:command_command_mapping') | unlet s:command_command_mapping | endif | const s:command_command_mapping =                                              s:leader       .         'mmmm'
+if exists('s:autocmd_command_mapping') | unlet s:autocmd_command_mapping | endif | const s:autocmd_command_mapping =                                              s:leader       .        'mmmmm'
+
+"   Listed-Buffers {{{2
+
+" enable mappings for listed-buffers activated by unlisted-buffers
+function! EnableMappingsListedBuffer()
+  if buflisted(bufnr())
+
+    let l:dict = maparg(':', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> :
+      endif
+    endif
+
+    let l:dict = maparg('Q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> Q
+      endif
+    endif
+
+    let l:dict = maparg('gQ', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> gQ
+      endif
+    endif
+
+    let l:dict = maparg('q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        nunmap <buffer> q
+      endif
+    endif
+
+    let l:dict = maparg(s:buffer_next_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'nunmap <buffer> ' . s:buffer_next_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:buffer_previous_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'nunmap <buffer> ' . s:buffer_previous_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:buffers_menu_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'nunmap <buffer> ' . s:buffers_menu_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:toggle_nerdtree_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'nunmap <buffer> ' . s:toggle_nerdtree_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:search_and_replace_mapping, 'v', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'vunmap <buffer> ' . s:search_and_replace_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:search_and_replace_insensitive_mapping, 'v',
+      \ v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'vunmap <buffer> ' . s:search_and_replace_insensitive_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:vsplit_vimrc_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'nunmap <buffer> ' . s:vsplit_vimrc_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:call_quit_function_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'nunmap <buffer> ' . s:call_quit_function_mapping
+      endif
+    endif
+
+    let l:dict = maparg(s:call_writequit_function_mapping, 'n', v:false,
+      \ v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer
+        execute 'nunmap <buffer> ' . s:call_writequit_function_mapping
+      endif
+    endif
+
+  endif
+endfunction
+
+"   }}}
+"   Unlisted-Buffers {{{2
+
+" disable risky mappings for unlisted-buffers
+function! DisableMappingsUnlistedBuffer()
+  if buflisted(bufnr()) == v:false
+
+    let l:dict = maparg(':', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        nnoremap <buffer> : <Esc>
+      endif
+    else
+      nnoremap <buffer> : <Esc>
+    endif
+
+    let l:dict = maparg('Q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        nnoremap <buffer> Q <Esc>
+      endif
+    else
+      nnoremap <buffer> Q <Esc>
+    endif
+
+    let l:dict = maparg('gQ', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        nnoremap <buffer> gQ <Esc>
+      endif
+    else
+      nnoremap <buffer> gQ <Esc>
+    endif
+
+    let l:dict = maparg('q', 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        nnoremap <buffer> q :quit<CR>
+      endif
+    else
+      nnoremap <buffer> q :quit<CR>
+    endif
+
+    let l:dict = maparg(s:buffer_next_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'nnoremap <buffer> ' . s:buffer_next_mapping . ' <Esc>'
+      endif
+    else
+      execute 'nnoremap <buffer> ' . s:buffer_next_mapping . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:buffer_previous_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'nnoremap <buffer> ' . s:buffer_previous_mapping . ' <Esc>'
+      endif
+    else
+      execute 'nnoremap <buffer> ' . s:buffer_previous_mapping . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:buffers_menu_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'nnoremap <buffer> ' . s:buffers_menu_mapping . ' <Esc>'
+      endif
+    else
+      execute 'nnoremap <buffer> ' . s:buffers_menu_mapping . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:toggle_nerdtree_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'nnoremap <buffer> ' . s:toggle_nerdtree_mapping . ' <Esc>'
+      endif
+    else
+      execute 'nnoremap <buffer> ' . s:toggle_nerdtree_mapping . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:search_and_replace_mapping, 'v', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'vnoremap <buffer> ' . s:search_and_replace_mapping . ' <Esc>'
+      endif
+    else
+      execute 'vnoremap <buffer> ' . s:search_and_replace_mapping . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:search_and_replace_insensitive_mapping, 'v',
+      \ v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'vnoremap <buffer> '
+          \ . s:search_and_replace_insensitive_mapping . ' <Esc>'
+      endif
+    else
+      execute 'vnoremap <buffer> ' . s:search_and_replace_insensitive_mapping
+        \ . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:vsplit_vimrc_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'nnoremap <buffer> ' . s:vsplit_vimrc_mapping . ' <Esc>'
+      endif
+    else
+      execute 'nnoremap <buffer> ' . s:vsplit_vimrc_mapping . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:call_quit_function_mapping, 'n', v:false, v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'nnoremap <buffer> ' . s:call_quit_function_mapping . ' <Esc>'
+      endif
+    else
+      execute 'nnoremap <buffer> ' . s:call_quit_function_mapping . ' <Esc>'
+    endif
+
+    let l:dict = maparg(s:call_writequit_function_mapping, 'n', v:false,
+      \ v:true)
+    if has_key(l:dict, 'buffer')
+      if l:dict.buffer == v:false
+        execute 'nnoremap <buffer> ' . s:call_writequit_function_mapping
+          \ . ' <Esc>'
+      endif
+    else
+      execute 'nnoremap <buffer> ' . s:call_writequit_function_mapping
+        \ . ' <Esc>'
+    endif
+
+  endif
+endfunction
+
+"   }}}
 
 " search and replace
-vnoremap : :s/\%V//g<Left><Left><Left>
+execute 'vnoremap '          . s:search_and_replace_mapping
+  \ . ' :s/\%V//g<Left><Left><Left>'
 
 " search and replace (case-insensitive)
-vnoremap <leader>: :s/\%V\c//g<Left><Left><Left>
+execute 'vnoremap '          . s:search_and_replace_insensitive_mapping
+  \ . ' :s/\%V\c//g<Left><Left><Left>'
 
 " search (case-insensitive)
-nnoremap <leader>/ /\c
-
-" hide/show good practices
-nnoremap <silent> <leader>z :call ToggleRedHighlight()<CR>
+execute 'nnoremap '          . s:search_insensitive_mapping
+  \ . ' /\c'
 
 " copy the unnamed register's content in the command line
 " unnamed register = any text deleted or yank (with y)
-cnoremap <leader>p <C-R><C-O>"
+execute 'cnoremap '          . s:past_unnamed_reg_in_cli_mapping
+  \ . ' <C-R><C-O>"'
 
 " open .vimrc in a vertical split window
-nnoremap <silent> <leader>& :vsplit $MYVIMRC<CR>
+execute 'nnoremap <silent> ' . s:vsplit_vimrc_mapping
+  \ . ' :vsplit $MYVIMRC<CR>'
 
-" compile .vimrc
-nnoremap <leader>é :source $MYVIMRC<CR>
+" source .vimrc
+execute 'nnoremap '          . s:source_vimrc_mapping
+  \ . ' :source $MYVIMRC<CR>'
 
 " stop highlighting from the last search
-nnoremap <silent> <leader>" :nohlsearch<CR>
+execute 'nnoremap <silent> ' . s:nohighlight_search_mapping
+  \ . ' :nohlsearch<CR>'
+
+" hide/show good practices
+execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
+  \ . ' :call ToggleRedHighlight()<CR>'
 
 " open NERDTree in a vertical split window
-nnoremap <silent> <leader>' :NERDTreeToggle<CR>
+execute 'nnoremap <silent> ' . s:toggle_nerdtree_mapping
+  \ . ' :NERDTreeToggle<CR>'
 
 " Quit() functions
-nnoremap <silent> <leader>q :call Quit()<CR>
-nnoremap <silent> <leader>w :call WriteQuit()<CR>
+execute 'nnoremap <silent> ' . s:call_quit_function_mapping
+  \ . ' :call Quit()<CR>'
+execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
+  \ . ' :call WriteQuit()<CR>'
 
 " buffers menu
-nnoremap <leader>a :call DisableRedraw() <bar>
-  \ call DisplayBuffersList(v:true)<CR>:ActivateBuffer<Space>
+execute 'nnoremap '          . s:buffers_menu_mapping
+  \ . ' :call DisableRedraw() <bar> call DisplayBuffersList(v:true)<CR>'
+  \ . ':ActivateBuffer<Space>'
 
 " buffers navigation
-nnoremap <silent> <S-Down> :silent bnext<CR>
-nnoremap <silent> <S-Up> :silent bprevious<CR>
+execute 'nnoremap <silent> ' . s:buffer_next_mapping
+  \ . ' :silent bnext<CR>'
+execute 'nnoremap <silent> ' . s:buffer_previous_mapping
+  \ . ' :silent bprevious<CR>'
 
 " windows navigation
-nnoremap <silent> <S-Right> :silent call NextWindow()<CR>
-nnoremap <silent> <S-Left> :silent call PreviousWindow()<CR>
+execute 'nnoremap <silent> ' . s:window_next_mapping
+  \ . ' :silent call NextWindow()<CR>'
+execute 'nnoremap <silent> ' . s:window_previous_mapping
+  \ . ' :silent call PreviousWindow()<CR>'
 
 " unfold vimscipt's folds
-nnoremap <space> za
+execute 'nnoremap '          . s:unfold_vim_fold_mapping
+  \ . ' za'
 
 " for debug purposes
-nnoremap <leader>m :call DisableRedraw() <bar> messages<CR>
-  \:call EnableRedraw()
-nnoremap <leader>mm :call DisableRedraw() <bar> map<CR>:call EnableRedraw()
-nnoremap <leader>mmm :call DisableRedraw() <bar> abbreviate<CR>
-  \:call EnableRedraw()
-nnoremap <leader>mmmm :call DisableRedraw() <bar> command<CR>
-  \:call EnableRedraw()
-nnoremap <leader>mmmmm :call DisableRedraw() <bar> autocmd<CR>
-  \:call EnableRedraw()
+execute 'nnoremap '          . s:message_command_mapping
+  \ . ' :call DisableRedraw() <bar> messages<CR>'
+execute 'nnoremap '          . s:map_command_mapping
+  \ . ' :call DisableRedraw() <bar> map<CR>'
+execute 'nnoremap '          . s:abbreviate_command_mapping
+  \ . ' :call DisableRedraw() <bar> abbreviate<CR>'
+execute 'nnoremap '          . s:command_command_mapping
+  \ . ' :call DisableRedraw() <bar> command<CR>'
+execute 'nnoremap '          . s:autocmd_command_mapping
+  \ . ' :call DisableRedraw() <bar> autocmd<CR>'
 
 " }}}
 " Abbreviations {{{1
@@ -755,7 +796,7 @@ cnoreabbrev wqa call WriteQuitAll()
 cnoreabbrev xa call WriteQuitAll()
 
 " avoid intuitive buffer usage
-cnoreabbrev b call DisableRedraw()<CR>:call DisplayBuffersList(v:true)<CR>
+cnoreabbrev b call DisableRedraw()<bar>call DisplayBuffersList(v:true)<CR>
   \:ActivateBuffer
 
 " }}}
@@ -785,7 +826,8 @@ augroup vimrc_autocomands
   " 2) renable incremental search
   autocmd CmdlineEnter * call StopDrawing() |
     \ call timer_pause(s:timer, v:true)
-  autocmd CmdlineLeave * call timer_pause(s:timer, v:false)
+  autocmd CmdlineLeave * call EnableRedraw() |
+    \ call timer_pause(s:timer, v:false)
 
 "   }}}
 "   Unlisted-Buffers Autocommands Group {{{2
