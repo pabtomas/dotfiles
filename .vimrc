@@ -55,7 +55,8 @@ set noshowcmd
 "   Palette {{{2
 
 if exists('s:red') | unlet s:red | endif
-if exists('s:orange') | unlet s:orange | endif
+if exists('s:orange_1') | unlet s:orange_1 | endif
+if exists('s:orange_2') | unlet s:orange_2 | endif
 if exists('s:purple_1') | unlet s:purple_1 | endif
 if exists('s:purple_2') | unlet s:purple_2 | endif
 if exists('s:purple_3') | unlet s:purple_3 | endif
@@ -70,7 +71,8 @@ if exists('s:grey_2') | unlet s:grey_2 | endif
 if exists('s:black') | unlet s:black | endif
 
 const s:red = 196
-const s:orange = 202
+const s:orange_1 = 202
+const s:orange_2 = 208
 const s:purple_1 = 62
 const s:purple_2 = 140
 const s:purple_3 = 176
@@ -102,14 +104,14 @@ if &term[-9:] =~ '-256color'
   endif
 
   set wincolor=NormalAlt
-  execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
-    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+  execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
+    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:grey_2   . ' |
     \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
     \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
     \      highlight       MoreMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
     \      highlight       Question       term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       NonText        term=NONE           cterm=NONE         ctermfg=' . s:orange   . ' ctermbg=' . s:black    . ' |
+    \      highlight       NonText        term=NONE           cterm=NONE         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
     \      highlight       Comment        term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       Constant       term=NONE           cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
     \      highlight       Special        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -127,7 +129,7 @@ if &term[-9:] =~ '-256color'
     \      highlight       Todo           term=standout                          ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
     \      highlight       StatusLine     term=bold           cterm=bold         ctermfg=' . s:blue_3   . ' ctermbg=' . s:grey_2   . ' |
     \      highlight       StatusLineNC   term=bold           cterm=bold         ctermfg=' . s:blue_1   . ' ctermbg=' . s:grey_1   . ' |
-    \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange   . ' |
+    \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_1 . ' |
     \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
     \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1
@@ -156,8 +158,8 @@ if &term[-9:] =~ '-256color'
   highlight  link SpecialComment Special
   highlight  link Debug          Special
 else
-  highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=White   ctermbg=Magenta
-  highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red
+  highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=Black   ctermbg=DarkRed
+  highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red     ctermbg=DarkGrey
 endif
 
 execute s:redhighlight_cmd
@@ -755,10 +757,10 @@ const s:toggle_nerdtree_mapping =                s:shift_leader . s:shift_leader
 const s:call_quit_function_mapping =             s:leader       .            'q'
 const s:call_writequit_function_mapping =        s:leader       .            'w'
 const s:buffers_menu_mapping =                   s:leader       .       s:leader
-const s:buffer_next_mapping =                                         '<S-Down>'
-const s:buffer_previous_mapping =                                       '<S-Up>'
-const s:window_next_mapping =                                        '<S-Right>'
-const s:window_previous_mapping =                                     '<S-Left>'
+const s:buffer_next_mapping =                                                'K'
+const s:buffer_previous_mapping =                                            'J'
+const s:window_next_mapping =                                                'L'
+const s:window_previous_mapping =                                            'H'
 const s:unfold_vim_fold_mapping =                                      '<Space>'
 const s:message_command_mapping =                s:leader       .            'm'
 const s:map_command_mapping =                    s:leader       .           'mm'
