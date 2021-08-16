@@ -641,7 +641,7 @@ endfunction
 
 function! CheckDependencies()
   if v:version < 801
-    l:major_version = v:version / 100
+    let l:major_version = v:version / 100
     echoe 'Personal Error Message: your VimRC needs Vim 8.1 to be'
       \ . ' functionnal. Your Vim version is ' l:major_version . '.'
       \ . (v:version - l:major_version * 100)
