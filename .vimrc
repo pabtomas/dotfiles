@@ -45,7 +45,7 @@ set lazyredraw
 set ttyfast
 
 " max column where syntax is applied (default: 3000)
-set synmaxcol=79
+set synmaxcol=200
 
 " avoid visual mod lags
 set noshowcmd
@@ -188,7 +188,7 @@ function! ToggleRedHighlight()
   else
     execute s:redhighlight_cmd
     let s:redhighlight = v:true
-    set synmaxcol=79
+    set synmaxcol=200
   endif
 endfunction
 
