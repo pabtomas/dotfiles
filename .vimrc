@@ -493,7 +493,7 @@ function! Quit()
     silent quit
     return v:true
   else
-    echo 'Personal Warning Message: ' . bufname('%') . ' has unsaved
+    echomsg 'Personal Warning Message: ' . bufname('%') . ' has unsaved
       \ modifications'
     return v:false
   endif
@@ -642,7 +642,7 @@ endfunction
 function! CheckDependencies()
   if v:version < 801
     let l:major_version = v:version / 100
-    echoe 'Personal Error Message: your VimRC needs Vim 8.1 to be'
+    echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
       \ . ' functionnal. Your Vim version is ' l:major_version . '.'
       \ . (v:version - l:major_version * 100)
     quit
@@ -659,7 +659,7 @@ function! CheckDependencies()
   \ exists('g:NERDTreeMouseMode') == v:false ||
   \ exists('g:NERDTreeHijackNetrw') == v:false ||
   \ exists(':NERDTreeToggle') == v:false
-    echoe 'Personal Error Message: your VimRC needs NERDTree plugin'
+    echoerr 'Personal Error Message: your VimRC needs NERDTree plugin'
       \ . ' to be functionnal'
     quit
   endif
@@ -709,7 +709,7 @@ function! ActivateBuffer(buf)
   if buflisted(a:buf)
     execute 'silent buffer ' . a:buf
   else
-    echoe 'Personal Error Message: selected buffer is not listed'
+    echoerr 'Personal Error Message: selected buffer is not listed'
   endif
 endfunction
 
