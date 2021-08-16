@@ -641,7 +641,10 @@ endfunction
 
 function! CheckDependencies()
   if v:version < 801
-    echoe 'Personal Error Message: your VimRC needs Vim 8.1 to be functionnal'
+    l:major_version = v:version / 100
+    echoe 'Personal Error Message: your VimRC needs Vim 8.1 to be'
+      \ . ' functionnal. Your Vim version is ' l:major_version . '.'
+      \ . (v:version - l:major_version * 100)
     quit
   endif
 
@@ -656,8 +659,8 @@ function! CheckDependencies()
   \ exists('g:NERDTreeMouseMode') == v:false ||
   \ exists('g:NERDTreeHijackNetrw') == v:false ||
   \ exists(':NERDTreeToggle') == v:false
-    echoe 'Personal Error Message: your VimRC needs NERDTree plugin
-      \ to be functionnal'
+    echoe 'Personal Error Message: your VimRC needs NERDTree plugin'
+      \ . ' to be functionnal'
     quit
   endif
 endfunction
