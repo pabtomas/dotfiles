@@ -123,7 +123,7 @@ const s:red = 196
 const s:pink = 205
 
 const s:orange_1 = 202
-const s:orange_2 = 208
+const s:orange_2 = 209
 const s:orange_3 = 216
 const s:purple_1 = 62
 const s:purple_2 = 140
@@ -163,7 +163,7 @@ if &term[-9:] =~ '-256color'
 
   set wincolor=NormalAlt
   execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
-    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:grey     . ' |
+    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:orange_2 . ' ctermbg=' . s:grey     . ' |
     \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
     \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -187,9 +187,9 @@ if &term[-9:] =~ '-256color'
     \      highlight       Todo           term=standout                          ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
     \      highlight       StatusLine     term=bold           cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
     \      highlight       StatusLineNC   term=NONE           cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_1 . ' |
+    \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
     \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
     \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1
   highlight! link WarningMsg     ErrorMsg
   highlight  link String         Constant
@@ -586,10 +586,10 @@ function! Quit()
       let l:unlistedbuf_nb = l:unlistedbuf_nb + i
     endfor
 
-    echoerr 'Personal Error Message: this Quit() case is not expected, you have'
-      \ . ' to define it: ' . winnr('$') . ' Window(s) & ' . l:unlistedbuf_nb
-      \ . ' Unlisted-Buffer(s) & ' . len(getbufinfo({'buflisted':1}))
-      \ . ' Listed-Buffer(s) & '
+    echoerr 'Personal Error Message: this Quit() case is not expected,'
+      \ . ' you have to define it: ' . winnr('$') . ' Window(s) & '
+      \ . l:unlistedbuf_nb . ' Unlisted-Buffer(s) & '
+      \ . len(getbufinfo({'buflisted':1})) . ' Listed-Buffer(s) & '
       \ . len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden'))
       \ . ' Hidden-Buffer(s)'
     sleep 3
@@ -631,6 +631,8 @@ function! DisplayBuffersList(prompt_hitting)
   let l:listed_buf = getbufinfo({'buflisted':1})
   let l:buffers_nb = len(l:listed_buf)
 
+  " to prompt key hitting, echoed message's height have to be less than or
+  " equal to commandline's height
   if a:prompt_hitting == v:false
     let l:buffers_nb = l:buffers_nb + 1
   endif
@@ -649,10 +651,6 @@ function! DisplayBuffersList(prompt_hitting)
       echon l:line
     endif
   endfor
-endfunction
-
-function! StartDrawing()
-  let s:elapsed_time = 0
 endfunction
 
 let s:redraw_allowed = v:true
@@ -677,26 +675,45 @@ function! StopDrawing()
   endif
 endfunction
 
-function! UpdateBuffersLine()
-  if s:elapsed_time >= s:nb_ticks * s:tick
-    call StopDrawing()
-  else
+" display buffers list when timer is starting and erase buffers list when
+" timer reached time limit
+function! UpdateBuffersList()
+  if s:elapsed_time == 0
     let s:elapsed_time = s:elapsed_time + s:tick
+    redraw
     set cmdheight=1
     call DisplayBuffersList(v:false)
+  elseif s:elapsed_time < s:nb_ticks * s:tick
+    let s:elapsed_time = s:elapsed_time + s:tick
+  elseif s:elapsed_time >= s:nb_ticks * s:tick
+    call StopDrawing()
   endif
 endfunction
 
-" allow to monitor 2 events:
-" - buffers list adding/deleting
-" - current listed-buffer entering
+let s:last_cursor_line = line('.')
+
+" display buffers list when cursor line is moving
+function! CursorUpdateBuffersList()
+  if s:elapsed_time < s:nb_ticks * s:tick
+    let l:current_cursor_line = line('.')
+    if s:last_cursor_line != l:current_cursor_line
+      set cmdheight=1
+      call DisplayBuffersList(v:false)
+      let s:last_cursor_line = line('.')
+    endif
+  endif
+endfunction
+
 function! s:MonitorBuffersList(timer_id)
   let l:current_sizebufist = len(getbufinfo({'buflisted':1}))
   let l:current_buffer = bufnr()
 
+  " monitor 2 events:
+  " - adding/deleting listed-buffers,
+  " - moving current buffer to another buffer.
   if (s:lasttick_sizebuflist != l:current_sizebufist) ||
   \ (s:lasttick_buffer != l:current_buffer)
-    call StartDrawing()
+    let s:elapsed_time = 0
   endif
 
   " update the buffers list displayed in commandline
@@ -985,8 +1002,8 @@ augroup vimrc_autocomands
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
 
-  " scrolling cursor erases command line content -> this line disable this
-  autocmd CursorMoved,CursorMovedI * :call UpdateBuffersList()
+  " allow to fix hidden content in command line when cursor is scrolling
+  autocmd CursorMoved,CursorMovedI * :call CursorUpdateBuffersList()
 
 "   }}}
 "   Color Autocommands Group {{{2
