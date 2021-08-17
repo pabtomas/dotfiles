@@ -13,9 +13,55 @@ syntax on
 set list
 set listchars=tab:▸\ ,eol:.
 
+function! FileName(modified, is_current_win)
+  if &modified == a:modified
+    if (g:actual_curwin == win_getid()) == a:is_current_win
+      return fnamemodify(bufname('%'), ":.")
+    else
+      return ''
+    endif
+  else
+    return ''
+  endif
+endfunction
+
+function! StartLine()
+  if g:actual_curwin == win_getid()
+    return '━━━┫'
+  else
+    return '───┤'
+  endif
+endfunction
+
+function! EndLine()
+  let l:length = winwidth(winnr()) - (
+    \ len(fnamemodify(bufname('%'), ":."))
+    \ + len('Type: ') + len(&ft)
+    \ + len('Win ') + len(winnr())
+    \ + len('Buf ') + len(bufnr())
+    \ + len('Line /') + len(line('.'))
+    \ + len(filter(getbufinfo(), 'v:val.bufnr == bufnr()')[0].linecount)
+    \ + len('Col ') + len(virtcol('.')) + 5 + len(' - ') * 5 + 2)
+  if g:actual_curwin == win_getid()
+    return '┣' . repeat('━', length)
+  else
+    return '├' . repeat('─', length)
+  endif
+endfunction
+
 " status line content for each window :
 " file + filetype + current line + total line
-set statusline=%f\ -\ FileType:\ %y%=%c,\ [%l/%L]
+set statusline=%{StartLine()}
+set statusline+=\ %2*%{FileName(v:false,v:true)}%0*
+                 \%2*%{FileName(v:false,v:false)}%0*
+                 \%4*%{FileName(v:true,v:false)}%0*
+                 \%1*%{FileName(v:true,v:true)}%0*
+set statusline+=\ -\ Type:\ %3*%{&ft}%0*
+set statusline+=\ -\ Win\ %3*%{winnr()}%0*
+set statusline+=\ -\ Buf\ %3*%n%0*
+set statusline+=\ -\ Line\ %3*%l%0*/%3*%L%0*
+set statusline+=\ -\ Col\ %3*%c%0*
+set statusline+=\ %{EndLine()}
 
 " display status line
 set laststatus=2
@@ -55,47 +101,59 @@ set noshowcmd
 "   Palette {{{2
 
 if exists('s:red') | unlet s:red | endif
+if exists('s:pink') | unlet s:pink | endif
 if exists('s:orange_1') | unlet s:orange_1 | endif
 if exists('s:orange_2') | unlet s:orange_2 | endif
+if exists('s:orange_3') | unlet s:orange_3 | endif
 if exists('s:purple_1') | unlet s:purple_1 | endif
 if exists('s:purple_2') | unlet s:purple_2 | endif
 if exists('s:purple_3') | unlet s:purple_3 | endif
 if exists('s:blue_1') | unlet s:blue_1 | endif
 if exists('s:blue_2') | unlet s:blue_2 | endif
 if exists('s:blue_3') | unlet s:blue_3 | endif
-if exists('s:green') | unlet s:green | endif
+if exists('s:blue_4') | unlet s:blue_4 | endif
+if exists('s:green_1') | unlet s:green_1 | endif
+if exists('s:green_2') | unlet s:green_2 | endif
 if exists('s:white_1') | unlet s:white_1 | endif
 if exists('s:white_2') | unlet s:white_2 | endif
-if exists('s:grey_1') | unlet s:grey_1 | endif
-if exists('s:grey_2') | unlet s:grey_2 | endif
+if exists('s:grey') | unlet s:grey | endif
 if exists('s:black') | unlet s:black | endif
 
 const s:red = 196
+const s:pink = 205
+
 const s:orange_1 = 202
 const s:orange_2 = 208
+const s:orange_3 = 216
 const s:purple_1 = 62
 const s:purple_2 = 140
 const s:purple_3 = 176
 const s:blue_1 = 69
 const s:blue_2 = 105
 const s:blue_3 = 111
-const s:green = 42
+const s:blue_4 = 45
+const s:green_1 = 42
+const s:green_2 = 120
 const s:white_1 = 147
 const s:white_2 = 153
-const s:grey_1 = 235
-const s:grey_2 = 236
+const s:grey = 236
 const s:black = 232
 
 "   }}}
 "   Scheme {{{2
 
-let s:redhighlight_cmd =
-  \ 'highlight RedHighlight ctermfg=Black ctermbg=DarkRed'
+let s:pink_user = 'highlight User1 term=bold cterm=bold ctermfg=Red'
+let s:green_user = 'highlight User2 term=bold cterm=bold ctermfg=Green'
+let s:orange_user = 'highlight User3 term=bold cterm=bold ctermfg=Yellow'
+let s:red_user = 'highlight User4 ctermfg=Magenta'
+let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
 if &term[-9:] =~ '-256color'
 
-  let s:redhighlight_cmd =
-    \ 'highlight RedHighlight ctermfg=' . s:black . ' ctermbg=DarkRed'
+  let s:pink_user = 'highlight User1 term=bold cterm=bold ctermfg=' . s:pink
+  let s:green_user = 'highlight User2 term=bold cterm=bold ctermfg=' . s:green_2
+  let s:orange_user = 'highlight User3 term=bold cterm=bold ctermfg=' . s:orange_3
+  let s:red_user = 'highlight User4 ctermfg=Red'
 
   set background=dark
   highlight clear
@@ -105,7 +163,7 @@ if &term[-9:] =~ '-256color'
 
   set wincolor=NormalAlt
   execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
-    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:grey_2   . ' |
+    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:grey     . ' |
     \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
     \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -120,15 +178,15 @@ if &term[-9:] =~ '-256color'
     \      highlight       PreProc        term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       Type           term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
     \      highlight       Visual         term=reverse        cterm=reverse                                 ctermbg=' . s:black    . ' |
-    \      highlight       LineNr         term=NONE           cterm=NONE         ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
-    \      highlight       Search         term=reverse        cterm=reverse      ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
-    \      highlight       IncSearch      term=reverse        cterm=reverse      ctermfg=' . s:green    . ' ctermbg=' . s:black    . ' |
+    \      highlight       LineNr         term=NONE           cterm=NONE         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+    \      highlight       Search         term=reverse        cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+    \      highlight       IncSearch      term=reverse        cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
     \      highlight       Tag            term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
     \      highlight       Error                                                 ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
     \      highlight       ErrorMsg       term=bold           cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
     \      highlight       Todo           term=standout                          ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
-    \      highlight       StatusLine     term=bold           cterm=bold         ctermfg=' . s:blue_3   . ' ctermbg=' . s:grey_2   . ' |
-    \      highlight       StatusLineNC   term=bold           cterm=bold         ctermfg=' . s:blue_1   . ' ctermbg=' . s:grey_1   . ' |
+    \      highlight       StatusLine     term=bold           cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
+    \      highlight       StatusLineNC   term=NONE           cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
     \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_1 . ' |
     \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -162,6 +220,10 @@ else
   highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red     ctermbg=DarkGrey
 endif
 
+execute s:pink_user
+execute s:green_user
+execute s:orange_user
+execute s:red_user
 execute s:redhighlight_cmd
 
 "   }}}
@@ -433,70 +495,109 @@ endfunction
 "   }}}
 "   Quit functions {{{2
 
+" W   - winnr('$')
+" ==N - is equal N
+" =>N - is greater than N
+" <=N - is less than N
+" N   - distinct number of windows/u-buffer/l-buffers/h-buffers
 function! Quit()
-  if &modified == 0
+  if &modified == v:false
 
     let l:current_buf = bufnr()
 
+    " case 1:               current
+    "   (>=1) win & (==1) unlisted-buf & (>=0) listed-buf & (>=0) hidden-buf
     let l:is_currentbuf_listed = buflisted(current_buf)
 
-    if l:is_currentbuf_listed == v:false
+    if (l:is_currentbuf_listed == v:false)
       silent quit
       return v:true
     endif
 
-    " here there is: - a current listed-buffer.
-
-    let l:more_than_one_listedbuf = (len(getbufinfo({'buflisted':1})) > 1)
-
-    if l:more_than_one_listedbuf == v:false
-      silent quit
-      return v:true
-    endif
-
-    " here there are: - a current listed-buffer,
-    "                 - more than 1 listed-buffer.
-
+    " case 2:                                   current
+    "   (==1) win & (==0) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
     let l:more_than_one_window = (winnr('$') > 1)
+    let l:at_least_one_hidden_listedbuf =
+      \ (empty(filter(getbufinfo({'buflisted':1}), 'v:val.hidden')) == v:false)
 
-    let l:lastused_hiddenbuf = map(sort(filter(getbufinfo(
-      \ {'buflisted':1}), 'v:val.hidden'), {x, y -> y.lastused - x.lastused}),
-      \ {key, val -> val.bufnr})[0]
+    if (l:more_than_one_window == v:false) &&
+    \ (l:at_least_one_hidden_listedbuf == v:false)
+      silent quit
+      return v:true
+    endif
 
-    if l:more_than_one_window == v:false
+    " case 3:                                   current
+    "   (==1) win & (==0) unlisted-buf & (==1) listed-buf & (>=1) hidden-buf
+    let l:lastused_hiddenbuf = 1
+    if l:at_least_one_hidden_listedbuf
+      let l:lastused_hiddenbuf = map(sort(filter(getbufinfo(
+        \ {'buflisted':1}), 'v:val.hidden'),
+        \ {x, y -> y.lastused - x.lastused}), {key, val -> val.bufnr})[0]
+    endif
+
+    if (l:more_than_one_window == v:false) && l:at_least_one_hidden_listedbuf
       execute 'silent buffer '  . l:lastused_hiddenbuf
       execute 'silent bdelete ' . l:current_buf
       return v:true
     endif
 
-    " here there are: - a current listed-buffer,
-    "                 - more than 1 listed-buffer,
-    "                 - more than 1 window.
-
-    let l:more_than_one_active_listedbuf = (ActiveListedBuffers() > 1)
+    " case 4:                                     current
+    "   (>=2) win & (<=W-2) unlisted-buf & (==1) listed-buf & (>=0) hidden-buf
     let l:current_buf_active_more_than_once =
       \ (len(win_findbuf(l:current_buf)) > 1)
 
-    if (l:more_than_one_active_listedbuf == v:false) &&
-    \ (l:current_buf_active_more_than_once == v:false)
+    if l:more_than_one_window && l:current_buf_active_more_than_once
+      silent quit
+      return v:true
+    endif
+
+    " case 5:                                   current
+    "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
+    let l:more_than_one_active_listedbuf = (ActiveListedBuffers() > 1)
+
+    if l:more_than_one_window && (l:at_least_one_hidden_listedbuf == v:false)
+    \ && (l:current_buf_active_more_than_once == v:false)
+    \ && (l:more_than_one_active_listedbuf == v:false)
+      silent quitall
+      return v:true
+    endif
+
+    " case 6:                                   current
+    "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (>=0) hidden-buf
+    if l:more_than_one_window && l:at_least_one_hidden_listedbuf
+    \ && (l:current_buf_active_more_than_once == v:false)
+    \ && (l:more_than_one_active_listedbuf == v:false)
       execute 'silent buffer '  . l:lastused_hiddenbuf
       execute 'silent bdelete ' . l:current_buf
       return v:true
     endif
 
-    " here there are: - a current listed-buffer,
-    "                 - more than 1 listed-buffer,
-    "                 - more than 1 window,
-    "                 - more than 1 active listed-buffer OR
-    "                     current buffer is active several times
+    " case 7:                                   current
+    "   (>=2) win & (>=0) unlisted-buf & (>=2) listed-buf & (>=0) hidden-buf
+    if l:more_than_one_window && l:more_than_one_active_listedbuf
+    \ && (l:current_buf_active_more_than_once == v:false)
+      silent quit
+      execute 'silent bdelete ' . l:current_buf
+      return v:true
+    endif
 
-    silent quit
-    return v:true
+    let l:unlistedbuf_nb = 0
+    for i in getbufinfo()->map({key, val -> len(val.windows)})
+      let l:unlistedbuf_nb = l:unlistedbuf_nb + i
+    endfor
+
+    echoerr 'Personal Error Message: this Quit() case is not expected, you have'
+      \ . ' to define it: ' . winnr('$') . ' Window(s) & ' . l:unlistedbuf_nb
+      \ . ' Unlisted-Buffer(s) & ' . len(getbufinfo({'buflisted':1}))
+      \ . ' Listed-Buffer(s) & '
+      \ . len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden'))
+      \ . ' Hidden-Buffer(s)'
+    sleep 3
   else
     echomsg 'Personal Warning Message: ' . bufname('%') . ' has unsaved
       \ modifications'
-    return v:false
   endif
+  return v:false
 endfunction
 
 function! WriteQuit()
@@ -550,18 +651,6 @@ function! DisplayBuffersList(prompt_hitting)
   endfor
 endfunction
 
-" update the buffers list displayed in commandline
-function! UpdateCommandline()
-  if s:elapsed_time < s:nb_ticks * s:tick
-    let s:elapsed_time = s:elapsed_time + s:tick
-    redraw
-    set cmdheight=1
-    call DisplayBuffersList(v:false)
-  else
-    call StopDrawing()
-  endif
-endfunction
-
 function! StartDrawing()
   let s:elapsed_time = 0
 endfunction
@@ -588,6 +677,16 @@ function! StopDrawing()
   endif
 endfunction
 
+function! UpdateBuffersLine()
+  if s:elapsed_time >= s:nb_ticks * s:tick
+    call StopDrawing()
+  else
+    let s:elapsed_time = s:elapsed_time + s:tick
+    set cmdheight=1
+    call DisplayBuffersList(v:false)
+  endif
+endfunction
+
 " allow to monitor 2 events:
 " - buffers list adding/deleting
 " - current listed-buffer entering
@@ -600,7 +699,8 @@ function! s:MonitorBuffersList(timer_id)
     call StartDrawing()
   endif
 
-  call UpdateCommandline()
+  " update the buffers list displayed in commandline
+  call UpdateBuffersList()
 
   " avoid commandline and risky commands for unlisted-buffers
   if buflisted(l:current_buffer)
@@ -613,7 +713,8 @@ function! s:MonitorBuffersList(timer_id)
   let s:lasttick_buffer = l:current_buffer
 endfunction
 
-let s:timer =
+" disable timers accumulation after sourcing vimrc
+if exists('s:timer') | call timer_stop(s:timer) | endif | let s:timer =
   \ timer_start(s:tick, function('s:MonitorBuffersList'), {'repeat': -1})
 
 "   }}}
@@ -883,6 +984,9 @@ augroup vimrc_autocomands
 
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
+
+  " scrolling cursor erases command line content -> this line disable this
+  autocmd CursorMoved,CursorMovedI * :call UpdateBuffersList()
 
 "   }}}
 "   Color Autocommands Group {{{2
