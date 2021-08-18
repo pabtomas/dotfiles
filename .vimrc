@@ -68,7 +68,6 @@ if exists('s:black') | unlet s:black | endif
 
 const s:red = 196
 const s:pink = 205
-
 const s:orange_1 = 202
 const s:orange_2 = 209
 const s:orange_3 = 216
