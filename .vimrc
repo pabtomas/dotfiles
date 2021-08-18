@@ -28,6 +28,15 @@ set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 " always display the number of changes after a command
 set report=0
 
+" disable default shortmessage config
+" n       -> show [New] instead of [New File]
+" x       -> show [unix] instead of [unix format]
+" t and T -> truncate too long messages
+" s       -> do not show search keys instructions when search is used
+" A       -> do not give message when an existing swap file is found
+" F       -> do not give the file info when editing a file
+set shortmess=nxtsTAF
+
 " }}}
 " Performance {{{1
 
@@ -211,7 +220,7 @@ set laststatus=2
 function! FileName(modified, is_current_win)
   let l:check_current_win = (g:actual_curwin == win_getid())
   if (&modified == a:modified) && (l:check_current_win == a:is_current_win)
-    return fnamemodify(bufname('%'), ":.")
+    return fnamemodify(bufname('%'), ':.')
   else
     return ''
   endif
@@ -227,16 +236,49 @@ endfunction
 
 function! EndLine()
   let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
-    \ + len(fnamemodify(bufname('%'), ":."))
+    \ + len(fnamemodify(bufname('%'), ':.'))
     \ + len(' - Type: ') + len(&ft)
     \ + len(' - Win ') + len(winnr())
     \ + len(' - Buf ') + len(bufnr())
     \ + len(' - Line ') + len(line('.')) + len('/') + len(line('$'))
-    \ + len(' - Col ') + len(virtcol('.')) + len(split('├ ', '\zs')))
+    \ + len(' - Col ') + len(virtcol('.'))
+    \ + len(split(' ├', '\zs')))
   if g:actual_curwin == win_getid()
+    let l:length = l:length - (len(' - ') + len(Mode()) + len('mode'))
     return '┣' . repeat('━', length)
   else
     return '├' . repeat('─', length)
+  endif
+endfunction
+
+let s:modes = {
+  \ 'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
+  \ 'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
+  \ 'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
+  \ 'r': 'PROMPT', '!': 'SHELL',
+\ }
+
+function! Mode()
+  if g:actual_curwin == win_getid()
+    return s:modes[mode()[0]] . ' '
+  else
+    return ''
+  endif
+endfunction
+
+function! StartMode()
+  if g:actual_curwin == win_getid()
+    return ' - '
+  else
+    return ''
+  endif
+endfunction
+
+function! EndMode()
+  if g:actual_curwin == win_getid()
+    return 'mode'
+  else
+    return ''
   endif
 endfunction
 
@@ -251,6 +293,7 @@ set statusline+=\ -\ Win\ %3*%{winnr()}%0*
 set statusline+=\ -\ Buf\ %3*%{bufnr()}%0*
 set statusline+=\ -\ Line\ %3*%{line('.')}%0*/%3*%{line('$')}%0*
 set statusline+=\ -\ Col\ %3*%{virtcol('.')}%0*
+set statusline+=\%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
 set statusline+=\ %{EndLine()}
 
 "   }}}
@@ -638,10 +681,10 @@ function! DisplayBuffersList(prompt_hitting)
 
   execute 'set cmdheight=' . l:buffers_nb
   for l:buf in l:listed_buf
-    let l:line = " " . l:buf.bufnr . ": \"" . fnamemodify(l:buf.name, ':.')
-      \ . "\""
+    let l:line = ' ' . l:buf.bufnr . ': "' . fnamemodify(l:buf.name, ':.')
+      \ . '"'
     let l:line = l:line .
-      \ repeat(" ", &columns - 1 - strlen(l:line)) . "\n"
+      \ repeat(' ', &columns - 1 - strlen(l:line)) . "\n"
     if l:buf.bufnr == bufnr()
       echohl CurrentBuffer | echon l:line | echohl None
     elseif l:buf.hidden == v:false
@@ -674,19 +717,11 @@ function! StopDrawing()
   endif
 endfunction
 
-" display buffers list when timer is starting and erase buffers list when
-" timer reached time limit
-let s:last_cursor_line = line('.')
-
-" display buffers list when cursor line is moving
-function! CursorUpdateBuffersList()
+" display buffers list when Vim state is safe
+function! UpdateBuffersList()
   if s:elapsed_time < s:nb_ticks * s:tick
-    let l:current_cursor_line = line('.')
-    if s:last_cursor_line != l:current_cursor_line
-      set cmdheight=1
-      call DisplayBuffersList(v:false)
-      let s:last_cursor_line = line('.')
-    endif
+    set cmdheight=1
+    call DisplayBuffersList(v:false)
   endif
 endfunction
 
@@ -708,9 +743,9 @@ function! s:MonitorBuffersList(timer_id)
     redraw
     set cmdheight=1
     call DisplayBuffersList(v:false)
-  elseif s:elapsed_time < s:nb_ticks * s:tick
+  elseif (s:elapsed_time > 0) && (s:elapsed_time < s:nb_ticks * s:tick)
     let s:elapsed_time = s:elapsed_time + s:tick
-  elseif s:elapsed_time >= s:nb_ticks * s:tick
+  else
     call StopDrawing()
   endif
 
@@ -785,8 +820,8 @@ let g:NERDTreeMapOpenInTab = ''
 let g:NERDTreeMapOpenInTabSilent = ''
 
 " disable splitting window with NERDTree
-let g:NERDTreeMapOpenSplit = ""
-let g:NERDTreeMapOpenVSplit = ""
+let g:NERDTreeMapOpenSplit = ''
+let g:NERDTreeMapOpenVSplit = ''
 
 " unused directory exploration command
 let g:NERDTreeMapOpenExpl = ''
@@ -1000,8 +1035,8 @@ augroup vimrc_autocomands
 "   }}}
 "   Fixing Autocommands Group {{{2
 
-  " allow to fix hidden content in command line when cursor is scrolling
-  autocmd CursorMoved,CursorMovedI * :call CursorUpdateBuffersList()
+  " update buffers list in command line after unsafe state events occured
+  autocmd SafeState,SafeStateAgain * :call UpdateBuffersList()
 
   " renable incremental search
   autocmd CmdlineEnter * call timer_pause(s:timer, v:true)
