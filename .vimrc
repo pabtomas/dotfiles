@@ -209,12 +209,9 @@ endfunction
 set laststatus=2
 
 function! FileName(modified, is_current_win)
-  if &modified == a:modified
-    if (g:actual_curwin == win_getid()) == a:is_current_win
-      return fnamemodify(bufname('%'), ":.")
-    else
-      return ''
-    endif
+  let l:check_current_win = (g:actual_curwin == win_getid())
+  if (&modified == a:modified) && (l:check_current_win == a:is_current_win)
+    return fnamemodify(bufname('%'), ":.")
   else
     return ''
   endif
