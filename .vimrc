@@ -92,7 +92,7 @@ const s:black = 232
 let s:pink_user = 'highlight User1 term=bold cterm=bold ctermfg=Red'
 let s:green_user = 'highlight User2 term=bold cterm=bold ctermfg=Green'
 let s:orange_user = 'highlight User3 term=bold cterm=bold ctermfg=Yellow'
-let s:red_user = 'highlight User4 ctermfg=Magenta'
+let s:red_user = 'highlight User4 ctermfg=Red'
 let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
 if &term[-9:] =~ '-256color'
@@ -165,6 +165,8 @@ if &term[-9:] =~ '-256color'
 else
   highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=Black   ctermbg=DarkRed
   highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red     ctermbg=DarkGrey
+  highlight       StatusLine     term=bold           cterm=bold           ctermfg=LightBlue
+  highlight       StatusLineNC   term=NONE           cterm=NONE           ctermfg=Blue
 endif
 
 execute s:pink_user
