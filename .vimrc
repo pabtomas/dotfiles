@@ -680,19 +680,6 @@ endfunction
 
 " display buffers list when timer is starting and erase buffers list when
 " timer reached time limit
-function! UpdateBuffersList()
-  if s:elapsed_time == 0
-    let s:elapsed_time = s:elapsed_time + s:tick
-    redraw
-    set cmdheight=1
-    call DisplayBuffersList(v:false)
-  elseif s:elapsed_time < s:nb_ticks * s:tick
-    let s:elapsed_time = s:elapsed_time + s:tick
-  elseif s:elapsed_time >= s:nb_ticks * s:tick
-    call StopDrawing()
-  endif
-endfunction
-
 let s:last_cursor_line = line('.')
 
 " display buffers list when cursor line is moving
@@ -720,7 +707,16 @@ function! s:MonitorBuffersList(timer_id)
   endif
 
   " update the buffers list displayed in commandline
-  call UpdateBuffersList()
+  if s:elapsed_time == 0
+    let s:elapsed_time = s:elapsed_time + s:tick
+    redraw
+    set cmdheight=1
+    call DisplayBuffersList(v:false)
+  elseif s:elapsed_time < s:nb_ticks * s:tick
+    let s:elapsed_time = s:elapsed_time + s:tick
+  elseif s:elapsed_time >= s:nb_ticks * s:tick
+    call StopDrawing()
+  endif
 
   " avoid commandline and risky commands for unlisted-buffers
   if buflisted(l:current_buffer)
