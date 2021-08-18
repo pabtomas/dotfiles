@@ -13,59 +13,6 @@ syntax on
 set list
 set listchars=tab:▸\ ,eol:.
 
-function! FileName(modified, is_current_win)
-  if &modified == a:modified
-    if (g:actual_curwin == win_getid()) == a:is_current_win
-      return fnamemodify(bufname('%'), ":.")
-    else
-      return ''
-    endif
-  else
-    return ''
-  endif
-endfunction
-
-function! StartLine()
-  if g:actual_curwin == win_getid()
-    return '━━━┫'
-  else
-    return '───┤'
-  endif
-endfunction
-
-function! EndLine()
-  let l:length = winwidth(winnr()) - (
-    \ len(fnamemodify(bufname('%'), ":."))
-    \ + len('Type: ') + len(&ft)
-    \ + len('Win ') + len(winnr())
-    \ + len('Buf ') + len(bufnr())
-    \ + len('Line /') + len(line('.'))
-    \ + len(filter(getbufinfo(), 'v:val.bufnr == bufnr()')[0].linecount)
-    \ + len('Col ') + len(virtcol('.')) + 5 + len(' - ') * 5 + 2)
-  if g:actual_curwin == win_getid()
-    return '┣' . repeat('━', length)
-  else
-    return '├' . repeat('─', length)
-  endif
-endfunction
-
-" status line content for each window :
-" file + filetype + current line + total line
-set statusline=%{StartLine()}
-set statusline+=\ %2*%{FileName(v:false,v:true)}%0*
-                 \%2*%{FileName(v:false,v:false)}%0*
-                 \%4*%{FileName(v:true,v:false)}%0*
-                 \%1*%{FileName(v:true,v:true)}%0*
-set statusline+=\ -\ Type:\ %3*%{&ft}%0*
-set statusline+=\ -\ Win\ %3*%{winnr()}%0*
-set statusline+=\ -\ Buf\ %3*%n%0*
-set statusline+=\ -\ Line\ %3*%l%0*/%3*%L%0*
-set statusline+=\ -\ Col\ %3*%c%0*
-set statusline+=\ %{EndLine()}
-
-" display status line
-set laststatus=2
-
 " highlight corresponding patterns during a search
 set hlsearch incsearch
 
@@ -253,6 +200,61 @@ function! ToggleRedHighlight()
     set synmaxcol=200
   endif
 endfunction
+
+"   }}}
+"   Status line {{{2
+
+" display status line
+set laststatus=2
+
+function! FileName(modified, is_current_win)
+  if &modified == a:modified
+    if (g:actual_curwin == win_getid()) == a:is_current_win
+      return fnamemodify(bufname('%'), ":.")
+    else
+      return ''
+    endif
+  else
+    return ''
+  endif
+endfunction
+
+function! StartLine()
+  if g:actual_curwin == win_getid()
+    return '━━━┫'
+  else
+    return '───┤'
+  endif
+endfunction
+
+function! EndLine()
+  let l:length = winwidth(winnr()) - (
+    \ len(fnamemodify(bufname('%'), ":."))
+    \ + len('Type: ') + len(&ft)
+    \ + len('Win ') + len(winnr())
+    \ + len('Buf ') + len(bufnr())
+    \ + len('Line /') + len(line('.'))
+    \ + len(filter(getbufinfo(), 'v:val.bufnr == bufnr()')[0].linecount)
+    \ + len('Col ') + len(virtcol('.')) + 5 + len(' - ') * 5 + 2)
+  if g:actual_curwin == win_getid()
+    return '┣' . repeat('━', length)
+  else
+    return '├' . repeat('─', length)
+  endif
+endfunction
+
+" status line content
+set statusline=%{StartLine()}
+set statusline+=\ %2*%{FileName(v:false,v:true)}%0*
+                 \%2*%{FileName(v:false,v:false)}%0*
+                 \%4*%{FileName(v:true,v:false)}%0*
+                 \%1*%{FileName(v:true,v:true)}%0*
+set statusline+=\ -\ Type:\ %3*%{&ft}%0*
+set statusline+=\ -\ Win\ %3*%{winnr()}%0*
+set statusline+=\ -\ Buf\ %3*%n%0*
+set statusline+=\ -\ Line\ %3*%l%0*/%3*%L%0*
+set statusline+=\ -\ Col\ %3*%c%0*
+set statusline+=\ %{EndLine()}
 
 "   }}}
 " }}}
