@@ -228,14 +228,13 @@ function! StartLine()
 endfunction
 
 function! EndLine()
-  let l:length = winwidth(winnr()) - (
-    \ len(fnamemodify(bufname('%'), ":."))
-    \ + len('Type: ') + len(&ft)
-    \ + len('Win ') + len(winnr())
-    \ + len('Buf ') + len(bufnr())
-    \ + len('Line /') + len(line('.'))
-    \ + len(filter(getbufinfo(), 'v:val.bufnr == bufnr()')[0].linecount)
-    \ + len('Col ') + len(virtcol('.')) + 5 + len(' - ') * 5 + 2)
+  let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
+    \ + len(fnamemodify(bufname('%'), ":."))
+    \ + len(' - Type: ') + len(&ft)
+    \ + len(' - Win ') + len(winnr())
+    \ + len(' - Buf ') + len(bufnr())
+    \ + len(' - Line ') + len(line('.')) + len('/') + len(line('$'))
+    \ + len(' - Col ') + len(virtcol('.')) + len(split('├ ', '\zs')))
   if g:actual_curwin == win_getid()
     return '┣' . repeat('━', length)
   else
@@ -251,9 +250,9 @@ set statusline+=\ %2*%{FileName(v:false,v:true)}%0*
                  \%1*%{FileName(v:true,v:true)}%0*
 set statusline+=\ -\ Type:\ %3*%{&ft}%0*
 set statusline+=\ -\ Win\ %3*%{winnr()}%0*
-set statusline+=\ -\ Buf\ %3*%n%0*
-set statusline+=\ -\ Line\ %3*%l%0*/%3*%L%0*
-set statusline+=\ -\ Col\ %3*%c%0*
+set statusline+=\ -\ Buf\ %3*%{bufnr()}%0*
+set statusline+=\ -\ Line\ %3*%{line('.')}%0*/%3*%{line('$')}%0*
+set statusline+=\ -\ Col\ %3*%{virtcol('.')}%0*
 set statusline+=\ %{EndLine()}
 
 "   }}}
@@ -1004,8 +1003,15 @@ augroup vimrc_autocomands
   " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
 
+"   }}}
+"   Fixing Autocommands Group {{{2
+
   " allow to fix hidden content in command line when cursor is scrolling
   autocmd CursorMoved,CursorMovedI * :call CursorUpdateBuffersList()
+
+  " renable incremental search
+  autocmd CmdlineEnter * call timer_pause(s:timer, v:true)
+  autocmd CmdlineLeave * call timer_pause(s:timer, v:false)
 
 "   }}}
 "   Color Autocommands Group {{{2
@@ -1020,12 +1026,13 @@ augroup vimrc_autocomands
 "   }}}
 "   Listed-Buffers Autocommands Group {{{2
 
-  " 1) entering commandline erases displayed buffers list,
-  " 2) renable incremental search
-  autocmd CmdlineEnter * call StopDrawing() |
-    \ call timer_pause(s:timer, v:true)
-  autocmd CmdlineLeave * call EnableRedraw() |
-    \ call timer_pause(s:timer, v:false)
+  " entering commandline erases displayed buffers list,
+  autocmd CmdlineEnter * call StopDrawing()
+
+  " calling StopTimer() hides commandline content, so for some
+  " commands/mappings, disabling hidding calls is necessary to show output
+  " (and reenabling hidding calls later is also necessary)
+  autocmd CmdlineLeave * call EnableRedraw()
 
 "   }}}
 "   Unlisted-Buffers Autocommands Group {{{2
