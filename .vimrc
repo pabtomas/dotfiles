@@ -100,18 +100,9 @@ const s:black = 232
 "   }}}
 "   Scheme {{{2
 
-let s:pink_user = 'highlight User1 term=bold cterm=bold ctermfg=Red'
-let s:green_user = 'highlight User2 term=bold cterm=bold ctermfg=Green'
-let s:orange_user = 'highlight User3 term=bold cterm=bold ctermfg=Yellow'
-let s:red_user = 'highlight User4 ctermfg=Red'
 let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
 if &term[-9:] =~ '-256color'
-
-  let s:pink_user = 'highlight User1 term=bold cterm=bold ctermfg=' . s:pink
-  let s:green_user = 'highlight User2 term=bold cterm=bold ctermfg=' . s:green_2
-  let s:orange_user = 'highlight User3 term=bold cterm=bold ctermfg=' . s:orange_3
-  let s:red_user = 'highlight User4 ctermfg=Red'
 
   set background=dark
   highlight clear
@@ -149,7 +140,10 @@ if &term[-9:] =~ '-256color'
     \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
     \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
-    \      highlight       PMenu          term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black
+    \      highlight       PMenu          term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
+    \      highlight       User1          term=bold           cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+    \      highlight       User2          term=bold           cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
+    \      highlight       User3          term=bold           cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black
   highlight! link WarningMsg     ErrorMsg
   highlight  link String         Constant
   highlight  link Character      Constant
@@ -175,16 +169,17 @@ if &term[-9:] =~ '-256color'
   highlight  link SpecialComment Special
   highlight  link Debug          Special
 else
-  highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=Black   ctermbg=DarkRed
-  highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red     ctermbg=DarkGrey
-  highlight       StatusLine     term=bold           cterm=bold           ctermfg=LightBlue
-  highlight       StatusLineNC   term=NONE           cterm=NONE           ctermfg=Blue
+  highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=Black     ctermbg=DarkRed
+  highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red       ctermbg=DarkGrey
+  highlight       PMenu          term=NONE           cterm=NONE           ctermfg=White     ctermbg=NONE
+  highlight       StatusLine     term=bold           cterm=bold           ctermfg=LightBlue ctermbg=NONE
+  highlight       StatusLineNC   term=NONE           cterm=NONE           ctermfg=Blue      ctermbg=NONE
+  highlight       User1          term=bold           cterm=bold           ctermfg=Red       ctermbg=NONE
+  highlight       User2          term=bold           cterm=bold           ctermfg=Green     ctermbg=NONE
+  highlight       User3          term=bold           cterm=bold           ctermfg=Yellow    ctermbg=NONE
 endif
 
-execute s:pink_user
-execute s:green_user
-execute s:orange_user
-execute s:red_user
+highlight         User4          term=bold           cterm=bold           ctermfg=Red
 execute s:redhighlight_cmd
 
 "   }}}
