@@ -233,10 +233,9 @@ endfunction
 
 function! EndLine()
   let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
-    \ + len(fnamemodify(bufname('%'), ':.'))
+    \ + len(bufnr()) + len(':') + len(fnamemodify(bufname('%'), ':.'))
     \ + len(' - Type: ') + len(&ft)
     \ + len(' - Win ') + len(winnr())
-    \ + len(' - Buf ') + len(bufnr())
     \ + len(' - Line ') + len(line('.')) + len('/') + len(line('$'))
     \ + len(' - Col ') + len(virtcol('.'))
     \ + len(split(' ├', '\zs')))
@@ -286,7 +285,7 @@ function! StartMatch()
     return ''
   endif
   let s:matches = searchcount(#{recompute: 1, maxcount: 0, timeout: 0})
-  if empty(s:matches)
+  if empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
   return '  - Match '
@@ -294,7 +293,7 @@ endfunction
 
 function! IndexedMatch()
   if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
-  \ || empty(s:matches)
+  \ || empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
   return s:matches.current
@@ -302,7 +301,7 @@ endfunction
 
 function! Bar()
   if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
-  \ || empty(s:matches)
+  \ || empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
   return '/'
@@ -310,7 +309,7 @@ endfunction
 
 function! TotalMatch()
   if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
-  \ || empty(s:matches)
+  \ || empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
   return s:matches.total
@@ -318,13 +317,13 @@ endfunction
 
 " status line content
 set statusline=%{StartLine()}
-set statusline+=\ %2*%{FileName(v:false,v:true)}%0*
+set statusline+=\ %3*%{bufnr()}%0*:
+                 \%2*%{FileName(v:false,v:true)}%0*
                  \%2*%{FileName(v:false,v:false)}%0*
                  \%4*%{FileName(v:true,v:false)}%0*
                  \%1*%{FileName(v:true,v:true)}%0*
 set statusline+=\ -\ Type:\ %3*%{&ft}%0*
 set statusline+=\ -\ Win\ %3*%{winnr()}%0*
-set statusline+=\ -\ Buf\ %3*%{bufnr()}%0*
 set statusline+=\ -\ Line\ %3*%{line('.')}%0*/%3*%{line('$')}%0*
 set statusline+=\ -\ Col\ %3*%{virtcol('.')}%0*
 set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
