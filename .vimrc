@@ -111,9 +111,9 @@ if &term[-9:] =~ '-256color'
   endif
 
   set wincolor=NormalAlt
-  execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
-    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:orange_2 . ' ctermbg=' . s:grey     . ' |
-    \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
+  execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:green_1  . ' |
+    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:grey     . ' |
+    \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
     \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
     \      highlight       MoreMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
@@ -140,7 +140,7 @@ if &term[-9:] =~ '-256color'
     \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
     \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
-    \      highlight       PMenu          term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black    . ' |
+    \      highlight       PMenu          term=bold           cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
     \      highlight       User1          term=bold           cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
     \      highlight       User2          term=bold           cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       User3          term=bold           cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black
