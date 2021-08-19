@@ -1036,9 +1036,10 @@ cnoreabbrev b call StartTimer()<CR>:ActivateBuffer
 
 augroup vimrc_autocomands
   autocmd!
-"   Dependencies Autocommands Group {{{2
+"   VimEnter Autocommands Group {{{2
 
   autocmd VimEnter * :call CheckDependencies()
+  autocmd VimEnter * :call histdel('/') | call histdel(':')
 
 "   }}}
 "   Color Autocommands Group {{{2
