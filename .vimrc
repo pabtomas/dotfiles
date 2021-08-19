@@ -1,7 +1,6 @@
 " TODO {{{1
 
 " scrolling cursor without redrawing all the screen
-" search counter in status line
 
 " }}}
 " Quality of Life {{{1
@@ -224,19 +223,17 @@ set laststatus=2
 
 function! FileName(modified, is_current_win)
   let l:check_current_win = (g:actual_curwin == win_getid())
-  if (&modified == a:modified) && (l:check_current_win == a:is_current_win)
-    return fnamemodify(bufname('%'), ':.')
-  else
+  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
     return ''
   endif
+  return fnamemodify(bufname('%'), ':.')
 endfunction
 
 function! StartLine()
-  if g:actual_curwin == win_getid()
-    return '━━━┫'
-  else
+  if g:actual_curwin != win_getid()
     return '───┤'
   endif
+  return '━━━┫'
 endfunction
 
 function! EndLine()
@@ -248,12 +245,15 @@ function! EndLine()
     \ + len(' - Line ') + len(line('.')) + len('/') + len(line('$'))
     \ + len(' - Col ') + len(virtcol('.'))
     \ + len(split(' ├', '\zs')))
-  if g:actual_curwin == win_getid()
-    let l:length = l:length - (len(' - ') + len(Mode()) + len('mode'))
-    return '┣' . repeat('━', length)
-  else
+  if g:actual_curwin != win_getid()
     return '├' . repeat('─', length)
   endif
+  let l:length = l:length - (len(' - ') + len(Mode()) + len(' mode'))
+  if v:hlsearch && (empty(s:matches) == v:false)
+    let l:length = l:length - (len(' - Match ') + len(IndexedMatch())
+      \ + len('/') + len(TotalMatch()))
+  endif
+  return '┣' . repeat('━', length)
 endfunction
 
 let s:modes = {
@@ -264,27 +264,61 @@ let s:modes = {
 \ }
 
 function! Mode()
-  if g:actual_curwin == win_getid()
-    return s:modes[mode()[0]] . ' '
-  else
+  if g:actual_curwin != win_getid()
     return ''
   endif
+  return s:modes[mode()[0]]
 endfunction
 
 function! StartMode()
-  if g:actual_curwin == win_getid()
-    return ' - '
-  else
+  if g:actual_curwin != win_getid()
     return ''
   endif
+  return ' - '
 endfunction
 
 function! EndMode()
-  if g:actual_curwin == win_getid()
-    return 'mode'
-  else
+  if g:actual_curwin != win_getid()
     return ''
   endif
+  return '  mode'
+endfunction
+
+let s:matches = []
+
+function! StartMatch()
+  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
+    return ''
+  endif
+  let s:matches = searchcount(#{recompute: 1, maxcount: 0, timeout: 0})
+  if empty(s:matches)
+    return ''
+  endif
+  return '  - Match '
+endfunction
+
+function! IndexedMatch()
+  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
+  \ || empty(s:matches)
+    return ''
+  endif
+  return s:matches.current
+endfunction
+
+function! Bar()
+  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
+  \ || empty(s:matches)
+    return ''
+  endif
+  return '/'
+endfunction
+
+function! TotalMatch()
+  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
+  \ || empty(s:matches)
+    return ''
+  endif
+  return s:matches.total
 endfunction
 
 " status line content
@@ -298,7 +332,9 @@ set statusline+=\ -\ Win\ %3*%{winnr()}%0*
 set statusline+=\ -\ Buf\ %3*%{bufnr()}%0*
 set statusline+=\ -\ Line\ %3*%{line('.')}%0*/%3*%{line('$')}%0*
 set statusline+=\ -\ Col\ %3*%{virtcol('.')}%0*
-set statusline+=\%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
+set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
+set statusline+=%{StartMatch()}%3*%{IndexedMatch()}%0*%{Bar()}
+                \%3*%{TotalMatch()}%0*
 set statusline+=\ %{EndLine()}
 
 "   }}}
