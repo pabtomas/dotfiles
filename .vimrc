@@ -1,4 +1,8 @@
 " TODO {{{1
+
+" scrolling cursor without redrawing all the screen
+" search counter in status line
+
 " }}}
 " Quality of Life {{{1
 
@@ -33,9 +37,9 @@ set report=0
 " x       -> show [unix] instead of [unix format]
 " t and T -> truncate too long messages
 " s       -> do not show search keys instructions when search is used
-" A       -> do not give message when an existing swap file is found
+" S       -> do not search counter
 " F       -> do not give the file info when editing a file
-set shortmess=nxtsTAF
+set shortmess=nxtTsSF
 
 " }}}
 " Performance {{{1
@@ -145,7 +149,8 @@ if &term[-9:] =~ '-256color'
     \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
     \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1
+    \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
+    \      highlight       PMenu          term=bold           cterm=bold         ctermfg=' . s:purple_3 . ' ctermbg=' . s:black
   highlight! link WarningMsg     ErrorMsg
   highlight  link String         Constant
   highlight  link Character      Constant
@@ -658,7 +663,7 @@ function! WriteQuitAll()
 endfunction
 
 "   }}}
-"   Timer & Drawing functions {{{2
+"   Timer & Popup functions {{{2
 
 " timer variables
 if exists('s:tick') | unlet s:tick | endif | const s:tick = 100
@@ -667,62 +672,39 @@ let s:elapsed_time = s:nb_ticks * s:tick
 let s:lasttick_sizebuflist = len(getbufinfo({'buflisted':1}))
 let s:lasttick_buffer = bufnr()
 
-" resize the command window, display listed buffers, highlight current
+" resize the commandline, display listed buffers, highlight current
 " buffer and underline active buffers
-function! DisplayBuffersList(prompt_hitting)
+function! DisplayBuffersList()
   let l:listed_buf = getbufinfo({'buflisted':1})
-  let l:buffers_nb = len(l:listed_buf)
+  let l:listedbuf_nb = len(l:listed_buf)
 
-  " to prompt key hitting, echoed message's height have to be less than or
-  " equal to commandline's height
-  if a:prompt_hitting == v:false
-    let l:buffers_nb = l:buffers_nb + 1
-  endif
+  let l:index = &lines - l:listedbuf_nb
 
-  execute 'set cmdheight=' . l:buffers_nb
+  execute 'set cmdheight=' . (l:listedbuf_nb + 2)
+  call popup_clear()
+  call popup_create(repeat('━', &columns),
+    \ #{ pos: 'topleft', line: l:index, col: 1, highlight: 'StatusLine' })
+
   for l:buf in l:listed_buf
     let l:line = ' ' . l:buf.bufnr . ': "' . fnamemodify(l:buf.name, ':.')
       \ . '"'
-    let l:line = l:line .
-      \ repeat(' ', &columns - 1 - strlen(l:line)) . "\n"
+    let l:line = l:line . repeat(' ', &columns - strlen(l:line))
+
+    let l:highlight = 'PMenu'
     if l:buf.bufnr == bufnr()
-      echohl CurrentBuffer | echon l:line | echohl None
+      let l:highlight = 'CurrentBuffer'
     elseif l:buf.hidden == v:false
-      echohl ActiveBuffer | echon l:line | echohl None
-    else
-      echon l:line
+      let l:highlight = 'ActiveBuffer'
     endif
+
+    let l:index = l:index + 1
+    call popup_create(l:line, #{ pos: 'topleft', line: l:index, col: 1,
+      \ highlight: l:highlight })
   endfor
 endfunction
 
-let s:redraw_allowed = v:true
-
-function! EnableRedraw()
-  if s:redraw_allowed == v:false
-    let s:redraw_allowed = v:true
-  endif
-endfunction
-
-function! DisableRedraw()
-  if s:redraw_allowed
-    let s:redraw_allowed = v:false
-  endif
-endfunction
-
-function! StopDrawing()
-  let s:elapsed_time = s:nb_ticks * s:tick
-  if s:redraw_allowed
-    set cmdheight=1
-    redraw
-  endif
-endfunction
-
-" display buffers list when Vim state is safe
-function! UpdateBuffersList()
-  if s:elapsed_time < s:nb_ticks * s:tick
-    set cmdheight=1
-    call DisplayBuffersList(v:false)
-  endif
+function! StartTimer()
+  let s:elapsed_time = 0
 endfunction
 
 function! s:MonitorBuffersList(timer_id)
@@ -734,19 +716,19 @@ function! s:MonitorBuffersList(timer_id)
   " - moving current buffer to another buffer.
   if (s:lasttick_sizebuflist != l:current_sizebufist) ||
   \ (s:lasttick_buffer != l:current_buffer)
-    let s:elapsed_time = 0
+    call StartTimer()
   endif
 
-  " update the buffers list displayed in commandline
+  " update buffers list
   if s:elapsed_time == 0
     let s:elapsed_time = s:elapsed_time + s:tick
-    redraw
-    set cmdheight=1
-    call DisplayBuffersList(v:false)
+    call DisplayBuffersList()
   elseif (s:elapsed_time > 0) && (s:elapsed_time < s:nb_ticks * s:tick)
     let s:elapsed_time = s:elapsed_time + s:tick
-  else
-    call StopDrawing()
+  elseif (s:elapsed_time == s:nb_ticks * s:tick)
+    let s:elapsed_time = s:elapsed_time + s:tick
+    set cmdheight=1
+    call popup_clear()
   endif
 
   " avoid commandline and risky commands for unlisted-buffers
@@ -964,8 +946,7 @@ execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
 
 " buffers menu
 execute 'nnoremap '          . s:buffers_menu_mapping
-  \ . ' :call DisableRedraw() <bar> call DisplayBuffersList(v:true)<CR>'
-  \ . ':ActivateBuffer<Space>'
+  \ . ' :call StartTimer()<CR>:ActivateBuffer<Space>'
 
 " buffers navigation
 execute 'nnoremap <silent> ' . s:buffer_next_mapping
@@ -985,15 +966,15 @@ execute 'nnoremap '          . s:unfold_vim_fold_mapping
 
 " for debug purposes
 execute 'nnoremap '          . s:message_command_mapping
-  \ . ' :call DisableRedraw() <bar> messages<CR>'
+  \ . ' :messages<CR>'
 execute 'nnoremap '          . s:map_command_mapping
-  \ . ' :call DisableRedraw() <bar> map<CR>'
+  \ . ' :map<CR>'
 execute 'nnoremap '          . s:abbreviate_command_mapping
-  \ . ' :call DisableRedraw() <bar> abbreviate<CR>'
+  \ . ' :abbreviate<CR>'
 execute 'nnoremap '          . s:command_command_mapping
-  \ . ' :call DisableRedraw() <bar> command<CR>'
+  \ . ' :command<CR>'
 execute 'nnoremap '          . s:autocmd_command_mapping
-  \ . ' :call DisableRedraw() <bar> autocmd<CR>'
+  \ . ' :autocmd<CR>'
 
 " }}}
 " Abbreviations {{{1
@@ -1019,28 +1000,16 @@ cnoreabbrev wqa call WriteQuitAll()
 cnoreabbrev xa call WriteQuitAll()
 
 " avoid intuitive buffer usage
-cnoreabbrev b call DisableRedraw()<bar>call DisplayBuffersList(v:true)<CR>
-  \:ActivateBuffer
+cnoreabbrev b call StartTimer()<CR>:ActivateBuffer
 
 " }}}
 " Autocommands {{{1
 
 augroup vimrc_autocomands
   autocmd!
-"   VimEnter Autocommands Group {{{2
+"   Dependencies Autocommands Group {{{2
 
-  " check vim dependencies before opening
   autocmd VimEnter * :call CheckDependencies()
-
-"   }}}
-"   Fixing Autocommands Group {{{2
-
-  " update buffers list in command line after unsafe state events occured
-  autocmd SafeState,SafeStateAgain * :call UpdateBuffersList()
-
-  " renable incremental search
-  autocmd CmdlineEnter * call timer_pause(s:timer, v:true)
-  autocmd CmdlineLeave * call timer_pause(s:timer, v:false)
 
 "   }}}
 "   Color Autocommands Group {{{2
@@ -1051,17 +1020,6 @@ augroup vimrc_autocomands
 "   Good Practices Autocommands Group {{{2
 
   autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
-
-"   }}}
-"   Listed-Buffers Autocommands Group {{{2
-
-  " entering commandline erases displayed buffers list,
-  autocmd CmdlineEnter * call StopDrawing()
-
-  " calling StopTimer() hides commandline content, so for some
-  " commands/mappings, disabling hidding calls is necessary to show output
-  " (and reenabling hidding calls later is also necessary)
-  autocmd CmdlineLeave * call EnableRedraw()
 
 "   }}}
 "   Unlisted-Buffers Autocommands Group {{{2
