@@ -675,7 +675,6 @@ function! Quit()
       \ . len(getbufinfo({'buflisted':1})) . ' Listed-Buffer(s) & '
       \ . len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden'))
       \ . ' Hidden-Buffer(s)'
-    sleep 3
   else
     echomsg 'Personal Warning Message: ' . bufname('%') . ' has unsaved
       \ modifications'
