@@ -233,19 +233,19 @@ endfunction
 
 function! EndLine()
   let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
-    \ + len(bufnr()) + len(':') + len(fnamemodify(bufname('%'), ':.'))
-    \ + len(' - Type: ') + len(&ft)
-    \ + len(' - Win ') + len(winnr())
-    \ + len(' - Line ') + len(line('.')) + len('/') + len(line('$'))
-    \ + len(' - Col ') + len(virtcol('.'))
-    \ + len(split(' ├', '\zs')))
+    \ + len('[') + len(winnr()) + len('] ')
+    \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
+    \ + len(' [') + len(&ft) + len(']')
+    \ + len(' C') + len(virtcol('.'))
+    \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
+    \ + len(split('├', '\zs')))
   if g:actual_curwin != win_getid()
     return '├' . repeat('─', length)
   endif
-  let l:length = l:length - (len(' - ') + len(Mode()) + len(' mode'))
-  if v:hlsearch && (empty(s:matches) == v:false)
-    let l:length = l:length - (len(' - Match ') + len(IndexedMatch())
-      \ + len('/') + len(TotalMatch()))
+  let l:length = l:length - (len(StartMode()) + len(Mode()) + len(EndMode()))
+  if v:hlsearch && (empty(s:matches) == v:false) && (s:matches.total > 0)
+    let l:length = l:length - (len(IndexedMatch()) + len(Bar())
+      \ + len(TotalMatch()))
   endif
   return '┣' . repeat('━', length)
 endfunction
@@ -268,32 +268,24 @@ function! StartMode()
   if g:actual_curwin != win_getid()
     return ''
   endif
-  return ' - '
+  return '['
 endfunction
 
 function! EndMode()
   if g:actual_curwin != win_getid()
     return ''
   endif
-  return '  mode'
+  return '] '
 endfunction
 
 let s:matches = []
 
-function! StartMatch()
+function! IndexedMatch()
   if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
     return ''
   endif
   let s:matches = searchcount(#{recompute: 1, maxcount: 0, timeout: 0})
   if empty(s:matches) || (s:matches.total == 0)
-    return ''
-  endif
-  return '  - Match '
-endfunction
-
-function! IndexedMatch()
-  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
-  \ || empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
   return s:matches.current
@@ -312,24 +304,23 @@ function! TotalMatch()
   \ || empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
-  return s:matches.total
+  return s:matches.total . ' '
 endfunction
 
-" status line content
+" status line content:
+" [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
 set statusline=%{StartLine()}
-set statusline+=\ %3*%{bufnr()}%0*:
+set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
                  \%2*%{FileName(v:false,v:true)}%0*
                  \%2*%{FileName(v:false,v:false)}%0*
                  \%4*%{FileName(v:true,v:false)}%0*
                  \%1*%{FileName(v:true,v:true)}%0*
-set statusline+=\ -\ Type:\ %3*%{&ft}%0*
-set statusline+=\ -\ Win\ %3*%{winnr()}%0*
-set statusline+=\ -\ Line\ %3*%{line('.')}%0*/%3*%{line('$')}%0*
-set statusline+=\ -\ Col\ %3*%{virtcol('.')}%0*
+set statusline+=\ [%3*%{&ft}%0*]
+set statusline+=\ C%3*%{virtcol('.')}%0*
+set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
 set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
-set statusline+=%{StartMatch()}%3*%{IndexedMatch()}%0*%{Bar()}
-                \%3*%{TotalMatch()}%0*
-set statusline+=\ %{EndLine()}
+set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
+set statusline+=%{EndLine()}
 
 "   }}}
 " }}}
