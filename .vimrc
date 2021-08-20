@@ -1,6 +1,7 @@
 " TODO {{{1
 
-" scrolling cursor without redrawing all the screen
+" - fix popup buffers list when an hitting prompt message is displayed
+" - hide buffers list only when screen moved
 
 " }}}
 " Quality of Life {{{1
@@ -17,7 +18,8 @@ set list
 set listchars=tab:▸\ ,eol:.
 
 " highlight corresponding patterns during a search
-set hlsearch incsearch
+if &hlsearch == v:false | set hlsearch | endif
+if &incsearch == v:false | set incsearch | endif
 
 " line number
 set number
@@ -683,7 +685,7 @@ function! WriteQuitAll()
 endfunction
 
 "   }}}
-"   Timer & Popup functions {{{2
+"   Timer & Popups functions {{{2
 
 " timer variables
 if exists('s:tick') | unlet s:tick | endif | const s:tick = 100
@@ -691,6 +693,9 @@ if exists('s:nb_ticks') | unlet s:nb_ticks | endif | const s:nb_ticks = 50
 let s:elapsed_time = s:nb_ticks * s:tick
 let s:lasttick_sizebuflist = len(getbufinfo({'buflisted':1}))
 let s:lasttick_buffer = bufnr()
+
+" cursor variable
+let s:lastcursor_line = line('.')
 
 " resize the commandline, display listed buffers, highlight current
 " buffer and underline active buffers
@@ -725,6 +730,18 @@ endfunction
 
 function! StartTimer()
   let s:elapsed_time = 0
+endfunction
+
+function! StopTimer()
+  let s:elapsed_time = s:nb_ticks * s:tick
+endfunction
+
+function! HideBuffersList()
+  let l:current_cursor_line = line('.')
+  if s:lastcursor_line != l:current_cursor_line
+    call StopTimer()
+    let s:lastcursor_line = l:current_cursor_line
+  endif
 endfunction
 
 function! s:MonitorBuffersList(timer_id)
@@ -890,9 +907,7 @@ if exists('s:window_previous_mapping') | unlet s:window_previous_mapping | endif
 if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif
 if exists('s:message_command_mapping') | unlet s:message_command_mapping | endif
 if exists('s:map_command_mapping') | unlet s:map_command_mapping | endif
-if exists('s:abbreviate_command_mapping') | unlet s:abbreviate_command_mapping | endif
-if exists('s:command_command_mapping') | unlet s:command_command_mapping | endif
-if exists('s:autocmd_command_mapping') | unlet s:autocmd_command_mapping | endif
+if exists('s:autocompletion_mapping') | unlet s:autocompletion_mapping | endif
 
 " leader keys
 const s:leader =                                                             '²'
@@ -917,9 +932,7 @@ const s:window_previous_mapping =                                            'H'
 const s:unfold_vim_fold_mapping =                                      '<Space>'
 const s:message_command_mapping =                s:leader       .            'm'
 const s:map_command_mapping =                    s:leader       .           'mm'
-const s:abbreviate_command_mapping =             s:leader       .          'mmm'
-const s:command_command_mapping =                s:leader       .         'mmmm'
-const s:autocmd_command_mapping =                s:leader       .        'mmmmm'
+const s:autocompletion_mapping =                                       '<S-Tab>'
 
 " search and replace
 execute 'vnoremap '          . s:search_and_replace_mapping
@@ -989,12 +1002,10 @@ execute 'nnoremap '          . s:message_command_mapping
   \ . ' :messages<CR>'
 execute 'nnoremap '          . s:map_command_mapping
   \ . ' :map<CR>'
-execute 'nnoremap '          . s:abbreviate_command_mapping
-  \ . ' :abbreviate<CR>'
-execute 'nnoremap '          . s:command_command_mapping
-  \ . ' :command<CR>'
-execute 'nnoremap '          . s:autocmd_command_mapping
-  \ . ' :autocmd<CR>'
+
+" autocompletion
+execute 'inoremap '          . s:autocompletion_mapping
+  \ . ' <C-n>'
 
 " }}}
 " Abbreviations {{{1
@@ -1030,7 +1041,9 @@ augroup vimrc_autocomands
 "   VimEnter Autocommands Group {{{2
 
   autocmd VimEnter * :call CheckDependencies()
-  autocmd VimEnter * :call histdel('/') | call histdel(':')
+
+  " hide buffers list when cursor is scrolling
+  autocmd CursorMoved,CursorMovedI * :call HideBuffersList()
 
 "   }}}
 "   Color Autocommands Group {{{2
