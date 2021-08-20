@@ -1,6 +1,7 @@
 " TODO {{{1
 
 " - hide buffers list only when screen moved
+" - PROMPT mode breaks buffers list display
 
 " }}}
 " Quality of Life {{{1
@@ -218,6 +219,18 @@ function! FileName(modified, is_current_win)
   return fnamemodify(bufname('%'), ':.')
 endfunction
 
+" 5.0 * sin(localtime() / 100.0 + column + sin(column * 20.0) * 0.2)
+" ﾟ 5
+" ˙ 4
+" ˚ 3
+" ° 2
+" º 1
+" ･ 0
+" • 1
+" · 2
+" ｡ 3
+" . 4
+" ˳ 5
 function! StartLine()
   if g:actual_curwin != win_getid()
     return '───┤'
@@ -685,7 +698,6 @@ let s:lasttick_buffer = bufnr()
 
 " cursor variable
 let s:lastcursor_line = line('.')
-let s:hit_enter = v:false
 
 " resize the commandline, display listed buffers, highlight current
 " buffer and underline active buffers
@@ -749,11 +761,6 @@ function! s:MonitorBuffersList(timer_id)
     call StartTimer()
   endif
 
-  " part 1: hide buffer list when prompted message are displayed in cmdline
-  if !empty(state('s')) && s:hit_enter && (mode()[0] == 'r')
-    call StopTimer()
-  endif
-
   " update buffers list
   if s:elapsed_time == 0
     let s:elapsed_time = s:elapsed_time + s:tick
@@ -763,12 +770,6 @@ function! s:MonitorBuffersList(timer_id)
   elseif (s:elapsed_time == s:nb_ticks * s:tick)
     let s:elapsed_time = s:elapsed_time + s:tick
     set cmdheight=1 | call popup_clear()
-  endif
-
-  " part 2: hide buffer list when prompted message are displayed in cmdline
-  if !empty(state('s')) && s:hit_enter && (mode()[0] == 'r')
-    let s:hit_enter = v:false
-    redraw | normal! g<
   endif
 
   " avoid commandline and risky commands for unlisted-buffers
@@ -1046,9 +1047,6 @@ augroup vimrc_autocomands
   " hide buffers list when cursor is scrolling
   autocmd CursorMoved,CursorMovedI * :call HideBuffersList()
 
-  " reset hit_enter varible after leaving cmdline
-  autocmd CmdlineLeave * let s:hit_enter = v:true
-
 "   }}}
 "   Color Autocommands Group {{{2
 
@@ -1078,3 +1076,4 @@ augroup vimrc_autocomands
 augroup END
 
 " }}}
+
