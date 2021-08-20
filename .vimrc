@@ -699,8 +699,8 @@ function! DisplayBuffersList()
 
   let l:index = &lines - l:listedbuf_nb
 
-  execute 'set cmdheight=' . (l:listedbuf_nb + 2) | call popup_clear()
-  call popup_create(repeat('━', &columns),
+  execute 'set cmdheight=' . (l:listedbuf_nb + 2)
+  call popup_clear() | call popup_create(repeat('━', &columns),
     \ #{ pos: 'topleft', line: l:index, col: 1, highlight: 'StatusLine' })
 
   for l:buf in l:listed_buf
@@ -749,10 +749,9 @@ function! s:MonitorBuffersList(timer_id)
     call StartTimer()
   endif
 
-  " hide buffer list when prompted message are displayed in cmdline
+  " part 1: hide buffer list when prompted message are displayed in cmdline
   if !empty(state('s')) && s:hit_enter && (mode()[0] == 'r')
-    set cmdheight=1 | call popup_clear() | redraw | normal! g<
-    let s:hit_enter = v:false
+    call StopTimer()
   endif
 
   " update buffers list
@@ -764,6 +763,12 @@ function! s:MonitorBuffersList(timer_id)
   elseif (s:elapsed_time == s:nb_ticks * s:tick)
     let s:elapsed_time = s:elapsed_time + s:tick
     set cmdheight=1 | call popup_clear()
+  endif
+
+  " part 2: hide buffer list when prompted message are displayed in cmdline
+  if !empty(state('s')) && s:hit_enter && (mode()[0] == 'r')
+    let s:hit_enter = v:false
+    redraw | normal! g<
   endif
 
   " avoid commandline and risky commands for unlisted-buffers
