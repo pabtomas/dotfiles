@@ -1,6 +1,5 @@
 " TODO {{{1
 
-" - fix popup buffers list when an hitting prompt message is displayed
 " - hide buffers list only when screen moved
 
 " }}}
@@ -18,8 +17,8 @@ set list
 set listchars=tab:▸\ ,eol:.
 
 " highlight corresponding patterns during a search
-if &hlsearch == v:false | set hlsearch | endif
-if &incsearch == v:false | set incsearch | endif
+if !&hlsearch | set hlsearch | endif
+if !&incsearch | set incsearch | endif
 
 " line number
 set number
@@ -106,13 +105,9 @@ let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
 if &term[-9:] =~ '-256color'
 
-  set background=dark
-  highlight clear
-  if exists('syntax_on')
-    syntax reset
-  endif
-
+  set background=dark | highlight clear | if exists('syntax_on') | syntax reset | endif
   set wincolor=NormalAlt
+
   execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:green_1  . ' |
     \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:grey     . ' |
     \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
@@ -202,14 +197,11 @@ endfunction
 " clear/add red highlight matching patterns
 function! ToggleRedHighlight()
   if s:redhighlight
-    highlight clear RedHighlight
-    let s:redhighlight = v:false
-    set synmaxcol=3000
+    highlight clear RedHighlight | set synmaxcol=3000
   else
-    execute s:redhighlight_cmd
-    let s:redhighlight = v:true
-    set synmaxcol=200
+    execute s:redhighlight_cmd | set synmaxcol=200
   endif
+  let s:redhighlight = !s:redhighlight
 endfunction
 
 "   }}}
@@ -245,7 +237,7 @@ function! EndLine()
     return '├' . repeat('─', length)
   endif
   let l:length = l:length - (len(StartMode()) + len(Mode()) + len(EndMode()))
-  if v:hlsearch && (empty(s:matches) == v:false) && (s:matches.total > 0)
+  if v:hlsearch && !empty(s:matches) && (s:matches.total > 0)
     let l:length = l:length - (len(IndexedMatch()) + len(Bar())
       \ + len(TotalMatch()))
   endif
@@ -280,10 +272,10 @@ function! EndMode()
   return '] '
 endfunction
 
-let s:matches = []
+let s:matches = {}
 
 function! IndexedMatch()
-  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
     return ''
   endif
   let s:matches = searchcount(#{recompute: 1, maxcount: 0, timeout: 0})
@@ -294,7 +286,7 @@ function! IndexedMatch()
 endfunction
 
 function! Bar()
-  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
   \ || empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
@@ -302,7 +294,7 @@ function! Bar()
 endfunction
 
 function! TotalMatch()
-  if (g:actual_curwin != win_getid()) || (v:hlsearch == v:false)
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
   \ || empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
@@ -333,7 +325,7 @@ set hidden
 
 " return number of active listed-buffers
 function! ActiveListedBuffers()
-  return len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden == v:false'))
+  return len(filter(getbufinfo({'buflisted':1}), '!v:val.hidden'))
 endfunction
 
 " close Vim if only unlisted-buffers are active
@@ -571,7 +563,7 @@ endfunction
 " <=N - is less than N
 " N   - distinct number of windows/u-buffer/l-buffers/h-buffers
 function! Quit()
-  if &modified == v:false
+  if !&modified
 
     let l:current_buf = bufnr()
 
@@ -579,7 +571,7 @@ function! Quit()
     "   (>=1) win & (==1) unlisted-buf & (>=0) listed-buf & (>=0) hidden-buf
     let l:is_currentbuf_listed = buflisted(current_buf)
 
-    if (l:is_currentbuf_listed == v:false)
+    if !l:is_currentbuf_listed
       silent quit
       return v:true
     endif
@@ -588,10 +580,9 @@ function! Quit()
     "   (==1) win & (==0) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
     let l:more_than_one_window = (winnr('$') > 1)
     let l:at_least_one_hidden_listedbuf =
-      \ (empty(filter(getbufinfo({'buflisted':1}), 'v:val.hidden')) == v:false)
+      \ !empty(filter(getbufinfo({'buflisted':1}), 'v:val.hidden'))
 
-    if (l:more_than_one_window == v:false) &&
-    \ (l:at_least_one_hidden_listedbuf == v:false)
+    if !l:more_than_one_window && !l:at_least_one_hidden_listedbuf
       silent quit
       return v:true
     endif
@@ -605,7 +596,7 @@ function! Quit()
         \ {x, y -> y.lastused - x.lastused}), {key, val -> val.bufnr})[0]
     endif
 
-    if (l:more_than_one_window == v:false) && l:at_least_one_hidden_listedbuf
+    if !l:more_than_one_window && l:at_least_one_hidden_listedbuf
       execute 'silent buffer '  . l:lastused_hiddenbuf
       execute 'silent bdelete ' . l:current_buf
       return v:true
@@ -625,18 +616,16 @@ function! Quit()
     "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
     let l:more_than_one_active_listedbuf = (ActiveListedBuffers() > 1)
 
-    if l:more_than_one_window && (l:at_least_one_hidden_listedbuf == v:false)
-    \ && (l:current_buf_active_more_than_once == v:false)
-    \ && (l:more_than_one_active_listedbuf == v:false)
+    if l:more_than_one_window && !l:current_buf_active_more_than_once
+    \ && !l:more_than_one_active_listedbuf && !l:at_least_one_hidden_listedbuf
       silent quitall
       return v:true
     endif
 
     " case 6:                                   current
     "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (>=0) hidden-buf
-    if l:more_than_one_window && l:at_least_one_hidden_listedbuf
-    \ && (l:current_buf_active_more_than_once == v:false)
-    \ && (l:more_than_one_active_listedbuf == v:false)
+    if l:more_than_one_window && !l:current_buf_active_more_than_once
+    \ && !l:more_than_one_active_listedbuf && l:at_least_one_hidden_listedbuf
       execute 'silent buffer '  . l:lastused_hiddenbuf
       execute 'silent bdelete ' . l:current_buf
       return v:true
@@ -645,7 +634,7 @@ function! Quit()
     " case 7:                                   current
     "   (>=2) win & (>=0) unlisted-buf & (>=2) listed-buf & (>=0) hidden-buf
     if l:more_than_one_window && l:more_than_one_active_listedbuf
-    \ && (l:current_buf_active_more_than_once == v:false)
+    \ && !l:current_buf_active_more_than_once
       silent quit
       execute 'silent bdelete ' . l:current_buf
       return v:true
@@ -696,6 +685,7 @@ let s:lasttick_buffer = bufnr()
 
 " cursor variable
 let s:lastcursor_line = line('.')
+let s:hit_enter = v:false
 
 " resize the commandline, display listed buffers, highlight current
 " buffer and underline active buffers
@@ -703,10 +693,13 @@ function! DisplayBuffersList()
   let l:listed_buf = getbufinfo({'buflisted':1})
   let l:listedbuf_nb = len(l:listed_buf)
 
+  if l:listedbuf_nb < 1
+    return
+  endif
+
   let l:index = &lines - l:listedbuf_nb
 
-  execute 'set cmdheight=' . (l:listedbuf_nb + 2)
-  call popup_clear()
+  execute 'set cmdheight=' . (l:listedbuf_nb + 2) | call popup_clear()
   call popup_create(repeat('━', &columns),
     \ #{ pos: 'topleft', line: l:index, col: 1, highlight: 'StatusLine' })
 
@@ -718,7 +711,7 @@ function! DisplayBuffersList()
     let l:highlight = 'PMenu'
     if l:buf.bufnr == bufnr()
       let l:highlight = 'CurrentBuffer'
-    elseif l:buf.hidden == v:false
+    elseif !l:buf.hidden
       let l:highlight = 'ActiveBuffer'
     endif
 
@@ -756,6 +749,12 @@ function! s:MonitorBuffersList(timer_id)
     call StartTimer()
   endif
 
+  " hide buffer list when prompted message are displayed in cmdline
+  if !empty(state('s')) && s:hit_enter && (mode()[0] == 'r')
+    set cmdheight=1 | call popup_clear() | redraw | normal! g<
+    let s:hit_enter = v:false
+  endif
+
   " update buffers list
   if s:elapsed_time == 0
     let s:elapsed_time = s:elapsed_time + s:tick
@@ -764,8 +763,7 @@ function! s:MonitorBuffersList(timer_id)
     let s:elapsed_time = s:elapsed_time + s:tick
   elseif (s:elapsed_time == s:nb_ticks * s:tick)
     let s:elapsed_time = s:elapsed_time + s:tick
-    set cmdheight=1
-    call popup_clear()
+    set cmdheight=1 | call popup_clear()
   endif
 
   " avoid commandline and risky commands for unlisted-buffers
@@ -815,17 +813,12 @@ function! CheckDependencies()
     quit
   endif
 
-  if exists('g:NERDTree') == v:false ||
-  \ exists('g:NERDTreeMapOpenInTab') == v:false ||
-  \ exists('g:NERDTreeMapOpenInTabSilent') == v:false ||
-  \ exists('g:NERDTreeMapOpenSplit') == v:false ||
-  \ exists('g:NERDTreeMapOpenVSplit') == v:false ||
-  \ exists('g:NERDTreeMapOpenExpl') == v:false ||
-  \ exists('g:NERDTreeNaturalSort') == v:false ||
-  \ exists('g:NERDTreeHighlightCursorline') == v:false ||
-  \ exists('g:NERDTreeMouseMode') == v:false ||
-  \ exists('g:NERDTreeHijackNetrw') == v:false ||
-  \ exists(':NERDTreeToggle') == v:false
+  if !exists('g:NERDTree') || !exists('g:NERDTreeMapOpenInTab') ||
+  \ !exists('g:NERDTreeMapOpenInTabSilent') ||
+  \ !exists('g:NERDTreeMapOpenSplit') || !exists('g:NERDTreeMapOpenVSplit') ||
+  \ !exists('g:NERDTreeMapOpenExpl') || !exists('g:NERDTreeNaturalSort') ||
+  \ !exists('g:NERDTreeHighlightCursorline') || !exists(':NERDTreeToggle') ||
+  \ !exists('g:NERDTreeMouseMode') || !exists('g:NERDTreeHijackNetrw')
     echoerr 'Personal Error Message: your VimRC needs NERDTree plugin'
       \ . ' to be functionnal'
     quit
@@ -1038,12 +1031,18 @@ cnoreabbrev b call StartTimer()<CR>:ActivateBuffer
 
 augroup vimrc_autocomands
   autocmd!
-"   VimEnter Autocommands Group {{{2
+"   Dependencies Autocommands Group {{{2
 
   autocmd VimEnter * :call CheckDependencies()
 
+"   }}}
+"   Fixing Autocommands Group {{{2
+
   " hide buffers list when cursor is scrolling
   autocmd CursorMoved,CursorMovedI * :call HideBuffersList()
+
+  " reset hit_enter varible after leaving cmdline
+  autocmd CmdlineLeave * let s:hit_enter = v:true
 
 "   }}}
 "   Color Autocommands Group {{{2
