@@ -807,9 +807,9 @@ endfunction
 " Plugins and Dependencies {{{1
 
 function! CheckDependencies()
-  if v:version < 801
+  if v:version < 802
     let l:major_version = v:version / 100
-    echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
+    echoerr 'Personal Error Message: your VimRC needs Vim 8.2 to be'
       \ . ' functionnal. Your Vim version is ' l:major_version . '.'
       \ . (v:version - l:major_version * 100)
     quit
