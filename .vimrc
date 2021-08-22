@@ -239,7 +239,7 @@ if exists('s:line_timer') | call timer_stop(s:line_timer) | endif
 let s:line_timer = timer_start(1000, function('s:WaveLine'), {'repeat': -1})
 call timer_pause(s:line_timer, v:true)
 
-function! ToggleStatusLine()
+function! AnimateStatusLine()
   if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
   let s:start_animation = localtime()
   call timer_pause(s:line_timer, v:false)
@@ -971,6 +971,7 @@ if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif
 if exists('s:message_command_mapping') | unlet s:message_command_mapping | endif
 if exists('s:map_command_mapping') | unlet s:map_command_mapping | endif
 if exists('s:autocompletion_mapping') | unlet s:autocompletion_mapping | endif
+if exists('s:animate_statusline_mapping') | unlet s:animate_statusline_mapping | endif
 
 " leader keys
 const s:leader =                                                             '²'
@@ -985,7 +986,6 @@ const s:source_vimrc_mapping =                   s:shift_leader .            '1'
 const s:nohighlight_search_mapping =             s:leader       .            'é'
 const s:toggle_good_practices_mapping =          s:leader       .            '"'
 const s:toggle_nerdtree_mapping =                s:shift_leader . s:shift_leader
-const s:toggle_statusline_mapping =              s:leader       .            's'
 const s:call_quit_function_mapping =             s:leader       .            'q'
 const s:call_writequit_function_mapping =        s:leader       .            'w'
 const s:buffers_menu_mapping =                   s:leader       .       s:leader
@@ -997,6 +997,7 @@ const s:unfold_vim_fold_mapping =                                      '<Space>'
 const s:message_command_mapping =                s:leader       .            'm'
 const s:map_command_mapping =                    s:leader       .           'mm'
 const s:autocompletion_mapping =                                       '<S-Tab>'
+const s:animate_statusline_mapping =             s:leader       .            's'
 
 " search and replace
 execute 'vnoremap '          . s:search_and_replace_mapping
@@ -1035,9 +1036,9 @@ execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
 execute 'nnoremap <silent> ' . s:toggle_nerdtree_mapping
   \ . ' :NERDTreeToggle<CR>'
 
-" toggle statusline
-execute 'nnoremap <silent> ' . s:toggle_statusline_mapping
-  \ . ' :call ToggleStatusLine()<CR>'
+" animate statusline
+execute 'nnoremap <silent> ' . s:animate_statusline_mapping
+  \ . ' :call AnimateStatusLine()<CR>'
 
 " Quit() functions
 execute 'nnoremap <silent> ' . s:call_quit_function_mapping
