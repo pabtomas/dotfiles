@@ -87,10 +87,9 @@ function! ComputeStatusLineLength()
     \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
     \ + len(split('├', '\zs')))
   if g:actual_curwin == win_getid()
-    let l:length = l:length - (len(StartMode()) + len(Mode()) + len(EndMode()))
+    let l:length -= len(StartMode()) + len(Mode()) + len(EndMode())
     if v:hlsearch && !empty(s:matches) && (s:matches.total > 0)
-      let l:length = l:length - (len(IndexedMatch()) + len(Bar())
-        \ + len(TotalMatch()))
+      let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
     endif
   endif
   return l:length
@@ -190,7 +189,8 @@ if exists('s:dots') | unlet s:dots | endif | const s:dots = [
 function! Wave(start, end)
   let l:wave = ''
   for i in range(a:start, a:end - 1)
-    let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(i * (fmod(0.05 * localtime() + winnr(), 2.0) - 1.0)))]
+    let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(i *
+    \ (fmod(0.05 * (s:localtime - s:start_animation) + winnr(), 2.0) - 1.0)))]
   endfor
   return l:wave
 endfunction
@@ -204,23 +204,35 @@ function! EndWave()
   return Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
 endfunction
 
+if &term[-9:] =~ '-256color'
+  if exists('s:color_spec') | unlet s:color_spec | endif
+  const s:color_spec = [
+    \ 51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
+    \ 202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50
+  \ ]
+endif
+
 function! s:WaveLine(timer_id)
   if &term[-9:] =~ '-256color'
-    let s:wavecolor = fmod(s:wavecolor + 1.0, 231.0)
-    if s:wavecolor < 17.0
-      let s:wavecolor = 17.0
-    endif
-    execute '
-    \ highlight User5 term=bold cterm=bold ctermfg=' . float2nr(floor(s:wavecolor)) . ' ctermbg=' . s:black
+    let s:wavecolor = fmod(s:wavecolor + 0.75, 30.0)
+    execute 'highlight User5 term=bold cterm=bold ctermfg='
+      \ . s:color_spec[float2nr(floor(s:wavecolor))] . ' ctermbg=' . s:black
   endif
 
+  let s:localtime = localtime()
   set statusline=%5*%{StartWave()}%0*
   call StatusLineData()
   set statusline+=%5*%{EndWave()}%0*
+
+  if (s:localtime - s:start_animation) > 40
+    call timer_pause(s:line_timer, v:true)
+    call StaticLine()
+  endif
 endfunction
 
-let s:wavecolor = 17.0
-let s:animated_statusline = v:false
+if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+let s:localtime = localtime()
+let s:start_animation = s:localtime
 call StaticLine()
 
 if exists('s:line_timer') | call timer_stop(s:line_timer) | endif
@@ -228,14 +240,9 @@ let s:line_timer = timer_start(1000, function('s:WaveLine'), {'repeat': -1})
 call timer_pause(s:line_timer, v:true)
 
 function! ToggleStatusLine()
-  let s:animated_statusline = !s:animated_statusline
-  if s:animated_statusline
-    let s:wavecolor = 17.0
-    call timer_pause(s:line_timer, v:false)
-  else
-    call timer_pause(s:line_timer, v:true)
-    call StaticLine()
-  endif
+  if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+  let s:start_animation = localtime()
+  call timer_pause(s:line_timer, v:false)
 endfunction
 
 " }}}
