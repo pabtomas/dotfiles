@@ -181,7 +181,6 @@ function! StaticLine()
   set statusline+=%{EndLine()}
 endfunction
 
-" 5.0 * sin(localtime() / 100.0 + column + sin(column * 20.0) * 0.2)
 if exists('s:dots') | unlet s:dots | endif | const s:dots = [
 \  '˳', '.', '｡', '·', '•', '･', 'º', '°', '˚', '˙',
 \ ]
@@ -190,7 +189,7 @@ function! Wave(start, end)
   let l:wave = ''
   for i in range(a:start, a:end - 1)
     let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(i *
-    \ (fmod(0.05 * (s:localtime - s:start_animation) + winnr(), 2.0) - 1.0)))]
+    \ (fmod(0.05 * (s:localtime - s:start_animation), 1.0))))]
   endfor
   return l:wave
 endfunction
