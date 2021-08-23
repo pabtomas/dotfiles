@@ -58,6 +58,194 @@ set synmaxcol=200
 set noshowcmd
 
 " }}}
+" Status line {{{1
+
+" display status line
+set laststatus=2
+
+function! FileName(modified, is_current_win)
+  let l:check_current_win = (g:actual_curwin == win_getid())
+  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
+    return ''
+  endif
+  return fnamemodify(bufname('%'), ':.')
+endfunction
+
+function! StartLine()
+  if g:actual_curwin != win_getid()
+    return '───┤'
+  endif
+  return '━━━┫'
+endfunction
+
+function! ComputeStatusLineLength()
+  let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
+    \ + len('[') + len(winnr()) + len('] ')
+    \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
+    \ + len(' [') + len(&ft) + len(']')
+    \ + len(' C') + len(virtcol('.'))
+    \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
+    \ + len(split('├', '\zs')))
+  if g:actual_curwin == win_getid()
+    let l:length -= len(StartMode()) + len(Mode()) + len(EndMode())
+    if v:hlsearch && !empty(s:matches) && (s:matches.total > 0)
+      let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
+    endif
+  endif
+  return l:length
+endfunction
+
+function! EndLine()
+  let l:length = ComputeStatusLineLength()
+  if g:actual_curwin != win_getid()
+    return '├' . repeat('─', l:length)
+  endif
+  return '┣' . repeat('━', l:length)
+endfunction
+
+if exists('s:modes') | unlet s:modes | endif | const s:modes = {
+  \ 'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
+  \ 'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
+  \ 'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
+  \ 'r': 'PROMPT', '!': 'SHELL',
+\ }
+
+function! Mode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return s:modes[mode()[0]]
+endfunction
+
+function! StartMode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return '['
+endfunction
+
+function! EndMode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return '] '
+endfunction
+
+let s:matches = {}
+
+function! IndexedMatch()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+    return ''
+  endif
+  let s:matches = searchcount(#{recompute: 1, maxcount: 0, timeout: 0})
+  if empty(s:matches) || (s:matches.total == 0)
+    return ''
+  endif
+  return s:matches.current
+endfunction
+
+function! Bar()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+  \ || empty(s:matches) || (s:matches.total == 0)
+    return ''
+  endif
+  return '/'
+endfunction
+
+function! TotalMatch()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+  \ || empty(s:matches) || (s:matches.total == 0)
+    return ''
+  endif
+  return s:matches.total . ' '
+endfunction
+
+" status line content:
+" [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
+function! StatusLineData()
+  set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
+                   \%2*%{FileName(v:false,v:true)}%0*
+                   \%2*%{FileName(v:false,v:false)}%0*
+                   \%4*%{FileName(v:true,v:false)}%0*
+                   \%1*%{FileName(v:true,v:true)}%0*
+  set statusline+=\ [%3*%{&ft}%0*]
+  set statusline+=\ C%3*%{virtcol('.')}%0*
+  set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
+  set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
+  set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
+endfunction
+
+function! StaticLine()
+  set statusline=%{StartLine()}
+  call StatusLineData()
+  set statusline+=%{EndLine()}
+endfunction
+
+" 5.0 * sin(localtime() / 100.0 + column + sin(column * 20.0) * 0.2)
+if exists('s:dots') | unlet s:dots | endif | const s:dots = [
+\  '˳', '.', '｡', '·', '•', '･', 'º', '°', '˚', '˙',
+\ ]
+
+function! Wave(start, end)
+  let l:wave = ''
+  for i in range(a:start, a:end - 1)
+    let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(i *
+    \ (fmod(0.05 * (s:localtime - s:start_animation) + winnr(), 2.0) - 1.0)))]
+  endfor
+  return l:wave
+endfunction
+
+function! StartWave()
+  return Wave(0, 4)
+endfunction
+
+function! EndWave()
+  let l:win_width = winwidth(winnr())
+  return Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
+endfunction
+
+if &term[-9:] =~ '-256color'
+  if exists('s:color_spec') | unlet s:color_spec | endif
+  const s:color_spec = [
+    \ 51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
+    \ 202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50
+  \ ]
+endif
+
+function! s:WaveLine(timer_id)
+  if &term[-9:] =~ '-256color'
+    let s:wavecolor = fmod(s:wavecolor + 0.75, 30.0)
+    execute 'highlight User5 term=bold cterm=bold ctermfg='
+      \ . s:color_spec[float2nr(floor(s:wavecolor))] . ' ctermbg=' . s:black
+  endif
+
+  let s:localtime = localtime()
+  set statusline=%5*%{StartWave()}%0*
+  call StatusLineData()
+  set statusline+=%5*%{EndWave()}%0*
+
+  if (s:localtime - s:start_animation) > 40
+    call timer_pause(s:line_timer, v:true)
+    call StaticLine()
+  endif
+endfunction
+
+if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+let s:localtime = localtime()
+let s:start_animation = s:localtime
+call StaticLine()
+
+if exists('s:line_timer') | call timer_stop(s:line_timer) | endif
+let s:line_timer = timer_start(1000, function('s:WaveLine'), {'repeat': -1})
+call timer_pause(s:line_timer, v:true)
+
+function! AnimateStatusLine()
+  if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+  let s:start_animation = localtime()
+  call timer_pause(s:line_timer, v:false)
+endfunction
+
+" }}}
 " Colors {{{1
 "   Palette {{{2
 
@@ -204,130 +392,6 @@ function! ToggleRedHighlight()
   endif
   let s:redhighlight = !s:redhighlight
 endfunction
-
-"   }}}
-"   Status line {{{2
-
-" display status line
-set laststatus=2
-
-function! FileName(modified, is_current_win)
-  let l:check_current_win = (g:actual_curwin == win_getid())
-  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
-    return ''
-  endif
-  return fnamemodify(bufname('%'), ':.')
-endfunction
-
-" 5.0 * sin(localtime() / 100.0 + column + sin(column * 20.0) * 0.2)
-" ﾟ 5
-" ˙ 4
-" ˚ 3
-" ° 2
-" º 1
-" ･ 0
-" • 1
-" · 2
-" ｡ 3
-" . 4
-" ˳ 5
-function! StartLine()
-  if g:actual_curwin != win_getid()
-    return '───┤'
-  endif
-  return '━━━┫'
-endfunction
-
-function! EndLine()
-  let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
-    \ + len('[') + len(winnr()) + len('] ')
-    \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
-    \ + len(' [') + len(&ft) + len(']')
-    \ + len(' C') + len(virtcol('.'))
-    \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
-    \ + len(split('├', '\zs')))
-  if g:actual_curwin != win_getid()
-    return '├' . repeat('─', length)
-  endif
-  let l:length = l:length - (len(StartMode()) + len(Mode()) + len(EndMode()))
-  if v:hlsearch && !empty(s:matches) && (s:matches.total > 0)
-    let l:length = l:length - (len(IndexedMatch()) + len(Bar())
-      \ + len(TotalMatch()))
-  endif
-  return '┣' . repeat('━', length)
-endfunction
-
-let s:modes = {
-  \ 'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
-  \ 'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
-  \ 'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
-  \ 'r': 'PROMPT', '!': 'SHELL',
-\ }
-
-function! Mode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return s:modes[mode()[0]]
-endfunction
-
-function! StartMode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return '['
-endfunction
-
-function! EndMode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return '] '
-endfunction
-
-let s:matches = {}
-
-function! IndexedMatch()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-    return ''
-  endif
-  let s:matches = searchcount(#{recompute: 1, maxcount: 0, timeout: 0})
-  if empty(s:matches) || (s:matches.total == 0)
-    return ''
-  endif
-  return s:matches.current
-endfunction
-
-function! Bar()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:matches) || (s:matches.total == 0)
-    return ''
-  endif
-  return '/'
-endfunction
-
-function! TotalMatch()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:matches) || (s:matches.total == 0)
-    return ''
-  endif
-  return s:matches.total . ' '
-endfunction
-
-" status line content:
-" [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
-set statusline=%{StartLine()}
-set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
-                 \%2*%{FileName(v:false,v:true)}%0*
-                 \%2*%{FileName(v:false,v:false)}%0*
-                 \%4*%{FileName(v:true,v:false)}%0*
-                 \%1*%{FileName(v:true,v:true)}%0*
-set statusline+=\ [%3*%{&ft}%0*]
-set statusline+=\ C%3*%{virtcol('.')}%0*
-set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
-set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
-set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
-set statusline+=%{EndLine()}
 
 "   }}}
 " }}}
@@ -907,6 +971,7 @@ if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif
 if exists('s:message_command_mapping') | unlet s:message_command_mapping | endif
 if exists('s:map_command_mapping') | unlet s:map_command_mapping | endif
 if exists('s:autocompletion_mapping') | unlet s:autocompletion_mapping | endif
+if exists('s:animate_statusline_mapping') | unlet s:animate_statusline_mapping | endif
 
 " leader keys
 const s:leader =                                                             '²'
@@ -932,6 +997,7 @@ const s:unfold_vim_fold_mapping =                                      '<Space>'
 const s:message_command_mapping =                s:leader       .            'm'
 const s:map_command_mapping =                    s:leader       .           'mm'
 const s:autocompletion_mapping =                                       '<S-Tab>'
+const s:animate_statusline_mapping =             s:leader       .            's'
 
 " search and replace
 execute 'vnoremap '          . s:search_and_replace_mapping
@@ -969,6 +1035,10 @@ execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
 " open NERDTree in a vertical split window
 execute 'nnoremap <silent> ' . s:toggle_nerdtree_mapping
   \ . ' :NERDTreeToggle<CR>'
+
+" animate statusline
+execute 'nnoremap <silent> ' . s:animate_statusline_mapping
+  \ . ' :call AnimateStatusLine()<CR>'
 
 " Quit() functions
 execute 'nnoremap <silent> ' . s:call_quit_function_mapping
@@ -1076,4 +1146,3 @@ augroup vimrc_autocomands
 augroup END
 
 " }}}
-
