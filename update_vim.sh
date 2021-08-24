@@ -13,4 +13,4 @@ cd vim/src
 
 cd $DIR && rm -rf $DIR
 cd ~
-vim --version
+source ~/.bashrc && clear && vim --version
