@@ -1,10 +1,13 @@
 " TODO {{{1
 
-" - hide buffers list only when screen moved
-" - PROMPT mode breaks buffers list display
+" - buffers menu: test
+" - file explorer: - copy fullpath file/dir
+"                  - disable Vexplore
+"                  - add do buffers list without open it
+"                  - open it in current window
 
 " }}}
-" Quality of Life {{{1
+" Quality of life {{{1
 
 " Vi default options unused
 set nocompatible
@@ -137,7 +140,7 @@ function! IndexedMatch()
   if (g:actual_curwin != win_getid()) || !v:hlsearch
     return ''
   endif
-  let s:matches = searchcount(#{recompute: 1, maxcount: 0, timeout: 0})
+  let s:matches = searchcount(#{ recompute: 1, maxcount: 0, timeout: 0 })
   if empty(s:matches) || (s:matches.total == 0)
     return ''
   endif
@@ -187,8 +190,8 @@ if exists('s:dots') | unlet s:dots | endif | const s:dots = [
 
 function! Wave(start, end)
   let l:wave = ''
-  for i in range(a:start, a:end - 1)
-    let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(i *
+  for l:col in range(a:start, a:end - 1)
+    let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(l:col *
     \ (fmod(0.05 * (s:localtime - s:start_animation) + 1.0, 2.0) - 1.0)))]
   endfor
   return l:wave
@@ -235,7 +238,7 @@ let s:start_animation = s:localtime
 call StaticLine()
 
 if exists('s:line_timer') | call timer_stop(s:line_timer) | endif
-let s:line_timer = timer_start(1000, function('s:WaveLine'), {'repeat': -1})
+let s:line_timer = timer_start(1000, function('s:WaveLine'), #{ repeat: -1 })
 call timer_pause(s:line_timer, v:true)
 
 function! AnimateStatusLine()
@@ -264,7 +267,8 @@ if exists('s:green_1') | unlet s:green_1 | endif
 if exists('s:green_2') | unlet s:green_2 | endif
 if exists('s:white_1') | unlet s:white_1 | endif
 if exists('s:white_2') | unlet s:white_2 | endif
-if exists('s:grey') | unlet s:grey | endif
+if exists('s:grey_1') | unlet s:grey_1 | endif
+if exists('s:grey_2') | unlet s:grey_2 | endif
 if exists('s:black') | unlet s:black | endif
 
 const s:red = 196
@@ -283,7 +287,8 @@ const s:green_1 = 42
 const s:green_2 = 120
 const s:white_1 = 147
 const s:white_2 = 153
-const s:grey = 236
+const s:grey_1 = 236
+const s:grey_2 = 244
 const s:black = 232
 
 "   }}}
@@ -296,77 +301,116 @@ if &term[-9:] =~ '-256color'
   set background=dark | highlight clear | if exists('syntax_on') | syntax reset | endif
   set wincolor=NormalAlt
 
-  execute 'highlight       CurrentBuffer  term=bold           cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:green_1  . ' |
-    \      highlight       ActiveBuffer   term=bold           cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:grey     . ' |
-    \      highlight       Normal         term=bold           cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
-    \      highlight       NormalAlt      term=NONE           cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       ModeMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MoreMsg        term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Question       term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       NonText        term=NONE           cterm=NONE         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Comment        term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Constant       term=NONE           cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Special        term=NONE           cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Identifier     term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Statement      term=NONE           cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       PreProc        term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Type           term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Visual         term=reverse        cterm=reverse                                 ctermbg=' . s:black    . ' |
-    \      highlight       LineNr         term=NONE           cterm=NONE         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Search         term=reverse        cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       IncSearch      term=reverse        cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Tag            term=NONE           cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Error                                                 ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
-    \      highlight       ErrorMsg       term=bold           cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       Todo           term=standout                          ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
-    \      highlight       StatusLine     term=bold           cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
-    \      highlight       StatusLineNC   term=NONE           cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Folded         term=NONE           cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
-    \      highlight       VertSplit      term=NONE           cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       CursorLine     term=bold,reverse   cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MatchParen     term=bold           cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
-    \      highlight       PMenu          term=bold           cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       User1          term=bold           cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
-    \      highlight       User2          term=bold           cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       User3          term=bold           cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black
-  highlight! link WarningMsg     ErrorMsg
-  highlight  link String         Constant
-  highlight  link Character      Constant
-  highlight  link Number         Constant
-  highlight  link Boolean        Constant
-  highlight  link Float          Number
-  highlight  link Function       Identifier
-  highlight  link Conditional    Statement
-  highlight  link Repeat         Statement
-  highlight  link Label          Statement
-  highlight  link Operator       Statement
-  highlight  link Keyword        Statement
-  highlight  link Exception      Statement
-  highlight  link Include        PreProc
-  highlight  link Define         PreProc
-  highlight  link Macro          PreProc
-  highlight  link PreCondit      PreProc
-  highlight  link StorageClass   Type
-  highlight  link Structure      Type
-  highlight  link Typedef        Type
-  highlight  link SpecialChar    Special
-  highlight  link Delimiter      Special
-  highlight  link SpecialComment Special
-  highlight  link Debug          Special
+  execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
+    \      highlight       BufferMenuBorders  term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
+    \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+    \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
+    \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
+    \      highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+    \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
+    \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+    \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+    \      highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Visual             term=reverse      cterm=reverse                                 ctermbg=' . s:black    . ' |
+    \      highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+    \      highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+    \      highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+    \      highlight       Tag                term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Error                                                   ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
+    \      highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+    \      highlight       Todo               term=standout                        ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+    \      highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
+    \      highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+    \      highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
+    \      highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
+    \      highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
+    \      highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+    \      highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
+    \      highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_3   . ' |
+    \      highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+    \      highlight       User1              term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+    \      highlight       User2              term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
+    \      highlight       User3              term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black
+  highlight! link WarningMsg         ErrorMsg
+  highlight  link String             Constant
+  highlight  link Character          Constant
+  highlight  link Number             Constant
+  highlight  link Boolean            Constant
+  highlight  link Float              Number
+  highlight  link Function           Identifier
+  highlight  link Conditional        Statement
+  highlight  link Repeat             Statement
+  highlight  link Label              Statement
+  highlight  link Operator           Statement
+  highlight  link Keyword            Statement
+  highlight  link Exception          Statement
+  highlight  link Include            PreProc
+  highlight  link Define             PreProc
+  highlight  link Macro              PreProc
+  highlight  link PreCondit          PreProc
+  highlight  link StorageClass       Type
+  highlight  link Structure          Type
+  highlight  link Typedef            Type
+  highlight  link SpecialChar        Special
+  highlight  link Delimiter          Special
+  highlight  link SpecialComment     Special
+  highlight  link Debug              Special
 else
-  highlight       CurrentBuffer  term=bold           cterm=bold           ctermfg=Black     ctermbg=DarkRed
-  highlight       ActiveBuffer   term=bold           cterm=bold           ctermfg=Red       ctermbg=DarkGrey
-  highlight       PMenu          term=NONE           cterm=NONE           ctermfg=White     ctermbg=NONE
-  highlight       StatusLine     term=bold           cterm=bold           ctermfg=LightBlue ctermbg=NONE
-  highlight       StatusLineNC   term=NONE           cterm=NONE           ctermfg=Blue      ctermbg=NONE
-  highlight       User1          term=bold           cterm=bold           ctermfg=Red       ctermbg=NONE
-  highlight       User2          term=bold           cterm=bold           ctermfg=Green     ctermbg=NONE
-  highlight       User3          term=bold           cterm=bold           ctermfg=Yellow    ctermbg=NONE
+  highlight       Buffer             term=bold           cterm=bold           ctermfg=DarkGrey  ctermbg=Black
+  highlight       ModifiedBuf        term=bold           cterm=bold           ctermfg=Red
+  highlight       BufferMenuBorders  term=bold           cterm=bold           ctermfg=LightBlue
+  highlight       RootPath           term=bold           cterm=bold           ctermfg=DarkRed   ctermbg=Black
+  highlight       ClosedDirPath      term=bold           cterm=bold           ctermfg=Yellow    ctermbg=Black
+  highlight       FilePath           term=NONE           cterm=NONE           ctermfg=White     ctermbg=Black
+  highlight       Pmenu              term=NONE           cterm=NONE           ctermfg=White     ctermbg=NONE
+  highlight       PmenuSbar          term=NONE           cterm=NONE           ctermfg=Black     ctermbg=Blue
+  highlight       PmenuThumb         term=NONE           cterm=NONE           ctermfg=Black     ctermbg=White
+  highlight       StatusLine         term=bold           cterm=bold           ctermfg=LightBlue ctermbg=NONE
+  highlight       StatusLineNC       term=NONE           cterm=NONE           ctermfg=Blue      ctermbg=NONE
+  highlight       User1              term=bold           cterm=bold           ctermfg=Red       ctermbg=NONE
+  highlight       User2              term=bold           cterm=bold           ctermfg=Green     ctermbg=NONE
+  highlight       User3              term=bold           cterm=bold           ctermfg=Yellow    ctermbg=NONE
+  highlight  link OpenedDirPath      ClosedDirPath
 endif
 
-highlight         User4          term=bold           cterm=bold           ctermfg=Red
+highlight         User4              term=bold           cterm=bold           ctermfg=Red
 execute s:redhighlight_cmd
 
+"   }}}
+"   Text properties {{{2
+"     Buffers menu {{{3
+
+if index(prop_type_list(), 'buf') != -1 | call prop_type_delete('buf') | endif
+if index(prop_type_list(), 'mbuf') != -1 | call prop_type_delete('mbuf') | endif
+
+call prop_type_add('buf', #{ highlight: 'Buffer' })
+call prop_type_add('mbuf', #{ highlight: 'ModifiedBuf' })
+
+"     }}}
+"     File explorer {{{3
+
+if index(prop_type_list(), 'rpath') != -1 | call prop_type_delete('rpath') | endif
+if index(prop_type_list(), 'fpath') != -1 | call prop_type_delete('fpath') | endif
+if index(prop_type_list(), 'cdpath') != -1 | call prop_type_delete('cdpath') | endif
+if index(prop_type_list(), 'odpath') != -1 | call prop_type_delete('odpath') | endif
+
+call prop_type_add('rpath', #{ highlight: 'RootPath' })
+call prop_type_add('fpath', #{ highlight: 'FilePath' })
+call prop_type_add('cdpath', #{ highlight: 'ClosedDirPath' })
+call prop_type_add('odpath', #{ highlight: 'OpenedDirPath' })
+
+"     }}}
 "   }}}
 "   Good practices {{{2
 
@@ -401,7 +445,7 @@ set hidden
 
 " return number of active listed-buffers
 function! ActiveListedBuffers()
-  return len(filter(getbufinfo({'buflisted':1}), '!v:val.hidden'))
+  return len(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> !val.hidden}))
 endfunction
 
 " close Vim if only unlisted-buffers are active
@@ -411,226 +455,6 @@ function! CloseLonelyUnlistedBuffers()
   endif
 endfunction
 
-"   Listed-Buffers {{{2
-
-" enable mappings for listed-buffers activated by unlisted-buffers
-function! EnableMappingsListedBuffer()
-  if buflisted(bufnr())
-
-    let l:dict = maparg(':', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> :
-      endif
-    endif
-
-    let l:dict = maparg('Q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> Q
-      endif
-    endif
-
-    let l:dict = maparg('gQ', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        nunmap <buffer> gQ
-      endif
-    endif
-
-    let l:dict = maparg(s:buffer_next_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'nunmap <buffer> ' . s:buffer_next_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:buffer_previous_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'nunmap <buffer> ' . s:buffer_previous_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:buffers_menu_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'nunmap <buffer> ' . s:buffers_menu_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:toggle_nerdtree_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'nunmap <buffer> ' . s:toggle_nerdtree_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:search_and_replace_mapping, 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'vunmap <buffer> ' . s:search_and_replace_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:search_and_replace_insensitive_mapping, 'v',
-      \ v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'vunmap <buffer> ' . s:search_and_replace_insensitive_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:vsplit_vimrc_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'nunmap <buffer> ' . s:vsplit_vimrc_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:call_quit_function_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'nunmap <buffer> ' . s:call_quit_function_mapping
-      endif
-    endif
-
-    let l:dict = maparg(s:call_writequit_function_mapping, 'n', v:false,
-      \ v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer
-        execute 'nunmap <buffer> ' . s:call_writequit_function_mapping
-      endif
-    endif
-
-  endif
-endfunction
-
-"   }}}
-"   Unlisted-Buffers {{{2
-
-" disable risky mappings for unlisted-buffers
-function! DisableMappingsUnlistedBuffer()
-  if buflisted(bufnr()) == v:false
-
-    let l:dict = maparg(':', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> : <Esc>
-      endif
-    else
-      nnoremap <buffer> : <Esc>
-    endif
-
-    let l:dict = maparg('Q', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> Q <Esc>
-      endif
-    else
-      nnoremap <buffer> Q <Esc>
-    endif
-
-    let l:dict = maparg('gQ', 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        nnoremap <buffer> gQ <Esc>
-      endif
-    else
-      nnoremap <buffer> gQ <Esc>
-    endif
-
-    let l:dict = maparg(s:buffer_next_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'nnoremap <buffer> ' . s:buffer_next_mapping . ' <Esc>'
-      endif
-    else
-      execute 'nnoremap <buffer> ' . s:buffer_next_mapping . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:buffer_previous_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'nnoremap <buffer> ' . s:buffer_previous_mapping . ' <Esc>'
-      endif
-    else
-      execute 'nnoremap <buffer> ' . s:buffer_previous_mapping . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:buffers_menu_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'nnoremap <buffer> ' . s:buffers_menu_mapping . ' <Esc>'
-      endif
-    else
-      execute 'nnoremap <buffer> ' . s:buffers_menu_mapping . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:toggle_nerdtree_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'nnoremap <buffer> ' . s:toggle_nerdtree_mapping . ' <Esc>'
-      endif
-    else
-      execute 'nnoremap <buffer> ' . s:toggle_nerdtree_mapping . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:search_and_replace_mapping, 'v', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'vnoremap <buffer> ' . s:search_and_replace_mapping . ' <Esc>'
-      endif
-    else
-      execute 'vnoremap <buffer> ' . s:search_and_replace_mapping . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:search_and_replace_insensitive_mapping, 'v',
-      \ v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'vnoremap <buffer> '
-          \ . s:search_and_replace_insensitive_mapping . ' <Esc>'
-      endif
-    else
-      execute 'vnoremap <buffer> ' . s:search_and_replace_insensitive_mapping
-        \ . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:vsplit_vimrc_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'nnoremap <buffer> ' . s:vsplit_vimrc_mapping . ' <Esc>'
-      endif
-    else
-      execute 'nnoremap <buffer> ' . s:vsplit_vimrc_mapping . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:call_quit_function_mapping, 'n', v:false, v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'nnoremap <buffer> ' . s:call_quit_function_mapping . ' <Esc>'
-      endif
-    else
-      execute 'nnoremap <buffer> ' . s:call_quit_function_mapping . ' <Esc>'
-    endif
-
-    let l:dict = maparg(s:call_writequit_function_mapping, 'n', v:false,
-      \ v:true)
-    if has_key(l:dict, 'buffer')
-      if l:dict.buffer == v:false
-        execute 'nnoremap <buffer> ' . s:call_writequit_function_mapping
-          \ . ' <Esc>'
-      endif
-    else
-      execute 'nnoremap <buffer> ' . s:call_writequit_function_mapping
-        \ . ' <Esc>'
-    endif
-
-  endif
-endfunction
-
-"   }}}
 "   Quit functions {{{2
 
 " W   - winnr('$')
@@ -656,7 +480,7 @@ function! Quit()
     "   (==1) win & (==0) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
     let l:more_than_one_window = (winnr('$') > 1)
     let l:at_least_one_hidden_listedbuf =
-      \ !empty(filter(getbufinfo({'buflisted':1}), 'v:val.hidden'))
+      \ !empty(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> val.hidden}))
 
     if !l:more_than_one_window && !l:at_least_one_hidden_listedbuf
       silent quit
@@ -668,8 +492,8 @@ function! Quit()
     let l:lastused_hiddenbuf = 1
     if l:at_least_one_hidden_listedbuf
       let l:lastused_hiddenbuf = map(sort(filter(getbufinfo(
-        \ {'buflisted':1}), 'v:val.hidden'),
-        \ {x, y -> y.lastused - x.lastused}), {key, val -> val.bufnr})[0]
+        \ #{ buflisted: 1 }), {_, val -> val.hidden}),
+        \ {x, y -> y.lastused - x.lastused}), {_, val -> val.bufnr})[0]
     endif
 
     if !l:more_than_one_window && l:at_least_one_hidden_listedbuf
@@ -717,15 +541,15 @@ function! Quit()
     endif
 
     let l:unlistedbuf_nb = 0
-    for i in getbufinfo()->map({key, val -> len(val.windows)})
-      let l:unlistedbuf_nb = l:unlistedbuf_nb + i
+    for l:i in map(getbufinfo(), {_, val -> len(val.windows)})
+      let l:unlistedbuf_nb += 1
     endfor
 
     echoerr 'Personal Error Message: this Quit() case is not expected,'
       \ . ' you have to define it: ' . winnr('$') . ' Window(s) & '
       \ . l:unlistedbuf_nb . ' Unlisted-Buffer(s) & '
-      \ . len(getbufinfo({'buflisted':1})) . ' Listed-Buffer(s) & '
-      \ . len(filter(getbufinfo({'buflisted':1}), 'v:val.hidden'))
+      \ . len(getbufinfo(#{ buflisted: 1 })) . ' Listed-Buffer(s) & '
+      \ . len(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> val.hidden}))
       \ . ' Hidden-Buffer(s)'
   else
     echomsg 'Personal Warning Message: ' . bufname('%') . ' has unsaved
@@ -750,107 +574,292 @@ function! WriteQuitAll()
 endfunction
 
 "   }}}
-"   Timer & Popups functions {{{2
+"   Buffers menu {{{2
 
-" timer variables
-if exists('s:tick') | unlet s:tick | endif | const s:tick = 100
-if exists('s:nb_ticks') | unlet s:nb_ticks | endif | const s:nb_ticks = 50
-let s:elapsed_time = s:nb_ticks * s:tick
-let s:lasttick_sizebuflist = len(getbufinfo({'buflisted':1}))
-let s:lasttick_buffer = bufnr()
+let s:last_buf = bufnr()
+let s:bufselect = ''
 
-" cursor variable
-let s:lastcursor_line = line('.')
+function! ReplaceCursorOnCurrentBuffer(winid)
+  call win_execute(a:winid,
+    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
+    \ {_, val -> val.bufnr}), winbufnr(s:last_win)) + 1, 0)')
+endfunction
 
-" resize the commandline, display listed buffers, highlight current
-" buffer and underline active buffers
-function! DisplayBuffersList()
-  let l:listed_buf = getbufinfo({'buflisted':1})
+function! BuffersMenuFilter(winid, key)
+  if a:key == "\<Down>"
+    bnext
+    call ReplaceCursorOnCurrentBuffer(a:winid)
+  elseif a:key == "\<Up>"
+    bprevious
+    call ReplaceCursorOnCurrentBuffer(a:winid)
+  elseif a:key == "\<Enter>"
+    call popup_close(a:winid)
+  elseif a:key == "\<Esc>"
+    execute 'buffer ' . s:last_buf
+    call popup_close(a:winid)
+  elseif (match(a:key, '\d') > -1) || (a:key == "$")
+    if (a:key != "0") || (len(s:bufselect) > 0)
+      let s:bufselect = s:bufselect . a:key
+      let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
+        \ {_, val -> val.bufnr}),
+        \ {_, val -> match(val, '^' . s:bufselect) > -1})
+      if len(l:matches) == 1
+        execute 'buffer ' . l:matches[0]
+        call popup_close(a:winid)
+      else
+        echo s:bufselect . ' (' . len(l:matches) . ' matches:'
+          \ . string(l:matches) . ')'
+      endif
+    endif
+  elseif a:key == "\<BS>"
+    let s:bufselect = s:bufselect[:-2]
+    if len(s:bufselect) > 0
+      let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
+        \ {_, val -> val.bufnr}),
+        \ {_, val -> match(val, '^' . s:bufselect) > -1})
+      echo s:bufselect . ' (' . len(l:matches) . ' matches:'
+        \ . string(l:matches) . ')'
+    else
+      echo s:bufselect
+    endif
+  endif
+  return v:true
+endfunction
+
+function! BuffersMenu()
+  let l:listed_buf = getbufinfo(#{ buflisted: 1 })
   let l:listedbuf_nb = len(l:listed_buf)
 
   if l:listedbuf_nb < 1
     return
   endif
 
-  let l:index = &lines - l:listedbuf_nb
-
-  execute 'set cmdheight=' . (l:listedbuf_nb + 2)
-  call popup_clear() | call popup_create(repeat('━', &columns),
-    \ #{ pos: 'topleft', line: l:index, col: 1, highlight: 'StatusLine' })
+  let l:text = []
+  let l:width = max(mapnew(l:listed_buf,
+    \ {_, val -> len(val.bufnr . ': ""' . fnamemodify(val.name, ':.'))}))
 
   for l:buf in l:listed_buf
-    let l:line = ' ' . l:buf.bufnr . ': "' . fnamemodify(l:buf.name, ':.')
-      \ . '"'
-    let l:line = l:line . repeat(' ', &columns - strlen(l:line))
+    let l:line = l:buf.bufnr . ': "' . fnamemodify(l:buf.name, ':.') . '"'
+    let l:line = l:line . repeat(' ', l:width - len(l:line))
 
-    let l:highlight = 'PMenu'
-    if l:buf.bufnr == bufnr()
-      let l:highlight = 'CurrentBuffer'
-    elseif !l:buf.hidden
-      let l:highlight = 'ActiveBuffer'
+    let l:property = [#{ type: 'buf', col: 0, length: l:width + 1 }]
+    if l:buf.changed
+      let l:property = [#{ type: 'mbuf', col: 0, length: l:width + 1 }]
     endif
 
-    let l:index = l:index + 1
-    call popup_create(l:line, #{ pos: 'topleft', line: l:index, col: 1,
-      \ highlight: l:highlight })
+    call add(l:text, #{ text: l:line, props: l:property })
   endfor
+
+  return #{ text: l:text, height: len(l:text), width: l:width }
 endfunction
 
-function! StartTimer()
-  let s:elapsed_time = 0
+function! DisplayBuffersMenu()
+  let s:last_buf = bufnr()
+  let s:last_win = winnr()
+  let s:bufselect = ''
+
+  let l:menu = BuffersMenu()
+  let l:popup_id = popup_create(l:menu.text,
+  \ #{
+    \ pos: 'topleft',
+    \ line: win_screenpos(0)[0] + (winheight(0) - l:menu.height) / 2,
+    \ col: win_screenpos(0)[1] + (winwidth(0) - l:menu.width) / 2,
+    \ drag: v:true,
+    \ wrap: v:false,
+    \ filter: 'BuffersMenuFilter',
+    \ mapping: v:false,
+    \ border: [],
+    \ borderhighlight: ['BufferMenuBorders'],
+    \ borderchars: ['━', '┃', '━', '┃', '┏', '┓', '┛', '┗'],
+    \ cursorline: v:true,
+  \ })
+  call ReplaceCursorOnCurrentBuffer(l:popup_id)
 endfunction
 
-function! StopTimer()
-  let s:elapsed_time = s:nb_ticks * s:tick
-endfunction
+"   }}
+" }}}
+" File explorer {{{1
 
-function! HideBuffersList()
-  let l:current_cursor_line = line('.')
-  if s:lastcursor_line != l:current_cursor_line
-    call StopTimer()
-    let s:lastcursor_line = l:current_cursor_line
+function! PathCompare(file1, file2)
+  if isdirectory(a:file1) && !isdirectory(a:file2)
+    return 1
+  elseif !isdirectory(a:file1) && isdirectory(a:file2)
+    return -1
   endif
 endfunction
 
-function! s:MonitorBuffersList(timer_id)
-  let l:current_sizebufist = len(getbufinfo({'buflisted':1}))
-  let l:current_buffer = bufnr()
+function! InitTree()
+  let s:tree = {}
+  let s:tree['.'] = fnamemodify('.', ':p')
+  let s:tree[fnamemodify('.', ':p')] = map(sort(reverse(
+    \ readdir('.', '1', #{ sort: 'icase' })),
+    \ "PathCompare"), {_, val -> fnamemodify(val, ':p')})
+endfunction
 
-  " monitor 2 events:
-  " - adding/deleting listed-buffers,
-  " - moving current buffer to another buffer.
-  if (s:lasttick_sizebuflist != l:current_sizebufist) ||
-  \ (s:lasttick_buffer != l:current_buffer)
-    call StartTimer()
-  endif
+let s:show_dotfiles = v:false
+let s:expl_searchmode = v:false
+let s:expl_search = ''
+let s:expl_lastsearch = ''
+call InitTree()
 
-  " update buffers list
-  if s:elapsed_time == 0
-    let s:elapsed_time = s:elapsed_time + s:tick
-    call DisplayBuffersList()
-  elseif (s:elapsed_time > 0) && (s:elapsed_time < s:nb_ticks * s:tick)
-    let s:elapsed_time = s:elapsed_time + s:tick
-  elseif (s:elapsed_time == s:nb_ticks * s:tick)
-    let s:elapsed_time = s:elapsed_time + s:tick
-    set cmdheight=1 | call popup_clear()
-  endif
+function! Depth(path)
+  return len(split(substitute(a:path, '/$', '', 'g'), '/'))
+endfunction
 
-  " avoid commandline and risky commands for unlisted-buffers
-  if buflisted(l:current_buffer)
-    call EnableMappingsListedBuffer()
+function! FileExplorerFilter(winid, key)
+  if !s:expl_searchmode
+    if a:key == "."
+      let s:show_dotfiles = !s:show_dotfiles
+      call popup_settext(a:winid, FileExplorer().text)
+      call win_execute(a:winid, 'call cursor(2, 0)')
+    elseif a:key == "y"
+      " copy fullpath in unnamed register
+    elseif a:key == "b"
+      " use badd for the file
+    elseif a:key == "o"
+      " if dir
+      "   open the directory and add content to the tree (even if empty)
+      " elseif file
+        edit s:tree[]
+        call popup_close(a:winid)
+    elseif a:key == "c"
+      call InitTree()
+      call popup_settext(a:winid, FileExplorer().text)
+      call win_execute(a:winid, 'call cursor(2, 0)')
+    elseif a:key == "n"
+      call win_execute(a:winid, 'call search(s:expl_lastsearch[1:], "")')
+    elseif a:key == "N"
+      call win_execute(a:winid, 'call search(s:expl_lastsearch[1:], "b")')
+    elseif a:key == "g"
+      call win_execute(a:winid, 'call cursor(2, 0)')
+    elseif a:key == "G"
+      call win_execute(a:winid, 'call cursor(line("$"), 0)')
+    elseif a:key == "\<Esc>"
+      call popup_close(a:winid)
+    elseif a:key == "\<Down>"
+      call win_execute(a:winid, 'let s:expl_cursor = (line(".") < line("$"))')
+      if s:expl_cursor
+        call win_execute(a:winid, 'call cursor(line(".") + 1, 0)')
+      endif
+    elseif a:key == "\<Up>"
+      call win_execute(a:winid, 'let s:expl_cursor = (line(".") > 2)')
+      if s:expl_cursor
+        call win_execute(a:winid, 'call cursor(line(".") - 1, 0)')
+      endif
+    elseif a:key == "/"
+      let s:expl_searchmode = v:true
+      let s:expl_search = '/'
+      echo s:expl_search
+    endif
   else
-    call DisableMappingsUnlistedBuffer()
+    if a:key == "\<Enter>"
+      let s:expl_lastsearch = s:expl_search
+      call win_execute(a:winid, 'call search(s:expl_search[1:], "c")')
+      let s:expl_search = ''
+    elseif a:key == "\<BS>"
+      let s:expl_search = s:expl_search[:-2]
+    elseif a:key == "\<Esc>"
+      let s:expl_search = ''
+    elseif a:key == "\<Down>"
+    elseif a:key == "\<Up>"
+    elseif a:key == "\<Left>"
+    elseif a:key == "\<Right>"
+    else
+      let s:expl_search = s:expl_search . a:key
+    endif
+    if empty(s:expl_search)
+      let s:expl_searchmode = v:false
+    endif
+    echo s:expl_search
   endif
-
-  let s:lasttick_sizebuflist = l:current_sizebufist
-  let s:lasttick_buffer = l:current_buffer
+  return v:true
 endfunction
 
-" disable timers accumulation after sourcing vimrc
-if exists('s:timer') | call timer_stop(s:timer) | endif | let s:timer =
-  \ timer_start(s:tick, function('s:MonitorBuffersList'), {'repeat': -1})
+function! FileExplorer()
+  let l:text = []
 
-"   }}}
+  let l:line = s:tree['.']
+  let l:property = [#{ type: 'rpath', col: 0, length: len(l:line) + 1 }]
+
+  call add(l:text, #{ text: l:line, props: l:property })
+
+  let l:index = -1
+  let l:stack = s:tree[s:tree['.']]
+  let l:visited = {}
+  let l:visited[s:tree['.']] = v:true
+  while !empty(l:stack)
+    " pop
+    let l:current = l:stack[-1]
+    let l:stack = l:stack[:-2]
+    let l:index += 1
+
+    " construct text
+    let l:arrow = ''
+    let l:id = ''
+    let l:name = fnamemodify(l:current, ':t')
+    if isdirectory(l:current)
+      let l:name = fnamemodify(l:current, ':p:s?/$??:t')
+      let l:id = '/'
+      if has_key(s:tree, l:current)
+        let l:arrow = '▾ '
+      else
+        let l:arrow = '▸ '
+      endif
+    endif
+
+    if s:show_dotfiles || l:name[0] != '.'
+      let l:indent = repeat('  ',
+        \ Depth(l:current) - Depth(s:tree['.']) - isdirectory(l:current))
+      let l:line = l:indent . l:arrow . l:name . l:id
+
+      " construct property
+      let l:property = [#{ type: 'fpath', col: 0, length: winwidth(0) + 1}]
+      if isdirectory(l:current)
+        if has_key(s:tree, l:current)
+          let l:property = [#{ type: 'odpath', col: 0, length: winwidth(0) + 1}]
+        else
+          let l:property = [#{ type: 'cdpath', col: 0, length: winwidth(0) + 1}]
+        endif
+      endif
+
+      call add(l:text, #{ text: l:line, props: l:property })
+    endif
+
+    " continue dfs
+    if has_key(l:visited, l:current)
+      let l:visited[l:current] = v:true
+      let l:stack += s:tree[l:current]
+    endif
+  endwhile
+  return #{ text: l:text }
+endfunction
+
+function! DisplayFileExplorer()
+  let s:show_dotfiles = v:false
+  let s:expl_searchmode = v:false
+  let s:expl_search = ''
+  call InitTree()
+
+  let l:file_expl = FileExplorer()
+  let l:popup_id = popup_create(l:file_expl.text,
+  \ #{
+    \ pos: 'topleft',
+    \ line: win_screenpos(0)[0],
+    \ col: win_screenpos(0)[1],
+    \ minwidth: winwidth(0),
+    \ maxwidth: winwidth(0),
+    \ minheight: winheight(0),
+    \ maxheight: winheight(0),
+    \ drag: v:true,
+    \ wrap: v:true,
+    \ filter: 'FileExplorerFilter',
+    \ mapping: v:false,
+    \ scrollbar: v:true,
+    \ cursorline: v:true,
+  \ })
+  call win_execute(l:popup_id, 'call cursor(2, 0)')
+endfunction
+
 " }}}
 " Windows {{{1
 
@@ -871,57 +880,20 @@ function! PreviousWindow()
 endfunction
 
 " }}}
-" Plugins and Dependencies {{{1
+" Dependencies {{{1
 
 function! CheckDependencies()
-  if v:version < 802
+  if v:version < 801
     let l:major_version = v:version / 100
-    echoerr 'Personal Error Message: your VimRC needs Vim 8.2 to be'
+    echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
       \ . ' functionnal. Your Vim version is ' l:major_version . '.'
       \ . (v:version - l:major_version * 100)
     quit
   endif
-
-  if !exists('g:NERDTree') || !exists('g:NERDTreeMapOpenInTab') ||
-  \ !exists('g:NERDTreeMapOpenInTabSilent') ||
-  \ !exists('g:NERDTreeMapOpenSplit') || !exists('g:NERDTreeMapOpenVSplit') ||
-  \ !exists('g:NERDTreeMapOpenExpl') || !exists('g:NERDTreeNaturalSort') ||
-  \ !exists('g:NERDTreeHighlightCursorline') || !exists(':NERDTreeToggle') ||
-  \ !exists('g:NERDTreeMouseMode') || !exists('g:NERDTreeHijackNetrw')
-    echoerr 'Personal Error Message: your VimRC needs NERDTree plugin'
-      \ . ' to be functionnal'
-    quit
-  endif
 endfunction
 
-"   NERDTree {{{2
-
-" unused NERDTree tabpage commands
-let g:NERDTreeMapOpenInTab = ''
-let g:NERDTreeMapOpenInTabSilent = ''
-
-" disable splitting window with NERDTree
-let g:NERDTreeMapOpenSplit = ''
-let g:NERDTreeMapOpenVSplit = ''
-
-" unused directory exploration command
-let g:NERDTreeMapOpenExpl = ''
-
-" sort files by number order
-let g:NERDTreeNaturalSort = v:true
-
-" highlight line where the cursor is
-let g:NERDTreeHighlightCursorline = v:true
-
-" single mouse click opens directories and files
-let g:NERDTreeMouseMode = 3
-
-" disable NERDTree to replace netrw
-let g:NERDTreeHijackNetrw = v:true
-
-"   }}}
 " }}}
-" FileType-specific {{{1
+" Filetype specific {{{1
 "   Bash {{{2
 
 function! PrefillShFile()
@@ -930,20 +902,6 @@ function! PrefillShFile()
 endfunction
 
 "   }}}
-" }}}
-" Commands {{{1
-
-" check if buffer is listed before to open it
-function! ActivateBuffer(buf)
-  if buflisted(a:buf)
-    execute 'silent buffer ' . a:buf
-  else
-    echoerr 'Personal Error Message: selected buffer is not listed'
-  endif
-endfunction
-
-command -nargs=1 ActivateBuffer call ActivateBuffer(<args>)
-
 " }}}
 " Mappings {{{1
 
@@ -958,12 +916,10 @@ if exists('s:vsplit_vimrc_mapping') | unlet s:vsplit_vimrc_mapping | endif
 if exists('s:source_vimrc_mapping') | unlet s:source_vimrc_mapping | endif
 if exists('s:nohighlight_search_mapping') | unlet s:nohighlight_search_mapping | endif
 if exists('s:toggle_good_practices_mapping') | unlet s:toggle_good_practices_mapping | endif
-if exists('s:toggle_nerdtree_mapping') | unlet s:toggle_nerdtree_mapping | endif
 if exists('s:call_quit_function_mapping') | unlet s:call_quit_function_mapping | endif
 if exists('s:call_writequit_function_mapping') | unlet s:call_writequit_function_mapping | endif
 if exists('s:buffers_menu_mapping') | unlet s:buffers_menu_mapping | endif
-if exists('s:buffer_next_mapping') | unlet s:buffer_next_mapping | endif
-if exists('s:buffer_previous_mapping') | unlet s:buffer_previous_mapping | endif
+if exists('s:file_explorer_mapping') | unlet s:file_explorer_mapping | endif
 if exists('s:window_next_mapping') | unlet s:window_next_mapping | endif
 if exists('s:window_previous_mapping') | unlet s:window_previous_mapping | endif
 if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif
@@ -984,12 +940,10 @@ const s:vsplit_vimrc_mapping =                   s:leader       .            '&'
 const s:source_vimrc_mapping =                   s:shift_leader .            '1'
 const s:nohighlight_search_mapping =             s:leader       .            'é'
 const s:toggle_good_practices_mapping =          s:leader       .            '"'
-const s:toggle_nerdtree_mapping =                s:shift_leader . s:shift_leader
 const s:call_quit_function_mapping =             s:leader       .            'q'
 const s:call_writequit_function_mapping =        s:leader       .            'w'
 const s:buffers_menu_mapping =                   s:leader       .       s:leader
-const s:buffer_next_mapping =                                                'K'
-const s:buffer_previous_mapping =                                            'J'
+const s:file_explorer_mapping =                  s:shift_leader . s:shift_leader
 const s:window_next_mapping =                                                'L'
 const s:window_previous_mapping =                                            'H'
 const s:unfold_vim_fold_mapping =                                      '<Space>'
@@ -1031,10 +985,6 @@ execute 'nnoremap <silent> ' . s:nohighlight_search_mapping
 execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
   \ . ' :call ToggleRedHighlight()<CR>'
 
-" open NERDTree in a vertical split window
-execute 'nnoremap <silent> ' . s:toggle_nerdtree_mapping
-  \ . ' :NERDTreeToggle<CR>'
-
 " animate statusline
 execute 'nnoremap <silent> ' . s:animate_statusline_mapping
   \ . ' :call AnimateStatusLine()<CR>'
@@ -1046,14 +996,12 @@ execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
   \ . ' :call WriteQuit()<CR>'
 
 " buffers menu
-execute 'nnoremap '          . s:buffers_menu_mapping
-  \ . ' :call StartTimer()<CR>:ActivateBuffer<Space>'
+execute 'nnoremap <silent> ' . s:buffers_menu_mapping
+  \ . ' :silent call DisplayBuffersMenu()<CR>'
 
-" buffers navigation
-execute 'nnoremap <silent> ' . s:buffer_next_mapping
-  \ . ' :silent bnext<CR>'
-execute 'nnoremap <silent> ' . s:buffer_previous_mapping
-  \ . ' :silent bprevious<CR>'
+" file explorer
+execute 'nnoremap <silent> ' . s:file_explorer_mapping
+  \ . ' :silent call DisplayFileExplorer()<CR>'
 
 " windows navigation
 execute 'nnoremap <silent> ' . s:window_next_mapping
@@ -1098,46 +1046,43 @@ cnoreabbrev qa call QuitAll()
 cnoreabbrev wqa call WriteQuitAll()
 cnoreabbrev xa call WriteQuitAll()
 
-" avoid intuitive buffer usage
-cnoreabbrev b call StartTimer()<CR>:ActivateBuffer
-
 " }}}
 " Autocommands {{{1
 
 augroup vimrc_autocomands
   autocmd!
-"   Dependencies Autocommands Group {{{2
+"   Dependencies autocommands group {{{2
 
   autocmd VimEnter * :call CheckDependencies()
 
 "   }}}
-"   Fixing Autocommands Group {{{2
-
-  " hide buffers list when cursor is scrolling
-  autocmd CursorMoved,CursorMovedI * :call HideBuffersList()
-
-"   }}}
-"   Color Autocommands Group {{{2
+"   Color autocommands group {{{2
 
   autocmd WinEnter * set wincolor=NormalAlt
 
 "   }}}
-"   Good Practices Autocommands Group {{{2
+"   Good practices autocommands group {{{2
 
   autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
 
 "   }}}
-"   Unlisted-Buffers Autocommands Group {{{2
+"   Buffers autocommands group {{{2
 
   autocmd BufEnter * :silent call CloseLonelyUnlistedBuffers()
 
 "   }}}
-"   Vimscript filetype Autocommands Group {{{2
+"   File explorer autocommands group {{{2
+
+  " autocmd VimEnter * silent! autocmd! FileExplorer
+  " autocmd BufEnter,VimEnter * if isdirectory('<amatch>') | call DisplayFileExplorer() | endif
+
+"   }}}
+"   Vimscript filetype autocommands group {{{2
 
   autocmd FileType vim setlocal foldmethod=marker
 
 "   }}}
-"   Bash filetype Autocommands Group {{{2
+"   Bash filetype autocommands group {{{2
 
   autocmd BufNewFile *.sh :call PrefillShFile()
 
