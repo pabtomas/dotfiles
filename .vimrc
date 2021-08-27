@@ -699,7 +699,6 @@ endfunction
 let s:show_dotfiles = v:false
 let s:expl_searchmode = v:false
 let s:expl_search = ''
-let s:expl_lastsearch = ''
 call InitTree()
 
 function! Depth(path)
@@ -711,7 +710,8 @@ function! FileExplorerFilter(winid, key)
     if a:key == "."
       let s:show_dotfiles = !s:show_dotfiles
       call popup_settext(a:winid, FileExplorer().text)
-      call win_execute(a:winid, 'call cursor(2, 0)')
+      call win_execute(a:winid, 'if line(".") > line("$")
+        \ | call cursor(line("$"), 0) | endif')
     elseif a:key == "y"
       " copy fullpath in unnamed register
     elseif a:key == "b"
@@ -727,34 +727,37 @@ function! FileExplorerFilter(winid, key)
       call popup_settext(a:winid, FileExplorer().text)
       call win_execute(a:winid, 'call cursor(2, 0)')
     elseif a:key == "n"
-      call win_execute(a:winid, 'call search(s:expl_lastsearch[1:], "")')
+      call win_execute(a:winid, 'call search(@/, "")')
     elseif a:key == "N"
-      call win_execute(a:winid, 'call search(s:expl_lastsearch[1:], "b")')
+      call win_execute(a:winid, 'call search(@/, "b")')
     elseif a:key == "g"
-      call win_execute(a:winid, 'call cursor(2, 0)')
+      call win_execute(a:winid, 'call cursor(2, 0) | execute "normal! \<C-Y>"')
     elseif a:key == "G"
       call win_execute(a:winid, 'call cursor(line("$"), 0)')
     elseif a:key == "\<Esc>"
+      call win_execute(a:winid, 'call clearmatches()')
       call popup_close(a:winid)
     elseif a:key == "\<Down>"
-      call win_execute(a:winid, 'let s:expl_cursor = (line(".") < line("$"))')
-      if s:expl_cursor
-        call win_execute(a:winid, 'call cursor(line(".") + 1, 0)')
-      endif
+      call win_execute(a:winid, 'if (line(".") < line("$"))
+        \ | call cursor(line(".") + 1, 0) | endif')
     elseif a:key == "\<Up>"
-      call win_execute(a:winid, 'let s:expl_cursor = (line(".") > 2)')
-      if s:expl_cursor
-        call win_execute(a:winid, 'call cursor(line(".") - 1, 0)')
-      endif
-    elseif a:key == "/"
+      call win_execute(a:winid, 'if (line(".") > 2)
+        \ | call cursor(line(".") - 1, 0) | else
+        \ | execute "normal! \<C-Y>" | endif')
+    elseif (a:key == "/") || (a:key == "?")
       let s:expl_searchmode = v:true
-      let s:expl_search = '/'
+      let s:expl_search = a:key
       echo s:expl_search
     endif
   else
     if a:key == "\<Enter>"
-      let s:expl_lastsearch = s:expl_search
-      call win_execute(a:winid, 'call search(s:expl_search[1:], "c")')
+      let @/ = '\%>1l' . s:expl_search[1:]
+      if s:expl_search[0] == "/"
+        call win_execute(a:winid, 'call search(@/, "c")')
+      elseif s:expl_search[0] == "?"
+        call win_execute(a:winid, 'call search(@/, "bc")')
+      endif
+      call histadd('/', @/)
       let s:expl_search = ''
     elseif a:key == "\<BS>"
       let s:expl_search = s:expl_search[:-2]
@@ -766,6 +769,8 @@ function! FileExplorerFilter(winid, key)
     elseif a:key == "\<Right>"
     else
       let s:expl_search = s:expl_search . a:key
+      call win_execute(a:winid, 'call clearmatches()
+        \ | call matchadd("Search", "\\%>1l" . s:expl_search[1:])')
     endif
     if empty(s:expl_search)
       let s:expl_searchmode = v:false
