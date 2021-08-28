@@ -576,52 +576,74 @@ endfunction
 "   }}}
 "   Buffers menu {{{2
 
-let s:last_buf = bufnr()
-let s:bufselect = ''
+let s:buf_before_menu = bufnr()
+let s:menu_bufnr = ''
 
 function! ReplaceCursorOnCurrentBuffer(winid)
   call win_execute(a:winid,
     \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
-    \ {_, val -> val.bufnr}), winbufnr(s:last_win)) + 1, 0)')
+    \ {_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
+endfunction
+
+function! HelpBuffersMenu()
+  call popup_create([ "h           - Show this help",
+                    \ "<Down>      - Next buffer",
+                    \ "<Up>        - Previous buffer",
+                    \ "<Enter>     - Select buffer",
+                    \ "<Esc>       - Cancel buffers menu",
+                    \ "0-9         - Buffer-id characters",
+                    \ "$           - End-of-string buffer-id character",
+                    \ "<BackSpace> - Erase last buffer-id character",
+                    \ ], #{ pos: 'topleft',
+                          \ line: win_screenpos(0)[0] + winheight(0) - 9,
+                          \ col: win_screenpos(0)[1],
+                          \ minwidth: winwidth(0),
+                          \ time: 5000,
+                          \ border: [1, 0, 0, 0],
+                          \ borderchars: ['━'],
+                          \ borderhighlight: ["StatusLine"],
+                          \ })
 endfunction
 
 function! BuffersMenuFilter(winid, key)
-  if a:key == "\<Down>"
+  if a:key == s:next_buffer_key
     bnext
     call ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == "\<Up>"
+  elseif a:key == s:previous_buffer_key
     bprevious
     call ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == "\<Enter>"
-    call popup_close(a:winid)
-  elseif a:key == "\<Esc>"
-    execute 'buffer ' . s:last_buf
-    call popup_close(a:winid)
-  elseif (match(a:key, '\d') > -1) || (a:key == "$")
-    if (a:key != "0") || (len(s:bufselect) > 0)
-      let s:bufselect = s:bufselect . a:key
+  elseif a:key == s:select_buffer_key
+    call popup_clear()
+  elseif a:key == s:cancel_buffersmenu_key
+    execute 'buffer ' . s:buf_before_menu
+    call popup_clear()
+  elseif match(a:key, s:select_bufnr_chars) > -1
+    if (a:key != "0") || (len(s:menu_bufnr) > 0)
+      let s:menu_bufnr = s:menu_bufnr . a:key
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
         \ {_, val -> val.bufnr}),
-        \ {_, val -> match(val, '^' . s:bufselect) > -1})
+        \ {_, val -> match(val, '^' . s:menu_bufnr) > -1})
       if len(l:matches) == 1
         execute 'buffer ' . l:matches[0]
-        call popup_close(a:winid)
+        call popup_clear()
       else
-        echo s:bufselect . ' (' . len(l:matches) . ' matches:'
+        echo s:menu_bufnr . ' (' . len(l:matches) . ' matches:'
           \ . string(l:matches) . ')'
       endif
     endif
-  elseif a:key == "\<BS>"
-    let s:bufselect = s:bufselect[:-2]
-    if len(s:bufselect) > 0
+  elseif a:key == s:erase_bufnr_key
+    let s:menu_bufnr = s:menu_bufnr[:-2]
+    if len(s:menu_bufnr) > 0
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
         \ {_, val -> val.bufnr}),
-        \ {_, val -> match(val, '^' . s:bufselect) > -1})
-      echo s:bufselect . ' (' . len(l:matches) . ' matches:'
+        \ {_, val -> match(val, '^' . s:menu_bufnr) > -1})
+      echo s:menu_bufnr . ' (' . len(l:matches) . ' matches:'
         \ . string(l:matches) . ')'
     else
-      echo s:bufselect
+      echo s:menu_bufnr
     endif
+  elseif a:key == s:help_buffersmenu_key
+    call HelpBuffersMenu()
   endif
   return v:true
 endfunction
@@ -654,9 +676,9 @@ function! BuffersMenu()
 endfunction
 
 function! DisplayBuffersMenu()
-  let s:last_buf = bufnr()
-  let s:last_win = winnr()
-  let s:bufselect = ''
+  let s:buf_before_menu = bufnr()
+  let s:win_before_menu = winnr()
+  let s:menu_bufnr = ''
 
   let l:menu = BuffersMenu()
   let l:popup_id = popup_create(l:menu.text,
@@ -674,6 +696,7 @@ function! DisplayBuffersMenu()
     \ cursorline: v:true,
   \ })
   call ReplaceCursorOnCurrentBuffer(l:popup_id)
+  call HelpBuffersMenu()
 endfunction
 
 "   }}
@@ -908,7 +931,8 @@ endfunction
 
 "   }}}
 " }}}
-" Mappings {{{1
+" Mappings and Keys {{{1
+"   Vim mappings {{{2
 
 if exists('s:leader') | unlet s:leader | endif
 if exists('s:shift_leader') | unlet s:shift_leader | endif
@@ -1002,11 +1026,11 @@ execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
 
 " buffers menu
 execute 'nnoremap <silent> ' . s:buffers_menu_mapping
-  \ . ' :silent call DisplayBuffersMenu()<CR>'
+  \ . ' :call DisplayBuffersMenu()<CR>'
 
 " file explorer
 execute 'nnoremap <silent> ' . s:file_explorer_mapping
-  \ . ' :silent call DisplayFileExplorer()<CR>'
+  \ . ' :call DisplayFileExplorer()<CR>'
 
 " windows navigation
 execute 'nnoremap <silent> ' . s:window_next_mapping
@@ -1028,6 +1052,28 @@ execute 'nnoremap '          . s:map_command_mapping
 execute 'inoremap '          . s:autocompletion_mapping
   \ . ' <C-n>'
 
+"   }}}
+"   Buffers menu keys {{{2
+
+if exists('s:next_buffer_key') | unlet s:next_buffer_key | endif
+if exists('s:previous_buffer_key') | unlet s:previous_buffer_key | endif
+if exists('s:select_buffer_key') | unlet s:select_buffer_key | endif
+if exists('s:cancel_buffersmenu_key') | unlet s:cancel_buffersmenu_key | endif
+if exists('s:select_bufnr_chars') | unlet s:select_bufnr_chars | endif
+if exists('s:erase_bufnr_key') | unlet s:erase_bufnr_key | endif
+if exists('s:help_buffersmenu_key') | unlet s:help_buffersmenu_key | endif
+
+const s:next_buffer_key =                                              "\<Down>"
+const s:previous_buffer_key =                                            "\<Up>"
+const s:select_buffer_key =                                           "\<Enter>"
+const s:cancel_buffersmenu_key =                                        "\<Esc>"
+const s:select_bufnr_chars =                                            '\d\|\$'
+const s:erase_bufnr_key =                                                "\<BS>"
+const s:help_buffersmenu_key =                                               "h"
+
+"   }}}
+"   File explorer keys {{{2
+"   }}}
 " }}}
 " Abbreviations {{{1
 
