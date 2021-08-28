@@ -1,10 +1,10 @@
 " TODO {{{1
 
 " - buffers menu: test
-" - file explorer: - copy fullpath file/dir
-"                  - disable Vexplore
-"                  - add do buffers list without open it
-"                  - open it in current window
+" - tree: - copy fullpath file/dir
+"         - disable Vexplore
+"         - add do buffers list without open it
+"         - open it in current window
 
 " }}}
 " Quality of life {{{1
@@ -398,7 +398,7 @@ call prop_type_add('buf', #{ highlight: 'Buffer' })
 call prop_type_add('mbuf', #{ highlight: 'ModifiedBuf' })
 
 "     }}}
-"     File explorer {{{3
+"     Tree {{{3
 
 if index(prop_type_list(), 'rpath') != -1 | call prop_type_delete('rpath') | endif
 if index(prop_type_list(), 'fpath') != -1 | call prop_type_delete('fpath') | endif
@@ -606,18 +606,18 @@ function! HelpBuffersMenu()
 endfunction
 
 function! BuffersMenuFilter(winid, key)
-  if a:key == s:next_buffer_key
+  if a:key == s:next_menukey
     bnext
     call ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == s:previous_buffer_key
+  elseif a:key == s:previous_menukey
     bprevious
     call ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == s:select_buffer_key
+  elseif a:key == s:select_menukey
     call popup_clear()
-  elseif a:key == s:cancel_buffersmenu_key
+  elseif a:key == s:cancel_menukey
     execute 'buffer ' . s:buf_before_menu
     call popup_clear()
-  elseif match(a:key, s:select_bufnr_chars) > -1
+  elseif match(a:key, s:select_menuchars) > -1
     if (a:key != "0") || (len(s:menu_bufnr) > 0)
       let s:menu_bufnr = s:menu_bufnr . a:key
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
@@ -631,7 +631,7 @@ function! BuffersMenuFilter(winid, key)
           \ . string(l:matches) . ')'
       endif
     endif
-  elseif a:key == s:erase_bufnr_key
+  elseif a:key == s:erase_menukey
     let s:menu_bufnr = s:menu_bufnr[:-2]
     if len(s:menu_bufnr) > 0
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
@@ -642,7 +642,7 @@ function! BuffersMenuFilter(winid, key)
     else
       echo s:menu_bufnr
     endif
-  elseif a:key == s:help_buffersmenu_key
+  elseif a:key == s:help_menukey
     call HelpBuffersMenu()
   endif
   return v:true
@@ -701,7 +701,7 @@ endfunction
 
 "   }}
 " }}}
-" File explorer {{{1
+" Tree {{{1
 
 function! PathCompare(file1, file2)
   if isdirectory(a:file1) && !isdirectory(a:file2)
@@ -720,90 +720,91 @@ function! InitTree()
 endfunction
 
 let s:show_dotfiles = v:false
-let s:expl_searchmode = v:false
-let s:expl_search = ''
+let s:tree_searchmode = v:false
+let s:tree_search = ''
 call InitTree()
 
 function! Depth(path)
   return len(split(substitute(a:path, '/$', '', 'g'), '/'))
 endfunction
 
-function! FileExplorerFilter(winid, key)
-  if !s:expl_searchmode
-    if a:key == "."
+function! TreeFilter(winid, key)
+  if !s:tree_searchmode
+    if a:key == s:dotfiles_treekey
       let s:show_dotfiles = !s:show_dotfiles
-      call popup_settext(a:winid, FileExplorer().text)
+      call popup_settext(a:winid, Tree().text)
       call win_execute(a:winid, 'if line(".") > line("$")
         \ | call cursor(line("$"), 0) | endif')
-    elseif a:key == "y"
+    elseif a:key == s:yank_treekey
       " copy fullpath in unnamed register
-    elseif a:key == "b"
+    elseif a:key == s:badd_treekey
       " use badd for the file
-    elseif a:key == "o"
+    elseif a:key == s:open_treekey
       " if dir
       "   open the directory and add content to the tree (even if empty)
       " elseif file
         edit s:tree[]
         call popup_close(a:winid)
-    elseif a:key == "c"
+    elseif a:key == s:reset_treekey
       call InitTree()
-      call popup_settext(a:winid, FileExplorer().text)
+      call popup_settext(a:winid, Tree().text)
       call win_execute(a:winid, 'call cursor(2, 0)')
-    elseif a:key == "n"
+    elseif a:key == s:next_search_treekey
       call win_execute(a:winid, 'call search(@/, "")')
-    elseif a:key == "N"
+    elseif a:key == s:previous_search_treekey
       call win_execute(a:winid, 'call search(@/, "b")')
-    elseif a:key == "g"
+    elseif a:key == s:first_file_treekey
       call win_execute(a:winid, 'call cursor(2, 0) | execute "normal! \<C-Y>"')
-    elseif a:key == "G"
+    elseif a:key == s:last_file_treekey
       call win_execute(a:winid, 'call cursor(line("$"), 0)')
-    elseif a:key == "\<Esc>"
+    elseif a:key == s:cancel_treekey
       call win_execute(a:winid, 'call clearmatches()')
       call popup_close(a:winid)
-    elseif a:key == "\<Down>"
+    elseif a:key == s:next_file_treekey
       call win_execute(a:winid, 'if (line(".") < line("$"))
         \ | call cursor(line(".") + 1, 0) | endif')
-    elseif a:key == "\<Up>"
+    elseif a:key == s:previous_file_treekey
       call win_execute(a:winid, 'if (line(".") > 2)
         \ | call cursor(line(".") - 1, 0) | else
         \ | execute "normal! \<C-Y>" | endif')
-    elseif (a:key == "/") || (a:key == "?")
-      let s:expl_searchmode = v:true
-      let s:expl_search = a:key
-      echo s:expl_search
+    elseif match(a:key, s:searchmode_treechars) > -1
+      let s:tree_searchmode = v:true
+      let s:tree_search = a:key
+      echo s:tree_search
     endif
   else
-    if a:key == "\<Enter>"
-      let @/ = '\%>1l' . s:expl_search[1:]
-      if s:expl_search[0] == "/"
+    if a:key == s:select_smtreekey
+      let @/ = '\%>1l' . s:tree_search[1:]
+      if s:tree_search[0] == "/"
         call win_execute(a:winid, 'call search(@/, "c")')
-      elseif s:expl_search[0] == "?"
+      elseif s:tree_search[0] == "?"
         call win_execute(a:winid, 'call search(@/, "bc")')
       endif
       call histadd('/', @/)
-      let s:expl_search = ''
-    elseif a:key == "\<BS>"
-      let s:expl_search = s:expl_search[:-2]
-    elseif a:key == "\<Esc>"
-      let s:expl_search = ''
+      let s:tree_search = ''
+    elseif a:key == s:erase_smtreekey
+      let s:tree_search = s:tree_search[:-2]
+    elseif a:key == s:cancel_smtreekey
+      let s:tree_search = ''
     elseif a:key == "\<Down>"
     elseif a:key == "\<Up>"
     elseif a:key == "\<Left>"
     elseif a:key == "\<Right>"
     else
-      let s:expl_search = s:expl_search . a:key
-      call win_execute(a:winid, 'call clearmatches()
-        \ | call matchadd("Search", "\\%>1l" . s:expl_search[1:])')
+      let s:tree_search = s:tree_search . a:key
+      call win_execute(a:winid, 'call clearmatches() | try
+        \ | call matchadd("Search", "\\%>1l" . s:tree_search[1:])
+        \ | catch | endtry ')
     endif
-    if empty(s:expl_search)
-      let s:expl_searchmode = v:false
+    if empty(s:tree_search)
+      let s:tree_searchmode = v:false
     endif
-    echo s:expl_search
+    echo s:tree_search
   endif
   return v:true
 endfunction
 
-function! FileExplorer()
+function! Tree()
   let l:text = []
 
   let l:line = s:tree['.']
@@ -862,14 +863,14 @@ function! FileExplorer()
   return #{ text: l:text }
 endfunction
 
-function! DisplayFileExplorer()
+function! DisplayTree()
   let s:show_dotfiles = v:false
-  let s:expl_searchmode = v:false
-  let s:expl_search = ''
+  let s:tree_searchmode = v:false
+  let s:tree_search = ''
   call InitTree()
 
-  let l:file_expl = FileExplorer()
-  let l:popup_id = popup_create(l:file_expl.text,
+  let l:tree = Tree()
+  let l:popup_id = popup_create(l:tree.text,
   \ #{
     \ pos: 'topleft',
     \ line: win_screenpos(0)[0],
@@ -880,7 +881,7 @@ function! DisplayFileExplorer()
     \ maxheight: winheight(0),
     \ drag: v:true,
     \ wrap: v:true,
-    \ filter: 'FileExplorerFilter',
+    \ filter: 'TreeFilter',
     \ mapping: v:false,
     \ scrollbar: v:true,
     \ cursorline: v:true,
@@ -948,7 +949,7 @@ if exists('s:toggle_good_practices_mapping') | unlet s:toggle_good_practices_map
 if exists('s:call_quit_function_mapping') | unlet s:call_quit_function_mapping | endif
 if exists('s:call_writequit_function_mapping') | unlet s:call_writequit_function_mapping | endif
 if exists('s:buffers_menu_mapping') | unlet s:buffers_menu_mapping | endif
-if exists('s:file_explorer_mapping') | unlet s:file_explorer_mapping | endif
+if exists('s:tree_mapping') | unlet s:tree_mapping | endif
 if exists('s:window_next_mapping') | unlet s:window_next_mapping | endif
 if exists('s:window_previous_mapping') | unlet s:window_previous_mapping | endif
 if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif
@@ -972,7 +973,7 @@ const s:toggle_good_practices_mapping =          s:leader       .            '"'
 const s:call_quit_function_mapping =             s:leader       .            'q'
 const s:call_writequit_function_mapping =        s:leader       .            'w'
 const s:buffers_menu_mapping =                   s:leader       .       s:leader
-const s:file_explorer_mapping =                  s:shift_leader . s:shift_leader
+const s:tree_mapping =                           s:shift_leader . s:shift_leader
 const s:window_next_mapping =                                                'L'
 const s:window_previous_mapping =                                            'H'
 const s:unfold_vim_fold_mapping =                                      '<Space>'
@@ -1028,9 +1029,9 @@ execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
 execute 'nnoremap <silent> ' . s:buffers_menu_mapping
   \ . ' :call DisplayBuffersMenu()<CR>'
 
-" file explorer
-execute 'nnoremap <silent> ' . s:file_explorer_mapping
-  \ . ' :call DisplayFileExplorer()<CR>'
+" tree
+execute 'nnoremap <silent> ' . s:tree_mapping
+  \ . ' :call DisplayTree()<CR>'
 
 " windows navigation
 execute 'nnoremap <silent> ' . s:window_next_mapping
@@ -1055,24 +1056,59 @@ execute 'inoremap '          . s:autocompletion_mapping
 "   }}}
 "   Buffers menu keys {{{2
 
-if exists('s:next_buffer_key') | unlet s:next_buffer_key | endif
-if exists('s:previous_buffer_key') | unlet s:previous_buffer_key | endif
-if exists('s:select_buffer_key') | unlet s:select_buffer_key | endif
-if exists('s:cancel_buffersmenu_key') | unlet s:cancel_buffersmenu_key | endif
-if exists('s:select_bufnr_chars') | unlet s:select_bufnr_chars | endif
-if exists('s:erase_bufnr_key') | unlet s:erase_bufnr_key | endif
-if exists('s:help_buffersmenu_key') | unlet s:help_buffersmenu_key | endif
+if exists('s:next_menukey') | unlet s:next_menukey | endif
+if exists('s:previous_menukey') | unlet s:previous_menukey | endif
+if exists('s:select_menukey') | unlet s:select_menukey | endif
+if exists('s:cancel_menukey') | unlet s:cancel_menukey | endif
+if exists('s:select_menuchars') | unlet s:select_menuchars | endif
+if exists('s:erase_menukey') | unlet s:erase_menukey | endif
+if exists('s:help_menukey') | unlet s:help_menukey | endif
 
-const s:next_buffer_key =                                              "\<Down>"
-const s:previous_buffer_key =                                            "\<Up>"
-const s:select_buffer_key =                                           "\<Enter>"
-const s:cancel_buffersmenu_key =                                        "\<Esc>"
-const s:select_bufnr_chars =                                            '\d\|\$'
-const s:erase_bufnr_key =                                                "\<BS>"
-const s:help_buffersmenu_key =                                               "h"
+const s:next_menukey =      "\<Down>"
+const s:previous_menukey =    "\<Up>"
+const s:select_menukey =   "\<Enter>"
+const s:cancel_menukey =     "\<Esc>"
+const s:select_menuchars =   '\d\|\$'
+const s:erase_menukey =       "\<BS>"
+const s:help_menukey =            "h"
 
 "   }}}
-"   File explorer keys {{{2
+"   Tree keys {{{2
+
+if exists('s:next_file_treekey') | unlet s:next_file_treekey | endif
+if exists('s:previous_file_treekey') | unlet s:previous_file_treekey | endif
+if exists('s:first_file_treekey') | unlet s:first_file_treekey | endif
+if exists('s:last_file_treekey') | unlet s:last_file_treekey | endif
+if exists('s:dotfiles_treekey') | unlet s:dotfiles_treekey | endif
+if exists('s:yank_treekey') | unlet s:yank_treekey | endif
+if exists('s:badd_treekey') | unlet s:badd_treekey | endif
+if exists('s:open_treekey') | unlet s:open_treekey | endif
+if exists('s:reset_treekey') | unlet s:reset_treekey | endif
+if exists('s:cancel_treekey') | unlet s:cancel_treekey | endif
+if exists('s:searchmode_treechars') | unlet s:searchmode_treechars | endif
+if exists('s:next_search_treekey') | unlet s:next_search_treekey | endif
+if exists('s:previous_search_treekey') | unlet s:previous_search_treekey | endif
+if exists('s:select_smtreekey') | unlet s:select_smtreekey | endif
+if exists('s:erase_smtreekey') | unlet s:erase_smtreekey | endif
+if exists('s:cancel_smtreekey') | unlet s:cancel_smtreekey | endif
+
+const s:next_file_treekey =        "\<Down>"
+const s:previous_file_treekey =      "\<Up>"
+const s:first_file_treekey =             "g"
+const s:last_file_treekey =              "G"
+const s:dotfiles_treekey =               "."
+const s:yank_treekey =                   "y"
+const s:badd_treekey =                   "b"
+const s:open_treekey =                   "o"
+const s:reset_treekey =                  "c"
+const s:cancel_treekey =            "\<Esc>"
+const s:searchmode_treechars =        '?\|/'
+const s:next_search_treekey =            "n"
+const s:previous_search_treekey =        "N"
+const s:select_smtreekey =        "\<Enter>"
+const s:erase_smtreekey =            "\<BS>"
+const s:cancel_smtreekey =          "\<Esc>"
+
 "   }}}
 " }}}
 " Abbreviations {{{1
@@ -1122,10 +1158,10 @@ augroup vimrc_autocomands
   autocmd BufEnter * :silent call CloseLonelyUnlistedBuffers()
 
 "   }}}
-"   File explorer autocommands group {{{2
+"   Tree autocommands group {{{2
 
   " autocmd VimEnter * silent! autocmd! FileExplorer
-  " autocmd BufEnter,VimEnter * if isdirectory('<amatch>') | call DisplayFileExplorer() | endif
+  " autocmd BufEnter,VimEnter * if isdirectory('<amatch>') | call DisplayTree() | endif
 
 "   }}}
 "   Vimscript filetype autocommands group {{{2
