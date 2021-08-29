@@ -18,7 +18,8 @@ set mouse=a
 " view tabulation, end of line and other hidden characters
 syntax on
 set list
-set listchars=tab:▸\ ,eol:.
+set listchars=tab:≫\ ,eol:.
+set fillchars=vert:│,fold:-,eob:∼
 
 " highlight corresponding patterns during a search
 if !&hlsearch | set hlsearch | endif
@@ -586,23 +587,24 @@ function! ReplaceCursorOnCurrentBuffer(winid)
 endfunction
 
 function! HelpBuffersMenu()
-  call popup_create([ "h           - Show this help",
-                    \ "<Down>      - Next buffer",
-                    \ "<Up>        - Previous buffer",
-                    \ "<Enter>     - Select buffer",
-                    \ "<Esc>       - Cancel buffers menu",
-                    \ "0-9         - Buffer-id characters",
-                    \ "$           - End-of-string buffer-id character",
-                    \ "<BackSpace> - Erase last buffer-id character",
-                    \ ], #{ pos: 'topleft',
-                          \ line: win_screenpos(0)[0] + winheight(0) - 9,
-                          \ col: win_screenpos(0)[1],
-                          \ minwidth: winwidth(0),
-                          \ time: 5000,
-                          \ border: [1, 0, 0, 0],
-                          \ borderchars: ['━'],
-                          \ borderhighlight: ["StatusLine"],
-                          \ })
+  let l:text = [ '    ' . Key([s:help_menukey]) . '     - Show this help',
+   \ '  ' . Key([s:next_menukey, s:previous_menukey]) . '   - Next/Previous buffer',
+   \ '  ' . Key([s:select_menukey]) . '   - Select buffer',
+   \ '   ' . Key([s:cancel_menukey]) . '    - Cancel buffers menu',
+   \ '   < 0-9 >    - Buffer-id characters',
+   \ '    < $ >     - End-of-string buffer-id character',
+   \ Key([s:erase_menukey]) . ' - Erase last buffer-id character',
+  \ ]
+  call popup_create(l:text, #{ pos: 'topleft',
+                             \ line: win_screenpos(0)[0] + winheight(0)
+                             \   - len(l:text) - &cmdheight,
+                             \ col: win_screenpos(0)[1],
+                             \ minwidth: winwidth(0),
+                             \ time: 5000,
+                             \ border: [1, 0, 0, 0],
+                             \ borderchars: ['━'],
+                             \ borderhighlight: ["StatusLine"],
+                             \ })
 endfunction
 
 function! BuffersMenuFilter(winid, key)
@@ -933,6 +935,37 @@ endfunction
 "   }}}
 " }}}
 " Mappings and Keys {{{1
+
+function! Key(keys)
+  let l:text = '< '
+  let l:index = 1
+  for l:key in a:keys
+    if l:key == "\<Down>"
+      let l:text = l:text . '↓'
+    elseif l:key == "\<Up>"
+      let l:text = l:text . '↑'
+    elseif l:key == "\<Right>"
+      let l:text = l:text . '→'
+    elseif l:key == "\<Left>"
+      let l:text = l:text . '←'
+    elseif l:key == "\<Enter>"
+      let l:text = l:text . 'Enter'
+    elseif l:key == "\<Esc>"
+      let l:text = l:text . 'Esc'
+    elseif l:key == "\<BS>"
+      let l:text = l:text . 'BackSpace'
+    else
+      let l:text = l:text . l:key
+    endif
+
+    if l:index < len(a:keys)
+      let l:text = l:text . ' | '
+      let l:index += 1
+    endif
+  endfor
+  return l:text . ' >'
+endfunction
+
 "   Vim mappings {{{2
 
 if exists('s:leader') | unlet s:leader | endif
