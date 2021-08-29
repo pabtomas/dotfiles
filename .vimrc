@@ -588,9 +588,10 @@ endfunction
 
 function! HelpBuffersMenu()
   let l:text = [ '    ' . Key([s:help_menukey]) . '     - Show this help',
-   \ '  ' . Key([s:next_menukey, s:previous_menukey]) . '   - Next/Previous buffer',
+   \ '   ' . Key([s:exit_menukey]) . '    - Exit buffers menu',
+   \ '  ' . Key([s:next_menukey, s:previous_menukey])
+     \ . '   - Next/Previous buffer',
    \ '  ' . Key([s:select_menukey]) . '   - Select buffer',
-   \ '   ' . Key([s:cancel_menukey]) . '    - Cancel buffers menu',
    \ '   < 0-9 >    - Buffer-id characters',
    \ '    < $ >     - End-of-string buffer-id character',
    \ Key([s:erase_menukey]) . ' - Erase last buffer-id character',
@@ -599,6 +600,7 @@ function! HelpBuffersMenu()
                              \ line: win_screenpos(0)[0] + winheight(0)
                              \   - len(l:text) - &cmdheight,
                              \ col: win_screenpos(0)[1],
+                             \ zindex: 1,
                              \ minwidth: winwidth(0),
                              \ time: 5000,
                              \ border: [1, 0, 0, 0],
@@ -616,7 +618,7 @@ function! BuffersMenuFilter(winid, key)
     call ReplaceCursorOnCurrentBuffer(a:winid)
   elseif a:key == s:select_menukey
     call popup_clear()
-  elseif a:key == s:cancel_menukey
+  elseif a:key == s:exit_menukey
     execute 'buffer ' . s:buf_before_menu
     call popup_clear()
   elseif match(a:key, s:select_menuchars) > -1
@@ -688,6 +690,7 @@ function! DisplayBuffersMenu()
     \ pos: 'topleft',
     \ line: win_screenpos(0)[0] + (winheight(0) - l:menu.height) / 2,
     \ col: win_screenpos(0)[1] + (winwidth(0) - l:menu.width) / 2,
+    \ zindex: 2,
     \ drag: v:true,
     \ wrap: v:false,
     \ filter: 'BuffersMenuFilter',
@@ -704,6 +707,39 @@ endfunction
 "   }}
 " }}}
 " Tree {{{1
+
+function! HelpTree()
+  let l:text = [ repeat('━', 40) . '┳' . repeat('━', winwidth(0) - 41),
+    \ '     NORMAL Mode                        ┃    '
+      \ . Key([s:reset_treekey]) . '     - Reset tree',
+    \ '  ' . Key([s:help_treekey]) . '   - Show this help              ┃'
+      \ . '  < / | ? >   - Forward/Backward SEARCH',
+    \ ' ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃  '
+      \ . Key([s:next_match_treekey, s:previous_match_treekey])
+      \ . '   - Next/Previous SEARCH match',
+    \ Key([s:next_file_treekey, s:previous_file_treekey])
+      \ . ' - Next/Previous file          ┃',
+    \ Key([s:first_file_treekey, s:last_file_treekey])
+      \ . ' - First/Last file             ┃         SEARCH Mode',
+    \ '  ' . Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃   '
+      \ . Key([s:exit_smtreekey]) . '    - Exit SEARCH Mode',
+    \ '  ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃  '
+      \ . Key([s:select_smtreekey]) . '   - Start search',
+    \ '  ' . Key([s:yank_treekey]) . '   - Yank path                   ┃'
+      \ . Key([s:erase_smtreekey]) . ' - Erase search',
+    \ '  ' . Key([s:dotfiles_treekey]) . '   - Show/Hide dot files         ┃'
+      \ . '  ' . Key([s:next_smtreekey, s:previous_smtreekey])
+      \ . '   - Next/Previous search',
+  \ ]
+  call popup_create(l:text, #{ pos: 'topleft',
+                             \ line: win_screenpos(0)[0] + winheight(0)
+                             \   - len(l:text),
+                             \ col: win_screenpos(0)[1],
+                             \ zindex: 3,
+                             \ minwidth: winwidth(0),
+                             \ time: 10000,
+                             \ })
+endfunction
 
 function! PathCompare(file1, file2)
   if isdirectory(a:file1) && !isdirectory(a:file2)
@@ -735,8 +771,8 @@ function! TreeFilter(winid, key)
     if a:key == s:dotfiles_treekey
       let s:show_dotfiles = !s:show_dotfiles
       call popup_settext(a:winid, Tree().text)
-      call win_execute(a:winid, 'if line(".") > line("$")
-        \ | call cursor(line("$"), 0) | endif')
+      call win_execute(a:winid, 'if line(".") > line("$") |'
+        \ . ' call cursor(line("$"), 0) | endif')
     elseif a:key == s:yank_treekey
       " copy fullpath in unnamed register
     elseif a:key == s:badd_treekey
@@ -746,29 +782,32 @@ function! TreeFilter(winid, key)
       "   open the directory and add content to the tree (even if empty)
       " elseif file
         edit s:tree[]
-        call popup_close(a:winid)
+        call popup_clear()
     elseif a:key == s:reset_treekey
       call InitTree()
       call popup_settext(a:winid, Tree().text)
       call win_execute(a:winid, 'call cursor(2, 0)')
-    elseif a:key == s:next_search_treekey
-      call win_execute(a:winid, 'call search(@/, "")')
-    elseif a:key == s:previous_search_treekey
-      call win_execute(a:winid, 'call search(@/, "b")')
+    elseif a:key == s:next_match_treekey
+      call win_execute(a:winid, 'call search(histget("/", -1), "")')
+    elseif a:key == s:previous_match_treekey
+      call win_execute(a:winid, 'call search(histget("/", -1), "b")')
     elseif a:key == s:first_file_treekey
-      call win_execute(a:winid, 'call cursor(2, 0) | execute "normal! \<C-Y>"')
+      call win_execute(a:winid,
+        \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
     elseif a:key == s:last_file_treekey
       call win_execute(a:winid, 'call cursor(line("$"), 0)')
-    elseif a:key == s:cancel_treekey
+    elseif a:key == s:exit_treekey
       call win_execute(a:winid, 'call clearmatches()')
-      call popup_close(a:winid)
+      call popup_clear()
     elseif a:key == s:next_file_treekey
-      call win_execute(a:winid, 'if (line(".") < line("$"))
-        \ | call cursor(line(".") + 1, 0) | endif')
+      call win_execute(a:winid, 'if line(".") < line("$") |'
+        \ . ' call cursor(line(".") + 1, 0) | endif')
     elseif a:key == s:previous_file_treekey
-      call win_execute(a:winid, 'if (line(".") > 2)
-        \ | call cursor(line(".") - 1, 0) | else
-        \ | execute "normal! \<C-Y>" | endif')
+      call win_execute(a:winid, 'if line(".") > 2 |'
+        \ . ' call cursor(line(".") - 1, 0) | else |'
+        \ . ' execute "normal! \<C-Y>" | endif')
+    elseif a:key == s:help_treekey
+      call HelpTree()
     elseif match(a:key, s:searchmode_treechars) > -1
       let s:tree_searchmode = v:true
       let s:tree_search = a:key
@@ -777,16 +816,14 @@ function! TreeFilter(winid, key)
   else
     if a:key == s:select_smtreekey
       let @/ = '\%>1l' . s:tree_search[1:]
-      if s:tree_search[0] == "/"
-        call win_execute(a:winid, 'call search(@/, "c")')
-      elseif s:tree_search[0] == "?"
-        call win_execute(a:winid, 'call search(@/, "bc")')
-      endif
+      call win_execute(a:winid,
+        \ 'if s:tree_search[0] == "/" | call search(@/, "c") | '
+        \ . 'elseif s:tree_search[0] == "?" | call search(@/, "bc") | endif')
       call histadd('/', @/)
       let s:tree_search = ''
     elseif a:key == s:erase_smtreekey
       let s:tree_search = s:tree_search[:-2]
-    elseif a:key == s:cancel_smtreekey
+    elseif a:key == s:exit_smtreekey
       let s:tree_search = ''
     elseif a:key == "\<Down>"
     elseif a:key == "\<Up>"
@@ -794,9 +831,9 @@ function! TreeFilter(winid, key)
     elseif a:key == "\<Right>"
     else
       let s:tree_search = s:tree_search . a:key
-      call win_execute(a:winid, 'call clearmatches() | try
-        \ | call matchadd("Search", "\\%>1l" . s:tree_search[1:])
-        \ | catch | endtry ')
+      call win_execute(a:winid, 'call clearmatches() | '
+        \ . 'try | call matchadd("Search", "\\%>1l" . s:tree_search[1:]) | '
+        \ . 'catch | endtry ')
     endif
     if empty(s:tree_search)
       let s:tree_searchmode = v:false
@@ -877,6 +914,7 @@ function! DisplayTree()
     \ pos: 'topleft',
     \ line: win_screenpos(0)[0],
     \ col: win_screenpos(0)[1],
+    \ zindex: 2,
     \ minwidth: winwidth(0),
     \ maxwidth: winwidth(0),
     \ minheight: winheight(0),
@@ -889,6 +927,7 @@ function! DisplayTree()
     \ cursorline: v:true,
   \ })
   call win_execute(l:popup_id, 'call cursor(2, 0)')
+  call HelpTree()
 endfunction
 
 " }}}
@@ -1092,7 +1131,7 @@ execute 'inoremap '          . s:autocompletion_mapping
 if exists('s:next_menukey') | unlet s:next_menukey | endif
 if exists('s:previous_menukey') | unlet s:previous_menukey | endif
 if exists('s:select_menukey') | unlet s:select_menukey | endif
-if exists('s:cancel_menukey') | unlet s:cancel_menukey | endif
+if exists('s:exit_menukey') | unlet s:exit_menukey | endif
 if exists('s:select_menuchars') | unlet s:select_menuchars | endif
 if exists('s:erase_menukey') | unlet s:erase_menukey | endif
 if exists('s:help_menukey') | unlet s:help_menukey | endif
@@ -1100,7 +1139,7 @@ if exists('s:help_menukey') | unlet s:help_menukey | endif
 const s:next_menukey =      "\<Down>"
 const s:previous_menukey =    "\<Up>"
 const s:select_menukey =   "\<Enter>"
-const s:cancel_menukey =     "\<Esc>"
+const s:exit_menukey =       "\<Esc>"
 const s:select_menuchars =   '\d\|\$'
 const s:erase_menukey =       "\<BS>"
 const s:help_menukey =            "h"
@@ -1117,13 +1156,16 @@ if exists('s:yank_treekey') | unlet s:yank_treekey | endif
 if exists('s:badd_treekey') | unlet s:badd_treekey | endif
 if exists('s:open_treekey') | unlet s:open_treekey | endif
 if exists('s:reset_treekey') | unlet s:reset_treekey | endif
-if exists('s:cancel_treekey') | unlet s:cancel_treekey | endif
+if exists('s:exit_treekey') | unlet s:exit_treekey | endif
+if exists('s:help_treekey') | unlet s:help_treekey | endif
 if exists('s:searchmode_treechars') | unlet s:searchmode_treechars | endif
-if exists('s:next_search_treekey') | unlet s:next_search_treekey | endif
-if exists('s:previous_search_treekey') | unlet s:previous_search_treekey | endif
+if exists('s:next_match_treekey') | unlet s:next_match_treekey | endif
+if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
+if exists('s:next_smtreekey') | unlet s:next_smtreekey | endif
+if exists('s:previous_smtreekey') | unlet s:previous_smtreekey | endif
 if exists('s:select_smtreekey') | unlet s:select_smtreekey | endif
 if exists('s:erase_smtreekey') | unlet s:erase_smtreekey | endif
-if exists('s:cancel_smtreekey') | unlet s:cancel_smtreekey | endif
+if exists('s:exit_smtreekey') | unlet s:exit_smtreekey | endif
 
 const s:next_file_treekey =        "\<Down>"
 const s:previous_file_treekey =      "\<Up>"
@@ -1134,13 +1176,16 @@ const s:yank_treekey =                   "y"
 const s:badd_treekey =                   "b"
 const s:open_treekey =                   "o"
 const s:reset_treekey =                  "c"
-const s:cancel_treekey =            "\<Esc>"
+const s:exit_treekey =              "\<Esc>"
+const s:help_treekey =                   "h"
 const s:searchmode_treechars =        '?\|/'
-const s:next_search_treekey =            "n"
-const s:previous_search_treekey =        "N"
+const s:next_match_treekey =             "n"
+const s:previous_match_treekey =         "N"
+const s:next_smtreekey =             "\<Up>"
+const s:previous_smtreekey =       "\<Down>"
 const s:select_smtreekey =        "\<Enter>"
 const s:erase_smtreekey =            "\<BS>"
-const s:cancel_smtreekey =          "\<Esc>"
+const s:exit_smtreekey =            "\<Esc>"
 
 "   }}}
 " }}}
