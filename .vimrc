@@ -390,6 +390,11 @@ execute s:redhighlight_cmd
 
 "   }}}
 "   Text properties {{{2
+
+if index(prop_type_list(), 'statusline') != -1 | call prop_type_delete('statusline') | endif
+
+call prop_type_add('statusline', #{ highlight: 'StatusLine' })
+
 "     Buffers menu {{{3
 
 if index(prop_type_list(), 'buf') != -1 | call prop_type_delete('buf') | endif
@@ -587,7 +592,7 @@ function! ReplaceCursorOnCurrentBuffer(winid)
 endfunction
 
 function! HelpBuffersMenu()
-  let l:text = [ '    ' . Key([s:help_menukey]) . '     - Show this help',
+  let l:lines = [ '    ' . Key([s:help_menukey]) . '     - Show this help',
    \ '   ' . Key([s:exit_menukey]) . '    - Exit buffers menu',
    \ '  ' . Key([s:next_menukey, s:previous_menukey])
      \ . '   - Next/Previous buffer',
@@ -596,6 +601,14 @@ function! HelpBuffersMenu()
    \ '    < $ >     - End-of-string buffer-id character',
    \ Key([s:erase_menukey]) . ' - Erase last buffer-id character',
   \ ]
+  let l:text = []
+  for l:line in l:lines
+    let l:properties = [#{ type: 'statusline',
+      \ col: matchend(l:line, '>\s*- \u') - 2, length: 1 }]
+    " let l:properties = l:properties + [#{ type: 'keys',
+    "  \ col: match(l:line, ''), length: 2 }]
+    call add(l:text, #{ text: l:line, props: l:properties })
+  endfor
   call popup_create(l:text, #{ pos: 'topleft',
                              \ line: win_screenpos(0)[0] + winheight(0)
                              \   - len(l:text) - &cmdheight,
@@ -713,7 +726,7 @@ function! HelpTree()
     \ '     NORMAL Mode                        ┃    '
       \ . Key([s:reset_treekey]) . '     - Reset tree',
     \ '  ' . Key([s:help_treekey]) . '   - Show this help              ┃'
-      \ . '  < / | ? >   - Forward/Backward SEARCH',
+      \ . '    ' . Key([s:searchmode_treekey]) . '     - Enter search command',
     \ ' ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃  '
       \ . Key([s:next_match_treekey, s:previous_match_treekey])
       \ . '   - Next/Previous SEARCH match',
@@ -808,7 +821,7 @@ function! TreeFilter(winid, key)
         \ . ' execute "normal! \<C-Y>" | endif')
     elseif a:key == s:help_treekey
       call HelpTree()
-    elseif match(a:key, s:searchmode_treechars) > -1
+    elseif a:key == s:searchmode_treekey
       let s:tree_searchmode = v:true
       let s:tree_search = a:key
       echo s:tree_search
@@ -1142,7 +1155,7 @@ const s:select_menukey =   "\<Enter>"
 const s:exit_menukey =       "\<Esc>"
 const s:select_menuchars =   '\d\|\$'
 const s:erase_menukey =       "\<BS>"
-const s:help_menukey =            "h"
+const s:help_menukey =            "?"
 
 "   }}}
 "   Tree keys {{{2
@@ -1158,7 +1171,7 @@ if exists('s:open_treekey') | unlet s:open_treekey | endif
 if exists('s:reset_treekey') | unlet s:reset_treekey | endif
 if exists('s:exit_treekey') | unlet s:exit_treekey | endif
 if exists('s:help_treekey') | unlet s:help_treekey | endif
-if exists('s:searchmode_treechars') | unlet s:searchmode_treechars | endif
+if exists('s:searchmode_treekey') | unlet s:searchmode_treekey | endif
 if exists('s:next_match_treekey') | unlet s:next_match_treekey | endif
 if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
 if exists('s:next_smtreekey') | unlet s:next_smtreekey | endif
@@ -1177,8 +1190,8 @@ const s:badd_treekey =                   "b"
 const s:open_treekey =                   "o"
 const s:reset_treekey =                  "c"
 const s:exit_treekey =              "\<Esc>"
-const s:help_treekey =                   "h"
-const s:searchmode_treechars =        '?\|/'
+const s:help_treekey =                   "?"
+const s:searchmode_treekey =             "/"
 const s:next_match_treekey =             "n"
 const s:previous_match_treekey =         "N"
 const s:next_smtreekey =             "\<Up>"
