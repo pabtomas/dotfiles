@@ -785,7 +785,7 @@ function! HelpTree()
     \ '      NORMAL Mode                        ┃     '
       \ . Key([s:reset_treekey]) . '     - Reset tree',
     \ '   ' . Key([s:help_treekey]) . '   - Show this help              ┃'
-      \ . '   ' . Key([s:searchmode_treekey]) . '   - Enter search command',
+      \ . '   ' . Key([s:searchmode_treekey]) . '   - Enter SEARCH Mode',
     \ '  ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃   '
       \ . Key([s:next_match_treekey, s:previous_match_treekey])
       \ . '   - Next/Previous SEARCH match',
@@ -796,7 +796,7 @@ function! HelpTree()
     \ '   ' . Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃    '
       \ . Key([s:exit_smtreekey]) . '    - Exit SEARCH Mode',
     \ '   ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃   '
-      \ . Key([s:select_smtreekey]) . '   - Evaluate SEARCH',
+      \ . Key([s:evaluate_smtreekey]) . '   - Evaluate SEARCH',
     \ '   ' . Key([s:yank_treekey]) . '   - Yank path                   ┃ '
       \ . Key([s:erase_smtreekey]) . ' - Erase SEARCH',
     \ '   ' . Key([s:dotfiles_treekey]) . '   - Show/Hide dot files         ┃'
@@ -879,85 +879,131 @@ endfunction
 let s:show_dotfiles = v:false
 let s:tree_searchmode = v:false
 let s:tree_search = ''
+let s:search_cursor = 0
+let s:search_hist_cursor = 0
 call InitTree()
 
 function! Depth(path)
   return len(split(substitute(a:path, '/$', '', 'g'), '/'))
 endfunction
 
-function! TreeFilter(winid, key)
-  if !s:tree_searchmode
-    if a:key == s:dotfiles_treekey
-      let s:show_dotfiles = !s:show_dotfiles
-      call popup_settext(a:winid, Tree().text)
-      call win_execute(a:winid, 'if line(".") > line("$") |'
-        \ . ' call cursor(line("$"), 0) | endif')
-    elseif a:key == s:yank_treekey
-      " copy fullpath in unnamed register
-    elseif a:key == s:badd_treekey
-      " use badd for the file
-    elseif a:key == s:open_treekey
-      " if dir
-      "   open the directory and add content to the tree (even if empty)
-      " elseif file
-        edit s:tree[]
-        call popup_clear()
-    elseif a:key == s:reset_treekey
-      call InitTree()
-      call popup_settext(a:winid, Tree().text)
-      call win_execute(a:winid, 'call cursor(2, 0)')
-    elseif a:key == s:next_match_treekey
-      call win_execute(a:winid, 'call search(histget("/", -1), "")')
-    elseif a:key == s:previous_match_treekey
-      call win_execute(a:winid, 'call search(histget("/", -1), "b")')
-    elseif a:key == s:first_file_treekey
-      call win_execute(a:winid,
-        \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
-    elseif a:key == s:last_file_treekey
-      call win_execute(a:winid, 'call cursor(line("$"), 0)')
-    elseif a:key == s:exit_treekey
-      call win_execute(a:winid, 'call clearmatches()')
+function! NormalModeTreeFilter(winid, key)
+  if a:key == s:dotfiles_treekey
+    let s:show_dotfiles = !s:show_dotfiles
+    call popup_settext(a:winid, Tree().text)
+    call win_execute(a:winid, 'if line(".") > line("$") |'
+      \ . ' call cursor(line("$"), 0) | endif')
+  elseif a:key == s:yank_treekey
+    " copy fullpath in unnamed register
+  elseif a:key == s:badd_treekey
+    " use badd for the file
+  elseif a:key == s:open_treekey
+    " if dir
+    "   open the directory and add content to the tree (even if empty)
+    " elseif file
+      edit s:tree[]
       call popup_clear()
-    elseif a:key == s:next_file_treekey
-      call win_execute(a:winid, 'if line(".") < line("$") |'
-        \ . ' call cursor(line(".") + 1, 0) | endif')
-    elseif a:key == s:previous_file_treekey
-      call win_execute(a:winid, 'if line(".") > 2 |'
-        \ . ' call cursor(line(".") - 1, 0) | else |'
-        \ . ' execute "normal! \<C-Y>" | endif')
-    elseif a:key == s:help_treekey
-      call HelpTree()
-    elseif a:key == s:searchmode_treekey
-      let s:tree_searchmode = v:true
-      let s:tree_search = a:key
-      echo s:tree_search
+  elseif a:key == s:reset_treekey
+    call InitTree()
+    call popup_settext(a:winid, Tree().text)
+    call win_execute(a:winid, 'call cursor(2, 0)')
+  elseif a:key == s:next_match_treekey
+    call win_execute(a:winid, 'call search(histget("/", -1), "")')
+  elseif a:key == s:previous_match_treekey
+    call win_execute(a:winid, 'call search(histget("/", -1), "b")')
+  elseif a:key == s:first_file_treekey
+    call win_execute(a:winid,
+      \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
+  elseif a:key == s:last_file_treekey
+    call win_execute(a:winid, 'call cursor(line("$"), 0)')
+  elseif a:key == s:exit_treekey
+    call win_execute(a:winid, 'call clearmatches()')
+    call popup_clear()
+  elseif a:key == s:next_file_treekey
+    call win_execute(a:winid, 'if line(".") < line("$") |'
+      \ . ' call cursor(line(".") + 1, 0) | endif')
+  elseif a:key == s:previous_file_treekey
+    call win_execute(a:winid, 'if line(".") > 2 |'
+      \ . ' call cursor(line(".") - 1, 0) | else |'
+      \ . ' execute "normal! \<C-Y>" | endif')
+  elseif a:key == s:help_treekey
+    call HelpTree()
+  elseif a:key == s:searchmode_treekey
+    let s:tree_searchmode = v:true
+    let s:tree_search = a:key
+    let s:search_cursor = 1
+    let s:search_hist_cursor = 0
+    echo s:tree_search
+    echohl Visual
+    echon ' '
+    echohl NONE
+  endif
+endfunction
+
+function! SearchModeTreeFilter(winid, key)
+  if a:key == s:evaluate_smtreekey
+    let @/ = '\%>1l' . s:tree_search[1:]
+    call win_execute(a:winid,
+      \ 'if s:tree_search[0] == "/" | call search(@/, "c") | '
+      \ . 'elseif s:tree_search[0] == "?" | call search(@/, "bc") | endif')
+    call histadd('/', @/)
+    let s:tree_search = ''
+  elseif a:key == s:erase_smtreekey
+    if s:search_cursor > 1
+      let s:tree_search = slice(s:tree_search, 0, s:search_cursor - 1)
+        \ . slice(s:tree_search, s:search_cursor)
+      let s:search_cursor -= 1
+    endif
+  elseif a:key == s:exit_smtreekey
+    let s:tree_search = ''
+  elseif a:key == s:next_smtreekey
+    if s:search_hist_cursor < 0
+      let s:search_hist_cursor += 1
+      let s:tree_search = '/' . histget('search', s:search_hist_cursor)
+    else
+      let s:tree_search = '/'
+    endif
+    let s:search_cursor = len(s:tree_search)
+  elseif a:key == s:previous_smtreekey
+    if abs(s:search_hist_cursor) < &history
+      let s:search_hist_cursor -= 1
+      let s:tree_search = '/' . histget('search', s:search_hist_cursor)
+      let s:search_cursor = len(s:tree_search)
+    endif
+  elseif a:key == s:left_smtreekey
+    if s:search_cursor > 1
+      let s:search_cursor -= 1
+    endif
+  elseif a:key == s:right_smtreekey
+    if s:search_cursor < len(s:tree_search)
+      let s:search_cursor += 1
     endif
   else
-    if a:key == s:select_smtreekey
-      let @/ = '\%>1l' . s:tree_search[1:]
-      call win_execute(a:winid,
-        \ 'if s:tree_search[0] == "/" | call search(@/, "c") | '
-        \ . 'elseif s:tree_search[0] == "?" | call search(@/, "bc") | endif')
-      call histadd('/', @/)
-      let s:tree_search = ''
-    elseif a:key == s:erase_smtreekey
-      let s:tree_search = s:tree_search[:-2]
-    elseif a:key == s:exit_smtreekey
-      let s:tree_search = ''
-    elseif a:key == "\<Down>"
-    elseif a:key == "\<Up>"
-    elseif a:key == "\<Left>"
-    elseif a:key == "\<Right>"
-    else
-      let s:tree_search = s:tree_search . a:key
-      call win_execute(a:winid, 'call clearmatches() | '
-        \ . 'try | call matchadd("Search", "\\%>1l" . s:tree_search[1:]) | '
-        \ . 'catch | endtry ')
-    endif
-    if empty(s:tree_search)
-      let s:tree_searchmode = v:false
-    endif
-    echo s:tree_search
+    let s:tree_search = slice(s:tree_search, 0, s:search_cursor) . a:key
+      \ . slice(s:tree_search, s:search_cursor)
+    let s:search_cursor += 1
+    call win_execute(a:winid, 'call clearmatches() | '
+      \ . 'try | call matchadd("Search", "\\%>1l" . s:tree_search[1:]) | '
+      \ . 'catch | endtry ')
+  endif
+  if empty(s:tree_search)
+    let s:tree_searchmode = v:false
+  endif
+  echo slice(s:tree_search, 0, s:search_cursor)
+  echohl Visual
+  echon slice(s:tree_search, s:search_cursor, s:search_cursor + 1)
+  if s:search_cursor == len(s:tree_search)
+    echon ' '
+  endif
+  echohl NONE
+  echon slice(s:tree_search, s:search_cursor + 1)
+endfunction
+
+function! TreeFilter(winid, key)
+  if !s:tree_searchmode
+    call NormalModeTreeFilter(a:winid, a:key)
+  else
+    call SearchModeTreeFilter(a:winid, a:key)
   endif
   return v:true
 endfunction
@@ -1257,9 +1303,11 @@ if exists('s:help_treekey') | unlet s:help_treekey | endif
 if exists('s:searchmode_treekey') | unlet s:searchmode_treekey | endif
 if exists('s:next_match_treekey') | unlet s:next_match_treekey | endif
 if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
+if exists('s:left_smtreekey') | unlet s:left_smtreekey | endif
+if exists('s:right_smtreekey') | unlet s:right_smtreekey | endif
 if exists('s:next_smtreekey') | unlet s:next_smtreekey | endif
 if exists('s:previous_smtreekey') | unlet s:previous_smtreekey | endif
-if exists('s:select_smtreekey') | unlet s:select_smtreekey | endif
+if exists('s:evaluate_smtreekey') | unlet s:evaluate_smtreekey | endif
 if exists('s:erase_smtreekey') | unlet s:erase_smtreekey | endif
 if exists('s:exit_smtreekey') | unlet s:exit_smtreekey | endif
 
@@ -1277,9 +1325,11 @@ const s:help_treekey =                   "?"
 const s:searchmode_treekey =             "/"
 const s:next_match_treekey =             "n"
 const s:previous_match_treekey =         "N"
-const s:next_smtreekey =             "\<Up>"
-const s:previous_smtreekey =       "\<Down>"
-const s:select_smtreekey =        "\<Enter>"
+const s:right_smtreekey =         "\<Right>"
+const s:left_smtreekey =           "\<Left>"
+const s:next_smtreekey =           "\<Down>"
+const s:previous_smtreekey =         "\<Up>"
+const s:evaluate_smtreekey =      "\<Enter>"
 const s:erase_smtreekey =            "\<BS>"
 const s:exit_smtreekey =            "\<Esc>"
 
