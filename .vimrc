@@ -309,7 +309,10 @@ if &term[-9:] =~ '-256color'
     \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
     \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
     \      highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
+    \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+    \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+    \      highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+    \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
     \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
     \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
     \      highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
@@ -374,6 +377,9 @@ else
   highlight       RootPath           term=bold           cterm=bold           ctermfg=DarkRed   ctermbg=Black
   highlight       ClosedDirPath      term=bold           cterm=bold           ctermfg=Yellow    ctermbg=Black
   highlight       FilePath           term=NONE           cterm=NONE           ctermfg=White     ctermbg=Black
+  highlight       Help               term=bold           cterm=bold           ctermfg=White     ctermbg=NONE
+  highlight       HelpKey            term=bold           cterm=bold           ctermfg=Red       ctermbg=NONE
+  highlight       HelpMode           term=bold           cterm=bold           ctermfg=Green     ctermbg=NONE
   highlight       Pmenu              term=NONE           cterm=NONE           ctermfg=White     ctermbg=NONE
   highlight       PmenuSbar          term=NONE           cterm=NONE           ctermfg=Black     ctermbg=Blue
   highlight       PmenuThumb         term=NONE           cterm=NONE           ctermfg=Black     ctermbg=White
@@ -392,8 +398,14 @@ execute s:redhighlight_cmd
 "   Text properties {{{2
 
 if index(prop_type_list(), 'statusline') != -1 | call prop_type_delete('statusline') | endif
+if index(prop_type_list(), 'key') != -1 | call prop_type_delete('key') | endif
+if index(prop_type_list(), 'help') != -1 | call prop_type_delete('help') | endif
+if index(prop_type_list(), 'mode') != -1 | call prop_type_delete('mode') | endif
 
 call prop_type_add('statusline', #{ highlight: 'StatusLine' })
+call prop_type_add('key', #{ highlight: 'HelpKey' })
+call prop_type_add('help', #{ highlight: 'Help' })
+call prop_type_add('mode', #{ highlight: 'HelpMode' })
 
 "     Buffers menu {{{3
 
@@ -592,21 +604,31 @@ function! ReplaceCursorOnCurrentBuffer(winid)
 endfunction
 
 function! HelpBuffersMenu()
-  let l:lines = [ '    ' . Key([s:help_menukey]) . '     - Show this help',
-   \ '   ' . Key([s:exit_menukey]) . '    - Exit buffers menu',
-   \ '  ' . Key([s:next_menukey, s:previous_menukey])
+  let l:lines = [ '     ' . Key([s:help_menukey]) . '     - Show this help',
+   \ '    ' . Key([s:exit_menukey]) . '    - Exit buffers menu',
+   \ '   ' . Key([s:next_menukey, s:previous_menukey])
      \ . '   - Next/Previous buffer',
-   \ '  ' . Key([s:select_menukey]) . '   - Select buffer',
-   \ '   < 0-9 >    - Buffer-id characters',
-   \ '    < $ >     - End-of-string buffer-id character',
-   \ Key([s:erase_menukey]) . ' - Erase last buffer-id character',
+   \ '   ' . Key([s:select_menukey]) . '   - Select buffer',
+   \ '    < 0-9 >    - Buffer-id characters',
+   \ '     < $ >     - End-of-string buffer-id character',
+   \ ' ' . Key([s:erase_menukey]) . ' - Erase last buffer-id character',
   \ ]
   let l:text = []
   for l:line in l:lines
-    let l:properties = [#{ type: 'statusline',
-      \ col: matchend(l:line, '>\s*- \u') - 2, length: 1 }]
-    " let l:properties = l:properties + [#{ type: 'keys',
-    "  \ col: match(l:line, ''), length: 2 }]
+    let l:start = matchend(l:line, '^\s*< .\+ >\s* - \u')
+    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1}]
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: l:start - 2, length: 1 }]
+    let l:start = 0
+    while l:start > -1
+      let l:start = match(l:line,
+        \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ', l:start)
+      if l:start > -1
+        let l:start += 1
+        let l:properties = l:properties + [#{ type: 'statusline',
+          \ col: l:start, length: 1 }]
+      endif
+    endwhile
     call add(l:text, #{ text: l:line, props: l:properties })
   endfor
   call popup_create(l:text, #{ pos: 'topleft',
@@ -615,10 +637,11 @@ function! HelpBuffersMenu()
                              \ col: win_screenpos(0)[1],
                              \ zindex: 1,
                              \ minwidth: winwidth(0),
-                             \ time: 5000,
+                             \ time: 10000,
                              \ border: [1, 0, 0, 0],
                              \ borderchars: ['━'],
                              \ borderhighlight: ["StatusLine"],
+                             \ highlight: 'Help',
                              \ })
 endfunction
 
@@ -722,28 +745,72 @@ endfunction
 " Tree {{{1
 
 function! HelpTree()
-  let l:text = [ repeat('━', 40) . '┳' . repeat('━', winwidth(0) - 41),
-    \ '     NORMAL Mode                        ┃    '
+  let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
+    \ '      NORMAL Mode                        ┃     '
       \ . Key([s:reset_treekey]) . '     - Reset tree',
-    \ '  ' . Key([s:help_treekey]) . '   - Show this help              ┃'
-      \ . '    ' . Key([s:searchmode_treekey]) . '     - Enter search command',
-    \ ' ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃  '
+    \ '   ' . Key([s:help_treekey]) . '   - Show this help              ┃'
+      \ . '   ' . Key([s:searchmode_treekey]) . '   - Enter search command',
+    \ '  ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃   '
       \ . Key([s:next_match_treekey, s:previous_match_treekey])
       \ . '   - Next/Previous SEARCH match',
-    \ Key([s:next_file_treekey, s:previous_file_treekey])
+    \ ' ' . Key([s:next_file_treekey, s:previous_file_treekey])
       \ . ' - Next/Previous file          ┃',
-    \ Key([s:first_file_treekey, s:last_file_treekey])
+    \ ' ' . Key([s:first_file_treekey, s:last_file_treekey])
       \ . ' - First/Last file             ┃         SEARCH Mode',
-    \ '  ' . Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃   '
+    \ '   ' . Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃    '
       \ . Key([s:exit_smtreekey]) . '    - Exit SEARCH Mode',
-    \ '  ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃  '
-      \ . Key([s:select_smtreekey]) . '   - Start search',
-    \ '  ' . Key([s:yank_treekey]) . '   - Yank path                   ┃'
-      \ . Key([s:erase_smtreekey]) . ' - Erase search',
-    \ '  ' . Key([s:dotfiles_treekey]) . '   - Show/Hide dot files         ┃'
-      \ . '  ' . Key([s:next_smtreekey, s:previous_smtreekey])
-      \ . '   - Next/Previous search',
+    \ '   ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃   '
+      \ . Key([s:select_smtreekey]) . '   - Evaluate SEARCH',
+    \ '   ' . Key([s:yank_treekey]) . '   - Yank path                   ┃ '
+      \ . Key([s:erase_smtreekey]) . ' - Erase SEARCH',
+    \ '   ' . Key([s:dotfiles_treekey]) . '   - Show/Hide dot files         ┃'
+      \ . '   ' . Key([s:next_smtreekey, s:previous_smtreekey])
+      \ . '   - Next/Previous SEARCH',
   \ ]
+  let l:text = [#{ text: l:lines[0], props: [#{ type: 'statusline',
+    \ col: 1, length: len(l:lines[0]) }] }]
+  for l:line in l:lines[1:]
+
+    let l:start = match(l:line, ' ┃ \s*<\zs .\+ >\s* - \u')
+    let l:end = matchend(l:line, ' ┃ \s*< .\+ \ze>\s* - \u')
+    let l:properties =
+      \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
+
+    let l:start = match(l:line, ' ┃ \s*< .\+ >\s* \zs- \u')
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: l:start + 1, length: 1 }]
+
+    let l:start = match(l:line, '^\s*<\zs .\+ >\s* - \u.* ┃')
+    let l:end = matchend(l:line, '^\s*< .\+ \ze>\s* - \u.* ┃')
+    let l:properties = l:properties +
+      \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
+
+    let l:start = match(l:line, '^\s*< .\+ >\s* \zs- \u.* ┃')
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: l:start + 1, length: 1 }]
+
+    let l:start = 0
+    while l:start > -1
+      let l:start = match(l:line,
+        \ ' ┃ \s*\zs< \|^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ',
+        \ l:start)
+      if l:start > -1
+        let l:start += 1
+        let l:properties = l:properties + [#{ type: 'statusline',
+          \ col: l:start, length: 1 }]
+      endif
+    endwhile
+
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: match(l:line, ' \zs┃ '), length: len('┃')}]
+
+    let l:start = match(l:line, '\u\{2,}')
+    let l:end = matchend(l:line, '\u\{2,} Mode\|\u\{2,}')
+    let l:properties = l:properties + [#{ type: 'mode',
+      \ col: l:start, length: l:end + 1 - l:start }]
+
+    call add(l:text, #{ text: l:line, props: l:properties })
+  endfor
   call popup_create(l:text, #{ pos: 'topleft',
                              \ line: win_screenpos(0)[0] + winheight(0)
                              \   - len(l:text),
@@ -751,6 +818,7 @@ function! HelpTree()
                              \ zindex: 3,
                              \ minwidth: winwidth(0),
                              \ time: 10000,
+                             \ highlight: 'Help',
                              \ })
 endfunction
 
@@ -1006,6 +1074,12 @@ function! Key(keys)
       let l:text = l:text . 'Esc'
     elseif l:key == "\<BS>"
       let l:text = l:text . 'BackSpace'
+    elseif l:key == "/"
+      let l:text = l:text . 'Slash'
+    elseif l:key == "\\"
+      let l:text = l:text . 'BackSlash'
+    elseif l:key == "|"
+      let l:text = l:text . 'Bar'
     else
       let l:text = l:text . l:key
     endif
