@@ -592,16 +592,42 @@ function! WriteQuitAll()
 endfunction
 
 "   }}}
-"   Buffers menu {{{2
+" }}}
+" Windows {{{1
 
-let s:buf_before_menu = bufnr()
-let s:menu_bufnr = ''
-
-function! ReplaceCursorOnCurrentBuffer(winid)
-  call win_execute(a:winid,
-    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
-    \ {_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
+function! NextWindow()
+  if winnr() < winnr('$')
+    execute winnr() + 1 . 'wincmd w'
+  else
+    1wincmd w
+  endif
 endfunction
+
+function! PreviousWindow()
+  if winnr() > 1
+    execute winnr() - 1 . 'wincmd w'
+  else
+    execute winnr('$') . 'wincmd w'
+  endif
+endfunction
+
+" }}}
+" Dependencies {{{1
+
+function! CheckDependencies()
+  if v:version < 801
+    let l:major_version = v:version / 100
+    echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
+      \ . ' functionnal. Your Vim version is ' l:major_version . '.'
+      \ . (v:version - l:major_version * 100)
+    quit
+  endif
+endfunction
+
+" }}}
+" Plugins {{{1
+"   Buffers menu {{{2
+"     Help {{{3
 
 function! HelpBuffersMenu()
   let l:lines = [ '     ' . Key([s:help_menukey]) . '     - Show this help',
@@ -643,6 +669,17 @@ function! HelpBuffersMenu()
                              \ borderhighlight: ["StatusLine"],
                              \ highlight: 'Help',
                              \ })
+endfunction
+
+"     }}}
+
+let s:buf_before_menu = bufnr()
+let s:menu_bufnr = ''
+
+function! ReplaceCursorOnCurrentBuffer(winid)
+  call win_execute(a:winid,
+    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
+    \ {_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
 endfunction
 
 function! BuffersMenuFilter(winid, key)
@@ -740,10 +777,9 @@ function! DisplayBuffersMenu()
   call HelpBuffersMenu()
 endfunction
 
-"   }}
-" }}}
-" Tree {{{1
-
+"   }}}
+"   Tree {{{2
+"     Help {{{3
 function! HelpTree()
   let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
     \ '      NORMAL Mode                        ┃     '
@@ -821,6 +857,8 @@ function! HelpTree()
                              \ highlight: 'Help',
                              \ })
 endfunction
+
+"     }}}
 
 function! PathCompare(file1, file2)
   if isdirectory(a:file1) && !isdirectory(a:file2)
@@ -965,9 +1003,11 @@ function! Tree()
       let l:property = [#{ type: 'fpath', col: 0, length: winwidth(0) + 1}]
       if isdirectory(l:current)
         if has_key(s:tree, l:current)
-          let l:property = [#{ type: 'odpath', col: 0, length: winwidth(0) + 1}]
+          let l:property =
+            \ [#{ type: 'odpath', col: 0, length: winwidth(0) + 1}]
         else
-          let l:property = [#{ type: 'cdpath', col: 0, length: winwidth(0) + 1}]
+          let l:property =
+            \ [#{ type: 'cdpath', col: 0, length: winwidth(0) + 1}]
         endif
       endif
 
@@ -1011,38 +1051,7 @@ function! DisplayTree()
   call HelpTree()
 endfunction
 
-" }}}
-" Windows {{{1
-
-function! NextWindow()
-  if winnr() < winnr('$')
-    execute winnr() + 1 . 'wincmd w'
-  else
-    1wincmd w
-  endif
-endfunction
-
-function! PreviousWindow()
-  if winnr() > 1
-    execute winnr() - 1 . 'wincmd w'
-  else
-    execute winnr('$') . 'wincmd w'
-  endif
-endfunction
-
-" }}}
-" Dependencies {{{1
-
-function! CheckDependencies()
-  if v:version < 801
-    let l:major_version = v:version / 100
-    echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
-      \ . ' functionnal. Your Vim version is ' l:major_version . '.'
-      \ . (v:version - l:major_version * 100)
-    quit
-  endif
-endfunction
-
+"   }}}
 " }}}
 " Filetype specific {{{1
 "   Bash {{{2
