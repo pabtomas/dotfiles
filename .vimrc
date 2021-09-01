@@ -46,6 +46,15 @@ set report=0
 " F       -> do not give the file info when editing a file
 set shortmess=nxtTsSF
 
+" automatically update a file if it is changed externally
+set autoread
+
+" show matching braces
+set showmatch
+
+" visual autocomplete for command menu
+set wildmenu
+
 " }}}
 " Performance {{{1
 
