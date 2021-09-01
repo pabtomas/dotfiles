@@ -782,26 +782,28 @@ endfunction
 "     Help {{{3
 function! HelpTree()
   let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
-    \ '      NORMAL Mode                        ┃     '
-      \ . Key([s:reset_treekey]) . '     - Reset tree',
-    \ '   ' . Key([s:help_treekey]) . '   - Show this help              ┃'
-      \ . '   ' . Key([s:searchmode_treekey]) . '   - Enter SEARCH Mode',
-    \ '  ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃   '
+    \ '      NORMAL Mode                        ┃        '
+      \ . Key([s:reset_treekey]) . '        - Reset tree',
+    \ '   ' . Key([s:help_treekey]) . '   - Show this help              ┃   '
+      \ . '   ' . Key([s:searchmode_treekey]) . '      - Enter SEARCH Mode',
+    \ '  ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃      '
       \ . Key([s:next_match_treekey, s:previous_match_treekey])
-      \ . '   - Next/Previous SEARCH match',
+      \ . '      - Next/Previous SEARCH match',
     \ ' ' . Key([s:next_file_treekey, s:previous_file_treekey])
-      \ . ' - Next/Previous file          ┃',
+      \ . ' - Next/Previous file          ┃                SEARCH Mode',
     \ ' ' . Key([s:first_file_treekey, s:last_file_treekey])
-      \ . ' - First/Last file             ┃         SEARCH Mode',
+      \ . ' - First/Last file             ┃       '
+      \ . Key([s:exit_smtreekey]) . '       - Exit SEARCH Mode',
     \ '   ' . Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃    '
-      \ . Key([s:exit_smtreekey]) . '    - Exit SEARCH Mode',
-    \ '   ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃   '
-      \ . Key([s:evaluate_smtreekey]) . '   - Evaluate SEARCH',
+      \ . '  ' . Key([s:evaluate_smtreekey]) . '      - Evaluate SEARCH',
+    \ '   ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃    '
+      \ . Key([s:erase_smtreekey]) . '    - Erase SEARCH',
     \ '   ' . Key([s:yank_treekey]) . '   - Yank path                   ┃ '
-      \ . Key([s:erase_smtreekey]) . ' - Erase SEARCH',
+      \ . '     ' . Key([s:next_smtreekey, s:previous_smtreekey])
+      \ . '      - Next/Previous SEARCH',
     \ '   ' . Key([s:dotfiles_treekey]) . '   - Show/Hide dot files         ┃'
-      \ . '   ' . Key([s:next_smtreekey, s:previous_smtreekey])
-      \ . '   - Next/Previous SEARCH',
+      \ . ' ' . Key([s:wide_left_smtreekey, s:wide_right_smtreekey])
+      \ . ' - Navigation',
   \ ]
   let l:text = [#{ text: l:lines[0], props: [#{ type: 'statusline',
     \ col: 1, length: len(l:lines[0]) }] }]
@@ -978,6 +980,19 @@ function! SearchModeTreeFilter(winid, key)
     if s:search_cursor < len(s:tree_search)
       let s:search_cursor += 1
     endif
+  elseif a:key == s:wide_left_smtreekey
+    for l:i in range(s:search_cursor - 2, 0, -1)
+      if match(s:tree_search[l:i], '[[:punct:][:space:]]') > -1
+        let s:search_cursor = l:i + 1
+        break
+      endif
+    endfor
+  elseif a:key == s:wide_right_smtreekey
+    let s:search_cursor =
+      \ match(s:tree_search[1:], '[[:punct:][:space:]]', s:search_cursor + 1)
+    if s:search_cursor == -1
+      let s:search_cursor = len(s:tree_search)
+    endif
   else
     let s:tree_search = slice(s:tree_search, 0, s:search_cursor) . a:key
       \ . slice(s:tree_search, s:search_cursor)
@@ -986,6 +1001,7 @@ function! SearchModeTreeFilter(winid, key)
       \ . 'try | call matchadd("Search", "\\%>1l" . s:tree_search[1:]) | '
       \ . 'catch | endtry ')
   endif
+
   if empty(s:tree_search)
     let s:tree_searchmode = v:false
   endif
@@ -1123,6 +1139,22 @@ function! Key(keys)
       let l:text = l:text . '→'
     elseif l:key == "\<Left>"
       let l:text = l:text . '←'
+    elseif l:key == "\<S-Down>"
+      let l:text = l:text . 'Shift ↓'
+    elseif l:key == "\<S-Up>"
+      let l:text = l:text . 'Shift ↑'
+    elseif l:key == "\<S-Right>"
+      let l:text = l:text . 'Shift →'
+    elseif l:key == "\<S-Left>"
+      let l:text = l:text . 'Shift ←'
+    elseif l:key == "\<C-Down>"
+      let l:text = l:text . 'Ctrl ↓'
+    elseif l:key == "\<C-Up>"
+      let l:text = l:text . 'Ctrl ↑'
+    elseif l:key == "\<C-Right>"
+      let l:text = l:text . 'Ctrl →'
+    elseif l:key == "\<C-Left>"
+      let l:text = l:text . 'Ctrl ←'
     elseif l:key == "\<Enter>"
       let l:text = l:text . 'Enter'
     elseif l:key == "\<Esc>"
@@ -1135,6 +1167,10 @@ function! Key(keys)
       let l:text = l:text . 'BackSlash'
     elseif l:key == "|"
       let l:text = l:text . 'Bar'
+    elseif l:key == "<"
+      let l:text = l:text . 'Less'
+    elseif l:key == ">"
+      let l:text = l:text . 'Greater'
     else
       let l:text = l:text . l:key
     endif
@@ -1305,6 +1341,8 @@ if exists('s:next_match_treekey') | unlet s:next_match_treekey | endif
 if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
 if exists('s:left_smtreekey') | unlet s:left_smtreekey | endif
 if exists('s:right_smtreekey') | unlet s:right_smtreekey | endif
+if exists('s:wide_left_smtreekey') | unlet s:wide_left_smtreekey | endif
+if exists('s:wide_right_smtreekey') | unlet s:wide_right_smtreekey | endif
 if exists('s:next_smtreekey') | unlet s:next_smtreekey | endif
 if exists('s:previous_smtreekey') | unlet s:previous_smtreekey | endif
 if exists('s:evaluate_smtreekey') | unlet s:evaluate_smtreekey | endif
@@ -1327,6 +1365,8 @@ const s:next_match_treekey =             "n"
 const s:previous_match_treekey =         "N"
 const s:right_smtreekey =         "\<Right>"
 const s:left_smtreekey =           "\<Left>"
+const s:wide_right_smtreekey =  "\<C-Right>"
+const s:wide_left_smtreekey =    "\<C-Left>"
 const s:next_smtreekey =           "\<Down>"
 const s:previous_smtreekey =         "\<Up>"
 const s:evaluate_smtreekey =      "\<Enter>"
