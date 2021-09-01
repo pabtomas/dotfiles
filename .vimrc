@@ -216,20 +216,16 @@ function! EndWave()
   return Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
 endfunction
 
-if &term[-9:] =~ '-256color'
-  if exists('s:color_spec') | unlet s:color_spec | endif
-  const s:color_spec = [
-    \ 51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
-    \ 202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50
-  \ ]
-endif
+if exists('s:color_spec') | unlet s:color_spec | endif
+const s:color_spec = [
+  \ 51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
+  \ 202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50
+\ ]
 
 function! s:WaveLine(timer_id)
-  if &term[-9:] =~ '-256color'
-    let s:wavecolor = fmod(s:wavecolor + 0.75, 30.0)
-    execute 'highlight User5 term=bold cterm=bold ctermfg='
-      \ . s:color_spec[float2nr(floor(s:wavecolor))] . ' ctermbg=' . s:black
-  endif
+  let s:wavecolor = fmod(s:wavecolor + 0.75, 30.0)
+  execute 'highlight User5 term=bold cterm=bold ctermfg='
+    \ . s:color_spec[float2nr(floor(s:wavecolor))] . ' ctermbg=' . s:black
 
   let s:localtime = localtime()
   set statusline=%5*%{StartWave()}%0*
@@ -242,7 +238,7 @@ function! s:WaveLine(timer_id)
   endif
 endfunction
 
-if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+let s:wavecolor = 0.0
 let s:localtime = localtime()
 let s:start_animation = s:localtime
 call StaticLine()
@@ -252,7 +248,7 @@ let s:line_timer = timer_start(1000, function('s:WaveLine'), #{ repeat: -1 })
 call timer_pause(s:line_timer, v:true)
 
 function! AnimateStatusLine()
-  if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+  let s:wavecolor = 0.0
   let s:start_animation = localtime()
   call timer_pause(s:line_timer, v:false)
 endfunction
@@ -306,101 +302,79 @@ const s:black = 232
 
 let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
-if &term[-9:] =~ '-256color'
+set background=dark | highlight clear | if exists('syntax_on') | syntax reset | endif
+set wincolor=NormalAlt
 
-  set background=dark | highlight clear | if exists('syntax_on') | syntax reset | endif
-  set wincolor=NormalAlt
+execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
+  \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
+  \      highlight       BufferMenuBorders  term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
+  \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+  \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
+  \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
+  \      highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+  \      highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+  \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+  \      highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
+  \      highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+  \      highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Visual             term=reverse      cterm=reverse                                 ctermbg=' . s:black    . ' |
+  \      highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Tag                term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Error                                                   ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
+  \      highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+  \      highlight       Todo               term=standout                        ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+  \      highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
+  \      highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
+  \      highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
+  \      highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
+  \      highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
+  \      highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_3   . ' |
+  \      highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+  \      highlight       User1              term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+  \      highlight       User2              term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
+  \      highlight       User3              term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
+  \      highlight       User4              term=bold         cterm=bold         ctermfg=Red'
+highlight! link WarningMsg         ErrorMsg
+highlight  link String             Constant
+highlight  link Character          Constant
+highlight  link Number             Constant
+highlight  link Boolean            Constant
+highlight  link Float              Number
+highlight  link Function           Identifier
+highlight  link Conditional        Statement
+highlight  link Repeat             Statement
+highlight  link Label              Statement
+highlight  link Operator           Statement
+highlight  link Keyword            Statement
+highlight  link Exception          Statement
+highlight  link Include            PreProc
+highlight  link Define             PreProc
+highlight  link Macro              PreProc
+highlight  link PreCondit          PreProc
+highlight  link StorageClass       Type
+highlight  link Structure          Type
+highlight  link Typedef            Type
+highlight  link SpecialChar        Special
+highlight  link Delimiter          Special
+highlight  link SpecialComment     Special
+highlight  link Debug              Special
 
-  execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
-    \      highlight       BufferMenuBorders  term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
-    \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
-    \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
-    \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
-    \      highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
-    \      highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Visual             term=reverse      cterm=reverse                                 ctermbg=' . s:black    . ' |
-    \      highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Tag                term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Error                                                   ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
-    \      highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       Todo               term=standout                        ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
-    \      highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
-    \      highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
-    \      highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
-    \      highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
-    \      highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_3   . ' |
-    \      highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
-    \      highlight       User1              term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
-    \      highlight       User2              term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       User3              term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black
-  highlight! link WarningMsg         ErrorMsg
-  highlight  link String             Constant
-  highlight  link Character          Constant
-  highlight  link Number             Constant
-  highlight  link Boolean            Constant
-  highlight  link Float              Number
-  highlight  link Function           Identifier
-  highlight  link Conditional        Statement
-  highlight  link Repeat             Statement
-  highlight  link Label              Statement
-  highlight  link Operator           Statement
-  highlight  link Keyword            Statement
-  highlight  link Exception          Statement
-  highlight  link Include            PreProc
-  highlight  link Define             PreProc
-  highlight  link Macro              PreProc
-  highlight  link PreCondit          PreProc
-  highlight  link StorageClass       Type
-  highlight  link Structure          Type
-  highlight  link Typedef            Type
-  highlight  link SpecialChar        Special
-  highlight  link Delimiter          Special
-  highlight  link SpecialComment     Special
-  highlight  link Debug              Special
-else
-  highlight       Buffer             term=bold           cterm=bold           ctermfg=DarkGrey  ctermbg=Black
-  highlight       ModifiedBuf        term=bold           cterm=bold           ctermfg=Red
-  highlight       BufferMenuBorders  term=bold           cterm=bold           ctermfg=LightBlue
-  highlight       RootPath           term=bold           cterm=bold           ctermfg=DarkRed   ctermbg=Black
-  highlight       ClosedDirPath      term=bold           cterm=bold           ctermfg=Yellow    ctermbg=Black
-  highlight       FilePath           term=NONE           cterm=NONE           ctermfg=White     ctermbg=Black
-  highlight       Help               term=bold           cterm=bold           ctermfg=White     ctermbg=NONE
-  highlight       HelpKey            term=bold           cterm=bold           ctermfg=Red       ctermbg=NONE
-  highlight       HelpMode           term=bold           cterm=bold           ctermfg=Green     ctermbg=NONE
-  highlight       Pmenu              term=NONE           cterm=NONE           ctermfg=White     ctermbg=NONE
-  highlight       PmenuSbar          term=NONE           cterm=NONE           ctermfg=Black     ctermbg=Blue
-  highlight       PmenuThumb         term=NONE           cterm=NONE           ctermfg=Black     ctermbg=White
-  highlight       StatusLine         term=bold           cterm=bold           ctermfg=LightBlue ctermbg=NONE
-  highlight       StatusLineNC       term=NONE           cterm=NONE           ctermfg=Blue      ctermbg=NONE
-  highlight       User1              term=bold           cterm=bold           ctermfg=Red       ctermbg=NONE
-  highlight       User2              term=bold           cterm=bold           ctermfg=Green     ctermbg=NONE
-  highlight       User3              term=bold           cterm=bold           ctermfg=Yellow    ctermbg=NONE
-  highlight  link OpenedDirPath      ClosedDirPath
-endif
-
-highlight         User4              term=bold           cterm=bold           ctermfg=Red
 execute s:redhighlight_cmd
 
 "   }}}
