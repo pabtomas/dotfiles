@@ -1,10 +1,8 @@
 " TODO {{{1
 
 " - buffers menu: test
-" - tree: - copy fullpath file/dir
+" - tree: - test
 "         - disable Vexplore
-"         - add do buffers list without open it
-"         - open it in current window
 
 " }}}
 " Quality of life {{{1
@@ -175,7 +173,7 @@ endfunction
 
 " status line content:
 " [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
-function! StatusLineData()
+function! s:StatusLineData()
   set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
                    \%2*%{FileName(v:false,v:true)}%0*
                    \%2*%{FileName(v:false,v:false)}%0*
@@ -188,9 +186,9 @@ function! StatusLineData()
   set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
 endfunction
 
-function! StaticLine()
+function! s:StaticLine()
   set statusline=%{StartLine()}
-  call StatusLineData()
+  call s:StatusLineData()
   set statusline+=%{EndLine()}
 endfunction
 
@@ -198,7 +196,7 @@ if exists('s:dots') | unlet s:dots | endif | const s:dots = [
 \  '˳', '.', '｡', '·', '•', '･', 'º', '°', '˚', '˙',
 \ ]
 
-function! Wave(start, end)
+function! s:Wave(start, end)
   let l:wave = ''
   for l:col in range(a:start, a:end - 1)
     let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(l:col *
@@ -208,12 +206,12 @@ function! Wave(start, end)
 endfunction
 
 function! StartWave()
-  return Wave(0, 4)
+  return s:Wave(0, 4)
 endfunction
 
 function! EndWave()
   let l:win_width = winwidth(winnr())
-  return Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
+  return s:Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
 endfunction
 
 if exists('s:color_spec') | unlet s:color_spec | endif
@@ -229,25 +227,25 @@ function! s:WaveLine(timer_id)
 
   let s:localtime = localtime()
   set statusline=%5*%{StartWave()}%0*
-  call StatusLineData()
+  call s:StatusLineData()
   set statusline+=%5*%{EndWave()}%0*
 
   if (s:localtime - s:start_animation) > 40
     call timer_pause(s:line_timer, v:true)
-    call StaticLine()
+    call s:StaticLine()
   endif
 endfunction
 
 let s:wavecolor = 0.0
 let s:localtime = localtime()
 let s:start_animation = s:localtime
-call StaticLine()
+call s:StaticLine()
 
 if exists('s:line_timer') | call timer_stop(s:line_timer) | endif
 let s:line_timer = timer_start(1000, function('s:WaveLine'), #{ repeat: -1 })
 call timer_pause(s:line_timer, v:true)
 
-function! AnimateStatusLine()
+function! s:AnimateStatusLine()
   let s:wavecolor = 0.0
   let s:start_animation = localtime()
   call timer_pause(s:line_timer, v:false)
@@ -418,17 +416,17 @@ call prop_type_add('odpath', #{ highlight: 'OpenedDirPath' })
 let s:redhighlight = v:true
 
 " highlight unused spaces before the end of the line
-function! ExtraSpaces()
+function! s:ExtraSpaces()
   call matchadd('RedHighlight', '\v\s+$')
 endfunction
 
 " highlight characters which overpass 80 columns
-function! OverLength()
+function! s:OverLength()
   call matchadd('RedHighlight', '\v%80v.*')
 endfunction
 
 " clear/add red highlight matching patterns
-function! ToggleRedHighlight()
+function! s:ToggleRedHighlight()
   if s:redhighlight
     highlight clear RedHighlight | set synmaxcol=3000
   else
@@ -445,13 +443,13 @@ endfunction
 set hidden
 
 " return number of active listed-buffers
-function! ActiveListedBuffers()
+function! s:ActiveListedBuffers()
   return len(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> !val.hidden}))
 endfunction
 
 " close Vim if only unlisted-buffers are active
-function! CloseLonelyUnlistedBuffers()
-  if ActiveListedBuffers() == 0
+function! s:CloseLonelyUnlistedBuffers()
+  if s:ActiveListedBuffers() == 0
     quitall
   endif
 endfunction
@@ -463,7 +461,7 @@ endfunction
 " =>N - is greater than N
 " <=N - is less than N
 " N   - distinct number of windows/u-buffer/l-buffers/h-buffers
-function! Quit()
+function! s:Quit()
   if !&modified
 
     let l:current_buf = bufnr()
@@ -515,7 +513,7 @@ function! Quit()
 
     " case 5:                                   current
     "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
-    let l:more_than_one_active_listedbuf = (ActiveListedBuffers() > 1)
+    let l:more_than_one_active_listedbuf = (s:ActiveListedBuffers() > 1)
 
     if l:more_than_one_window && !l:current_buf_active_more_than_once
     \ && !l:more_than_one_active_listedbuf && !l:at_least_one_hidden_listedbuf
@@ -559,18 +557,18 @@ function! Quit()
   return v:false
 endfunction
 
-function! WriteQuit()
+function! s:WriteQuit()
   update
-  return Quit()
+  return s:Quit()
 endfunction
 
-function! QuitAll()
-  while Quit()
+function! s:QuitAll()
+  while s:Quit()
   endwhile
 endfunction
 
-function! WriteQuitAll()
-  while WriteQuit()
+function! s:WriteQuitAll()
+  while s:WriteQuit()
   endwhile
 endfunction
 
@@ -578,7 +576,7 @@ endfunction
 " }}}
 " Windows {{{1
 
-function! NextWindow()
+function! s:NextWindow()
   if winnr() < winnr('$')
     execute winnr() + 1 . 'wincmd w'
   else
@@ -586,7 +584,7 @@ function! NextWindow()
   endif
 endfunction
 
-function! PreviousWindow()
+function! s:PreviousWindow()
   if winnr() > 1
     execute winnr() - 1 . 'wincmd w'
   else
@@ -597,7 +595,7 @@ endfunction
 " }}}
 " Dependencies {{{1
 
-function! CheckDependencies()
+function! s:CheckDependencies()
   if v:version < 801
     let l:major_version = v:version / 100
     echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
@@ -612,15 +610,15 @@ endfunction
 "   Buffers menu {{{2
 "     Help {{{3
 
-function! HelpBuffersMenu()
-  let l:lines = [ '     ' . Key([s:help_menukey]) . '     - Show this help',
-   \ '    ' . Key([s:exit_menukey]) . '    - Exit buffers menu',
-   \ '   ' . Key([s:next_menukey, s:previous_menukey])
+function! s:HelpBuffersMenu()
+  let l:lines = [ '     ' . s:Key([s:help_menukey]) . '     - Show this help',
+   \ '    ' . s:Key([s:exit_menukey]) . '    - Exit buffers menu',
+   \ '   ' . s:Key([s:next_menukey, s:previous_menukey])
      \ . '   - Next/Previous buffer',
-   \ '   ' . Key([s:select_menukey]) . '   - Select buffer',
+   \ '   ' . s:Key([s:select_menukey]) . '   - Select buffer',
    \ '    < 0-9 >    - Buffer-id characters',
    \ '     < $ >     - End-of-string buffer-id character',
-   \ ' ' . Key([s:erase_menukey]) . ' - Erase last buffer-id character',
+   \ ' ' . s:Key([s:erase_menukey]) . ' - Erase last buffer-id character',
   \ ]
   let l:text = []
   for l:line in l:lines
@@ -659,19 +657,19 @@ endfunction
 let s:buf_before_menu = bufnr()
 let s:menu_bufnr = ''
 
-function! ReplaceCursorOnCurrentBuffer(winid)
+function! s:ReplaceCursorOnCurrentBuffer(winid)
   call win_execute(a:winid,
     \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
     \ {_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
 endfunction
 
-function! BuffersMenuFilter(winid, key)
+function! s:BuffersMenuFilter(winid, key)
   if a:key == s:next_menukey
     bnext
-    call ReplaceCursorOnCurrentBuffer(a:winid)
+    call s:ReplaceCursorOnCurrentBuffer(a:winid)
   elseif a:key == s:previous_menukey
     bprevious
-    call ReplaceCursorOnCurrentBuffer(a:winid)
+    call s:ReplaceCursorOnCurrentBuffer(a:winid)
   elseif a:key == s:select_menukey
     call popup_clear()
   elseif a:key == s:exit_menukey
@@ -703,12 +701,12 @@ function! BuffersMenuFilter(winid, key)
       echo s:menu_bufnr
     endif
   elseif a:key == s:help_menukey
-    call HelpBuffersMenu()
+    call s:HelpBuffersMenu()
   endif
   return v:true
 endfunction
 
-function! BuffersMenu()
+function! s:BuffersMenu()
   let l:listed_buf = getbufinfo(#{ buflisted: 1 })
   let l:listedbuf_nb = len(l:listed_buf)
 
@@ -735,12 +733,12 @@ function! BuffersMenu()
   return #{ text: l:text, height: len(l:text), width: l:width }
 endfunction
 
-function! DisplayBuffersMenu()
+function! s:DisplayBuffersMenu()
   let s:buf_before_menu = bufnr()
   let s:win_before_menu = winnr()
   let s:menu_bufnr = ''
 
-  let l:menu = BuffersMenu()
+  let l:menu = s:BuffersMenu()
   let l:popup_id = popup_create(l:menu.text,
   \ #{
     \ pos: 'topleft',
@@ -749,43 +747,44 @@ function! DisplayBuffersMenu()
     \ zindex: 2,
     \ drag: v:true,
     \ wrap: v:false,
-    \ filter: 'BuffersMenuFilter',
+    \ filter: expand('<SID>') . 'BuffersMenuFilter',
     \ mapping: v:false,
     \ border: [],
     \ borderhighlight: ['BufferMenuBorders'],
     \ borderchars: ['━', '┃', '━', '┃', '┏', '┓', '┛', '┗'],
     \ cursorline: v:true,
   \ })
-  call ReplaceCursorOnCurrentBuffer(l:popup_id)
-  call HelpBuffersMenu()
+  call s:ReplaceCursorOnCurrentBuffer(l:popup_id)
+  call s:HelpBuffersMenu()
 endfunction
 
 "   }}}
 "   Tree {{{2
 "     Help {{{3
-function! HelpTree()
+function! s:HelpTree()
   let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
     \ '      NORMAL Mode                        ┃        '
-      \ . Key([s:reset_treekey]) . '        - Reset tree',
-    \ '   ' . Key([s:help_treekey]) . '   - Show this help              ┃   '
-      \ . '   ' . Key([s:searchmode_treekey]) . '      - Enter SEARCH Mode',
-    \ '  ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃      '
-      \ . Key([s:next_match_treekey, s:previous_match_treekey])
+      \ . s:Key([s:reset_treekey]) . '        - Reset tree',
+    \ '   ' . s:Key([s:help_treekey]) . '   - Show this help              ┃  '
+      \ . '    ' . s:Key([s:searchmode_treekey])
+      \ . '      - Enter SEARCH Mode',
+    \ '  ' . s:Key([s:exit_treekey]) . '  - Exit tree                   ┃    '
+      \ . '  ' . s:Key([s:next_match_treekey, s:previous_match_treekey])
       \ . '      - Next/Previous SEARCH match',
-    \ ' ' . Key([s:next_file_treekey, s:previous_file_treekey])
+    \ ' ' . s:Key([s:next_file_treekey, s:previous_file_treekey])
       \ . ' - Next/Previous file          ┃                SEARCH Mode',
-    \ ' ' . Key([s:first_file_treekey, s:last_file_treekey])
+    \ ' ' . s:Key([s:first_file_treekey, s:last_file_treekey])
       \ . ' - First/Last file             ┃       '
-      \ . Key([s:exit_smtreekey]) . '       - Exit SEARCH Mode',
-    \ '   ' . Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃    '
-      \ . '  ' . Key([s:evaluate_smtreekey]) . '      - Evaluate SEARCH',
-    \ '   ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃    '
-      \ . Key([s:erase_smtreekey]) . '    - Erase SEARCH',
-    \ '   ' . Key([s:yank_treekey]) . '   - Yank path                   ┃ '
-      \ . '     ' . Key([s:next_smtreekey, s:previous_smtreekey])
+      \ . s:Key([s:exit_smtreekey]) . '       - Exit SEARCH Mode',
+    \ '   ' . s:Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃  '
+      \ . '    ' . s:Key([s:evaluate_smtreekey]) . '      - Evaluate SEARCH',
+    \ '   ' . s:Key([s:badd_treekey]) . '   - Add to buffers list         ┃  '
+      \ . '  ' . s:Key([s:erase_smtreekey]) . '    - Erase SEARCH',
+    \ '   ' . s:Key([s:yank_treekey]) . '   - Yank path                   ┃ '
+      \ . '     ' . s:Key([s:next_smtreekey, s:previous_smtreekey])
       \ . '      - Next/Previous SEARCH',
-    \ '   ' . Key([s:dotfiles_treekey]) . '   - Show/Hide dot files         ┃'
-      \ . ' ' . Key([s:wide_left_smtreekey, s:wide_right_smtreekey])
+    \ '   ' . s:Key([s:dotfiles_treekey]) . '   - Show/Hide dot files        '
+      \ . ' ┃ ' . s:Key([s:wide_left_smtreekey, s:wide_right_smtreekey])
       \ . ' - Navigation',
   \ ]
   let l:text = [#{ text: l:lines[0], props: [#{ type: 'statusline',
@@ -845,7 +844,7 @@ endfunction
 
 "     }}}
 
-function! PathCompare(file1, file2)
+function! s:PathCompare(file1, file2)
   if isdirectory(a:file1) && !isdirectory(a:file2)
     return 1
   elseif !isdirectory(a:file1) && isdirectory(a:file2)
@@ -853,44 +852,76 @@ function! PathCompare(file1, file2)
   endif
 endfunction
 
-function! InitTree()
+function! s:FullPath(path, value)
+  let l:content = a:path . a:value
+  if isdirectory(l:content)
+    return l:content . '/'
+  endif
+  return l:content
+endfunction
+
+function! s:InitTree()
   let s:tree = {}
   let s:tree['.'] = fnamemodify('.', ':p')
-  let s:tree[fnamemodify('.', ':p')] = map(sort(reverse(
-    \ readdir('.', '1', #{ sort: 'icase' })),
-    \ "PathCompare"), {_, val -> fnamemodify(val, ':p')})
+  let s:tree[fnamemodify('.', ':p')] = sort(map(reverse(
+    \ readdir('.', '1', #{ sort: 'icase' })), {_, val ->
+      \ s:FullPath(s:tree['.'], val)}), expand('<SID>') . 'PathCompare')
+  let s:tree_searchmode = v:false
+  let s:tree_search = ''
 endfunction
 
 let s:show_dotfiles = v:false
-let s:tree_searchmode = v:false
-let s:tree_search = ''
 let s:search_cursor = 0
 let s:search_hist_cursor = 0
-call InitTree()
+call s:InitTree()
 
-function! Depth(path)
+function! s:Depth(path)
   return len(split(substitute(a:path, '/$', '', 'g'), '/'))
 endfunction
 
-function! NormalModeTreeFilter(winid, key)
+function! s:NormalModeTreeFilter(winid, key)
   if a:key == s:dotfiles_treekey
     let s:show_dotfiles = !s:show_dotfiles
-    call popup_settext(a:winid, Tree().text)
+    call popup_settext(a:winid, s:Tree().text)
     call win_execute(a:winid, 'if line(".") > line("$") |'
       \ . ' call cursor(line("$"), 0) | endif')
   elseif a:key == s:yank_treekey
-    " copy fullpath in unnamed register
+    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
+    let l:path = s:Tree().paths[s:tree_line]
+    let @" = l:path
+    echo 'Unnamed register content is:'
+    echohl OpenedDirPath
+    echon @"
+    echohl NONE
   elseif a:key == s:badd_treekey
-    " use badd for the file
+    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
+    let l:path = s:Tree().paths[s:tree_line]
+    if !isdirectory(l:path)
+      execute 'badd ' . l:path
+      echohl OpenedDirPath
+      echo l:path
+      echohl NONE
+      echon ' added to buffers list'
+    endif
   elseif a:key == s:open_treekey
-    " if dir
-    "   open the directory and add content to the tree (even if empty)
-    " elseif file
-      edit s:tree[]
+    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
+    let l:path = s:Tree().paths[s:tree_line]
+    if isdirectory(l:path)
+      if has_key(s:tree, l:path)
+        unlet s:tree[l:path]
+      else
+        let s:tree[l:path] = sort(map(reverse(
+          \ readdir(l:path, '1', #{ sort: 'icase' })), {_, val ->
+            \s:FullPath(l:path, val)}), expand('<SID>') . 'PathCompare')
+      endif
+      call popup_settext(a:winid, s:Tree().text)
+    else
       call popup_clear()
+      execute 'edit ' . l:path
+    endif
   elseif a:key == s:reset_treekey
-    call InitTree()
-    call popup_settext(a:winid, Tree().text)
+    call s:InitTree()
+    call popup_settext(a:winid, s:Tree().text)
     call win_execute(a:winid, 'call cursor(2, 0)')
   elseif a:key == s:next_match_treekey
     call win_execute(a:winid, 'call search(histget("/", -1), "")')
@@ -912,7 +943,7 @@ function! NormalModeTreeFilter(winid, key)
       \ . ' call cursor(line(".") - 1, 0) | else |'
       \ . ' execute "normal! \<C-Y>" | endif')
   elseif a:key == s:help_treekey
-    call HelpTree()
+    call s:HelpTree()
   elseif a:key == s:searchmode_treekey
     let s:tree_searchmode = v:true
     let s:tree_search = a:key
@@ -925,7 +956,7 @@ function! NormalModeTreeFilter(winid, key)
   endif
 endfunction
 
-function! SearchModeTreeFilter(winid, key)
+function! s:SearchModeTreeFilter(winid, key)
   if a:key == s:evaluate_smtreekey
     let @/ = '\%>1l' . s:tree_search[1:]
     call win_execute(a:winid,
@@ -998,24 +1029,24 @@ function! SearchModeTreeFilter(winid, key)
   echon slice(s:tree_search, s:search_cursor + 1)
 endfunction
 
-function! TreeFilter(winid, key)
+function! s:TreeFilter(winid, key)
   if !s:tree_searchmode
-    call NormalModeTreeFilter(a:winid, a:key)
+    call s:NormalModeTreeFilter(a:winid, a:key)
   else
-    call SearchModeTreeFilter(a:winid, a:key)
+    call s:SearchModeTreeFilter(a:winid, a:key)
   endif
   return v:true
 endfunction
 
-function! Tree()
+function! s:Tree()
   let l:text = []
+  let l:paths = []
 
   let l:line = s:tree['.']
   let l:property = [#{ type: 'rpath', col: 0, length: len(l:line) + 1 }]
 
   call add(l:text, #{ text: l:line, props: l:property })
 
-  let l:index = -1
   let l:stack = s:tree[s:tree['.']]
   let l:visited = {}
   let l:visited[s:tree['.']] = v:true
@@ -1023,7 +1054,6 @@ function! Tree()
     " pop
     let l:current = l:stack[-1]
     let l:stack = l:stack[:-2]
-    let l:index += 1
 
     " construct text
     let l:arrow = ''
@@ -1041,7 +1071,7 @@ function! Tree()
 
     if s:show_dotfiles || l:name[0] != '.'
       let l:indent = repeat('  ',
-        \ Depth(l:current) - Depth(s:tree['.']) - isdirectory(l:current))
+        \ s:Depth(l:current) - s:Depth(s:tree['.']) - isdirectory(l:current))
       let l:line = l:indent . l:arrow . l:name . l:id
 
       " construct property
@@ -1057,24 +1087,24 @@ function! Tree()
       endif
 
       call add(l:text, #{ text: l:line, props: l:property })
+      call add(l:paths, l:current)
     endif
 
     " continue dfs
-    if has_key(l:visited, l:current)
+    if !has_key(l:visited, l:current)
       let l:visited[l:current] = v:true
-      let l:stack += s:tree[l:current]
+      if has_key(s:tree, l:current)
+        let l:stack += s:tree[l:current]
+      endif
     endif
   endwhile
-  return #{ text: l:text }
+  return #{ text: l:text, paths: l:paths }
 endfunction
 
-function! DisplayTree()
-  let s:show_dotfiles = v:false
-  let s:tree_searchmode = v:false
-  let s:tree_search = ''
-  call InitTree()
+function! s:DisplayTree()
+  call s:InitTree()
 
-  let l:tree = Tree()
+  let l:tree = s:Tree()
   let l:popup_id = popup_create(l:tree.text,
   \ #{
     \ pos: 'topleft',
@@ -1087,13 +1117,13 @@ function! DisplayTree()
     \ maxheight: winheight(0),
     \ drag: v:true,
     \ wrap: v:true,
-    \ filter: 'TreeFilter',
+    \ filter: expand('<SID>') . 'TreeFilter',
     \ mapping: v:false,
     \ scrollbar: v:true,
     \ cursorline: v:true,
   \ })
   call win_execute(l:popup_id, 'call cursor(2, 0)')
-  call HelpTree()
+  call s:HelpTree()
 endfunction
 
 "   }}}
@@ -1101,7 +1131,7 @@ endfunction
 " Filetype specific {{{1
 "   Bash {{{2
 
-function! PrefillShFile()
+function! s:PrefillShFile()
   call append(0, [ '#!/bin/bash',
   \                '', ])
 endfunction
@@ -1110,7 +1140,7 @@ endfunction
 " }}}
 " Mappings and Keys {{{1
 
-function! Key(keys)
+function! s:Key(keys)
   let l:text = '< '
   let l:index = 1
   for l:key in a:keys
@@ -1246,31 +1276,31 @@ execute 'nnoremap <silent> ' . s:nohighlight_search_mapping
 
 " hide/show good practices
 execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
-  \ . ' :call ToggleRedHighlight()<CR>'
+  \ . ' :call <SID>ToggleRedHighlight()<CR>'
 
 " animate statusline
 execute 'nnoremap <silent> ' . s:animate_statusline_mapping
-  \ . ' :call AnimateStatusLine()<CR>'
+  \ . ' :call <SID>AnimateStatusLine()<CR>'
 
 " Quit() functions
 execute 'nnoremap <silent> ' . s:call_quit_function_mapping
-  \ . ' :call Quit()<CR>'
+  \ . ' :call <SID>Quit()<CR>'
 execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
-  \ . ' :call WriteQuit()<CR>'
+  \ . ' :call <SID>WriteQuit()<CR>'
 
 " buffers menu
 execute 'nnoremap <silent> ' . s:buffers_menu_mapping
-  \ . ' :call DisplayBuffersMenu()<CR>'
+  \ . ' :call <SID>DisplayBuffersMenu()<CR>'
 
 " tree
 execute 'nnoremap <silent> ' . s:tree_mapping
-  \ . ' :call DisplayTree()<CR>'
+  \ . ' :call <SID>DisplayTree()<CR>'
 
 " windows navigation
 execute 'nnoremap <silent> ' . s:window_next_mapping
-  \ . ' :silent call NextWindow()<CR>'
+  \ . ' :silent call <SID>NextWindow()<CR>'
 execute 'nnoremap <silent> ' . s:window_previous_mapping
-  \ . ' :silent call PreviousWindow()<CR>'
+  \ . ' :silent call <SID>PreviousWindow()<CR>'
 
 " unfold vimscipt's folds
 execute 'nnoremap '          . s:unfold_vim_fold_mapping
@@ -1367,18 +1397,18 @@ cnoreabbrev w update
 cnoreabbrev tabe silent tabonly
 
 " avoid intuitive quit usage
-cnoreabbrev q call Quit()
+cnoreabbrev q call <SID>Quit()
 
 " avoid intuitive exit usage
-cnoreabbrev wq call WriteQuit()
-cnoreabbrev x call WriteQuit()
+cnoreabbrev wq call <SID>WriteQuit()
+cnoreabbrev x call <SID>WriteQuit()
 
 " avoid intuitive quitall usage
-cnoreabbrev qa call QuitAll()
+cnoreabbrev qa call <SID>QuitAll()
 
 " avoid intuitive exitall usage
-cnoreabbrev wqa call WriteQuitAll()
-cnoreabbrev xa call WriteQuitAll()
+cnoreabbrev wqa call <SID>WriteQuitAll()
+cnoreabbrev xa call <SID>WriteQuitAll()
 
 " }}}
 " Autocommands {{{1
@@ -1387,7 +1417,7 @@ augroup vimrc_autocomands
   autocmd!
 "   Dependencies autocommands group {{{2
 
-  autocmd VimEnter * :call CheckDependencies()
+  autocmd VimEnter * :call <SID>CheckDependencies()
 
 "   }}}
 "   Color autocommands group {{{2
@@ -1397,18 +1427,18 @@ augroup vimrc_autocomands
 "   }}}
 "   Good practices autocommands group {{{2
 
-  autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
+  autocmd BufEnter * :silent call <SID>ExtraSpaces() |
+    \ silent call <SID>OverLength()
 
 "   }}}
 "   Buffers autocommands group {{{2
 
-  autocmd BufEnter * :silent call CloseLonelyUnlistedBuffers()
+  autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
 
 "   }}}
 "   Tree autocommands group {{{2
 
   " autocmd VimEnter * silent! autocmd! FileExplorer
-  " autocmd BufEnter,VimEnter * if isdirectory('<amatch>') | call DisplayTree() | endif
 
 "   }}}
 "   Vimscript filetype autocommands group {{{2
@@ -1416,9 +1446,14 @@ augroup vimrc_autocomands
   autocmd FileType vim setlocal foldmethod=marker
 
 "   }}}
+"   Tmux filetype autocommands group {{{2
+
+  autocmd FileType tmux setlocal foldmethod=marker
+
+"   }}}
 "   Bash filetype autocommands group {{{2
 
-  autocmd BufNewFile *.sh :call PrefillShFile()
+  autocmd BufNewFile *.sh :call <SID>PrefillShFile()
 
 "   }}}
 augroup END

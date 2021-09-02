@@ -3,6 +3,10 @@
 CLONE_DIR=/tmp/repositories_clone
 BACKUP=$(pwd)
 
+if [ $(which git | wc -l) -eq 0 ]; then
+  sudo apt install git
+fi
+
 # cloning repositories
 [ -d ${CLONE_DIR} ] && rm -rf ${CLONE_DIR}
 mkdir -p ${CLONE_DIR} && cd ${CLONE_DIR}
