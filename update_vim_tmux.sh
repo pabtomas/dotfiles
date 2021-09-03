@@ -3,6 +3,19 @@
 CLONE_DIR=/tmp/repositories_clone
 BACKUP=$(pwd)
 
+VIM_VERSION="-> "
+TMUX_VERSION="-> "
+
+if [ $(which vim | wc -l) -eq 1 ]; then
+  VIM_VERSION="vim "$(vim --version | head -n 2 | sed "s/^[^0-9]\+//" \
+    | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" | tr '\n' '.    ' \
+    | sed "s/\.$/\n/")" -> vim "
+fi
+
+if [ $(which tmux | wc -l) -eq 1 ]; then
+  TMUX_VERSION=$(tmux -V)" -> "
+fi
+
 if [ $(which git | wc -l) -eq 0 ]; then
   sudo apt install git
 fi
@@ -45,4 +58,7 @@ cd ${CLONE_DIR}/tmux && sh autogen.sh
 ./configure && make && sudo make install
 
 cd ${BACKUP} && rm -rf ${CLONE_DIR}
-source ~/.bashrc && clear && (vim --version | grep -E "VIM - Vi IMproved |Included patches: " | sed "s/- Vi IMproved \|Included patches: //" | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" | tr '\n' '.' | sed "s/\.$/\n/") && tmux -V
+
+source ~/.bashrc && clear && echo -e ${VIM_VERSION}"$(vim --version \
+  | head -n 2 | sed "s/^[^0-9]\+//" | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" \
+  | tr '\n' '.    ' | sed "s/\.$/\n/")\n"${TMUX_VERSION}$(tmux -V)
