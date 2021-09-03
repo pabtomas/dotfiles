@@ -1,10 +1,8 @@
 " TODO {{{1
 
 " - buffers menu: test
-" - tree: - copy fullpath file/dir
+" - tree: - test
 "         - disable Vexplore
-"         - add do buffers list without open it
-"         - open it in current window
 
 " }}}
 " Quality of life {{{1
@@ -45,6 +43,15 @@ set report=0
 " S       -> do not search counter
 " F       -> do not give the file info when editing a file
 set shortmess=nxtTsSF
+
+" automatically update a file if it is changed externally
+set autoread
+
+" show matching braces
+set showmatch
+
+" visual autocomplete for command menu
+set wildmenu
 
 " }}}
 " Performance {{{1
@@ -166,7 +173,7 @@ endfunction
 
 " status line content:
 " [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
-function! StatusLineData()
+function! s:StatusLineData()
   set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
                    \%2*%{FileName(v:false,v:true)}%0*
                    \%2*%{FileName(v:false,v:false)}%0*
@@ -179,9 +186,9 @@ function! StatusLineData()
   set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
 endfunction
 
-function! StaticLine()
+function! s:StaticLine()
   set statusline=%{StartLine()}
-  call StatusLineData()
+  call s:StatusLineData()
   set statusline+=%{EndLine()}
 endfunction
 
@@ -189,7 +196,7 @@ if exists('s:dots') | unlet s:dots | endif | const s:dots = [
 \  '˳', '.', '｡', '·', '•', '･', 'º', '°', '˚', '˙',
 \ ]
 
-function! Wave(start, end)
+function! s:Wave(start, end)
   let l:wave = ''
   for l:col in range(a:start, a:end - 1)
     let l:wave = l:wave . s:dots[5 + float2nr(5.0 * sin(l:col *
@@ -199,51 +206,47 @@ function! Wave(start, end)
 endfunction
 
 function! StartWave()
-  return Wave(0, 4)
+  return s:Wave(0, 4)
 endfunction
 
 function! EndWave()
   let l:win_width = winwidth(winnr())
-  return Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
+  return s:Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
 endfunction
 
-if &term[-9:] =~ '-256color'
-  if exists('s:color_spec') | unlet s:color_spec | endif
-  const s:color_spec = [
-    \ 51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
-    \ 202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50
-  \ ]
-endif
+if exists('s:color_spec') | unlet s:color_spec | endif
+const s:color_spec = [
+  \ 51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
+  \ 202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50
+\ ]
 
 function! s:WaveLine(timer_id)
-  if &term[-9:] =~ '-256color'
-    let s:wavecolor = fmod(s:wavecolor + 0.75, 30.0)
-    execute 'highlight User5 term=bold cterm=bold ctermfg='
-      \ . s:color_spec[float2nr(floor(s:wavecolor))] . ' ctermbg=' . s:black
-  endif
+  let s:wavecolor = fmod(s:wavecolor + 0.75, 30.0)
+  execute 'highlight User5 term=bold cterm=bold ctermfg='
+    \ . s:color_spec[float2nr(floor(s:wavecolor))] . ' ctermbg=' . s:black
 
   let s:localtime = localtime()
   set statusline=%5*%{StartWave()}%0*
-  call StatusLineData()
+  call s:StatusLineData()
   set statusline+=%5*%{EndWave()}%0*
 
   if (s:localtime - s:start_animation) > 40
     call timer_pause(s:line_timer, v:true)
-    call StaticLine()
+    call s:StaticLine()
   endif
 endfunction
 
-if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+let s:wavecolor = 0.0
 let s:localtime = localtime()
 let s:start_animation = s:localtime
-call StaticLine()
+call s:StaticLine()
 
 if exists('s:line_timer') | call timer_stop(s:line_timer) | endif
 let s:line_timer = timer_start(1000, function('s:WaveLine'), #{ repeat: -1 })
 call timer_pause(s:line_timer, v:true)
 
-function! AnimateStatusLine()
-  if &term[-9:] =~ '-256color' | let s:wavecolor = 0.0 | endif
+function! s:AnimateStatusLine()
+  let s:wavecolor = 0.0
   let s:start_animation = localtime()
   call timer_pause(s:line_timer, v:false)
 endfunction
@@ -297,103 +300,93 @@ const s:black = 232
 
 let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
-if &term[-9:] =~ '-256color'
+set background=dark | highlight clear | if exists('syntax_on') | syntax reset | endif
+set wincolor=NormalAlt
 
-  set background=dark | highlight clear | if exists('syntax_on') | syntax reset | endif
-  set wincolor=NormalAlt
+execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
+  \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
+  \      highlight       BufferMenuBorders  term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
+  \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+  \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
+  \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
+  \      highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+  \      highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
+  \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+  \      highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
+  \      highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+  \      highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Visual             term=reverse      cterm=reverse                                 ctermbg=' . s:black    . ' |
+  \      highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       Tag                term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Error                                                   ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
+  \      highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+  \      highlight       Todo               term=standout                        ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+  \      highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
+  \      highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
+  \      highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
+  \      highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
+  \      highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
+  \      highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
+  \      highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
+  \      highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_3   . ' |
+  \      highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
+  \      highlight       User1              term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
+  \      highlight       User2              term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
+  \      highlight       User3              term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
+  \      highlight       User4              term=bold         cterm=bold         ctermfg=Red'
+highlight! link WarningMsg         ErrorMsg
+highlight  link String             Constant
+highlight  link Character          Constant
+highlight  link Number             Constant
+highlight  link Boolean            Constant
+highlight  link Float              Number
+highlight  link Function           Identifier
+highlight  link Conditional        Statement
+highlight  link Repeat             Statement
+highlight  link Label              Statement
+highlight  link Operator           Statement
+highlight  link Keyword            Statement
+highlight  link Exception          Statement
+highlight  link Include            PreProc
+highlight  link Define             PreProc
+highlight  link Macro              PreProc
+highlight  link PreCondit          PreProc
+highlight  link StorageClass       Type
+highlight  link Structure          Type
+highlight  link Typedef            Type
+highlight  link SpecialChar        Special
+highlight  link Delimiter          Special
+highlight  link SpecialComment     Special
+highlight  link Debug              Special
 
-  execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
-    \      highlight       BufferMenuBorders  term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
-    \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
-    \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
-    \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
-    \      highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
-    \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Visual             term=reverse      cterm=reverse                                 ctermbg=' . s:black    . ' |
-    \      highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       Tag                term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Error                                                   ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
-    \      highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
-    \      highlight       Todo               term=standout                        ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
-    \      highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
-    \      highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
-    \      highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:orange_2 . ' |
-    \      highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
-    \      highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
-    \      highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:purple_1 . ' ctermbg=' . s:white_1  . ' |
-    \      highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-    \      highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:purple_2 . ' |
-    \      highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_3   . ' |
-    \      highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
-    \      highlight       User1              term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
-    \      highlight       User2              term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
-    \      highlight       User3              term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black
-  highlight! link WarningMsg         ErrorMsg
-  highlight  link String             Constant
-  highlight  link Character          Constant
-  highlight  link Number             Constant
-  highlight  link Boolean            Constant
-  highlight  link Float              Number
-  highlight  link Function           Identifier
-  highlight  link Conditional        Statement
-  highlight  link Repeat             Statement
-  highlight  link Label              Statement
-  highlight  link Operator           Statement
-  highlight  link Keyword            Statement
-  highlight  link Exception          Statement
-  highlight  link Include            PreProc
-  highlight  link Define             PreProc
-  highlight  link Macro              PreProc
-  highlight  link PreCondit          PreProc
-  highlight  link StorageClass       Type
-  highlight  link Structure          Type
-  highlight  link Typedef            Type
-  highlight  link SpecialChar        Special
-  highlight  link Delimiter          Special
-  highlight  link SpecialComment     Special
-  highlight  link Debug              Special
-else
-  highlight       Buffer             term=bold           cterm=bold           ctermfg=DarkGrey  ctermbg=Black
-  highlight       ModifiedBuf        term=bold           cterm=bold           ctermfg=Red
-  highlight       BufferMenuBorders  term=bold           cterm=bold           ctermfg=LightBlue
-  highlight       RootPath           term=bold           cterm=bold           ctermfg=DarkRed   ctermbg=Black
-  highlight       ClosedDirPath      term=bold           cterm=bold           ctermfg=Yellow    ctermbg=Black
-  highlight       FilePath           term=NONE           cterm=NONE           ctermfg=White     ctermbg=Black
-  highlight       Pmenu              term=NONE           cterm=NONE           ctermfg=White     ctermbg=NONE
-  highlight       PmenuSbar          term=NONE           cterm=NONE           ctermfg=Black     ctermbg=Blue
-  highlight       PmenuThumb         term=NONE           cterm=NONE           ctermfg=Black     ctermbg=White
-  highlight       StatusLine         term=bold           cterm=bold           ctermfg=LightBlue ctermbg=NONE
-  highlight       StatusLineNC       term=NONE           cterm=NONE           ctermfg=Blue      ctermbg=NONE
-  highlight       User1              term=bold           cterm=bold           ctermfg=Red       ctermbg=NONE
-  highlight       User2              term=bold           cterm=bold           ctermfg=Green     ctermbg=NONE
-  highlight       User3              term=bold           cterm=bold           ctermfg=Yellow    ctermbg=NONE
-  highlight  link OpenedDirPath      ClosedDirPath
-endif
-
-highlight         User4              term=bold           cterm=bold           ctermfg=Red
 execute s:redhighlight_cmd
 
 "   }}}
 "   Text properties {{{2
 
 if index(prop_type_list(), 'statusline') != -1 | call prop_type_delete('statusline') | endif
+if index(prop_type_list(), 'key') != -1 | call prop_type_delete('key') | endif
+if index(prop_type_list(), 'help') != -1 | call prop_type_delete('help') | endif
+if index(prop_type_list(), 'mode') != -1 | call prop_type_delete('mode') | endif
 
 call prop_type_add('statusline', #{ highlight: 'StatusLine' })
+call prop_type_add('key', #{ highlight: 'HelpKey' })
+call prop_type_add('help', #{ highlight: 'Help' })
+call prop_type_add('mode', #{ highlight: 'HelpMode' })
 
 "     Buffers menu {{{3
 
@@ -423,17 +416,17 @@ call prop_type_add('odpath', #{ highlight: 'OpenedDirPath' })
 let s:redhighlight = v:true
 
 " highlight unused spaces before the end of the line
-function! ExtraSpaces()
+function! s:ExtraSpaces()
   call matchadd('RedHighlight', '\v\s+$')
 endfunction
 
 " highlight characters which overpass 80 columns
-function! OverLength()
+function! s:OverLength()
   call matchadd('RedHighlight', '\v%80v.*')
 endfunction
 
 " clear/add red highlight matching patterns
-function! ToggleRedHighlight()
+function! s:ToggleRedHighlight()
   if s:redhighlight
     highlight clear RedHighlight | set synmaxcol=3000
   else
@@ -450,13 +443,13 @@ endfunction
 set hidden
 
 " return number of active listed-buffers
-function! ActiveListedBuffers()
+function! s:ActiveListedBuffers()
   return len(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> !val.hidden}))
 endfunction
 
 " close Vim if only unlisted-buffers are active
-function! CloseLonelyUnlistedBuffers()
-  if ActiveListedBuffers() == 0
+function! s:CloseLonelyUnlistedBuffers()
+  if s:ActiveListedBuffers() == 0
     quitall
   endif
 endfunction
@@ -468,7 +461,7 @@ endfunction
 " =>N - is greater than N
 " <=N - is less than N
 " N   - distinct number of windows/u-buffer/l-buffers/h-buffers
-function! Quit()
+function! s:Quit()
   if !&modified
 
     let l:current_buf = bufnr()
@@ -520,7 +513,7 @@ function! Quit()
 
     " case 5:                                   current
     "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
-    let l:more_than_one_active_listedbuf = (ActiveListedBuffers() > 1)
+    let l:more_than_one_active_listedbuf = (s:ActiveListedBuffers() > 1)
 
     if l:more_than_one_window && !l:current_buf_active_more_than_once
     \ && !l:more_than_one_active_listedbuf && !l:at_least_one_hidden_listedbuf
@@ -564,49 +557,85 @@ function! Quit()
   return v:false
 endfunction
 
-function! WriteQuit()
+function! s:WriteQuit()
   update
-  return Quit()
+  return s:Quit()
 endfunction
 
-function! QuitAll()
-  while Quit()
+function! s:QuitAll()
+  while s:Quit()
   endwhile
 endfunction
 
-function! WriteQuitAll()
-  while WriteQuit()
+function! s:WriteQuitAll()
+  while s:WriteQuit()
   endwhile
 endfunction
 
 "   }}}
-"   Buffers menu {{{2
+" }}}
+" Windows {{{1
 
-let s:buf_before_menu = bufnr()
-let s:menu_bufnr = ''
-
-function! ReplaceCursorOnCurrentBuffer(winid)
-  call win_execute(a:winid,
-    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
-    \ {_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
+function! s:NextWindow()
+  if winnr() < winnr('$')
+    execute winnr() + 1 . 'wincmd w'
+  else
+    1wincmd w
+  endif
 endfunction
 
-function! HelpBuffersMenu()
-  let l:lines = [ '    ' . Key([s:help_menukey]) . '     - Show this help',
-   \ '   ' . Key([s:exit_menukey]) . '    - Exit buffers menu',
-   \ '  ' . Key([s:next_menukey, s:previous_menukey])
+function! s:PreviousWindow()
+  if winnr() > 1
+    execute winnr() - 1 . 'wincmd w'
+  else
+    execute winnr('$') . 'wincmd w'
+  endif
+endfunction
+
+" }}}
+" Dependencies {{{1
+
+function! s:CheckDependencies()
+  if v:version < 801
+    let l:major_version = v:version / 100
+    echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
+      \ . ' functionnal. Your Vim version is ' l:major_version . '.'
+      \ . (v:version - l:major_version * 100)
+    quit
+  endif
+endfunction
+
+" }}}
+" Plugins {{{1
+"   Buffers menu {{{2
+"     Help {{{3
+
+function! s:HelpBuffersMenu()
+  let l:lines = [ '     ' . s:Key([s:help_menukey]) . '     - Show this help',
+   \ '    ' . s:Key([s:exit_menukey]) . '    - Exit buffers menu',
+   \ '   ' . s:Key([s:next_menukey, s:previous_menukey])
      \ . '   - Next/Previous buffer',
-   \ '  ' . Key([s:select_menukey]) . '   - Select buffer',
-   \ '   < 0-9 >    - Buffer-id characters',
-   \ '    < $ >     - End-of-string buffer-id character',
-   \ Key([s:erase_menukey]) . ' - Erase last buffer-id character',
+   \ '   ' . s:Key([s:select_menukey]) . '   - Select buffer',
+   \ '    < 0-9 >    - Buffer-id characters',
+   \ '     < $ >     - End-of-string buffer-id character',
+   \ ' ' . s:Key([s:erase_menukey]) . ' - Erase last buffer-id character',
   \ ]
   let l:text = []
   for l:line in l:lines
-    let l:properties = [#{ type: 'statusline',
-      \ col: matchend(l:line, '>\s*- \u') - 2, length: 1 }]
-    " let l:properties = l:properties + [#{ type: 'keys',
-    "  \ col: match(l:line, ''), length: 2 }]
+    let l:start = matchend(l:line, '^\s*< .\+ >\s* - \u')
+    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1}]
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: l:start - 2, length: 1 }]
+    let l:start = 0
+    while l:start > -1
+      let l:start = match(l:line,
+        \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ', l:start)
+      if l:start > -1
+        let l:start += 1
+        let l:properties = l:properties + [#{ type: 'statusline',
+          \ col: l:start, length: 1 }]
+      endif
+    endwhile
     call add(l:text, #{ text: l:line, props: l:properties })
   endfor
   call popup_create(l:text, #{ pos: 'topleft',
@@ -615,20 +644,32 @@ function! HelpBuffersMenu()
                              \ col: win_screenpos(0)[1],
                              \ zindex: 1,
                              \ minwidth: winwidth(0),
-                             \ time: 5000,
+                             \ time: 10000,
                              \ border: [1, 0, 0, 0],
                              \ borderchars: ['━'],
                              \ borderhighlight: ["StatusLine"],
+                             \ highlight: 'Help',
                              \ })
 endfunction
 
-function! BuffersMenuFilter(winid, key)
+"     }}}
+
+let s:buf_before_menu = bufnr()
+let s:menu_bufnr = ''
+
+function! s:ReplaceCursorOnCurrentBuffer(winid)
+  call win_execute(a:winid,
+    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
+    \ {_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
+endfunction
+
+function! s:BuffersMenuFilter(winid, key)
   if a:key == s:next_menukey
     bnext
-    call ReplaceCursorOnCurrentBuffer(a:winid)
+    call s:ReplaceCursorOnCurrentBuffer(a:winid)
   elseif a:key == s:previous_menukey
     bprevious
-    call ReplaceCursorOnCurrentBuffer(a:winid)
+    call s:ReplaceCursorOnCurrentBuffer(a:winid)
   elseif a:key == s:select_menukey
     call popup_clear()
   elseif a:key == s:exit_menukey
@@ -660,12 +701,12 @@ function! BuffersMenuFilter(winid, key)
       echo s:menu_bufnr
     endif
   elseif a:key == s:help_menukey
-    call HelpBuffersMenu()
+    call s:HelpBuffersMenu()
   endif
   return v:true
 endfunction
 
-function! BuffersMenu()
+function! s:BuffersMenu()
   let l:listed_buf = getbufinfo(#{ buflisted: 1 })
   let l:listedbuf_nb = len(l:listed_buf)
 
@@ -692,12 +733,12 @@ function! BuffersMenu()
   return #{ text: l:text, height: len(l:text), width: l:width }
 endfunction
 
-function! DisplayBuffersMenu()
+function! s:DisplayBuffersMenu()
   let s:buf_before_menu = bufnr()
   let s:win_before_menu = winnr()
   let s:menu_bufnr = ''
 
-  let l:menu = BuffersMenu()
+  let l:menu = s:BuffersMenu()
   let l:popup_id = popup_create(l:menu.text,
   \ #{
     \ pos: 'topleft',
@@ -706,44 +747,90 @@ function! DisplayBuffersMenu()
     \ zindex: 2,
     \ drag: v:true,
     \ wrap: v:false,
-    \ filter: 'BuffersMenuFilter',
+    \ filter: expand('<SID>') . 'BuffersMenuFilter',
     \ mapping: v:false,
     \ border: [],
     \ borderhighlight: ['BufferMenuBorders'],
     \ borderchars: ['━', '┃', '━', '┃', '┏', '┓', '┛', '┗'],
     \ cursorline: v:true,
   \ })
-  call ReplaceCursorOnCurrentBuffer(l:popup_id)
-  call HelpBuffersMenu()
+  call s:ReplaceCursorOnCurrentBuffer(l:popup_id)
+  call s:HelpBuffersMenu()
 endfunction
 
-"   }}
-" }}}
-" Tree {{{1
-
-function! HelpTree()
-  let l:text = [ repeat('━', 40) . '┳' . repeat('━', winwidth(0) - 41),
-    \ '     NORMAL Mode                        ┃    '
-      \ . Key([s:reset_treekey]) . '     - Reset tree',
-    \ '  ' . Key([s:help_treekey]) . '   - Show this help              ┃'
-      \ . '    ' . Key([s:searchmode_treekey]) . '     - Enter search command',
-    \ ' ' . Key([s:exit_treekey]) . '  - Exit tree                   ┃  '
-      \ . Key([s:next_match_treekey, s:previous_match_treekey])
-      \ . '   - Next/Previous SEARCH match',
-    \ Key([s:next_file_treekey, s:previous_file_treekey])
-      \ . ' - Next/Previous file          ┃',
-    \ Key([s:first_file_treekey, s:last_file_treekey])
-      \ . ' - First/Last file             ┃         SEARCH Mode',
-    \ '  ' . Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃   '
-      \ . Key([s:exit_smtreekey]) . '    - Exit SEARCH Mode',
-    \ '  ' . Key([s:badd_treekey]) . '   - Add to buffers list         ┃  '
-      \ . Key([s:select_smtreekey]) . '   - Start search',
-    \ '  ' . Key([s:yank_treekey]) . '   - Yank path                   ┃'
-      \ . Key([s:erase_smtreekey]) . ' - Erase search',
-    \ '  ' . Key([s:dotfiles_treekey]) . '   - Show/Hide dot files         ┃'
-      \ . '  ' . Key([s:next_smtreekey, s:previous_smtreekey])
-      \ . '   - Next/Previous search',
+"   }}}
+"   Tree {{{2
+"     Help {{{3
+function! s:HelpTree()
+  let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
+    \ '      NORMAL Mode                        ┃        '
+      \ . s:Key([s:reset_treekey]) . '        - Reset tree',
+    \ '   ' . s:Key([s:help_treekey]) . '   - Show this help              ┃  '
+      \ . '    ' . s:Key([s:searchmode_treekey])
+      \ . '      - Enter SEARCH Mode',
+    \ '  ' . s:Key([s:exit_treekey]) . '  - Exit tree                   ┃    '
+      \ . '  ' . s:Key([s:next_match_treekey, s:previous_match_treekey])
+      \ . '      - Next/Previous SEARCH match',
+    \ ' ' . s:Key([s:next_file_treekey, s:previous_file_treekey])
+      \ . ' - Next/Previous file          ┃                SEARCH Mode',
+    \ ' ' . s:Key([s:first_file_treekey, s:last_file_treekey])
+      \ . ' - First/Last file             ┃       '
+      \ . s:Key([s:exit_smtreekey]) . '       - Exit SEARCH Mode',
+    \ '   ' . s:Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃  '
+      \ . '    ' . s:Key([s:evaluate_smtreekey]) . '      - Evaluate SEARCH',
+    \ '   ' . s:Key([s:badd_treekey]) . '   - Add to buffers list         ┃  '
+      \ . '  ' . s:Key([s:erase_smtreekey]) . '    - Erase SEARCH',
+    \ '   ' . s:Key([s:yank_treekey]) . '   - Yank path                   ┃ '
+      \ . '     ' . s:Key([s:next_smtreekey, s:previous_smtreekey])
+      \ . '      - Next/Previous SEARCH',
+    \ '   ' . s:Key([s:dotfiles_treekey]) . '   - Show/Hide dot files        '
+      \ . ' ┃ ' . s:Key([s:wide_left_smtreekey, s:wide_right_smtreekey])
+      \ . ' - Navigation',
   \ ]
+  let l:text = [#{ text: l:lines[0], props: [#{ type: 'statusline',
+    \ col: 1, length: len(l:lines[0]) }] }]
+  for l:line in l:lines[1:]
+
+    let l:start = match(l:line, ' ┃ \s*<\zs .\+ >\s* - \u')
+    let l:end = matchend(l:line, ' ┃ \s*< .\+ \ze>\s* - \u')
+    let l:properties =
+      \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
+
+    let l:start = match(l:line, ' ┃ \s*< .\+ >\s* \zs- \u')
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: l:start + 1, length: 1 }]
+
+    let l:start = match(l:line, '^\s*<\zs .\+ >\s* - \u.* ┃')
+    let l:end = matchend(l:line, '^\s*< .\+ \ze>\s* - \u.* ┃')
+    let l:properties = l:properties +
+      \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
+
+    let l:start = match(l:line, '^\s*< .\+ >\s* \zs- \u.* ┃')
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: l:start + 1, length: 1 }]
+
+    let l:start = 0
+    while l:start > -1
+      let l:start = match(l:line,
+        \ ' ┃ \s*\zs< \|^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ',
+        \ l:start)
+      if l:start > -1
+        let l:start += 1
+        let l:properties = l:properties + [#{ type: 'statusline',
+          \ col: l:start, length: 1 }]
+      endif
+    endwhile
+
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: match(l:line, ' \zs┃ '), length: len('┃')}]
+
+    let l:start = match(l:line, '\u\{2,}')
+    let l:end = matchend(l:line, '\u\{2,} Mode\|\u\{2,}')
+    let l:properties = l:properties + [#{ type: 'mode',
+      \ col: l:start, length: l:end + 1 - l:start }]
+
+    call add(l:text, #{ text: l:line, props: l:properties })
+  endfor
   call popup_create(l:text, #{ pos: 'topleft',
                              \ line: win_screenpos(0)[0] + winheight(0)
                              \   - len(l:text),
@@ -751,10 +838,13 @@ function! HelpTree()
                              \ zindex: 3,
                              \ minwidth: winwidth(0),
                              \ time: 10000,
+                             \ highlight: 'Help',
                              \ })
 endfunction
 
-function! PathCompare(file1, file2)
+"     }}}
+
+function! s:PathCompare(file1, file2)
   if isdirectory(a:file1) && !isdirectory(a:file2)
     return 1
   elseif !isdirectory(a:file1) && isdirectory(a:file2)
@@ -762,109 +852,201 @@ function! PathCompare(file1, file2)
   endif
 endfunction
 
-function! InitTree()
+function! s:FullPath(path, value)
+  let l:content = a:path . a:value
+  if isdirectory(l:content)
+    return l:content . '/'
+  endif
+  return l:content
+endfunction
+
+function! s:InitTree()
   let s:tree = {}
   let s:tree['.'] = fnamemodify('.', ':p')
-  let s:tree[fnamemodify('.', ':p')] = map(sort(reverse(
-    \ readdir('.', '1', #{ sort: 'icase' })),
-    \ "PathCompare"), {_, val -> fnamemodify(val, ':p')})
+  let s:tree[fnamemodify('.', ':p')] = sort(map(reverse(
+    \ readdir('.', '1', #{ sort: 'icase' })), {_, val ->
+      \ s:FullPath(s:tree['.'], val)}), expand('<SID>') . 'PathCompare')
+  let s:tree_searchmode = v:false
+  let s:tree_search = ''
 endfunction
 
 let s:show_dotfiles = v:false
-let s:tree_searchmode = v:false
-let s:tree_search = ''
-call InitTree()
+let s:search_cursor = 0
+let s:search_hist_cursor = 0
+call s:InitTree()
 
-function! Depth(path)
+function! s:Depth(path)
   return len(split(substitute(a:path, '/$', '', 'g'), '/'))
 endfunction
 
-function! TreeFilter(winid, key)
-  if !s:tree_searchmode
-    if a:key == s:dotfiles_treekey
-      let s:show_dotfiles = !s:show_dotfiles
-      call popup_settext(a:winid, Tree().text)
-      call win_execute(a:winid, 'if line(".") > line("$") |'
-        \ . ' call cursor(line("$"), 0) | endif')
-    elseif a:key == s:yank_treekey
-      " copy fullpath in unnamed register
-    elseif a:key == s:badd_treekey
-      " use badd for the file
-    elseif a:key == s:open_treekey
-      " if dir
-      "   open the directory and add content to the tree (even if empty)
-      " elseif file
-        edit s:tree[]
-        call popup_clear()
-    elseif a:key == s:reset_treekey
-      call InitTree()
-      call popup_settext(a:winid, Tree().text)
-      call win_execute(a:winid, 'call cursor(2, 0)')
-    elseif a:key == s:next_match_treekey
-      call win_execute(a:winid, 'call search(histget("/", -1), "")')
-    elseif a:key == s:previous_match_treekey
-      call win_execute(a:winid, 'call search(histget("/", -1), "b")')
-    elseif a:key == s:first_file_treekey
-      call win_execute(a:winid,
-        \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
-    elseif a:key == s:last_file_treekey
-      call win_execute(a:winid, 'call cursor(line("$"), 0)')
-    elseif a:key == s:exit_treekey
-      call win_execute(a:winid, 'call clearmatches()')
+function! s:NormalModeTreeFilter(winid, key)
+  if a:key == s:dotfiles_treekey
+    let s:show_dotfiles = !s:show_dotfiles
+    call popup_settext(a:winid, s:Tree().text)
+    call win_execute(a:winid, 'if line(".") > line("$") |'
+      \ . ' call cursor(line("$"), 0) | endif')
+  elseif a:key == s:yank_treekey
+    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
+    let l:path = s:Tree().paths[s:tree_line]
+    let @" = l:path
+    echo 'Unnamed register content is:'
+    echohl OpenedDirPath
+    echon @"
+    echohl NONE
+  elseif a:key == s:badd_treekey
+    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
+    let l:path = s:Tree().paths[s:tree_line]
+    if !isdirectory(l:path)
+      execute 'badd ' . l:path
+      echohl OpenedDirPath
+      echo l:path
+      echohl NONE
+      echon ' added to buffers list'
+    endif
+  elseif a:key == s:open_treekey
+    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
+    let l:path = s:Tree().paths[s:tree_line]
+    if isdirectory(l:path)
+      if has_key(s:tree, l:path)
+        unlet s:tree[l:path]
+      else
+        let s:tree[l:path] = sort(map(reverse(
+          \ readdir(l:path, '1', #{ sort: 'icase' })), {_, val ->
+            \s:FullPath(l:path, val)}), expand('<SID>') . 'PathCompare')
+      endif
+      call popup_settext(a:winid, s:Tree().text)
+    else
       call popup_clear()
-    elseif a:key == s:next_file_treekey
-      call win_execute(a:winid, 'if line(".") < line("$") |'
-        \ . ' call cursor(line(".") + 1, 0) | endif')
-    elseif a:key == s:previous_file_treekey
-      call win_execute(a:winid, 'if line(".") > 2 |'
-        \ . ' call cursor(line(".") - 1, 0) | else |'
-        \ . ' execute "normal! \<C-Y>" | endif')
-    elseif a:key == s:help_treekey
-      call HelpTree()
-    elseif a:key == s:searchmode_treekey
-      let s:tree_searchmode = v:true
-      let s:tree_search = a:key
-      echo s:tree_search
+      execute 'edit ' . l:path
+    endif
+  elseif a:key == s:reset_treekey
+    call s:InitTree()
+    call popup_settext(a:winid, s:Tree().text)
+    call win_execute(a:winid, 'call cursor(2, 0)')
+  elseif a:key == s:next_match_treekey
+    call win_execute(a:winid, 'call search(histget("/", -1), "")')
+  elseif a:key == s:previous_match_treekey
+    call win_execute(a:winid, 'call search(histget("/", -1), "b")')
+  elseif a:key == s:first_file_treekey
+    call win_execute(a:winid,
+      \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
+  elseif a:key == s:last_file_treekey
+    call win_execute(a:winid, 'call cursor(line("$"), 0)')
+  elseif a:key == s:exit_treekey
+    call win_execute(a:winid, 'call clearmatches()')
+    call popup_clear()
+  elseif a:key == s:next_file_treekey
+    call win_execute(a:winid, 'if line(".") < line("$") |'
+      \ . ' call cursor(line(".") + 1, 0) | endif')
+  elseif a:key == s:previous_file_treekey
+    call win_execute(a:winid, 'if line(".") > 2 |'
+      \ . ' call cursor(line(".") - 1, 0) | else |'
+      \ . ' execute "normal! \<C-Y>" | endif')
+  elseif a:key == s:help_treekey
+    call s:HelpTree()
+  elseif a:key == s:searchmode_treekey
+    let s:tree_searchmode = v:true
+    let s:tree_search = a:key
+    let s:search_cursor = 1
+    let s:search_hist_cursor = 0
+    echo s:tree_search
+    echohl Visual
+    echon ' '
+    echohl NONE
+  endif
+endfunction
+
+function! s:SearchModeTreeFilter(winid, key)
+  if a:key == s:evaluate_smtreekey
+    let @/ = '\%>1l' . s:tree_search[1:]
+    call win_execute(a:winid,
+      \ 'if s:tree_search[0] == "/" | call search(@/, "c") | '
+      \ . 'elseif s:tree_search[0] == "?" | call search(@/, "bc") | endif')
+    call histadd('/', @/)
+    let s:tree_search = ''
+  elseif a:key == s:erase_smtreekey
+    if s:search_cursor > 1
+      let s:tree_search = slice(s:tree_search, 0, s:search_cursor - 1)
+        \ . slice(s:tree_search, s:search_cursor)
+      let s:search_cursor -= 1
+    endif
+  elseif a:key == s:exit_smtreekey
+    let s:tree_search = ''
+  elseif a:key == s:next_smtreekey
+    if s:search_hist_cursor < 0
+      let s:search_hist_cursor += 1
+      let s:tree_search = '/' . histget('search', s:search_hist_cursor)
+    else
+      let s:tree_search = '/'
+    endif
+    let s:search_cursor = len(s:tree_search)
+  elseif a:key == s:previous_smtreekey
+    if abs(s:search_hist_cursor) < &history
+      let s:search_hist_cursor -= 1
+      let s:tree_search = '/' . histget('search', s:search_hist_cursor)
+      let s:search_cursor = len(s:tree_search)
+    endif
+  elseif a:key == s:left_smtreekey
+    if s:search_cursor > 1
+      let s:search_cursor -= 1
+    endif
+  elseif a:key == s:right_smtreekey
+    if s:search_cursor < len(s:tree_search)
+      let s:search_cursor += 1
+    endif
+  elseif a:key == s:wide_left_smtreekey
+    for l:i in range(s:search_cursor - 2, 0, -1)
+      if match(s:tree_search[l:i], '[[:punct:][:space:]]') > -1
+        let s:search_cursor = l:i + 1
+        break
+      endif
+    endfor
+  elseif a:key == s:wide_right_smtreekey
+    let s:search_cursor =
+      \ match(s:tree_search[1:], '[[:punct:][:space:]]', s:search_cursor + 1)
+    if s:search_cursor == -1
+      let s:search_cursor = len(s:tree_search)
     endif
   else
-    if a:key == s:select_smtreekey
-      let @/ = '\%>1l' . s:tree_search[1:]
-      call win_execute(a:winid,
-        \ 'if s:tree_search[0] == "/" | call search(@/, "c") | '
-        \ . 'elseif s:tree_search[0] == "?" | call search(@/, "bc") | endif')
-      call histadd('/', @/)
-      let s:tree_search = ''
-    elseif a:key == s:erase_smtreekey
-      let s:tree_search = s:tree_search[:-2]
-    elseif a:key == s:exit_smtreekey
-      let s:tree_search = ''
-    elseif a:key == "\<Down>"
-    elseif a:key == "\<Up>"
-    elseif a:key == "\<Left>"
-    elseif a:key == "\<Right>"
-    else
-      let s:tree_search = s:tree_search . a:key
-      call win_execute(a:winid, 'call clearmatches() | '
-        \ . 'try | call matchadd("Search", "\\%>1l" . s:tree_search[1:]) | '
-        \ . 'catch | endtry ')
-    endif
-    if empty(s:tree_search)
-      let s:tree_searchmode = v:false
-    endif
-    echo s:tree_search
+    let s:tree_search = slice(s:tree_search, 0, s:search_cursor) . a:key
+      \ . slice(s:tree_search, s:search_cursor)
+    let s:search_cursor += 1
+    call win_execute(a:winid, 'call clearmatches() | '
+      \ . 'try | call matchadd("Search", "\\%>1l" . s:tree_search[1:]) | '
+      \ . 'catch | endtry ')
+  endif
+
+  if empty(s:tree_search)
+    let s:tree_searchmode = v:false
+  endif
+  echo slice(s:tree_search, 0, s:search_cursor)
+  echohl Visual
+  echon slice(s:tree_search, s:search_cursor, s:search_cursor + 1)
+  if s:search_cursor == len(s:tree_search)
+    echon ' '
+  endif
+  echohl NONE
+  echon slice(s:tree_search, s:search_cursor + 1)
+endfunction
+
+function! s:TreeFilter(winid, key)
+  if !s:tree_searchmode
+    call s:NormalModeTreeFilter(a:winid, a:key)
+  else
+    call s:SearchModeTreeFilter(a:winid, a:key)
   endif
   return v:true
 endfunction
 
-function! Tree()
+function! s:Tree()
   let l:text = []
+  let l:paths = []
 
   let l:line = s:tree['.']
   let l:property = [#{ type: 'rpath', col: 0, length: len(l:line) + 1 }]
 
   call add(l:text, #{ text: l:line, props: l:property })
 
-  let l:index = -1
   let l:stack = s:tree[s:tree['.']]
   let l:visited = {}
   let l:visited[s:tree['.']] = v:true
@@ -872,7 +1054,6 @@ function! Tree()
     " pop
     let l:current = l:stack[-1]
     let l:stack = l:stack[:-2]
-    let l:index += 1
 
     " construct text
     let l:arrow = ''
@@ -890,38 +1071,40 @@ function! Tree()
 
     if s:show_dotfiles || l:name[0] != '.'
       let l:indent = repeat('  ',
-        \ Depth(l:current) - Depth(s:tree['.']) - isdirectory(l:current))
+        \ s:Depth(l:current) - s:Depth(s:tree['.']) - isdirectory(l:current))
       let l:line = l:indent . l:arrow . l:name . l:id
 
       " construct property
       let l:property = [#{ type: 'fpath', col: 0, length: winwidth(0) + 1}]
       if isdirectory(l:current)
         if has_key(s:tree, l:current)
-          let l:property = [#{ type: 'odpath', col: 0, length: winwidth(0) + 1}]
+          let l:property =
+            \ [#{ type: 'odpath', col: 0, length: winwidth(0) + 1}]
         else
-          let l:property = [#{ type: 'cdpath', col: 0, length: winwidth(0) + 1}]
+          let l:property =
+            \ [#{ type: 'cdpath', col: 0, length: winwidth(0) + 1}]
         endif
       endif
 
       call add(l:text, #{ text: l:line, props: l:property })
+      call add(l:paths, l:current)
     endif
 
     " continue dfs
-    if has_key(l:visited, l:current)
+    if !has_key(l:visited, l:current)
       let l:visited[l:current] = v:true
-      let l:stack += s:tree[l:current]
+      if has_key(s:tree, l:current)
+        let l:stack += s:tree[l:current]
+      endif
     endif
   endwhile
-  return #{ text: l:text }
+  return #{ text: l:text, paths: l:paths }
 endfunction
 
-function! DisplayTree()
-  let s:show_dotfiles = v:false
-  let s:tree_searchmode = v:false
-  let s:tree_search = ''
-  call InitTree()
+function! s:DisplayTree()
+  call s:InitTree()
 
-  let l:tree = Tree()
+  let l:tree = s:Tree()
   let l:popup_id = popup_create(l:tree.text,
   \ #{
     \ pos: 'topleft',
@@ -934,52 +1117,21 @@ function! DisplayTree()
     \ maxheight: winheight(0),
     \ drag: v:true,
     \ wrap: v:true,
-    \ filter: 'TreeFilter',
+    \ filter: expand('<SID>') . 'TreeFilter',
     \ mapping: v:false,
     \ scrollbar: v:true,
     \ cursorline: v:true,
   \ })
   call win_execute(l:popup_id, 'call cursor(2, 0)')
-  call HelpTree()
+  call s:HelpTree()
 endfunction
 
-" }}}
-" Windows {{{1
-
-function! NextWindow()
-  if winnr() < winnr('$')
-    execute winnr() + 1 . 'wincmd w'
-  else
-    1wincmd w
-  endif
-endfunction
-
-function! PreviousWindow()
-  if winnr() > 1
-    execute winnr() - 1 . 'wincmd w'
-  else
-    execute winnr('$') . 'wincmd w'
-  endif
-endfunction
-
-" }}}
-" Dependencies {{{1
-
-function! CheckDependencies()
-  if v:version < 801
-    let l:major_version = v:version / 100
-    echoerr 'Personal Error Message: your VimRC needs Vim 8.1 to be'
-      \ . ' functionnal. Your Vim version is ' l:major_version . '.'
-      \ . (v:version - l:major_version * 100)
-    quit
-  endif
-endfunction
-
+"   }}}
 " }}}
 " Filetype specific {{{1
 "   Bash {{{2
 
-function! PrefillShFile()
+function! s:PrefillShFile()
   call append(0, [ '#!/bin/bash',
   \                '', ])
 endfunction
@@ -988,7 +1140,7 @@ endfunction
 " }}}
 " Mappings and Keys {{{1
 
-function! Key(keys)
+function! s:Key(keys)
   let l:text = '< '
   let l:index = 1
   for l:key in a:keys
@@ -1000,12 +1152,38 @@ function! Key(keys)
       let l:text = l:text . '→'
     elseif l:key == "\<Left>"
       let l:text = l:text . '←'
+    elseif l:key == "\<S-Down>"
+      let l:text = l:text . 'Shift ↓'
+    elseif l:key == "\<S-Up>"
+      let l:text = l:text . 'Shift ↑'
+    elseif l:key == "\<S-Right>"
+      let l:text = l:text . 'Shift →'
+    elseif l:key == "\<S-Left>"
+      let l:text = l:text . 'Shift ←'
+    elseif l:key == "\<C-Down>"
+      let l:text = l:text . 'Ctrl ↓'
+    elseif l:key == "\<C-Up>"
+      let l:text = l:text . 'Ctrl ↑'
+    elseif l:key == "\<C-Right>"
+      let l:text = l:text . 'Ctrl →'
+    elseif l:key == "\<C-Left>"
+      let l:text = l:text . 'Ctrl ←'
     elseif l:key == "\<Enter>"
       let l:text = l:text . 'Enter'
     elseif l:key == "\<Esc>"
       let l:text = l:text . 'Esc'
     elseif l:key == "\<BS>"
       let l:text = l:text . 'BackSpace'
+    elseif l:key == "/"
+      let l:text = l:text . 'Slash'
+    elseif l:key == "\\"
+      let l:text = l:text . 'BackSlash'
+    elseif l:key == "|"
+      let l:text = l:text . 'Bar'
+    elseif l:key == "<"
+      let l:text = l:text . 'Less'
+    elseif l:key == ">"
+      let l:text = l:text . 'Greater'
     else
       let l:text = l:text . l:key
     endif
@@ -1098,31 +1276,31 @@ execute 'nnoremap <silent> ' . s:nohighlight_search_mapping
 
 " hide/show good practices
 execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
-  \ . ' :call ToggleRedHighlight()<CR>'
+  \ . ' :call <SID>ToggleRedHighlight()<CR>'
 
 " animate statusline
 execute 'nnoremap <silent> ' . s:animate_statusline_mapping
-  \ . ' :call AnimateStatusLine()<CR>'
+  \ . ' :call <SID>AnimateStatusLine()<CR>'
 
 " Quit() functions
 execute 'nnoremap <silent> ' . s:call_quit_function_mapping
-  \ . ' :call Quit()<CR>'
+  \ . ' :call <SID>Quit()<CR>'
 execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
-  \ . ' :call WriteQuit()<CR>'
+  \ . ' :call <SID>WriteQuit()<CR>'
 
 " buffers menu
 execute 'nnoremap <silent> ' . s:buffers_menu_mapping
-  \ . ' :call DisplayBuffersMenu()<CR>'
+  \ . ' :call <SID>DisplayBuffersMenu()<CR>'
 
 " tree
 execute 'nnoremap <silent> ' . s:tree_mapping
-  \ . ' :call DisplayTree()<CR>'
+  \ . ' :call <SID>DisplayTree()<CR>'
 
 " windows navigation
 execute 'nnoremap <silent> ' . s:window_next_mapping
-  \ . ' :silent call NextWindow()<CR>'
+  \ . ' :silent call <SID>NextWindow()<CR>'
 execute 'nnoremap <silent> ' . s:window_previous_mapping
-  \ . ' :silent call PreviousWindow()<CR>'
+  \ . ' :silent call <SID>PreviousWindow()<CR>'
 
 " unfold vimscipt's folds
 execute 'nnoremap '          . s:unfold_vim_fold_mapping
@@ -1174,9 +1352,13 @@ if exists('s:help_treekey') | unlet s:help_treekey | endif
 if exists('s:searchmode_treekey') | unlet s:searchmode_treekey | endif
 if exists('s:next_match_treekey') | unlet s:next_match_treekey | endif
 if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
+if exists('s:left_smtreekey') | unlet s:left_smtreekey | endif
+if exists('s:right_smtreekey') | unlet s:right_smtreekey | endif
+if exists('s:wide_left_smtreekey') | unlet s:wide_left_smtreekey | endif
+if exists('s:wide_right_smtreekey') | unlet s:wide_right_smtreekey | endif
 if exists('s:next_smtreekey') | unlet s:next_smtreekey | endif
 if exists('s:previous_smtreekey') | unlet s:previous_smtreekey | endif
-if exists('s:select_smtreekey') | unlet s:select_smtreekey | endif
+if exists('s:evaluate_smtreekey') | unlet s:evaluate_smtreekey | endif
 if exists('s:erase_smtreekey') | unlet s:erase_smtreekey | endif
 if exists('s:exit_smtreekey') | unlet s:exit_smtreekey | endif
 
@@ -1194,9 +1376,13 @@ const s:help_treekey =                   "?"
 const s:searchmode_treekey =             "/"
 const s:next_match_treekey =             "n"
 const s:previous_match_treekey =         "N"
-const s:next_smtreekey =             "\<Up>"
-const s:previous_smtreekey =       "\<Down>"
-const s:select_smtreekey =        "\<Enter>"
+const s:right_smtreekey =         "\<Right>"
+const s:left_smtreekey =           "\<Left>"
+const s:wide_right_smtreekey =  "\<C-Right>"
+const s:wide_left_smtreekey =    "\<C-Left>"
+const s:next_smtreekey =           "\<Down>"
+const s:previous_smtreekey =         "\<Up>"
+const s:evaluate_smtreekey =      "\<Enter>"
 const s:erase_smtreekey =            "\<BS>"
 const s:exit_smtreekey =            "\<Esc>"
 
@@ -1211,18 +1397,18 @@ cnoreabbrev w update
 cnoreabbrev tabe silent tabonly
 
 " avoid intuitive quit usage
-cnoreabbrev q call Quit()
+cnoreabbrev q call <SID>Quit()
 
 " avoid intuitive exit usage
-cnoreabbrev wq call WriteQuit()
-cnoreabbrev x call WriteQuit()
+cnoreabbrev wq call <SID>WriteQuit()
+cnoreabbrev x call <SID>WriteQuit()
 
 " avoid intuitive quitall usage
-cnoreabbrev qa call QuitAll()
+cnoreabbrev qa call <SID>QuitAll()
 
 " avoid intuitive exitall usage
-cnoreabbrev wqa call WriteQuitAll()
-cnoreabbrev xa call WriteQuitAll()
+cnoreabbrev wqa call <SID>WriteQuitAll()
+cnoreabbrev xa call <SID>WriteQuitAll()
 
 " }}}
 " Autocommands {{{1
@@ -1231,7 +1417,7 @@ augroup vimrc_autocomands
   autocmd!
 "   Dependencies autocommands group {{{2
 
-  autocmd VimEnter * :call CheckDependencies()
+  autocmd VimEnter * :call <SID>CheckDependencies()
 
 "   }}}
 "   Color autocommands group {{{2
@@ -1241,18 +1427,18 @@ augroup vimrc_autocomands
 "   }}}
 "   Good practices autocommands group {{{2
 
-  autocmd BufEnter * :silent call ExtraSpaces() | silent call OverLength()
+  autocmd BufEnter * :silent call <SID>ExtraSpaces() |
+    \ silent call <SID>OverLength()
 
 "   }}}
 "   Buffers autocommands group {{{2
 
-  autocmd BufEnter * :silent call CloseLonelyUnlistedBuffers()
+  autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
 
 "   }}}
 "   Tree autocommands group {{{2
 
   " autocmd VimEnter * silent! autocmd! FileExplorer
-  " autocmd BufEnter,VimEnter * if isdirectory('<amatch>') | call DisplayTree() | endif
 
 "   }}}
 "   Vimscript filetype autocommands group {{{2
@@ -1260,9 +1446,14 @@ augroup vimrc_autocomands
   autocmd FileType vim setlocal foldmethod=marker
 
 "   }}}
+"   Tmux filetype autocommands group {{{2
+
+  autocmd FileType tmux setlocal foldmethod=marker
+
+"   }}}
 "   Bash filetype autocommands group {{{2
 
-  autocmd BufNewFile *.sh :call PrefillShFile()
+  autocmd BufNewFile *.sh :call <SID>PrefillShFile()
 
 "   }}}
 augroup END
