@@ -3,7 +3,7 @@
 CLONE_DIR=/tmp/repositories_clone
 BACKUP=$(pwd)
 
-VIM_VERSION="-> "
+VIM_VERSION="-> vim"
 TMUX_VERSION="-> "
 
 if [ $(which vim | wc -l) -eq 1 ]; then
