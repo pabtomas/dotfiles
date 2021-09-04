@@ -2,7 +2,6 @@
 
 " - buffers menu: test
 " - tree: - test
-"         - disable Vexplore
 
 " }}}
 " Quality of life {{{1
@@ -52,6 +51,9 @@ set showmatch
 
 " visual autocomplete for command menu
 set wildmenu
+
+" give backspace its original power
+set backspace=indent,eol,start
 
 " }}}
 " Performance {{{1
@@ -252,7 +254,7 @@ function! s:AnimateStatusLine()
 endfunction
 
 " }}}
-" Colors {{{1
+" Style {{{1
 "   Palette {{{2
 
 if exists('s:red') | unlet s:red | endif
@@ -296,7 +298,7 @@ const s:grey_2 = 244
 const s:black = 232
 
 "   }}}
-"   Scheme {{{2
+"   Colorscheme {{{2
 
 let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
@@ -1315,6 +1317,9 @@ execute 'nnoremap '          . s:map_command_mapping
 " autocompletion
 execute 'inoremap '          . s:autocompletion_mapping
   \ . ' <C-n>'
+
+" give usage to backspace
+nnoremap <BS> i<BS><Esc> 
 
 "   }}}
 "   Buffers menu keys {{{2
