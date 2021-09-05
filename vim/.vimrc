@@ -64,9 +64,6 @@ set lazyredraw
 " indicates terminal connection, Vim will be faster
 set ttyfast
 
-" max column where syntax is applied (default: 3000)
-set synmaxcol=200
-
 " avoid visual mod lags
 set noshowcmd
 
@@ -1317,9 +1314,6 @@ execute 'nnoremap '          . s:map_command_mapping
 " autocompletion
 execute 'inoremap '          . s:autocompletion_mapping
   \ . ' <C-n>'
-
-" give usage to backspace
-nnoremap <BS> i<BS><Esc> 
 
 "   }}}
 "   Buffers menu keys {{{2
