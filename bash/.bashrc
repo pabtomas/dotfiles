@@ -12,6 +12,6 @@ cd () {
     if [ $TREE_HEIGHT -lt $TERM_HEIGHT ]; then
         echo -e "$TREE"
     else
-        echo -e "$TREE" | less
+        echo -e "$TREE" | less -r
     fi
 }
