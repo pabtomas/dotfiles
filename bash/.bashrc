@@ -10,10 +10,7 @@ function cd () {
                           ((SZ+=1)); \
                         done; echo ${SZ}))
     if [ ${SZ} -lt ${DSZ} ]; then
-      local LS_LA=$(ls -la --color)
-      local START=$( echo "${LS_LA}" | head -n 2 | tail -n 1 \
-        | sed "s/ [^[:space:]]\+$//" | wc -m)
-      echo "${LS_LA}" | tail -n+4 | sed "s/^.\{"$START"\}/- /"
+      ls -la --color | tail -n+4 | awk '{printf "- %s %s %s\n", $9, $10, $11}'
     else
       local COL='\033[1;33m'
       local NC='\033[0m'
