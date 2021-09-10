@@ -1,34 +1,21 @@
 redshift -x
 redshift -O 5500k
 
-function __cd__() {
-    local LS=($(ls -a -1 --color))
-    local LS=(${LS[@]:2})
-    set -o noglob
-    IFS=$'\n'
-    local LINKS=($(ls -la --color))
-    set +o noglob
-    local LINKS=(${LINKS[@]:3})
-    TREE=()
-    for I in $(seq 0 $((${#LS[@]} - 1))); do
-        local LINE="- "${LINKS[$I]/*${LS[$I]}/${LS[$I]}}
-        TREE+=($LINE)
-    done
-}
-
-function cd() {
-    command cd "$@"
-    if [ $? -eq 0 ]; then
-        {
-            __cd__ &
-            __CD__PID=$!
-            wait $__CD__PID
-            fg
-        } > /dev/null 2>&1
-        __cd__
-        if [ ${#TREE[@]} -gt 0 ]; then
-            printf "%s\n" "${TREE[@]}" | less -r -F -X
-            unset TREE
-        fi
+function cd () {
+  command cd "$@"
+  if [ $? -eq 0 ]; then
+    local SZ=0
+    local DSZ=$(( ${LINES} + 2 ))
+    local SZ=$(ls -f | (while read -r file && [ ${SZ} -lt ${DSZ} ]; do \
+                          ((SZ+=1)); \
+                        done; echo ${SZ}))
+    if [ ${SZ} -lt ${DSZ} ]; then
+      local LS_LA=$(ls -la --color)
+      local START=$( echo "${LS_LA}" | head -n 2 | tail -n 1 \
+        | sed "s/ [^[:space:]]\+$//" | wc -m)
+      echo "${LS_LA}" | tail -n+4 | sed "s/^.\{"$START"\}/- /"
+    else
+      echo "Huge current directory. Use listing commands carrefully."
     fi
+  fi
 }
