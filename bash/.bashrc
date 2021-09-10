@@ -15,8 +15,10 @@ function cd () {
         | sed "s/ [^[:space:]]\+$//" | wc -m)
       echo "${LS_LA}" | tail -n+4 | sed "s/^.\{"$START"\}/- /"
     else
-      local COLOR='\033[1;33m'
-      echo -e ${COLOR}"Huge current directory. Use listing commands carrefully."
+      local COL='\033[1;33m'
+      local NC='\033[0m'
+      echo -e ${COL}"Huge current directory."\
+        "Use listing commands carrefully."${NC}
     fi
   fi
 }
