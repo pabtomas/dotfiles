@@ -46,9 +46,6 @@ set shortmess=nxtTsSF
 " automatically update a file if it is changed externally
 set autoread
 
-" show matching braces
-set showmatch
-
 " visual autocomplete for command menu
 set wildmenu
 
@@ -1236,8 +1233,8 @@ const s:call_quit_function_mapping =             s:leader       .            'q'
 const s:call_writequit_function_mapping =        s:leader       .            'w'
 const s:buffers_menu_mapping =                   s:leader       .       s:leader
 const s:tree_mapping =                           s:shift_leader . s:shift_leader
-const s:window_next_mapping =                                                'L'
-const s:window_previous_mapping =                                            'H'
+const s:window_next_mapping =                    s:leader       .      '<Right>'
+const s:window_previous_mapping =                s:leader       .       '<Left>'
 const s:unfold_vim_fold_mapping =                                      '<Space>'
 const s:message_command_mapping =                s:leader       .            'm'
 const s:map_command_mapping =                    s:leader       .           'mm'
