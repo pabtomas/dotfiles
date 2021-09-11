@@ -1,5 +1,5 @@
-## My .vimrc
+### .vimrc
 
-### Dependencies
+#### Dependencies
 
-* Minimal Vim 8.2 required
+Minimal Vim 8.2 required

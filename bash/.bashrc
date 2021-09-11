@@ -1,5 +1,10 @@
 redshift -x
 redshift -O 5500k
+force_color_prompt=yes
+
+alias ls='ls --color'
+alias ll='ls -lA --color'
+alias grep='grep --color'
 
 cd () {
   command cd "$@"
@@ -15,7 +20,7 @@ cd () {
 \ \ \ '          ((SZ+=1));'\
 \ \ \ '        done; command echo ${SZ}));'\
 \ \ \ 'if [ ${SZ} -lt ${DSZ} ]; then'\
-\ \ \ '  command ls -la --color | command tail -n+4'\
+\ \ \ '  command ls -lA --color | command tail -n+2'\
 \ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
 \ \ \ '    | command column;'\
 \ \ \ 'else'\
@@ -32,3 +37,16 @@ cd () {
     fi
   fi
 }
+
+alias ga='git add'
+alias gam='git add -A && git commit -m'
+alias gb='git branch'
+alias gc='git clone'
+alias gd='git diff --color | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -r'
+alias gh='git checkout'
+alias gm='git commit -m'
+alias gp='git pull'
+alias gP='git push'
+alias gl="git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative"
+alias gr='git remote'
+alias gs='git status -s'

@@ -1,5 +1,5 @@
-## My .tmux.conf
+### .tmux.conf
 
-### Dependencies
+#### Dependencies
 
-* Minimal Tmux 3 required
+Minimal Tmux 3.2 required
