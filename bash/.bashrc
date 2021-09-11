@@ -44,10 +44,10 @@ alias gb='git branch'
 alias gc='git clone'
 alias gd='git diff --color | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -r'
 alias gh='git checkout'
+alias gl="git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative"
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
-alias gl="git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative"
 alias gr='git remote'
 alias gs='git status -s'
 alias gu='git reset --soft HEAD^'
