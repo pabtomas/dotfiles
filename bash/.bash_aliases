@@ -4,9 +4,12 @@ alias ls='ls --color'
 alias ll='ls -lA --color'
 alias grep='grep --color'
 
-cd () {
+function cd () {
+
   command cd "$@"
+
   if [ $? -eq 0 ]; then
+
     command timeout 0.1 bash -c \
 \ \ \ 'SZ=0;'\
 \ \ \ 'DSZ=$(( (('${LINES}' / 2) * ('${COLUMNS}' / ((('\
@@ -27,37 +30,133 @@ cd () {
 \ \ \ '  command echo -e ${COL}"Huge current directory."'\
 \ \ \ '    "Use listing commands carrefully."${NC};'\
 \ \ \ 'fi'
+
     if [ $? -eq 124 ]; then
       local COL="\033[1;31m"
       local NC="\033[0m"
       command echo -e ${COL}"Timeout occured."\
         "Avoid listing commands in current directory."${NC}
     fi
+
   fi
+}
+
+# change directories easily
+for I in $(seq 2 1 10); do
+  ALIAS=$(printf '.%.0s' $(seq 1 ${I}))
+  DIR=$(printf '../%.0s' $(seq 1 $(( ${I} - 1 ))))
+  alias "${ALIAS}"='cd '${DIR}
+done
+
+function mkdir () {
+  command mkdir -pv "$@" && command cd "$@"
+}
+
+alias vi='vim'
+alias rm='rm -iv'
+alias cp='cp -iv'
+alias mv='mv -iv'
+alias hs='history | grep -i'
+alias f?='find . | grep -E'
+alias ps?='ps -ax | grep -E'
+alias sudo='sudo '
+alias update='sudo apt-get update && sudo apt-get upgrade '\
+\ '&& sudo apt-get autoremove && sudo apt-get autoclean'
+
+function extract () {
+
+  if [[ "$#" -lt 1 ]]; then
+    command echo "Usage: extract <path/file_name>"\
+      ".<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
+    return 1 #not enough args
+  fi
+
+  if [[ ! -e "$1" ]]; then
+    command echo -e "File does not exist!"
+    return 2 # File not found
+  fi
+
+  local DESTDIR="."
+
+  local FILE=$(command basename "$1")
+
+  case "${FILE##*.}" in
+    tar)
+      command echo -e "Extracting $1 to $DESTDIR: (uncompressed tar)"
+      command tar xvf "$1" -C "$DESTDIR"
+      ;;
+    gz)
+      command echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
+      command tar xvfz "$1" -C "$DESTDIR"
+    ;;
+    tgz)
+      command echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
+      command tar xvfz "$1" -C "$DESTDIR"
+      ;;
+    xz)
+      command echo -e "Extracting  $1 to $DESTDIR: (gip compressed tar)"
+      command tar xvf -J "$1" -C "$DESTDIR"
+      ;;
+    bz2)
+      command echo -e "Extracting $1 to $DESTDIR: (bzip compressed tar)"
+      command tar xvfj "$1" -C "$DESTDIR"
+      ;;
+    tbz2)
+      command echo -e "Extracting $1 to $DESTDIR: (tbz2 compressed tar)"
+      command tar xvjf "$1" -C "$DESTDIR"
+      ;;
+    zip)
+      command echo -e "Extracting $1 to $DESTDIR: (zip compressed file)"
+      command unzip "$1" -d "$DESTDIR"
+      ;;
+    lzma)
+      command echo -e "Extracting $1 : (lzma compressed file)"
+      command unlzma "$1"
+      ;;
+    rar)
+      command echo -e "Extracting $1 to $DESTDIR: (rar compressed file)"
+      command unrar x "$1" "$DESTDIR"
+      ;;
+    7z)
+      command echo -e  "Extracting $1 to $DESTDIR: (7zip compressed file)"
+      command 7za e "$1" -o "$DESTDIR"
+      ;;
+    xz)
+      command echo -e  "Extracting $1 : (xz compressed file)"
+      command unxz  "$1"
+      ;;
+    exe)
+      command cabextract "$1"
+      ;;
+    *)
+      command echo -e "Unknown format!"
+      return
+      ;;
+  esac
 }
 
 alias ga='git add'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
 alias gc='git clone'
-alias gd='git diff --color | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -r'
+alias gd='git diff --color-words | less -r'
 alias gh='git checkout'
-alias gl="git log --graph --abbrev-commit --date=relative --pretty=format:'"\
-\ "%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset'"
+alias gl="git log --graph --color --abbrev-commit --date=relative "\
+\ "--pretty=format:'%Cred%h%Creset %Cblue%an%Creset: %s - %Creset "\
+\ "%C(yellow)%d%Creset %Cgreen(%cr)%Creset' | less -r"
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
-alias gr='git remote'
 alias gs='git status -s'
-alias gu='git reset --soft HEAD^'
+alias gS='git ls-files | xargs -n1 git blame --line-porcelain '\
+\ "| sed -n 's/^author //p' | sort -f | uniq -ic | sort -nr"
+# git remote
+# git merge
 
-alias vi='vim'
-alias update='sudo apt-get update && sudo apt-get upgrade '\
-\ '&& sudo apt-get autoremove && sudo apt-get autoclean'
-
-alias rm='rm -iv'
-alias cp='cp -iv'
-alias mv='mv -iv'
-alias mkdir='mkdir -pv'
-alias hs='history | grep -i'
-alias tgz='tar -zxvf'
+function gu () {
+  if [ $(git diff --cached --name-only | wc -l) -gt 0 ]; then
+    git reset
+  elif [ $(git log --pretty=onelin origin/master..master | wc -l) -gt 0 ]; then
+    git reset --soft HEAD^
+  fi
+}
