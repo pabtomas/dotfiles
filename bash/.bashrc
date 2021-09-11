@@ -1,5 +1,5 @@
-redshift -x
-redshift -O 5500k
+redshift -x > /dev/null
+redshift -O 5500k > /dev/null
 force_color_prompt=yes
 
 alias ls='ls --color'
