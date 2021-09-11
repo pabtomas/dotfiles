@@ -50,3 +50,4 @@ alias gP='git push'
 alias gl="git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative"
 alias gr='git remote'
 alias gs='git status -s'
+alias gu='git reset --soft HEAD^'
