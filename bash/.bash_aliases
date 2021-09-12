@@ -1,5 +1,6 @@
 #!/bin/bash
 
+unalias -a
 alias ls='ls --color'
 alias ll='ls -lA --color'
 alias grep='grep --color'
@@ -13,20 +14,23 @@ function cd () {
     command timeout 0.1 bash -c \
 \ \ \ 'SZ=0;'\
 \ \ \ 'DSZ=$(( (('${LINES}' / 2) * ('${COLUMNS}' / ((('\
-\ \ \ '  $(command ls -fl'\
+\ \ \ '  $(command ls -AUl'\
 \ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
-\ \ \ '    | command wc -L) / 8) + 1) * 8))) + 3 ));'\
-\ \ \ 'SZ=$(command ls -f'\
+\ \ \ '    | command wc -L) / 8) + 1) * 8))) + 1 ));'\
+\ \ \ 'SZ=$(command ls -AU'\
 \ \ \ '     | (while command read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
 \ \ \ '          ((SZ+=1));'\
 \ \ \ '        done; command echo ${SZ}));'\
-\ \ \ 'if [ ${SZ} -lt ${DSZ} ]; then'\
+\ \ \ 'NC="\033[0m";'\
+\ \ \ 'if [ ${SZ} -eq 0 ]; then'\
+\ \ \ '  COL="\033[1;36m";'\
+\ \ \ '  command echo -e ${COL}"Empty directory."${NC};'\
+\ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
 \ \ \ '  command ls -lA --color | command tail -n+2'\
 \ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
 \ \ \ '    | command column;'\
 \ \ \ 'else'\
 \ \ \ '  COL="\033[1;33m";'\
-\ \ \ '  NC="\033[0m";'\
 \ \ \ '  command echo -e ${COL}"Huge current directory."'\
 \ \ \ '    "Use listing commands carrefully."${NC};'\
 \ \ \ 'fi'
@@ -49,7 +53,10 @@ for I in $(seq 2 1 10); do
 done
 
 function mkdir () {
-  command mkdir -pv "$@" && command cd "$@"
+  command mkdir -pv "$@"
+  [ $? -eq 0 ] \
+    && command echo -n "mkdir: change directory for '$(realpath $@)' ? " \
+    && command read Y && [[ ${Y,,} == 'y' ]] && cd "$@"
 }
 
 alias vi='vim'
@@ -142,21 +149,21 @@ alias gc='git clone'
 alias gd='git diff --color-words | less -r'
 alias gh='git checkout'
 alias gl="git log --graph --color --abbrev-commit --date=relative "\
-\ "--pretty=format:'%Cred%h%Creset %Cblue%an%Creset: %s - %Creset "\
+\ "--pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s - %Creset "\
 \ "%C(yellow)%d%Creset %Cgreen(%cr)%Creset' | less -r"
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
+alias gr='git remote'
 alias gs='git status -s'
 alias gS='git ls-files | xargs -n1 git blame --line-porcelain '\
 \ "| sed -n 's/^author //p' | sort -f | uniq -ic | sort -nr"
-# git remote
-# git merge
 
 function gu () {
   if [ $(git diff --cached --name-only | wc -l) -gt 0 ]; then
-    git reset
-  elif [ $(git log --pretty=onelin origin/master..master | wc -l) -gt 0 ]; then
-    git reset --soft HEAD^
+    git reset --mixed
+  elif [ $(git log --pretty=oneline origin/master..master | wc -l) -gt 0 ] \
+    && [ $(git status -s | wc -l) -eq 0 ]; then
+      git reset --soft HEAD^
   fi
 }
