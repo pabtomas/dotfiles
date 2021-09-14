@@ -159,7 +159,7 @@ alias gS='git ls-files | xargs -n1 git blame --line-porcelain '\
 \ "| sed -n 's/^author //p' | sort -f | uniq -ic | sort -nr"
 
 function gd () {
-  git diff --color-words "$@" | less -r
+  git diff --color-words "$@" | less -R -S
 }
 
 function gl () {
@@ -173,7 +173,8 @@ function gl () {
     | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
     | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
     | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
-    | sed 's/(il y a \(.\+\))$/'$(tput setaf 2)'(\1)'$(tput sgr0)'/' | less -r
+    | sed 's/(il y a \(.\+\))$/'$(tput setaf 2)'(\1)'$(tput sgr0)'/' \
+    | less -R -S
 }
 
 function gu () {
