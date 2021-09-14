@@ -149,7 +149,7 @@ alias gc='git clone'
 alias gd='git diff --color-words | less -r'
 alias gh='git checkout'
 alias gl="git log --graph --color --abbrev-commit --date=relative "\
-\ "--pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s - %Creset "\
+\ "--pretty=format:'%Cred%H%Creset %C(cyan)%an%Creset: %s - %Creset "\
 \ "%C(yellow)%d%Creset %Cgreen(%cr)%Creset' | less -r"
 alias gm='git commit -m'
 alias gp='git pull'
@@ -166,4 +166,8 @@ function gu () {
     && [ $(git status -s | wc -l) -eq 0 ]; then
       git reset --soft HEAD^
   fi
+}
+
+function gamP () {
+  git add -A && git commit -m "$@" && git pull && git push
 }
