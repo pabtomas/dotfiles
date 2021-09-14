@@ -149,19 +149,7 @@ alias ga='git add'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
 alias gc='git clone'
-alias gd='git diff --color-words | less -r'
 alias gh='git checkout'
-alias gl="git log --graph --color --abbrev-commit --date=relative "\
-\ "--pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s\
-%C(yellow)%d%Creset (%cr)' | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
- | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
- | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
- | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
- | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
- | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
- | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
- | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
- | sed 's/(il y a \(.\+\))$/"$(tput setaf 2)"(\1)"$(tput sgr0)"/' | less -r"
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
@@ -169,6 +157,24 @@ alias gr='git remote'
 alias gs='git status -s'
 alias gS='git ls-files | xargs -n1 git blame --line-porcelain '\
 \ "| sed -n 's/^author //p' | sort -f | uniq -ic | sort -nr"
+
+function gd () {
+  git diff --color-words "$@" | less -r
+}
+
+function gl () {
+  git log --graph --color --abbrev-commit --date=relative \
+    --pretty=format:"%Cred%h%Creset %C(cyan)%an%Creset: %s\
+%C(yellow)%d%Creset (%cr)" "$@" | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
+    | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
+    | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
+    | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
+    | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
+    | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
+    | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
+    | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
+    | sed 's/(il y a \(.\+\))$/'$(tput setaf 2)'(\1)'$(tput sgr0)'/' | less -r
+}
 
 function gu () {
   if [ $(git diff --cached --name-only | wc -l) -gt 0 ]; then
