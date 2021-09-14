@@ -149,8 +149,16 @@ alias gc='git clone'
 alias gd='git diff --color-words | less -r'
 alias gh='git checkout'
 alias gl="git log --graph --color --abbrev-commit --date=relative "\
-\ "--pretty=format:'%Cred%H%Creset %C(cyan)%an%Creset: %s -\
-%C(yellow)%d%Creset %Cgreen(%cr)%Creset' | less -r"
+\ "--pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s\
+%C(yellow)%d%Creset (%cr)' | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
+ | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
+ | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
+ | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
+ | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
+ | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
+ | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
+ | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
+ | sed 's/(il y a \(.\+\))$/"$(tput setaf 2)"(\1)"$(tput sgr0)"/' | less -r"
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
