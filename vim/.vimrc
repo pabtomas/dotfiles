@@ -303,8 +303,8 @@ execute 'highlight       Buffer             term=bold         cterm=bold        
   \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
   \      highlight       BufferMenuBorders  term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
   \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
-  \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_3 . ' ctermbg=' . s:black    . ' |
-  \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:orange_1 . ' ctermbg=' . s:black    . ' |
+  \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
+  \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
   \      highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
   \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
