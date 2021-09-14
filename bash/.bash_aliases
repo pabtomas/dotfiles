@@ -54,9 +54,12 @@ done
 
 function mkdir () {
   command mkdir -pv "$@"
-  [ $? -eq 0 ] \
-    && command echo -n "mkdir: change directory for '$(realpath $@)' ? " \
-    && command read Y && [[ ${Y,,} == 'y' ]] && cd "$@"
+  if [ $? -eq 0 ]; then
+    for DIR in $(echo "$@"); do
+      command echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
+        && command read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
+    done
+  fi
 }
 
 alias vi='vim'
