@@ -149,7 +149,7 @@ fi
 echo -n "Checking VIM version --------------------------------------------- "
 if [ $(which vim | wc -l) -eq 1 ]; then
   echo $(tput setaf 2)"OK"$(tput sgr0)
-  echo "\nvim "$(vim --version | head -n 2 | sed "s/^[^0-9]\+//" \
+  echo -e "\nvim "$(vim --version | head -n 2 | sed "s/^[^0-9]\+//" \
     | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" | tr '\n' '.    ' \
     | sed "s/\.$/\n/")"\n"
 else
