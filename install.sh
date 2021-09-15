@@ -280,4 +280,12 @@ command cp -r executor ${USER_HOME}/.executor > /dev/null 2>&1 \
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
-source ${USER_HOME}/.bashrc
+echo -n "Enabling EXECUTOR ------------------------------------------------ "
+gnome-extensions enable executor@raujonas.github.io \
+  && echo $(tput setaf 2)"OK"$(tput sgr0)
+
+[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
+echo -e $(tput setaf 11)"\nSource your new .bashrc, press 'Alt + F2' and \
+then enter 'r' to complete installation\n"
