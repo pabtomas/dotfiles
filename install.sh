@@ -275,6 +275,7 @@ command cp bash/.bash_aliases ${USER_HOME} > /dev/null 2>&1 \
 echo -n "Copying executor scripts ----------------------------------------- "
 [ -d ${USER_HOME}/.executor ] && command rm -rf ${USER_HOME}/.executor
 command cp -r executor ${USER_HOME}/.executor > /dev/null 2>&1 \
+  && command rm ${USER_HOME}/.executor/README.md \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
