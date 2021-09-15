@@ -224,10 +224,9 @@ sudo make install > /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
 echo -e "\n"$(tmux -V)"\n"
 
 echo -n "Cloning EXECUTOR repository -------------------------------------- "
-USER_HOME=$(getent passwd ${SUDO_USER} | cut -d: -f6)
-EXECUTOR_DEST=${USER_HOME}
-EXECUTOR_DEST+=\
-  "/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
+USER_HOME="$(getent passwd ${SUDO_USER} | cut -d: -f6)"
+EXECUTOR_DEST="${USER_HOME}"\
+"/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
 [ -d ${EXECUTOR_DEST} ] && command rm -rf ${EXECUTOR_DEST}
 git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} > \
   /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
