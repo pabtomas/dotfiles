@@ -14,10 +14,10 @@ function cd () {
     command timeout 0.1 bash -c \
 \ \ \ 'SZ=0;'\
 \ \ \ 'DSZ=$(( (('${LINES}' / 2) * ('${COLUMNS}' / ((('\
-\ \ \ '  $(command ls -AUl'\
+\ \ \ '  $(command ls -Ul'\
 \ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
 \ \ \ '    | command wc -L) / 8) + 1) * 8))) + 1 ));'\
-\ \ \ 'SZ=$(command ls -AU'\
+\ \ \ 'SZ=$(command ls -U'\
 \ \ \ '     | (while command read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
 \ \ \ '          ((SZ+=1));'\
 \ \ \ '        done; command echo ${SZ}));'\
@@ -26,7 +26,7 @@ function cd () {
 \ \ \ '  COL="\033[1;36m";'\
 \ \ \ '  command echo -e ${COL}"Empty directory."${NC};'\
 \ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
-\ \ \ '  command ls -lA --color | command tail -n+2'\
+\ \ \ '  command ls -l --color | command tail -n+2'\
 \ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
 \ \ \ '    | command column;'\
 \ \ \ 'else'\
