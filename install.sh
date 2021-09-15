@@ -302,9 +302,7 @@ gnome-extensions enable executor@raujonas.github.io \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Restarting Gnome -------------------------------------------------- "
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell \
-  --method org.gnome.Shell.Eval 'Meta.restart(_("Restarting…"))' \
-    && echo $(tput setaf 2)"OK"$(tput sgr0)
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval 'Meta.restart(_("Restarting…"))' > /dev/null && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
