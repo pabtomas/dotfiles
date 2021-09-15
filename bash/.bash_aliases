@@ -14,10 +14,10 @@ function cd () {
     command timeout 0.1 bash -c \
 \ \ \ 'SZ=0;'\
 \ \ \ 'DSZ=$(( (('${LINES}' / 2) * ('${COLUMNS}' / ((('\
-\ \ \ '  $(command ls -AUl'\
+\ \ \ '  $(command ls -Ul'\
 \ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
 \ \ \ '    | command wc -L) / 8) + 1) * 8))) + 1 ));'\
-\ \ \ 'SZ=$(command ls -AU'\
+\ \ \ 'SZ=$(command ls -U'\
 \ \ \ '     | (while command read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
 \ \ \ '          ((SZ+=1));'\
 \ \ \ '        done; command echo ${SZ}));'\
@@ -26,7 +26,7 @@ function cd () {
 \ \ \ '  COL="\033[1;36m";'\
 \ \ \ '  command echo -e ${COL}"Empty directory."${NC};'\
 \ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
-\ \ \ '  command ls -lA --color | command tail -n+2'\
+\ \ \ '  command ls -l --color | command tail -n+2'\
 \ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
 \ \ \ '    | command column;'\
 \ \ \ 'else'\
@@ -54,9 +54,12 @@ done
 
 function mkdir () {
   command mkdir -pv "$@"
-  [ $? -eq 0 ] \
-    && command echo -n "mkdir: change directory for '$(realpath $@)' ? " \
-    && command read Y && [[ ${Y,,} == 'y' ]] && cd "$@"
+  if [ $? -eq 0 ]; then
+    for DIR in $(echo "$@"); do
+      command echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
+        && command read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
+    done
+  fi
 }
 
 alias vi='vim'
@@ -146,11 +149,7 @@ alias ga='git add'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
 alias gc='git clone'
-alias gd='git diff --color-words | less -r'
 alias gh='git checkout'
-alias gl="git log --graph --color --abbrev-commit --date=relative "\
-\ "--pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s - %Creset "\
-\ "%C(yellow)%d%Creset %Cgreen(%cr)%Creset' | less -r"
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
@@ -159,6 +158,25 @@ alias gs='git status -s'
 alias gS='git ls-files | xargs -n1 git blame --line-porcelain '\
 \ "| sed -n 's/^author //p' | sort -f | uniq -ic | sort -nr"
 
+function gd () {
+  git diff --color-words "$@" | less -R -S
+}
+
+function gl () {
+  git log --graph --color --abbrev-commit --date=relative \
+    --pretty=format:"%Cred%h%Creset %C(cyan)%an%Creset: %s\
+%C(yellow)%d%Creset (%cr)" "$@" | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
+    | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
+    | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
+    | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
+    | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
+    | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
+    | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
+    | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
+    | sed 's/(il y a \(.\+\))$/'$(tput setaf 2)'(\1)'$(tput sgr0)'/' \
+    | less -R -S
+}
+
 function gu () {
   if [ $(git diff --cached --name-only | wc -l) -gt 0 ]; then
     git reset --mixed
@@ -166,4 +184,8 @@ function gu () {
     && [ $(git status -s | wc -l) -eq 0 ]; then
       git reset --soft HEAD^
   fi
+}
+
+function gamP () {
+  git add -A && git commit -m "$@" && git pull && git push
 }
