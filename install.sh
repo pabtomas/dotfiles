@@ -224,7 +224,8 @@ sudo make install > /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
 echo -e "\n"$(tmux -V)"\n"
 
 echo -n "Cloning EXECUTOR repository -------------------------------------- "
-EXECUTOR_DEST=$(getent passwd ${SUDO_USER} | cut -d: -f6)
+USER_HOME=$(getent passwd ${SUDO_USER} | cut -d: -f6)
+EXECUTOR_DEST=${USER_HOME}
 EXECUTOR_DEST+=\
   "/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
 [ -d ${EXECUTOR_DEST} ] && command rm -rf ${EXECUTOR_DEST}
@@ -237,46 +238,47 @@ git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} > \
 command cd ${BACKUP} && command rm -rf ${CLONE_DIR}
 
 echo -n "Copying .vimrc --------------------------------------------------- "
-command cp vim/.vimrc ${HOME} > /dev/null 2>&1 \
+command cp vim/.vimrc ${USER_HOME} > /dev/null 2>&1 \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Copying .tmux.conf ----------------------------------------------- "
-command cp tmux/.tmux.conf ${HOME} > /dev/null 2>&1 \
+command cp tmux/.tmux.conf ${USER_HOME} > /dev/null 2>&1 \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Copying .bashrc -------------------------------------------------- "
-command cp /etc/skel/.bashrc ${HOME} > /dev/null 2>&1 \
+command cp /etc/skel/.bashrc ${USER_HOME} > /dev/null 2>&1 \
   && cat bash/.bashrc >> \
-    ${HOME}/.bashrc && echo $(tput setaf 2)"OK"$(tput sgr0)
+    ${USER_HOME}/.bashrc && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Copying .bash_profile -------------------------------------------- "
-command cp bash/.bash_profile ${HOME} > /dev/null 2>&1 \
+command cp bash/.bash_profile ${USER_HOME} > /dev/null 2>&1 \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Copying .bash_aliases -------------------------------------------- "
-command cp bash/.bash_aliases ${HOME} > /dev/null 2>&1 \
+command cp bash/.bash_aliases ${USER_HOME} > /dev/null 2>&1 \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Copying executor scripts ----------------------------------------- "
-command cp -r executor ${HOME}/.executor > /dev/null 2>&1 \
+[ -d ${USER_HOME}/.executor ] && command rm -rf ${USER_HOME}/.executor
+command cp -r executor ${USER_HOME}/.executor > /dev/null 2>&1 \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
-source ${HOME}/.bashrc
+source ${USER_HOME}/.bashrc
