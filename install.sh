@@ -224,8 +224,9 @@ sudo make install > /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
 echo -e "\n"$(tmux -V)"\n"
 
 echo -n "Cloning EXECUTOR repository -------------------------------------- "
-EXECUTOR_DEST=$(getent passwd ${SUDO_USER} | cut -d: -f6)\
-  /.local/share/gnome-shell/extensions/executor@raujonas.github.io/
+EXECUTOR_DEST=$(getent passwd ${SUDO_USER} | cut -d: -f6)
+EXECUTOR_DEST+=\
+  "/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
 [ -d ${EXECUTOR_DEST} ] && command rm -rf ${EXECUTOR_DEST}
 git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} > \
   /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
@@ -272,7 +273,7 @@ command cp bash/.bash_aliases ${HOME} > /dev/null 2>&1 \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Copying executor scripts ----------------------------------------- "
-command cp -r .executor ${HOME} > /dev/null 2>&1 \
+command cp -r executor ${HOME}/.executor > /dev/null 2>&1 \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
