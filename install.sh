@@ -133,12 +133,25 @@ fi
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
+echo -n "Checking redshift installation ----------------------------------- "
+if [ $(which redshift | wc -l) -eq 0 ]; then
+  echo $(tput setaf 9)"Not OK"$(tput sgr0)
+  echo -n "Installing redshift package -------------------------------------- "
+  sudo apt install -y redshift > /dev/null 2>&1 \
+    && echo $(tput setaf 2)"OK"$(tput sgr0)
+else
+  echo $(tput setaf 2)"OK"$(tput sgr0)
+fi
+
+[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
 echo -n "Checking VIM version --------------------------------------------- "
 if [ $(which vim | wc -l) -eq 1 ]; then
   echo $(tput setaf 2)"OK"$(tput sgr0)
-  echo "vim "$(vim --version | head -n 2 | sed "s/^[^0-9]\+//" \
+  echo "\nvim "$(vim --version | head -n 2 | sed "s/^[^0-9]\+//" \
     | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" | tr '\n' '.    ' \
-    | sed "s/\.$/\n/")
+    | sed "s/\.$/\n/")"\n"
 else
   echo $(tput setaf 9)"Not OK"$(tput sgr0)
 fi
@@ -169,14 +182,14 @@ sudo make install > /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
-echo -e "vim "$(vim --version \
+echo -e "\nvim "$(vim --version \
   | head -n 2 | sed "s/^[^0-9]\+//" | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" \
-  | tr '\n' '.    ' | sed "s/\.$/\n/")
+  | tr '\n' '.    ' | sed "s/\.$/\n/")"\n"
 
 echo -n "Checking TMUX version -------------------------------------------- "
 if [ $(which tmux | wc -l) -eq 1 ]; then
   echo $(tput setaf 2)"OK"$(tput sgr0)
-  tmux -V
+  echo -e "\n"$(tmux -V)"\n"
 else
   echo $(tput setaf 9)"Not OK"$(tput sgr0)
 fi
@@ -208,11 +221,11 @@ sudo make install > /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
-tmux -V
+echo -e "\n"$(tmux -V)"\n"
 
 echo -n "Cloning EXECUTOR repository -------------------------------------- "
-EXECUTOR_DEST=\
-  ${HOME}/.local/share/gnome-shell/extensions/executor@raujonas.github.io/
+EXECUTOR_DEST=$(getent passwd ${SUDO_USER} | cut -d: -f6)\
+  /.local/share/gnome-shell/extensions/executor@raujonas.github.io/
 [ -d ${EXECUTOR_DEST} ] && command rm -rf ${EXECUTOR_DEST}
 git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} > \
   /dev/null 2>&1 && echo $(tput setaf 2)"OK"$(tput sgr0)
@@ -245,7 +258,7 @@ command cp /etc/skel/.bashrc ${HOME} > /dev/null 2>&1 \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Copying .bash_profile -------------------------------------------- "
-command cp bash/.bash_profild ${HOME} > /dev/null 2>&1 \
+command cp bash/.bash_profile ${HOME} > /dev/null 2>&1 \
   && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
