@@ -11,35 +11,36 @@ function cd () {
 
   if [ $? -eq 0 ]; then
 
-    command timeout 0.1 bash -c \
+    OUT=$(timeout 0.1 bash -c \
 \ \ \ 'SZ=0;'\
 \ \ \ 'DSZ=$(( (('${LINES}' / 2) * ('${COLUMNS}' / ((('\
 \ \ \ '  $(command ls -Ul'\
-\ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
-\ \ \ '    | command wc -L) / 8) + 1) * 8))) + 1 ));'\
+\ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
+\ \ \ '    | wc -L) / 8) + 1) * 8))) + 1 ));'\
 \ \ \ 'SZ=$(command ls -U'\
-\ \ \ '     | (while command read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
+\ \ \ '     | (while read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
 \ \ \ '          ((SZ+=1));'\
-\ \ \ '        done; command echo ${SZ}));'\
+\ \ \ '        done; echo ${SZ}));'\
 \ \ \ 'NC="\033[0m";'\
 \ \ \ 'if [ ${SZ} -eq 0 ]; then'\
 \ \ \ '  COL="\033[1;36m";'\
-\ \ \ '  command echo -e ${COL}"Empty directory."${NC};'\
+\ \ \ '  echo -e ${COL}"Empty directory."${NC};'\
 \ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
-\ \ \ '  command ls -l --color | command tail -n+2'\
-\ \ \ '    | command awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
-\ \ \ '    | command column;'\
+\ \ \ '  ls -l --color | tail -n+2'\
+\ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}";'\
 \ \ \ 'else'\
 \ \ \ '  COL="\033[1;33m";'\
-\ \ \ '  command echo -e ${COL}"Huge current directory."'\
-\ \ \ '    "Use listing commands carrefully."${NC};'\
-\ \ \ 'fi'
+\ \ \ '  echo -e ${COL}"Huge current directory.'\
+\ \ \ \ ' Use listing commands carrefully."${NC};'\
+\ \ \ 'fi')
 
     if [ $? -eq 124 ]; then
       local COL="\033[1;31m"
       local NC="\033[0m"
-      command echo -e ${COL}"Timeout occured."\
+      echo -e ${COL}"Timeout occured."\
         "Avoid listing commands in current directory."${NC}
+    else
+      echo -e "${OUT}" | column
     fi
 
   fi
@@ -56,8 +57,8 @@ function mkdir () {
   command mkdir -pv "$@"
   if [ $? -eq 0 ]; then
     for DIR in $(echo "$@"); do
-      command echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
-        && command read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
+      echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
+        && read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
     done
   fi
 }
@@ -72,74 +73,75 @@ alias ps?='ps -ax | grep -E'
 alias sudo='sudo '
 alias update='sudo apt-get update && sudo apt-get upgrade '\
 \ '&& sudo apt-get autoremove && sudo apt-get autoclean'
+alias executor='gnome-extensions prefs executor@raujonas.github.io'
 
 function extract () {
 
   if [[ "$#" -lt 1 ]]; then
-    command echo "Usage: extract <path/file_name>"\
+    echo "Usage: extract <path/file_name>"\
       ".<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
     return 1 #not enough args
   fi
 
   if [[ ! -e "$1" ]]; then
-    command echo -e "File does not exist!"
+    echo -e "File does not exist!"
     return 2 # File not found
   fi
 
   local DESTDIR="."
 
-  local FILE=$(command basename "$1")
+  local FILE=$(basename "$1")
 
   case "${FILE##*.}" in
     tar)
-      command echo -e "Extracting $1 to $DESTDIR: (uncompressed tar)"
-      command tar xvf "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to $DESTDIR: (uncompressed tar)"
+      tar xvf "$1" -C "$DESTDIR"
       ;;
     gz)
-      command echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
-      command tar xvfz "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
+      tar xvfz "$1" -C "$DESTDIR"
     ;;
     tgz)
-      command echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
-      command tar xvfz "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
+      tar xvfz "$1" -C "$DESTDIR"
       ;;
     xz)
-      command echo -e "Extracting  $1 to $DESTDIR: (gip compressed tar)"
-      command tar xvf -J "$1" -C "$DESTDIR"
+      echo -e "Extracting  $1 to $DESTDIR: (gip compressed tar)"
+      tar xvf -J "$1" -C "$DESTDIR"
       ;;
     bz2)
-      command echo -e "Extracting $1 to $DESTDIR: (bzip compressed tar)"
-      command tar xvfj "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to $DESTDIR: (bzip compressed tar)"
+      tar xvfj "$1" -C "$DESTDIR"
       ;;
     tbz2)
-      command echo -e "Extracting $1 to $DESTDIR: (tbz2 compressed tar)"
-      command tar xvjf "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to $DESTDIR: (tbz2 compressed tar)"
+      tar xvjf "$1" -C "$DESTDIR"
       ;;
     zip)
-      command echo -e "Extracting $1 to $DESTDIR: (zip compressed file)"
-      command unzip "$1" -d "$DESTDIR"
+      echo -e "Extracting $1 to $DESTDIR: (zip compressed file)"
+      unzip "$1" -d "$DESTDIR"
       ;;
     lzma)
-      command echo -e "Extracting $1 : (lzma compressed file)"
-      command unlzma "$1"
+      echo -e "Extracting $1 : (lzma compressed file)"
+      unlzma "$1"
       ;;
     rar)
-      command echo -e "Extracting $1 to $DESTDIR: (rar compressed file)"
-      command unrar x "$1" "$DESTDIR"
+      echo -e "Extracting $1 to $DESTDIR: (rar compressed file)"
+      unrar x "$1" "$DESTDIR"
       ;;
     7z)
-      command echo -e  "Extracting $1 to $DESTDIR: (7zip compressed file)"
-      command 7za e "$1" -o "$DESTDIR"
+      echo -e  "Extracting $1 to $DESTDIR: (7zip compressed file)"
+      7za e "$1" -o "$DESTDIR"
       ;;
     xz)
-      command echo -e  "Extracting $1 : (xz compressed file)"
-      command unxz  "$1"
+      echo -e  "Extracting $1 : (xz compressed file)"
+      unxz  "$1"
       ;;
     exe)
-      command cabextract "$1"
+      cabextract "$1"
       ;;
     *)
-      command echo -e "Unknown format!"
+      echo -e "Unknown format!"
       return
       ;;
   esac

@@ -68,6 +68,45 @@ fi
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
+echo -n "Checking gcc installation ---------------------------------------- "
+if [ $(which gcc | wc -l) -eq 0 ]; then
+  echo $(tput setaf 9)"Not OK"$(tput sgr0)
+  echo -n "Installing build-essential package ------------------------------- "
+  sudo apt install -y build-essential > /dev/null 2>&1 \
+    && echo $(tput setaf 2)"OK"$(tput sgr0)
+else
+  echo $(tput setaf 2)"OK"$(tput sgr0)
+fi
+
+[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
+echo -n "Checking yacc installation --------------------------------------- "
+if [ $(which yacc | wc -l) -eq 0 ]; then
+  echo $(tput setaf 9)"Not OK"$(tput sgr0)
+  echo -n "Installing bison package ----------------------------------------- "
+  sudo apt install -y bison > /dev/null 2>&1 \
+    && echo $(tput setaf 2)"OK"$(tput sgr0)
+else
+  echo $(tput setaf 2)"OK"$(tput sgr0)
+fi
+
+[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
+echo -n "Checking make installation --------------------------------------- "
+if [ $(which make | wc -l) -eq 0 ]; then
+  echo $(tput setaf 9)"Not OK"$(tput sgr0)
+  echo -n "Installing make package ------------------------------------------ "
+  sudo apt install -y make > /dev/null 2>&1 \
+    && echo $(tput setaf 2)"OK"$(tput sgr0)
+else
+  echo $(tput setaf 2)"OK"$(tput sgr0)
+fi
+
+[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
 echo -n "Checking automake installation ----------------------------------- "
 if [ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]; then
   echo $(tput setaf 9)"Not OK"$(tput sgr0)
@@ -99,32 +138,6 @@ if [ $(dpkg -l | command grep -E "pkg-config" | wc -l) -eq 0 ]; then
   echo $(tput setaf 9)"Not OK"$(tput sgr0)
   echo -n "Installing pkg-config package ------------------------------------ "
   sudo apt install -y pkg-config > /dev/null 2>&1 \
-    && echo $(tput setaf 2)"OK"$(tput sgr0)
-else
-  echo $(tput setaf 2)"OK"$(tput sgr0)
-fi
-
-[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
-
-echo -n "Checking gcc installation ---------------------------------------- "
-if [ $(which gcc | wc -l) -eq 0 ]; then
-  echo $(tput setaf 9)"Not OK"$(tput sgr0)
-  echo -n "Installing build-essential package ------------------------------- "
-  sudo apt install -y build-essential > /dev/null 2>&1 \
-    && echo $(tput setaf 2)"OK"$(tput sgr0)
-else
-  echo $(tput setaf 2)"OK"$(tput sgr0)
-fi
-
-[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
-
-echo -n "Checking yacc installation --------------------------------------- "
-if [ $(which yacc | wc -l) -eq 0 ]; then
-  echo $(tput setaf 9)"Not OK"$(tput sgr0)
-  echo -n "Installing bison package ----------------------------------------- "
-  sudo apt install -y bison > /dev/null 2>&1 \
     && echo $(tput setaf 2)"OK"$(tput sgr0)
 else
   echo $(tput setaf 2)"OK"$(tput sgr0)
@@ -252,7 +265,7 @@ command cp tmux/.tmux.conf ${USER_HOME} > /dev/null 2>&1 \
 
 echo -n "Copying .bashrc -------------------------------------------------- "
 command cp /etc/skel/.bashrc ${USER_HOME} > /dev/null 2>&1 \
-  && cat bash/.bashrc >> \
+  && echo -e "\n$(cat bash/.bashrc)" >> \
     ${USER_HOME}/.bashrc && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
@@ -288,5 +301,12 @@ gnome-extensions enable executor@raujonas.github.io \
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
-echo -e $(tput setaf 3)"\nSource your new .bashrc, press 'Alt + F2' and \
-then enter 'r' to complete installation\n"
+echo -n "Restarting Gnome -------------------------------------------------- "
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell \
+  --method org.gnome.Shell.Eval 'Meta.restart(_("Restarting…"))' \
+    && echo $(tput setaf 2)"OK"$(tput sgr0)
+
+[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
+echo -e $(tput setaf 3)"\nSource your new .bashrc to complete installation\n"
