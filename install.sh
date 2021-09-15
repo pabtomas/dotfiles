@@ -288,5 +288,5 @@ gnome-extensions enable executor@raujonas.github.io \
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
-echo -e $(tput setaf 11)"\nSource your new .bashrc, press 'Alt + F2' and \
+echo -e $(tput setaf 3)"\nSource your new .bashrc, press 'Alt + F2' and \
 then enter 'r' to complete installation\n"
