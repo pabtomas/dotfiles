@@ -1406,6 +1406,8 @@ cnoreabbrev qa call <SID>QuitAll()
 cnoreabbrev wqa call <SID>WriteQuitAll()
 cnoreabbrev xa call <SID>WriteQuitAll()
 
+cnoreabbrev vb vertical sbuffer
+
 " }}}
 " Autocommands {{{1
 
