@@ -39,15 +39,26 @@ function cd () {
       local NC="\033[0m"
       echo -e ${COL}"Timeout occured."\
         "Avoid listing commands in current directory."${NC}
-    else
-      if [ $(ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then
-         COL="$(tput bold)$(tput setaf 13)"
-         echo -e ${COL}"Hidden file(s) detected."\
-           "Use ld -d .??* to see them."${NC}
-      fi
-      echo -e "${OUT}" | column
+      exit 1
     fi
 
+    HID=$(timeout 0.1 bash -c \
+\ \ \ 'if [ $(ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then'\
+\ \ \ ' COL="$(tput bold)$(tput setaf 13)";'\
+\ \ \ ' echo -e ${COL}"Hidden file(s) detected."'\
+\ \ \ \ '"Use ls -d .??* to see them."${NC};'\
+\ \ \ 'fi')
+
+    if [ $? -eq 124 ]; then
+      local COL="$(tput bold)$(tput setaf 9)"
+      local NC="\033[0m"
+      echo -e ${COL}"Timeout occured."\
+        "Avoid listing commands in current directory."${NC}
+      exit 1
+    fi
+
+    [ $(echo "${HID}" | wc -L) -gt 0 ] && echo -e "${HID}"
+    echo -e "${OUT}" | column
   fi
 }
 
