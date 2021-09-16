@@ -21,25 +21,30 @@ function cd () {
 \ \ \ '     | (while read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
 \ \ \ '          ((SZ+=1));'\
 \ \ \ '        done; echo ${SZ}));'\
-\ \ \ 'NC="\033[0m";'\
+\ \ \ 'NC="$(tput sgr0)";'\
 \ \ \ 'if [ ${SZ} -eq 0 ]; then'\
-\ \ \ '  COL="\033[1;36m";'\
-\ \ \ '  echo -e ${COL}"Empty directory."${NC};'\
+\ \ \ '  COL="$(tput bold)$(tput setaf 6)";'\
+\ \ \ '  echo -e ${COL}"No regular files found in this directory."${NC};'\
 \ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
 \ \ \ '  ls -l --color | tail -n+2'\
 \ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}";'\
 \ \ \ 'else'\
-\ \ \ '  COL="\033[1;33m";'\
+\ \ \ '  COL="$(tput bold)$(tput setaf 3)";'\
 \ \ \ '  echo -e ${COL}"Huge current directory."'\
 \ \ \ \ '"Use listing commands carrefully."${NC};'\
 \ \ \ 'fi')
 
     if [ $? -eq 124 ]; then
-      local COL="\033[1;31m"
+      local COL="$(tput bold)$(tput setaf 9)"
       local NC="\033[0m"
       echo -e ${COL}"Timeout occured."\
         "Avoid listing commands in current directory."${NC}
     else
+      if [ $(ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then
+         COL="$(tput bold)$(tput setaf 13)"
+         echo -e ${COL}"Hidden file(s) detected."\
+           "Use ld -d .??* to see them."${NC}
+      fi
       echo -e "${OUT}" | column
     fi
 
