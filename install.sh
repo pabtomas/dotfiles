@@ -1,8 +1,6 @@
 #!/bin/bash
 
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root" && exit 1
-fi
+sudo echo "1" > /dev/null 2>&1
 
 echo -n "Checking apt installation ---------------------------------------- "
 if [ $(which apt | wc -l) -gt 0 ]; then
@@ -14,27 +12,21 @@ fi
 CLONE_DIR=/tmp/repositories_clone
 BACKUP=$(pwd)
 
-[ -d ${CLONE_DIR} ] && command rm -rf ${CLONE_DIR}
-command mkdir -p ${CLONE_DIR} && command cd ${CLONE_DIR}
-
 echo -n "Updating system -------------------------------------------------- "
 sudo apt update -y > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Upgrading system ------------------------------------------------- "
 sudo apt upgrade -y > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Removing unused packages ----------------------------------------- "
 sudo apt autoremove -y > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking wmctrl installation ------------------------------------- "
 if [ $(which wmctrl | wc -l) -eq 0 ]; then
@@ -46,16 +38,14 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking GNOME installation -------------------------------------- "
 if [ $(wmctrl -m | grep -E "GNOME" | wc -l) -gt 0 ] \
   && [ $(which gnome-shell | wc -l) -gt 0 ]; then
     echo -e $(tput setaf 2)"OK"$(tput sgr0)
 else
-  echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && command cd ${BACKUP} \
-    && command rm -rf ${CLONE_DIR} && exit 1
+  echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 fi
 
 echo -n "Checking GNOME version ------------------------------------------- "
@@ -64,8 +54,7 @@ if [ $(echo -e $(gnome-shell --version | sed "s/^[^0-9]\+//")"\n3.30.1" \
     echo -e $(tput setaf 2)"OK"$(tput sgr0)
 else
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-    && echo -e "\n$(gnome-shell --version)\n" && command cd ${BACKUP} \
-    && command rm -rf ${CLONE_DIR} && exit 1
+    && echo -e "\n$(gnome-shell --version)\n" && exit 1
 fi
 
 echo -n "Checking GIT installation ---------------------------------------- "
@@ -78,8 +67,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking libncurses-dev installation ----------------------------- "
 if [ $(dpkg -l | command grep -E "libncurses-dev" | wc -l) -eq 0 ]; then
@@ -91,8 +79,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking libevent-dev installation ------------------------------- "
 if [ $(dpkg -l | command grep -E "libevent-dev" | wc -l) -eq 0 ]; then
@@ -104,8 +91,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking gcc installation ---------------------------------------- "
 if [ $(which gcc | wc -l) -eq 0 ]; then
@@ -117,8 +103,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking yacc installation --------------------------------------- "
 if [ $(which yacc | wc -l) -eq 0 ]; then
@@ -130,8 +115,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking make installation --------------------------------------- "
 if [ $(which make | wc -l) -eq 0 ]; then
@@ -143,8 +127,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking automake installation ----------------------------------- "
 if [ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]; then
@@ -156,8 +139,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking autoconf installation ----------------------------------- "
 if [ $(dpkg -l | command grep -E "autoconf" | wc -l) -eq 0 ]; then
@@ -169,8 +151,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking pkg-config installation --------------------------------- "
 if [ $(dpkg -l | command grep -E "pkg-config" | wc -l) -eq 0 ]; then
@@ -182,8 +163,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking redshift installation ----------------------------------- "
 if [ $(which redshift | wc -l) -eq 0 ]; then
@@ -195,8 +175,7 @@ else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Checking VIM version --------------------------------------------- "
 if [ $(which vim | wc -l) -eq 1 ]; then
@@ -208,31 +187,34 @@ else
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
 fi
 
+[ -d ${CLONE_DIR} ] && sudo \rm -rf ${CLONE_DIR}
+command mkdir -p ${CLONE_DIR} && command cd ${CLONE_DIR}
+
 echo -n "Cloning VIM repository ------------------------------------------- "
 git clone https://github.com/vim/vim.git > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 command cd ${CLONE_DIR}/vim/src
 echo -n "Configuring VIM -------------------------------------------------- "
 ./configure > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Making VIM ------------------------------------------------------- "
 make > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Installing VIM --------------------------------------------------- "
 sudo make install > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 echo -e "\nvim "$(vim --version \
   | head -n 2 | sed "s/^[^0-9]\+//" | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" \
@@ -252,98 +234,90 @@ git clone https://github.com/tmux/tmux.git > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Configuring TMUX ------------------------------------------------- "
 command cd ${CLONE_DIR}/tmux && sh autogen.sh > /dev/null 2>&1
 ./configure > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Making TMUX ------------------------------------------------------ "
 make > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 echo -n "Installing TMUX -------------------------------------------------- "
 sudo make install > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
 echo -e "\n"$(tmux -V)"\n"
 
 echo -n "Cloning EXECUTOR repository -------------------------------------- "
-USER_HOME="$(getent passwd ${SUDO_USER} | cut -d: -f6)"
-EXECUTOR_DEST="${USER_HOME}"\
+EXECUTOR_DEST="${HOME}"\
 "/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
-[ -d ${EXECUTOR_DEST} ] && command rm -rf ${EXECUTOR_DEST}
+[ -d ${EXECUTOR_DEST} ] && sudo \rm -rf ${EXECUTOR_DEST}
 git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} > \
   /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && exit 1
 
-command cd ${BACKUP} && command rm -rf ${CLONE_DIR}
+command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR}
 
 echo -n "Copying .vimrc --------------------------------------------------- "
-command cp vim/.vimrc ${USER_HOME} > /dev/null 2>&1 \
+command cp vim/.vimrc ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Copying .tmux.conf ----------------------------------------------- "
-command cp tmux/.tmux.conf ${USER_HOME} > /dev/null 2>&1 \
+command cp tmux/.tmux.conf ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Copying .bashrc -------------------------------------------------- "
-command cp /etc/skel/.bashrc ${USER_HOME} > /dev/null 2>&1 \
+command cp /etc/skel/.bashrc ${HOME} > /dev/null 2>&1 \
   && echo -e "\n$(cat bash/.bashrc)" >> \
-    ${USER_HOME}/.bashrc && echo -e $(tput setaf 2)"OK"$(tput sgr0)
+    ${HOME}/.bashrc && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Copying .bash_profile -------------------------------------------- "
-command cp bash/.bash_profile ${USER_HOME} > /dev/null 2>&1 \
+command cp bash/.bash_profile ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Copying .bash_aliases -------------------------------------------- "
-command cp bash/.bash_aliases ${USER_HOME} > /dev/null 2>&1 \
+command cp bash/.bash_aliases ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Copying executor scripts ----------------------------------------- "
-[ -d ${USER_HOME}/.executor ] && command rm -rf ${USER_HOME}/.executor
-command cp -r executor ${USER_HOME}/.executor > /dev/null 2>&1 \
-  && command rm ${USER_HOME}/.executor/README.md \
+[ -d ${HOME}/.executor ] && sudo \rm -rf ${HOME}/.executor
+command cp -r executor ${HOME}/.executor > /dev/null 2>&1 \
+  && sudo \rm ${HOME}/.executor/README.md \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Enabling EXECUTOR ------------------------------------------------ "
 gnome-extensions enable executor@raujonas.github.io \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
 echo -n "Restarting GNOME ------------------------------------------------- "
 killall -3 gnome-shell > /dev/null && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
 
-echo -e $(tput setaf 3)"\nSource your new .bashrc to complete installation\n"
+echo -e $(tput setaf 3)\
+  "\nSource your new .bashrc to complete installation"$(tput sgr0)
