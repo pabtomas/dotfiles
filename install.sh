@@ -4,6 +4,13 @@ if [ "$EUID" -ne 0 ]; then
   echo "Please run as root" && exit 1
 fi
 
+echo -n "Checking apt installation ---------------------------------------- "
+if [ $(which apt | wc -l) -gt 0 ]; then
+  echo $(tput setaf 2)"OK"$(tput sgr0)
+else
+  echo $(tput setaf 9)"Not OK"$(tput sgr0) && exit 1
+fi
+
 CLONE_DIR=/tmp/repositories_clone
 BACKUP=$(pwd)
 
@@ -28,6 +35,27 @@ sudo apt autoremove -y > /dev/null 2>&1 \
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
+echo -n "Checking wmctrl installation ------------------------------------- "
+if [ $(which wmctrl | wc -l) -eq 0 ]; then
+  echo $(tput setaf 9)"Not OK"$(tput sgr0)
+  echo -n "Installing wmctrl package ---------------------------------------- "
+  sudo apt install -y wmctrl > /dev/null 2>&1 \
+    && echo $(tput setaf 2)"OK"$(tput sgr0)
+else
+  echo $(tput setaf 2)"OK"$(tput sgr0)
+fi
+
+[ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
+
+echo -n "Checking GNOME installation -------------------------------------- "
+if [ $(wmctrl -m | grep -E "GNOME" | wc -l) -gt 0 ]; then
+  echo $(tput setaf 2)"OK"$(tput sgr0)
+else
+  echo $(tput setaf 9)"Not OK"$(tput sgr0) && command cd ${BACKUP} \
+    && command rm -rf ${CLONE_DIR} && exit 1
+fi
 
 echo -n "Checking GIT installation ---------------------------------------- "
 if [ $(which git | wc -l) -eq 0 ]; then
@@ -301,8 +329,8 @@ gnome-extensions enable executor@raujonas.github.io \
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1
 
-echo -n "Restarting Gnome -------------------------------------------------- "
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval 'Meta.restart(_("Restarting…"))' > /dev/null && echo $(tput setaf 2)"OK"$(tput sgr0)
+echo -n "Restarting GNOME ------------------------------------------------- "
+killall -3 gnome-shell > /dev/null && echo $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && command rm -rf ${CLONE_DIR} && exit 1

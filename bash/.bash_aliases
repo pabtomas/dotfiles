@@ -30,8 +30,8 @@ function cd () {
 \ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}";'\
 \ \ \ 'else'\
 \ \ \ '  COL="\033[1;33m";'\
-\ \ \ '  echo -e ${COL}"Huge current directory.'\
-\ \ \ \ ' Use listing commands carrefully."${NC};'\
+\ \ \ '  echo -e ${COL}"Huge current directory."'\
+\ \ \ \ '"Use listing commands carrefully."${NC};'\
 \ \ \ 'fi')
 
     if [ $? -eq 124 ]; then
