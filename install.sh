@@ -344,6 +344,8 @@ if [ ${GNOME} -eq 1 ]; then
 
   [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
     && command cd ${BACKUP} && return 1
+
+  echo -n "Press Enter when GNOME service is functional again " && read
 fi
 
 echo -n "Sourcing .bashrc ------------------------------------------------- "
