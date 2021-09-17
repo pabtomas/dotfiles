@@ -302,7 +302,7 @@ command cp bash/.bash_profile ${HOME} > /dev/null 2>&1 \
   && command cd ${BACKUP} && return 1
 
 echo -n "Copying .bash_aliases -------------------------------------------- "
-command cp bash/.bash_aliases ${HOME} > /dev/null 2>&1 \
+command cp bash/.bash_aliases/usual ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
