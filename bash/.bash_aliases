@@ -164,7 +164,44 @@ function extract () {
   esac
 }
 
+git config --global --replace-all alias.podium "!git ls-files \
+  | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
+  | sort -f | uniq -ic | sort -nr"
+
+git config --global --replace-all alias.tree "!bash -c \"
+git-tree () {
+  git log --graph --color --abbrev-commit --date=relative \
+    --pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s\
+%C(yellow)%d%Creset (%cr)' \$* | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
+    | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
+    | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
+    | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
+    | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
+    | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
+    | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
+    | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
+    | sed 's/(il y a \(.\+\))$/$(tput setaf 2)(\1)$(tput sgr0)/' \
+    | less -R -S
+}
+git-tree\""
+
+git config --global --replace-all alias.undo "!bash -c \"
+git-undo () {
+  if [ \$(git diff --cached --name-only | wc -l) -gt 0 ]; then
+    echo ici
+    git reset --mixed
+  elif [ \$(git log --pretty=oneline origin/master..master | wc -l) -gt 0 ] \
+    && [ \$(git status -s | wc -l) -eq 0 ]; then
+      echo la
+      git reset --soft HEAD^
+  else
+    echo nulpar
+  fi
+}
+git-undo\""
+
 alias ga='git add'
+alias gA='git add -A'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
 alias gc='git clone'
@@ -174,26 +211,11 @@ alias gp='git pull'
 alias gP='git push'
 alias gr='git remote'
 alias gs='git status -s'
-alias gS='git ls-files | xargs -n1 git blame --line-porcelain '\
-\ "| sed -n 's/^author //p' | sort -f | uniq -ic | sort -nr"
+alias gS='git podium'
+alias gt='git tree'
 
 function gd () {
   git diff --color-words "$@" | less -R -S
-}
-
-function gl () {
-  git log --graph --color --abbrev-commit --date=relative \
-    --pretty=format:"%Cred%h%Creset %C(cyan)%an%Creset: %s\
-%C(yellow)%d%Creset (%cr)" "$@" | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
-    | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
-    | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
-    | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
-    | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
-    | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
-    | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
-    | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
-    | sed 's/(il y a \(.\+\))$/'$(tput setaf 2)'(\1)'$(tput sgr0)'/' \
-    | less -R -S
 }
 
 function gu () {
