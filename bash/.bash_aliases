@@ -169,7 +169,7 @@ git config --global --replace-all alias.podium "!git ls-files \
   | sort -f | uniq -ic | sort -nr"
 
 git config --global --replace-all alias.tree "!bash -c \"
-git-tree () {
+function git-tree () {
   git log --graph --color --abbrev-commit --date=relative \
     --pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s\
 %C(yellow)%d%Creset (%cr)' \$* | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
@@ -186,7 +186,7 @@ git-tree () {
 git-tree\""
 
 git config --global --replace-all alias.undo "!bash -c \"
-git-undo () {
+function git-undo () {
   if [ \$(git diff --cached --name-only | wc -l) -gt 0 ]; then
     git reset --mixed
   elif [ \$(git log --pretty=oneline origin/master..master | wc -l) -gt 0 ] \
@@ -200,7 +200,6 @@ alias ga='git add'
 alias gA='git add -A'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
-alias gc='git clone'
 alias gh='git checkout'
 alias gm='git commit -m'
 alias go='git podium'
@@ -209,6 +208,14 @@ alias gP='git push'
 alias gs='git status -s'
 alias gt='git tree'
 alias gu='git undo'
+
+function gc () {
+  git clone "$1" && command cd "$(basename "$1" .git)"
+  [ $? -eq 0 ] && [ -f "${GIT_TEMPLATE_DIR}/.gitignore" ] \
+    && echo -e "\n$(cat ${GIT_TEMPLATE_DIR}/.gitignore)" >> .gitignore
+  [ $? -eq 0 ] && [ -d "${GIT_TEMPLATE_DIR}/.hooks" ] \
+    && command cp ${GIT_TEMPLATE_DIR}/.hooks/* .git/hooks
+}
 
 function gd () {
   git diff --color-words "$@" | less -R -S

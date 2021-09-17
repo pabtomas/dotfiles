@@ -1,2 +1,3 @@
+GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
 force_color_prompt=yes
 cd .

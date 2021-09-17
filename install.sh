@@ -33,6 +33,7 @@ fi
 
 CLONE_DIR=/tmp/repositories_clone
 BACKUP=$(pwd)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 echo -n "Updating system -------------------------------------------------- "
 sudo apt update -y > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
@@ -264,19 +265,21 @@ if [ ${GNOME} -eq 1 ]; then
     && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
 fi
 
-command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR}
+command cd ${SCRIPT_DIR} && sudo \rm -rf ${CLONE_DIR}
 
 echo -n "Copying .vimrc --------------------------------------------------- "
 command cp vim/.vimrc ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
 
 echo -n "Copying .tmux.conf ----------------------------------------------- "
 command cp tmux/.tmux.conf ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
 
 echo -n "Copying .bashrc -------------------------------------------------- "
 command cp /etc/skel/.bashrc ${HOME} > /dev/null 2>&1 \
@@ -285,7 +288,8 @@ command cp /etc/skel/.bashrc ${HOME} > /dev/null 2>&1 \
     >> ${HOME}/.bashrc
 
 if [ $? -ne 0 ]; then
-  echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+  echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && command cd ${BACKUP} \
+    && return 1
 else
   echo -e $(tput setaf 2)"OK"$(tput sgr0)
 fi
@@ -294,13 +298,30 @@ echo -n "Copying .bash_profile -------------------------------------------- "
 command cp bash/.bash_profile ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
 
 echo -n "Copying .bash_aliases -------------------------------------------- "
 command cp bash/.bash_aliases ${HOME} > /dev/null 2>&1 \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
+
+GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
+echo -n "Copying .gitignore ----------------------------------------------- "
+sudo \cp git/.gitignore ${GIT_TEMPLATE_DIR} > /dev/null 2>&1 \
+  && echo -e $(tput setaf 2)"OK"$(tput sgr0)
+
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
+
+echo -n "Copying GIT hooks ------------------------------------------------ "
+sudo \cp -r git/.hooks ${GIT_TEMPLATE_DIR} > /dev/null 2>&1 \
+  && echo -e $(tput setaf 2)"OK"$(tput sgr0)
+
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
 
 if [ ${GNOME} -eq 1 ]; then
   echo -n "Copying executor scripts ----------------------------------------- "
@@ -308,21 +329,27 @@ if [ ${GNOME} -eq 1 ]; then
   command cp -r executor ${HOME}/.executor > /dev/null 2>&1 \
     && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
 
   echo -n "Enabling EXECUTOR ------------------------------------------------ "
   gnome-extensions enable executor@raujonas.github.io \
     && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
 
   echo -n "Restarting GNOME ------------------------------------------------- "
   killall -3 gnome-shell > /dev/null && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
 fi
 
 echo -n "Sourcing .bashrc ------------------------------------------------- "
 source ${HOME}/.bashrc > /dev/null && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
+
+command cd ${BACKUP}
