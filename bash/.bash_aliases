@@ -188,14 +188,10 @@ git-tree\""
 git config --global --replace-all alias.undo "!bash -c \"
 git-undo () {
   if [ \$(git diff --cached --name-only | wc -l) -gt 0 ]; then
-    echo ici
     git reset --mixed
   elif [ \$(git log --pretty=oneline origin/master..master | wc -l) -gt 0 ] \
     && [ \$(git status -s | wc -l) -eq 0 ]; then
-      echo la
       git reset --soft HEAD^
-  else
-    echo nulpar
   fi
 }
 git-undo\""
@@ -207,24 +203,15 @@ alias gb='git branch'
 alias gc='git clone'
 alias gh='git checkout'
 alias gm='git commit -m'
+alias go='git podium'
 alias gp='git pull'
 alias gP='git push'
-alias gr='git remote'
 alias gs='git status -s'
-alias gS='git podium'
 alias gt='git tree'
+alias gu='git undo'
 
 function gd () {
   git diff --color-words "$@" | less -R -S
-}
-
-function gu () {
-  if [ $(git diff --cached --name-only | wc -l) -gt 0 ]; then
-    git reset --mixed
-  elif [ $(git log --pretty=oneline origin/master..master | wc -l) -gt 0 ] \
-    && [ $(git status -s | wc -l) -eq 0 ]; then
-      git reset --soft HEAD^
-  fi
 }
 
 function gamP () {
