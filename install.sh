@@ -306,7 +306,6 @@ if [ ${GNOME} -eq 1 ]; then
   echo -n "Copying executor scripts ----------------------------------------- "
   [ -d ${HOME}/.executor ] && sudo \rm -rf ${HOME}/.executor
   command cp -r executor ${HOME}/.executor > /dev/null 2>&1 \
-    && sudo \rm ${HOME}/.executor/README.md \
     && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
   [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && return 1
