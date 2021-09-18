@@ -253,6 +253,15 @@ sudo make install > /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 echo -e "\n"$(tmux -V)"\n"
 
+echo -n "Cloning TMUX Plugin Manager repository --------------------------- "
+TPM_DEST="${HOME}/.tmux/plugins/tpm"
+[ -d ${TPM_DEST} ] && sudo \rm -rf ${TPM_DEST}
+sudo git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} > \
+  /dev/null 2>&1 && echo -e $(tput setaf 2)"OK"$(tput sgr0)
+
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+
 if [ ${GNOME} -eq 1 ]; then
   echo -n "Cloning EXECUTOR repository -------------------------------------- "
   EXECUTOR_DEST="${HOME}/.local/share/gnome-shell"

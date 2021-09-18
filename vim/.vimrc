@@ -1215,6 +1215,7 @@ if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif
 if exists('s:message_command_mapping') | unlet s:message_command_mapping | endif
 if exists('s:map_command_mapping') | unlet s:map_command_mapping | endif
 if exists('s:autocompletion_mapping') | unlet s:autocompletion_mapping | endif
+if exists('s:mksession_mapping') | unlet s:mksession_mapping | endif
 if exists('s:animate_statusline_mapping') | unlet s:animate_statusline_mapping | endif
 
 " leader keys
@@ -1239,6 +1240,7 @@ const s:unfold_vim_fold_mapping =                                      '<Space>'
 const s:message_command_mapping =                s:leader       .            'm'
 const s:map_command_mapping =                    s:leader       .           'mm'
 const s:autocompletion_mapping =                                       '<S-Tab>'
+const s:mksession_mapping =                      s:leader       .            'z'
 const s:animate_statusline_mapping =             s:leader       .            's'
 
 " search and replace
@@ -1273,6 +1275,10 @@ execute 'nnoremap <silent> ' . s:nohighlight_search_mapping
 " hide/show good practices
 execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
   \ . ' :call <SID>ToggleRedHighlight()<CR>'
+
+" create session
+execute 'nnoremap <silent> ' . s:mksession_mapping
+  \ . ' :mksession!<CR>'
 
 " animate statusline
 execute 'nnoremap <silent> ' . s:animate_statusline_mapping
