@@ -1,0 +1,9 @@
+#!/bin/bash
+
+COMMIT_REGEX='\[(fixing|feature|update) - .+] '
+
+if ! grep -iqE "$COMMIT_REGEX" "$1"; then
+    echo "Unexpected commit message: [<type> - <identifier>] <message>" >&2
+    exit 1
+fi
+
