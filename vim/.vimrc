@@ -247,6 +247,19 @@ function! s:AnimateStatusLine()
   call timer_pause(s:line_timer, v:false)
 endfunction
 
+function! s:RestoreStatusLines(timer_id)
+  execute 'highlight StatusLine   term=bold cterm=bold ctermfg=' . s:blue_4   . ' ctermbg=' . s:black . ' |
+    \      highlight StatusLineNC term=NONE cterm=NONE ctermfg=' . s:blue_1   . ' ctermbg=' . s:black . ' |
+    \      highlight VertSplit    term=NONE cterm=NONE ctermfg=' . s:purple_2 . ' ctermbg=' . s:black
+endfunction
+
+function! s:HighlightStatusLines()
+  execute 'highlight StatusLine   ctermfg=' . s:green_1 . ' |
+    \      highlight StatusLineNC ctermfg=' . s:green_1 . ' |
+    \      highlight VertSplit    ctermfg=' . s:green_1
+  call timer_start(1000, function('s:RestoreStatusLines'))
+endfunction
+
 " }}}
 " Style {{{1
 "   Palette {{{2
@@ -1265,8 +1278,8 @@ execute 'nnoremap <silent> ' . s:vsplit_vimrc_mapping
   \ . ' :vsplit $MYVIMRC<CR>'
 
 " source .vimrc
-execute 'nnoremap '          . s:source_vimrc_mapping
-  \ . ' :source $MYVIMRC<CR>'
+execute 'nnoremap <silent> ' . s:source_vimrc_mapping
+  \ . ' :source $MYVIMRC <bar> call <SID>HighlightStatusLines()<CR>'
 
 " stop highlighting from the last search
 execute 'nnoremap <silent> ' . s:nohighlight_search_mapping
@@ -1278,7 +1291,7 @@ execute 'nnoremap <silent> ' . s:toggle_good_practices_mapping
 
 " create session
 execute 'nnoremap <silent> ' . s:mksession_mapping
-  \ . ' :mksession!<CR>'
+  \ . ' :mksession! <bar> call <SID>HighlightStatusLines()<CR>'
 
 " animate statusline
 execute 'nnoremap <silent> ' . s:animate_statusline_mapping
