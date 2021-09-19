@@ -466,126 +466,6 @@ function! s:CloseLonelyUnlistedBuffers()
   endif
 endfunction
 
-"   Quit functions {{{2
-
-" W   - winnr('$')
-" ==N - is equal N
-" =>N - is greater than N
-" <=N - is less than N
-" N   - distinct number of windows/u-buffer/l-buffers/h-buffers
-function! s:Quit()
-  if !&modified
-
-    let l:current_buf = bufnr()
-
-    " case 1:               current
-    "   (>=1) win & (==1) unlisted-buf & (>=0) listed-buf & (>=0) hidden-buf
-    let l:is_currentbuf_listed = buflisted(current_buf)
-
-    if !l:is_currentbuf_listed
-      silent quit
-      return v:true
-    endif
-
-    " case 2:                                   current
-    "   (==1) win & (==0) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
-    let l:more_than_one_window = (winnr('$') > 1)
-    let l:at_least_one_hidden_listedbuf =
-      \ !empty(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> val.hidden}))
-
-    if !l:more_than_one_window && !l:at_least_one_hidden_listedbuf
-      silent quit
-      return v:true
-    endif
-
-    " case 3:                                   current
-    "   (==1) win & (==0) unlisted-buf & (==1) listed-buf & (>=1) hidden-buf
-    let l:lastused_hiddenbuf = 1
-    if l:at_least_one_hidden_listedbuf
-      let l:lastused_hiddenbuf = map(sort(filter(getbufinfo(
-        \ #{ buflisted: 1 }), {_, val -> val.hidden}),
-        \ {x, y -> y.lastused - x.lastused}), {_, val -> val.bufnr})[0]
-    endif
-
-    if !l:more_than_one_window && l:at_least_one_hidden_listedbuf
-      execute 'silent buffer '  . l:lastused_hiddenbuf
-      execute 'silent bdelete ' . l:current_buf
-      return v:true
-    endif
-
-    " case 4:                                     current
-    "   (>=2) win & (<=W-2) unlisted-buf & (==1) listed-buf & (>=0) hidden-buf
-    let l:current_buf_active_more_than_once =
-      \ (len(win_findbuf(l:current_buf)) > 1)
-
-    if l:more_than_one_window && l:current_buf_active_more_than_once
-      silent quit
-      return v:true
-    endif
-
-    " case 5:                                   current
-    "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (==0) hidden-buf
-    let l:more_than_one_active_listedbuf = (s:ActiveListedBuffers() > 1)
-
-    if l:more_than_one_window && !l:current_buf_active_more_than_once
-    \ && !l:more_than_one_active_listedbuf && !l:at_least_one_hidden_listedbuf
-      silent quitall
-      return v:true
-    endif
-
-    " case 6:                                   current
-    "   (>=2) win & (==W-1) unlisted-buf & (==1) listed-buf & (>=0) hidden-buf
-    if l:more_than_one_window && !l:current_buf_active_more_than_once
-    \ && !l:more_than_one_active_listedbuf && l:at_least_one_hidden_listedbuf
-      execute 'silent buffer '  . l:lastused_hiddenbuf
-      execute 'silent bdelete ' . l:current_buf
-      return v:true
-    endif
-
-    " case 7:                                   current
-    "   (>=2) win & (>=0) unlisted-buf & (>=2) listed-buf & (>=0) hidden-buf
-    if l:more_than_one_window && l:more_than_one_active_listedbuf
-    \ && !l:current_buf_active_more_than_once
-      silent quit
-      execute 'silent bdelete ' . l:current_buf
-      return v:true
-    endif
-
-    let l:unlistedbuf_nb = 0
-    for l:i in map(getbufinfo(), {_, val -> len(val.windows)})
-      let l:unlistedbuf_nb += 1
-    endfor
-
-    echoerr 'Personal Error Message: this Quit() case is not expected,'
-      \ . ' you have to define it: ' . winnr('$') . ' Window(s) & '
-      \ . l:unlistedbuf_nb . ' Unlisted-Buffer(s) & '
-      \ . len(getbufinfo(#{ buflisted: 1 })) . ' Listed-Buffer(s) & '
-      \ . len(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> val.hidden}))
-      \ . ' Hidden-Buffer(s)'
-  else
-    echomsg 'Personal Warning Message: ' . bufname('%') . ' has unsaved
-      \ modifications'
-  endif
-  return v:false
-endfunction
-
-function! s:WriteQuit()
-  update
-  return s:Quit()
-endfunction
-
-function! s:QuitAll()
-  while s:Quit()
-  endwhile
-endfunction
-
-function! s:WriteQuitAll()
-  while s:WriteQuit()
-  endwhile
-endfunction
-
-"   }}}
-" }}}
 " Windows {{{1
 
 function! s:NextWindow()
@@ -628,6 +508,7 @@ function! s:HelpBuffersMenu()
    \ '   ' . s:Key([s:next_menukey, s:previous_menukey])
      \ . '   - Next/Previous buffer',
    \ '   ' . s:Key([s:select_menukey]) . '   - Select buffer',
+   \ '     ' . s:Key([s:delete_menukey]) . '     - Delete buffer',
    \ '    < 0-9 >    - Buffer-id characters',
    \ '     < $ >     - End-of-string buffer-id character',
    \ ' ' . s:Key([s:erase_menukey]) . ' - Erase last buffer-id character',
@@ -684,6 +565,11 @@ function! s:BuffersMenuFilter(winid, key)
     call s:ReplaceCursorOnCurrentBuffer(a:winid)
   elseif a:key == s:select_menukey
     call popup_clear()
+  elseif a:key == s:delete_menukey
+    if len(getbufinfo(#{ buflisted: 1 })) > 1
+      bdelete
+      call s:ReplaceCursorOnCurrentBuffer(a:winid)
+    endif
   elseif a:key == s:exit_menukey
     execute 'buffer ' . s:buf_before_menu
     call popup_clear()
@@ -1300,12 +1186,6 @@ execute 'nnoremap <silent> ' . s:mksession_mapping
 execute 'nnoremap <silent> ' . s:animate_statusline_mapping
   \ . ' :call <SID>AnimateStatusLine()<CR>'
 
-" Quit() functions
-execute 'nnoremap <silent> ' . s:call_quit_function_mapping
-  \ . ' :call <SID>Quit()<CR>'
-execute 'nnoremap <silent> ' . s:call_writequit_function_mapping
-  \ . ' :call <SID>WriteQuit()<CR>'
-
 " buffers menu
 execute 'nnoremap <silent> ' . s:buffers_menu_mapping
   \ . ' :call <SID>DisplayBuffersMenu()<CR>'
@@ -1340,6 +1220,7 @@ execute 'inoremap '          . s:autocompletion_mapping
 if exists('s:next_menukey') | unlet s:next_menukey | endif
 if exists('s:previous_menukey') | unlet s:previous_menukey | endif
 if exists('s:select_menukey') | unlet s:select_menukey | endif
+if exists('s:delete_menukey') | unlet s:delete_menukey | endif
 if exists('s:exit_menukey') | unlet s:exit_menukey | endif
 if exists('s:select_menuchars') | unlet s:select_menuchars | endif
 if exists('s:erase_menukey') | unlet s:erase_menukey | endif
@@ -1348,6 +1229,7 @@ if exists('s:help_menukey') | unlet s:help_menukey | endif
 const s:next_menukey =      "\<Down>"
 const s:previous_menukey =    "\<Up>"
 const s:select_menukey =   "\<Enter>"
+const s:delete_menukey =          "d"
 const s:exit_menukey =       "\<Esc>"
 const s:select_menuchars =   '\d\|\$'
 const s:erase_menukey =       "\<BS>"
@@ -1413,20 +1295,6 @@ cnoreabbrev w update
 
 " avoid intuitive tabpage usage
 cnoreabbrev tabe silent tabonly
-
-" avoid intuitive quit usage
-cnoreabbrev q call <SID>Quit()
-
-" avoid intuitive exit usage
-cnoreabbrev wq call <SID>WriteQuit()
-cnoreabbrev x call <SID>WriteQuit()
-
-" avoid intuitive quitall usage
-cnoreabbrev qa call <SID>QuitAll()
-
-" avoid intuitive exitall usage
-cnoreabbrev wqa call <SID>WriteQuitAll()
-cnoreabbrev xa call <SID>WriteQuitAll()
 
 cnoreabbrev vb vertical sbuffer
 
