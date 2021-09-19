@@ -52,6 +52,9 @@ set wildmenu
 " give backspace its original power
 set backspace=indent,eol,start
 
+" unset blank (empty windows), options (sometimes buggy) and tabpages (unused)
+set sessionoptions=buffers,curdir,folds,help,winsize,terminal
+
 " }}}
 " Performance {{{1
 
@@ -1453,9 +1456,9 @@ augroup vimrc_autocomands
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
 
 "   }}}
-"   Tree autocommands group {{{2
+"   Sessions autocommands group {{{2
 
-  " autocmd VimEnter * silent! autocmd! FileExplorer
+  autocmd VimLeavePre * :mksession!
 
 "   }}}
 "   Vimscript filetype autocommands group {{{2
