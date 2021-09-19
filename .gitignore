@@ -1,2 +1,7 @@
 .*.sw[a-z]
 Session.vim
+
+.*.sw[a-z]
+Session.vim
+/bin
+/obj

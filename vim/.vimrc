@@ -317,7 +317,7 @@ set wincolor=NormalAlt
 
 execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
   \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
-  \      highlight       BufferMenuBorders  term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
+  \      highlight       BuffersMenuBorders term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
   \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
   \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
   \      highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
@@ -566,12 +566,24 @@ function! s:BuffersMenuFilter(winid, key)
   elseif a:key == s:select_menukey
     call popup_clear()
   elseif a:key == s:delete_menukey
-    if len(getbufinfo(#{ buflisted: 1 })) > 1
-      bdelete
-      call s:ReplaceCursorOnCurrentBuffer(a:winid)
+    let l:listed_buf = getbufinfo(#{ buflisted: 1 })
+    if len(l:listed_buf) > 1
+      let l:buf = bufnr()
+      if len(win_findbuf(l:buf)) == 1
+        if l:buf == l:listed_buf[-1].bufnr
+          bprevious
+        else
+          bnext
+        endif
+        execute 'silent bdelete ' . l:buf
+        call popup_settext(a:winid, s:BuffersMenu().text)
+        call s:ReplaceCursorOnCurrentBuffer(a:winid)
+      endif
     endif
   elseif a:key == s:exit_menukey
-    execute 'buffer ' . s:buf_before_menu
+    if !empty(win_findbuf(s:buf_before_menu))
+      execute 'buffer ' . s:buf_before_menu
+    endif
     call popup_clear()
   elseif match(a:key, s:select_menuchars) > -1
     if (a:key != "0") || (len(s:menu_bufnr) > 0)
@@ -648,7 +660,7 @@ function! s:DisplayBuffersMenu()
     \ filter: expand('<SID>') . 'BuffersMenuFilter',
     \ mapping: v:false,
     \ border: [],
-    \ borderhighlight: ['BufferMenuBorders'],
+    \ borderhighlight: ['BuffersMenuBorders'],
     \ borderchars: ['━', '┃', '━', '┃', '┏', '┓', '┛', '┗'],
     \ cursorline: v:true,
   \ })
@@ -1025,6 +1037,27 @@ function! s:DisplayTree()
 endfunction
 
 "   }}}
+"   Obsession {{{2
+
+function! s:DisplayObsession()
+  call inputsave()
+  while v:true
+    echohl PMenu
+    let l:mkses = input('Build a new session in "' . fnamemodify('.', ':p')
+      \ . '": [Y]es or [N]o ? ')
+    let l:mkses = tolower(l:mkses)
+    if l:mkses == s:yes_obsessionkey
+      mksession!
+      break
+    elseif l:mkses == s:no_obsessionkey
+      break
+    endif
+    echohl NONE
+  endwhile
+  call inputrestore()
+endfunction
+
+"   }}}
 " }}}
 " Filetype specific {{{1
 "   Bash {{{2
@@ -1096,54 +1129,54 @@ endfunction
 
 "   Vim mappings {{{2
 
-if exists('s:leader') | unlet s:leader | endif
-if exists('s:shift_leader') | unlet s:shift_leader | endif
+if exists('s:leader')                                 | unlet s:leader                                 | endif
+if exists('s:shift_leader')                           | unlet s:shift_leader                           | endif
 
-if exists('s:search_and_replace_mapping') | unlet s:search_and_replace_mapping | endif
+if exists('s:search_and_replace_mapping')             | unlet s:search_and_replace_mapping             | endif
 if exists('s:search_and_replace_insensitive_mapping') | unlet s:search_and_replace_insensitive_mapping | endif
-if exists('s:search_insensitive_mapping') | unlet s:search_insensitive_mapping | endif
-if exists('s:past_unnamed_reg_in_cli_mapping') | unlet s:past_unnamed_reg_in_cli_mapping | endif
-if exists('s:vsplit_vimrc_mapping') | unlet s:vsplit_vimrc_mapping | endif
-if exists('s:source_vimrc_mapping') | unlet s:source_vimrc_mapping | endif
-if exists('s:nohighlight_search_mapping') | unlet s:nohighlight_search_mapping | endif
-if exists('s:toggle_good_practices_mapping') | unlet s:toggle_good_practices_mapping | endif
-if exists('s:call_quit_function_mapping') | unlet s:call_quit_function_mapping | endif
-if exists('s:call_writequit_function_mapping') | unlet s:call_writequit_function_mapping | endif
-if exists('s:buffers_menu_mapping') | unlet s:buffers_menu_mapping | endif
-if exists('s:tree_mapping') | unlet s:tree_mapping | endif
-if exists('s:window_next_mapping') | unlet s:window_next_mapping | endif
-if exists('s:window_previous_mapping') | unlet s:window_previous_mapping | endif
-if exists('s:unfold_vim_fold_mapping') | unlet s:unfold_vim_fold_mapping | endif
-if exists('s:message_command_mapping') | unlet s:message_command_mapping | endif
-if exists('s:map_command_mapping') | unlet s:map_command_mapping | endif
-if exists('s:autocompletion_mapping') | unlet s:autocompletion_mapping | endif
-if exists('s:mksession_mapping') | unlet s:mksession_mapping | endif
-if exists('s:animate_statusline_mapping') | unlet s:animate_statusline_mapping | endif
+if exists('s:search_insensitive_mapping')             | unlet s:search_insensitive_mapping             | endif
+if exists('s:past_unnamed_reg_in_cli_mapping')        | unlet s:past_unnamed_reg_in_cli_mapping        | endif
+if exists('s:vsplit_vimrc_mapping')                   | unlet s:vsplit_vimrc_mapping                   | endif
+if exists('s:source_vimrc_mapping')                   | unlet s:source_vimrc_mapping                   | endif
+if exists('s:nohighlight_search_mapping')             | unlet s:nohighlight_search_mapping             | endif
+if exists('s:toggle_good_practices_mapping')          | unlet s:toggle_good_practices_mapping          | endif
+if exists('s:call_quit_function_mapping')             | unlet s:call_quit_function_mapping             | endif
+if exists('s:call_writequit_function_mapping')        | unlet s:call_writequit_function_mapping        | endif
+if exists('s:buffers_menu_mapping')                   | unlet s:buffers_menu_mapping                   | endif
+if exists('s:tree_mapping')                           | unlet s:tree_mapping                           | endif
+if exists('s:window_next_mapping')                    | unlet s:window_next_mapping                    | endif
+if exists('s:window_previous_mapping')                | unlet s:window_previous_mapping                | endif
+if exists('s:unfold_vim_fold_mapping')                | unlet s:unfold_vim_fold_mapping                | endif
+if exists('s:message_command_mapping')                | unlet s:message_command_mapping                | endif
+if exists('s:map_command_mapping')                    | unlet s:map_command_mapping                    | endif
+if exists('s:autocompletion_mapping')                 | unlet s:autocompletion_mapping                 | endif
+if exists('s:mksession_mapping')                      | unlet s:mksession_mapping                      | endif
+if exists('s:animate_statusline_mapping')             | unlet s:animate_statusline_mapping             | endif
 
 " leader keys
-const s:leader =                                                             '²'
-const s:shift_leader =                                                       '³'
+const s:leader                                 =                             '²'
+const s:shift_leader                           =                             '³'
 
-const s:search_and_replace_mapping =                                         ':'
+const s:search_and_replace_mapping             =                             ':'
 const s:search_and_replace_insensitive_mapping = s:leader       .            ':'
-const s:search_insensitive_mapping =             s:leader       .            '/'
-const s:past_unnamed_reg_in_cli_mapping =        s:leader       .            'p'
-const s:vsplit_vimrc_mapping =                   s:leader       .            '&'
-const s:source_vimrc_mapping =                   s:shift_leader .            '1'
-const s:nohighlight_search_mapping =             s:leader       .            'é'
-const s:toggle_good_practices_mapping =          s:leader       .            '"'
-const s:call_quit_function_mapping =             s:leader       .            'q'
-const s:call_writequit_function_mapping =        s:leader       .            'w'
-const s:buffers_menu_mapping =                   s:leader       .       s:leader
-const s:tree_mapping =                           s:shift_leader . s:shift_leader
-const s:window_next_mapping =                    s:leader       .      '<Right>'
-const s:window_previous_mapping =                s:leader       .       '<Left>'
-const s:unfold_vim_fold_mapping =                                      '<Space>'
-const s:message_command_mapping =                s:leader       .            'm'
-const s:map_command_mapping =                    s:leader       .           'mm'
-const s:autocompletion_mapping =                                       '<S-Tab>'
-const s:mksession_mapping =                      s:leader       .            'z'
-const s:animate_statusline_mapping =             s:leader       .            's'
+const s:search_insensitive_mapping             = s:leader       .            '/'
+const s:past_unnamed_reg_in_cli_mapping        = s:leader       .            'p'
+const s:vsplit_vimrc_mapping                   = s:leader       .            '&'
+const s:source_vimrc_mapping                   = s:shift_leader .            '1'
+const s:nohighlight_search_mapping             = s:leader       .            'é'
+const s:toggle_good_practices_mapping          = s:leader       .            '"'
+const s:call_quit_function_mapping             = s:leader       .            'q'
+const s:call_writequit_function_mapping        = s:leader       .            'w'
+const s:buffers_menu_mapping                   = s:leader       .       s:leader
+const s:tree_mapping                           = s:shift_leader . s:shift_leader
+const s:window_next_mapping                    = s:leader       .      '<Right>'
+const s:window_previous_mapping                = s:leader       .       '<Left>'
+const s:unfold_vim_fold_mapping                =                       '<Space>'
+const s:message_command_mapping                = s:leader       .            'm'
+const s:map_command_mapping                    = s:leader       .           'mm'
+const s:autocompletion_mapping                 =                       '<S-Tab>'
+const s:mksession_mapping                      = s:leader       .            'z'
+const s:animate_statusline_mapping             = s:leader       .            's'
 
 " search and replace
 execute 'vnoremap '          . s:search_and_replace_mapping
@@ -1217,23 +1250,32 @@ execute 'inoremap '          . s:autocompletion_mapping
 "   }}}
 "   Buffers menu keys {{{2
 
-if exists('s:next_menukey') | unlet s:next_menukey | endif
+if exists('s:next_menukey')     | unlet s:next_menukey     | endif
 if exists('s:previous_menukey') | unlet s:previous_menukey | endif
-if exists('s:select_menukey') | unlet s:select_menukey | endif
-if exists('s:delete_menukey') | unlet s:delete_menukey | endif
-if exists('s:exit_menukey') | unlet s:exit_menukey | endif
+if exists('s:select_menukey')   | unlet s:select_menukey   | endif
+if exists('s:delete_menukey')   | unlet s:delete_menukey   | endif
+if exists('s:exit_menukey')     | unlet s:exit_menukey     | endif
 if exists('s:select_menuchars') | unlet s:select_menuchars | endif
-if exists('s:erase_menukey') | unlet s:erase_menukey | endif
-if exists('s:help_menukey') | unlet s:help_menukey | endif
+if exists('s:erase_menukey')    | unlet s:erase_menukey    | endif
+if exists('s:help_menukey')     | unlet s:help_menukey     | endif
 
-const s:next_menukey =      "\<Down>"
+const s:next_menukey     =  "\<Down>"
 const s:previous_menukey =    "\<Up>"
-const s:select_menukey =   "\<Enter>"
-const s:delete_menukey =          "d"
-const s:exit_menukey =       "\<Esc>"
+const s:select_menukey   = "\<Enter>"
+const s:delete_menukey   =        "d"
+const s:exit_menukey     =   "\<Esc>"
 const s:select_menuchars =   '\d\|\$'
-const s:erase_menukey =       "\<BS>"
-const s:help_menukey =            "?"
+const s:erase_menukey    =    "\<BS>"
+const s:help_menukey     =        "?"
+
+"   }}}
+"   Obsession keys {{{2
+
+if exists('s:yes_obsessionkey') | unlet s:yes_obsessionkey | endif
+if exists('s:no_obsessionkey')  | unlet s:no_obsessionkey  | endif
+
+const s:yes_obsessionkey = "y"
+const s:no_obsessionkey  = "n"
 
 "   }}}
 "   Tree keys {{{2
@@ -1326,7 +1368,7 @@ augroup vimrc_autocomands
 "   }}}
 "   Sessions autocommands group {{{2
 
-  autocmd VimLeavePre * :mksession!
+  autocmd VimLeavePre * :call <SID>DisplayObsession()
 
 "   }}}
 "   Vimscript filetype autocommands group {{{2
