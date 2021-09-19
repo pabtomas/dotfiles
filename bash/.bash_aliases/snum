@@ -216,11 +216,3 @@ function gd () {
 function gamP () {
   git add -A && git commit -m "$@" && git pull && git push
 }
-
-function vim () {
-  if [ "$#" -eq 0 ]; then
-    [ -f $(pwd)/Session.vim ] && command vim -S Session.vim || command vim
-  else
-    command vim "$@"
-  fi
-}
