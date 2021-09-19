@@ -289,6 +289,13 @@ command cp tmux/.tmux.conf ${HOME} &> /dev/null \
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && return 1
 
+echo -n "Installing TMUX Plugins ------------------------------------------ "
+${HOME}/.tmux/plugins/tpm/scripts/install_plugins.sh &> /dev/null \
+  && echo -e $(tput setaf 2)"OK"$(tput sgr0)
+
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
+
 echo -n "Copying .bashrc -------------------------------------------------- "
 command cp /etc/skel/.bashrc ${HOME} &> /dev/null \
   && echo -e "\n$(cat bash/.bashrc/basic_settings)" >> ${HOME}/.bashrc \
@@ -363,17 +370,5 @@ source ${HOME}/.bashrc &> /dev/null && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && return 1
-
-echo -n "Installing TMUX Plugins ------------------------------------------ "
-${HOME}/.tmux/plugins/tpm/scripts/install_plugins.sh &> /dev/null \
-  && echo -e $(tput setaf 2)"OK"$(tput sgr0)
-
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
-
-echo -n "Sourcing TMUX Plugins -------------------------------------------- "
-${HOME}/.tmux/plugins/tpm/scripts/source_plugins.sh &> /dev/null
-
-echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 command cd ${BACKUP}
