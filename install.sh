@@ -364,6 +364,13 @@ if [ ${GNOME} -eq 1 ]; then
     && read && echo
 fi
 
+echo -n "Disabling bluetooth by default ----------------------------------- "
+sudo systemctl disable bluetooth.service &> /dev/null \
+  && echo -e $(tput setaf 2)"OK"$(tput sgr0)
+
+[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+  && command cd ${BACKUP} && return 1
+
 echo -n "Sourcing .bashrc ------------------------------------------------- "
 source ${HOME}/.bashrc &> /dev/null && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
