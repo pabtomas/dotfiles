@@ -183,14 +183,14 @@ else
 fi
 
 [ -d ${CLONE_DIR} ] && sudo \rm -rf ${CLONE_DIR}
-command mkdir -p ${CLONE_DIR} && command cd ${CLONE_DIR}
+command mkdir -p ${CLONE_DIR}
 
 echo -n "Cloning VIM repository ------------------------------------------- "
-git clone https://github.com/vim/vim.git &> /dev/null \
+git clone https://github.com/vim/vim.git ${CLONE_DIR}/vim &> /dev/null \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+  && sudo \rm -rf ${CLONE_DIR} && return 1
 
 command cd ${CLONE_DIR}/vim/src
 echo -n "Configuring VIM -------------------------------------------------- "
@@ -223,9 +223,8 @@ else
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
 fi
 
-command cd ${CLONE_DIR}
 echo -n "Cloning TMUX repository ------------------------------------------ "
-git clone https://github.com/tmux/tmux.git &> /dev/null \
+git clone https://github.com/tmux/tmux.git ${CLONE_DIR}/tmux &> /dev/null \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
@@ -255,7 +254,7 @@ echo -e "\n"$(tmux -V)"\n"
 echo -n "Cloning TMUX Plugin Manager repository --------------------------- "
 TPM_DEST="${HOME}/.tmux/plugins/tpm"
 [ -d ${TPM_DEST} ] && sudo \rm -rf ${TPM_DEST}
-sudo git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} &> /dev/null \
+git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} &> /dev/null \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
@@ -266,7 +265,7 @@ if [ ${GNOME} -eq 1 ]; then
   EXECUTOR_DEST="${HOME}/.local/share/gnome-shell"
   EXECUTOR_DEST+="/extensions/executor@raujonas.github.io/"
   [ -d ${EXECUTOR_DEST} ] && sudo \rm -rf ${EXECUTOR_DEST}
-  sudo git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} \
+  git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} \
     &> /dev/null && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
   [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
@@ -290,7 +289,7 @@ command cp tmux/.tmux.conf ${HOME} &> /dev/null \
   && command cd ${BACKUP} && return 1
 
 echo -n "Installing TMUX Plugins ------------------------------------------ "
-${HOME}/.tmux/plugins/tpm/scripts/install_plugins.sh &> /dev/null \
+${HOME}/.tmux/plugins/tpm/bin/install_plugins &> /dev/null \
   && echo -e $(tput setaf 2)"OK"$(tput sgr0)
 
 [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
