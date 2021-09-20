@@ -47,7 +47,7 @@ function cd () {
 \ \ \ ' COL="$(tput bold)$(tput setaf 13)";'\
 \ \ \ ' NC="$(tput sgr0)";'\
 \ \ \ ' echo -e "${COL}Hidden file(s) detected."'\
-\ \ \ \ '"${NC}Use ls -d .??* | column${COL} to see them.${NC}";'\
+\ \ \ \ '"Use ${NC}ls -d .??* | column${COL} to see them.${NC}";'\
 \ \ \ 'fi')
 
     if [ $? -eq 124 ]; then
