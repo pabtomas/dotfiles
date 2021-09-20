@@ -47,7 +47,7 @@ function cd () {
 \ \ \ ' COL="$(tput bold)$(tput setaf 13)";'\
 \ \ \ ' NC="$(tput sgr0)";'\
 \ \ \ ' echo -e "${COL}Hidden file(s) detected."'\
-\ \ \ \ '"Use ls -d .??* | column to see them.${NC}";'\
+\ \ \ \ '"${NC}Use ls -d .??* | column${COL} to see them.${NC}";'\
 \ \ \ 'fi')
 
     if [ $? -eq 124 ]; then
@@ -80,7 +80,6 @@ function mkdir () {
   fi
 }
 
-alias vi='vim'
 alias rm='rm -iv'
 alias cp='cp -iv'
 alias mv='mv -iv'
@@ -163,6 +162,10 @@ function extract () {
       ;;
   esac
 }
+
+alias vi='vim'
+alias vs='vim -S'
+alias tx='tmux'
 
 git config --global --replace-all alias.podium "!git ls-files \
   | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
