@@ -7,6 +7,10 @@ function ls () {
     | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}" | less -R +g
 }
 
+function ll () {
+  command ls -lA --color "$@" | tail -n+2 | less -R +g
+}
+
 alias grep='grep --color'
 
 function cd () {
@@ -224,7 +228,7 @@ function gc () {
 }
 
 function gd () {
-  git diff --color-words "$@" | less -R -S
+  git diff --color "$@" | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -R -S
 }
 
 function gamP () {

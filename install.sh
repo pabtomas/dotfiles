@@ -4,6 +4,18 @@
 [ $? -ne 0 ] && echo "This script has to be sourced." && exit 1
 sudo -k && sudo echo &> /dev/null
 
+CLEAR="\e[K"
+
+function chrono () {
+  trap 'exit 0' TERM
+  local START=$(($(date +%s) + 1))
+  while [ 1 ]; do
+    echo -n -e ${CLEAR}"$1" \
+      && printf '.%.0s' $(seq 0 1 $((($(date +%s) - ${START}) % 3)) ) \
+      && echo -n -e $'\r' && sleep 0.2
+  done
+}
+
 echo -n "Checking apt installation ---------------------------------------- "
 if [ $(which apt | wc -l) -gt 0 ]; then
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
@@ -12,6 +24,7 @@ else
 fi
 
 GNOME=1
+
 echo -n "Checking GNOME installation -------------------------------------- "
 if [ $(echo "${XDG_CURRENT_DESKTOP}" | grep -E "GNOME" | wc -l) -gt 0 ] \
   && [ $(which gnome-shell | wc -l) -gt 0 ]; then
@@ -34,12 +47,20 @@ fi
 echo -n "Checking bluetooth service --------------------------------------- "
 if [ -f /etc/init.d/bluetooth ]; then
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
-  echo -n "Disabling bluetooth ---------------------------------------------- "
-  sudo systemctl disable bluetooth.service &> /dev/null \
-    && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  chrono "Disabling bluetooth ---------------------------------------------- " &
+  CHRONO_PID=$!
+  sudo systemctl disable bluetooth.service &> /dev/null
+  STATUS=$?
 
-  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-    && command cd ${BACKUP} && return 1
+  pkill $(ps -q ${CHRONO_PID} -o comm=)
+  wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e "Disabling bluetooth ---------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  else
+    echo -e "Disabling bluetooth ---------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+      && command cd ${BACKUP} && return 1
+  fi
 else
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
 fi
@@ -57,8 +78,6 @@ if [ $(which unbuffer | wc -l) -eq 0 ]; then
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
-
-CLEAR="\e[K"
 
 sudo unbuffer apt update -y | unbuffer -p grep -E -o "[0-9]+%" \
   | xargs -I {} echo -n -e ${CLEAR}"Updating system -------------------------------------------------- {}" \
@@ -223,23 +242,51 @@ unbuffer git clone https://github.com/vim/vim.git ${CLONE_DIR}/vim \
   && sudo \rm -rf ${CLONE_DIR} && return 1
 
 command cd ${CLONE_DIR}/vim/src
-echo -n "Configuring VIM -------------------------------------------------- "
-./configure &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+chrono "Configuring VIM -------------------------------------------------- " &
+CHRONO_PID=$!
+./configure &> /dev/null
+STATUS=$?
 
-echo -n "Making VIM ------------------------------------------------------- "
-make &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Configuring VIM -------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Configuring VIM -------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+fi
 
-echo -n "Installing VIM --------------------------------------------------- "
-sudo make install &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+chrono "Making VIM ------------------------------------------------------- " &
+CHRONO_PID=$!
+make &> /dev/null
+STATUS=$?
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Making VIM ------------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Making VIM ------------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+fi
+
+chrono "Installing VIM --------------------------------------------------- " &
+CHRONO_PID=$!
+sudo make install &> /dev/null
+STATUS=$?
+
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Installing VIM --------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Installing VIM --------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+fi
 
 echo -e "\nvim "$(vim --version \
   | head -n 2 | sed "s/^[^0-9]\+//" | sed "s/ (.*$//g" | sed "s/^[0-9]\+-//" \
@@ -261,24 +308,51 @@ unbuffer git clone https://github.com/tmux/tmux.git ${CLONE_DIR}/tmux \
 [ $? -ne 0 ] && echo -e ${CLEAR}"Cloning TMUX repository ------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
 
-echo -n "Configuring TMUX ------------------------------------------------- "
-command cd ${CLONE_DIR}/tmux && sh autogen.sh &> /dev/null
-./configure &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+chrono "Configuring TMUX ------------------------------------------------- " &
+CHRONO_PID=$!
+command cd ${CLONE_DIR}/tmux && sh autogen.sh &> /dev/null \
+  && ./configure &> /dev/null
+STATUS=$?
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-echo -n "Making TMUX ------------------------------------------------------ "
-make &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Configuring TMUX ------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Configuring TMUX ------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+chrono "Making TMUX ------------------------------------------------------ " &
+CHRONO_PID=$!
+make &> /dev/null
+STATUS=$?
 
-echo -n "Installing TMUX -------------------------------------------------- "
-sudo make install &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Making TMUX ------------------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Making TMUX ------------------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+fi
+
+chrono "Installing TMUX -------------------------------------------------- " &
+CHRONO_PID=$!
+sudo make install &> /dev/null
+STATUS=$?
+
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Installing TMUX -------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Installing TMUX -------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
+fi
 
 echo -e "\n"$(tmux -V)"\n"
 
@@ -307,108 +381,209 @@ fi
 
 command cd ${SCRIPT_DIR} && sudo \rm -rf ${CLONE_DIR}
 
-echo -n "Copying .vimrc --------------------------------------------------- "
-command cp vim/.vimrc ${HOME} &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+chrono "Copying .vimrc --------------------------------------------------- " &
+CHRONO_PID=$!
+command cp vim/.vimrc ${HOME} &> /dev/null
+STATUS=$?
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-echo -n "Copying .tmux.conf ----------------------------------------------- "
-command cp tmux/.tmux.conf ${HOME} &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Copying .vimrc --------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Copying .vimrc --------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+chrono "Copying .tmux.conf ----------------------------------------------- " &
+CHRONO_PID=$!
+command cp tmux/.tmux.conf ${HOME} &> /dev/null
+STATUS=$?
 
-echo -n "Installing TMUX Plugins ------------------------------------------ "
-${HOME}/.tmux/plugins/tpm/bin/install_plugins &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Copying .tmux.conf ----------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Copying .tmux.conf ----------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
 
-echo -n "Copying .bashrc -------------------------------------------------- "
+chrono "Installing TMUX Plugins ------------------------------------------ " &
+CHRONO_PID=$!
+${HOME}/.tmux/plugins/tpm/bin/install_plugins &> /dev/null
+STATUS=$?
+
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Installing TMUX Plugins ------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Installing TMUX Plugins ------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
+
+chrono "Copying .bashrc -------------------------------------------------- " &
+CHRONO_PID=$!
 command cp /etc/skel/.bashrc ${HOME} &> /dev/null \
   && echo -e "\n$(cat bash/.bashrc/basic_settings)" >> ${HOME}/.bashrc
 
 if [ $? -ne 0 ]; then
-  echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && command cd ${BACKUP} \
-    && return 1
+  pkill $(ps -q ${CHRONO_PID} -o comm=)
+  wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+  echo -e "Copying .bashrc -------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
 else
   if [ ${GNOME} -eq 1 ]; then
     echo -e "\n$(cat bash/.bashrc/redshift_settings)" >> ${HOME}/.bashrc
-    if [ $? -ne 0 ]; then
-      echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && command cd ${BACKUP} \
-        && return 1
+    STATUS=$?
+    pkill $(ps -q ${CHRONO_PID} -o comm=)
+    wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e "Copying .bashrc -------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
     else
-      echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+      echo -e "Copying .bashrc -------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+        && command cd ${BACKUP} && return 1
     fi
   else
-    echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+    pkill $(ps -q ${CHRONO_PID} -o comm=)
+    wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+    echo -e "Copying .bashrc -------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
   fi
 fi
 
-echo -n "Copying .bash_profile -------------------------------------------- "
-command cp bash/.bash_profile ${HOME} &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+chrono "Copying .bash_profile -------------------------------------------- " &
+CHRONO_PID=$!
+command cp bash/.bash_profile ${HOME} &> /dev/null
+STATUS=$?
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-echo -n "Copying .bash_aliases -------------------------------------------- "
-command cp bash/.bash_aliases/usual ${HOME}/.bash_aliases &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Copying .bash_profile -------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Copying .bash_profile -------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+chrono "Copying .bash_aliases -------------------------------------------- " &
+CHRONO_PID=$!
+command cp bash/.bash_aliases/usual ${HOME}/.bash_aliases &> /dev/null
+STATUS=$?
+
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Copying .bash_aliases -------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Copying .bash_aliases -------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
 
 GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
-echo -n "Copying .gitignore ----------------------------------------------- "
-sudo \cp git/.gitignore ${GIT_TEMPLATE_DIR} &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+chrono "Copying .gitignore ----------------------------------------------- " &
+CHRONO_PID=$!
+sudo \cp git/.gitignore ${GIT_TEMPLATE_DIR} &> /dev/null
+STATUS=$?
 
-echo -n "Copying GIT hooks ------------------------------------------------ "
-sudo \cp -r git/.hooks ${GIT_TEMPLATE_DIR} &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Copying .gitignore ----------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Copying .gitignore ----------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
+
+chrono "Copying GIT hooks ------------------------------------------------ " &
+CHRONO_PID=$!
+sudo \cp -r git/.hooks ${GIT_TEMPLATE_DIR} &> /dev/null
+STATUS=$?
+
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Copying GIT hooks ------------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Copying GIT hooks ------------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
 
 if [ ${GNOME} -eq 1 ]; then
-  echo -n "Copying executor scripts ----------------------------------------- "
+  chrono "Copying executor scripts ----------------------------------------- " &
+  CHRONO_PID=$!
   [ -d ${HOME}/.executor ] && sudo \rm -rf ${HOME}/.executor
-  command cp -r executor ${HOME}/.executor &> /dev/null \
-    && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  command cp -r executor ${HOME}/.executor &> /dev/null
+  STATUS=$?
+
+  pkill $(ps -q ${CHRONO_PID} -o comm=)
+  wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e "Copying executor scripts ----------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  else
+    echo -e "Copying executor scripts ----------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+      && command cd ${BACKUP} && return 1
+  fi
 
   [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
     && command cd ${BACKUP} && return 1
 
-  echo -n "Enabling EXECUTOR ------------------------------------------------ "
-  gnome-extensions enable executor@raujonas.github.io \
-    && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  chrono "Enabling EXECUTOR ------------------------------------------------ " &
+  CHRONO_PID=$!
+  gnome-extensions enable executor@raujonas.github.io &> /dev/null
+  STATUS=$?
 
-  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-    && command cd ${BACKUP} && return 1
+  pkill $(ps -q ${CHRONO_PID} -o comm=)
+  wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
 
-  echo -n "Restarting GNOME ------------------------------------------------- "
-  killall -3 gnome-shell &> /dev/null \
-    && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e "Enabling EXECUTOR ------------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+  else
+    echo -e "Enabling EXECUTOR ------------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
+      && command cd ${BACKUP} && return 1
+  fi
 
-  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-    && command cd ${BACKUP} && return 1
+  chrono "Restarting GNOME ------------------------------------------------- " &
+  CHRONO_PID=$!
+  killall -3 gnome-shell &> /dev/null
+  STATUS=$?
+
+  pkill $(ps -q ${CHRONO_PID} -o comm=)
+  wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e "Restarting GNOME ------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  else
+    echo -e "Restarting GNOME ------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+      && command cd ${BACKUP} && return 1
+  fi
 
   echo -n -e "\nPress Enter when GNOME service is functional again " \
     && read && echo
 fi
 
-echo -n "Sourcing .bashrc ------------------------------------------------- "
-source ${HOME}/.bashrc &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+chrono "Sourcing .bashrc ------------------------------------------------- " &
+CHRONO_PID=$!
+source ${HOME}/.bashrc &> /dev/null
+STATUS=$?
 
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
+pkill $(ps -q ${CHRONO_PID} -o comm=)
+wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+if [ ${STATUS} -eq 0 ]; then
+  echo -e "Sourcing .bashrc ------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+else
+  echo -e "Sourcing .bashrc ------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+fi
 
 command cd ${BACKUP}
