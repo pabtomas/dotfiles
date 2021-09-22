@@ -72,9 +72,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 echo -n "Checking unbuffer installation ----------------------------------- "
 if [ $(which unbuffer | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  echo -n "Installing expect-dev package ------------------------------------ "
-  sudo apt install -y expect-dev &> /dev/null \
-    && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  chrono "Installing expect-dev package ------------------------------------ " &
+  CHRONO_PID=$!
+  sudo apt install -y expect-dev &> /dev/null
+  STATUS=$?
+
+  pkill $(ps -q ${CHRONO_PID} -o comm=)
+  wait ${CHRONO_PID} &> /dev/null && echo -n -e ${CLEAR}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e "Installing expect-dev package ------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+  else
+    echo -e "Installing expect-dev package ------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
+      && command cd ${BACKUP} && return 1
+  fi
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
