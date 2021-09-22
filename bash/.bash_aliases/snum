@@ -1,7 +1,10 @@
 #!/bin/bash
 
-alias ls='ls --color'
-alias ll='ls -lA --color'
+function ls () {
+  command ls -lA --color "$@" | tail -n+2 \
+    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}" | less -R +g
+}
+
 alias grep='grep --color'
 
 function cd () {
@@ -25,7 +28,7 @@ function cd () {
 \ \ \ '  COL="$(tput bold)$(tput setaf 6)";'\
 \ \ \ '  echo -e "${COL}No regular files found in this directory.${NC}";'\
 \ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
-\ \ \ '  ls -l --color | tail -n+2'\
+\ \ \ '  command ls -l --color | tail -n+2'\
 \ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}";'\
 \ \ \ 'else'\
 \ \ \ '  COL="$(tput bold)$(tput setaf 3)";'\
@@ -42,11 +45,10 @@ function cd () {
     fi
 
     HID=$(timeout 0.3 bash -c \
-\ \ \ 'if [ $(ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then'\
+\ \ \ 'if [ $(command ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then'\
 \ \ \ ' COL="$(tput bold)$(tput setaf 13)";'\
 \ \ \ ' NC="$(tput sgr0)";'\
-\ \ \ ' echo -e "${COL}Hidden file(s) detected."'\
-\ \ \ \ '"Use ${NC}ls -d .??* | column${COL} to see them.${NC}";'\
+\ \ \ ' echo -e "${COL}Hidden file(s) detected.${NC}";'\
 \ \ \ 'fi')
 
     if [ $? -eq 124 ]; then

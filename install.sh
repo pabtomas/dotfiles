@@ -31,6 +31,19 @@ if [ ${GNOME} -eq 1 ]; then
   fi
 fi
 
+echo -n "Checking bluetooth service --------------------------------------- "
+if [ -f /etc/init.d/bluetooth ]; then
+  echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  echo -n "Disabling bluetooth ---------------------------------------------- "
+  sudo systemctl disable bluetooth.service &> /dev/null \
+    && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+
+  [ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
+    && command cd ${BACKUP} && return 1
+else
+  echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
+fi
+
 CLONE_DIR=/tmp/repositories_clone
 BACKUP=$(pwd)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
@@ -45,160 +58,147 @@ else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-NC="$(tput sgr0)"
+CLEAR="\e[K"
 
-sudo unbuffer apt update -y | unbuffer -p grep -E "[0-9]+%" \
-  | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-  | xargs -I {} echo -n "Updating system -------------------------------------------------- {}   " $'\r' \
-  && echo -e "Updating system -------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+sudo unbuffer apt update -y | unbuffer -p grep -E -o "[0-9]+%" \
+  | xargs -I {} echo -n -e ${CLEAR}"Updating system -------------------------------------------------- {}" \
+  && echo -e ${CLEAR}"Updating system -------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e "Updating system -------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Updating system -------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
-sudo unbuffer apt upgrade -y | unbuffer -p grep -E "[0-9]+%" \
-  | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-  | xargs -I {} echo -n "Upgrading system ------------------------------------------------- {}   " $'\r' \
-  && echo -e "Upgrading system ------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+sudo unbuffer apt upgrade -y | unbuffer -p grep -E -o "[0-9]+%" \
+  | xargs -I {} echo -n -e ${CLEAR}"Upgrading system ------------------------------------------------- {}" \
+  && echo -e ${CLEAR}"Upgrading system ------------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e "Upgrading system ------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Upgrading system ------------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
-sudo unbuffer apt autoremove -y | unbuffer -p grep -E "[0-9]+%" \
-  | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-  | xargs -I {} echo -n "Removing unused packages ----------------------------------------- {}   " $'\r' \
-  && echo -e "Removing unused packages ----------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+sudo unbuffer apt autoremove -y | unbuffer -p grep -E -o "[0-9]+%" \
+  | xargs -I {} echo -n -e ${CLEAR}"Removing unused packages ----------------------------------------- {}" \
+  && echo -e ${CLEAR}"Removing unused packages ----------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e "Removing unused packages ----------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Removing unused packages ----------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking GIT installation ---------------------------------------- "
 if [ $(which git | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing GIT package ------------------------------------------- {}   " $'\r' \
-    && echo -e "Installing GIT package ------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y git | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing GIT package ------------------------------------------- {}" \
+    && echo -e ${CLEAR}"Installing GIT package ------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing GIT package ------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing GIT package ------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking libncurses-dev installation ----------------------------- "
 if [ $(dpkg -l | command grep -E "libncurses-dev" | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y libncurses-dev | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing libncurses-dev package -------------------------------- {}   " $'\r' \
-    && echo -e "Installing libncurses-dev package -------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y libncurses-dev | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing libncurses-dev package -------------------------------- {}" \
+    && echo -e ${CLEAR}"Installing libncurses-dev package -------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing libncurses-dev package -------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing libncurses-dev package -------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking libevent-dev installation ------------------------------- "
 if [ $(dpkg -l | command grep -E "libevent-dev" | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y libevent-dev | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing libevent-dev package ---------------------------------- {}   " $'\r' \
-    && echo -e "Installing libevent-dev package ---------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y libevent-dev | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing libevent-dev package ---------------------------------- {}" \
+    && echo -e ${CLEAR}"Installing libevent-dev package ---------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing libevent-dev package ---------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing libevent-dev package ---------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking gcc installation ---------------------------------------- "
 if [ $(which gcc | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
   sudo unbuffer apt install -y build-essential \
-    | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing build-essential package ------------------------------- {}   " $'\r' \
-    && echo -e "Installing build-essential package ------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+    | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing build-essential package ------------------------------- {}" \
+    && echo -e ${CLEAR}"Installing build-essential package ------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing build-essential package ------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing build-essential package ------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking yacc installation --------------------------------------- "
 if [ $(which yacc | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y bison | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing bison package ----------------------------------------- {}   " $'\r' \
-    && echo -e "Installing bison package ----------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y bison | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing bison package ----------------------------------------- {}" \
+    && echo -e ${CLEAR}"Installing bison package ----------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing bison package ----------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing bison package ----------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking make installation --------------------------------------- "
 if [ $(which make | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y make | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing make package ------------------------------------------ {}   " $'\r' \
-    && echo -e "Installing make package ------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y make | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing make package ------------------------------------------ {}" \
+    && echo -e ${CLEAR}"Installing make package ------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing make package ------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing make package ------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking automake installation ----------------------------------- "
 if [ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y automake | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing automake package -------------------------------------- {}   " $'\r' \
-    && echo -e "Installing automake package -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y automake | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing automake package -------------------------------------- {}" \
+    && echo -e ${CLEAR}"Installing automake package -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing automake package -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing automake package -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking autoconf installation ----------------------------------- "
 if [ $(dpkg -l | command grep -E "autoconf" | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y autoconf | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing autoconf package -------------------------------------- {}   " $'\r' \
-    && echo -e "Installing autoconf package -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y autoconf | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing autoconf package -------------------------------------- {}" \
+    && echo -e ${CLEAR}"Installing autoconf package -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing autoconf package -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing autoconf package -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 echo -n "Checking pkg-config installation --------------------------------- "
 if [ $(dpkg -l | command grep -E "pkg-config" | wc -l) -eq 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-  sudo unbuffer apt install -y pkg-config | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Installing pkg-config package ------------------------------------ {}   " $'\r' \
-    && echo -e "Installing pkg-config package ------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+  sudo unbuffer apt install -y pkg-config | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Installing pkg-config package ------------------------------------ {}" \
+    && echo -e ${CLEAR}"Installing pkg-config package ------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
 else
   echo -e $(tput setaf 2)"OK   "$(tput sgr0)
 fi
 
-[ $? -ne 0 ] && echo -e "Installing pkg-config package ------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+[ $? -ne 0 ] && echo -e ${CLEAR}"Installing pkg-config package ------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 
 if [ ${GNOME} -eq 1 ]; then
   echo -n "Checking redshift installation ----------------------------------- "
   if [ $(which redshift | wc -l) -eq 0 ]; then
     echo -e $(tput setaf 9)"Not OK"$(tput sgr0)
-    sudo unbuffer apt install -y redshift | unbuffer -p grep -E "[0-9]+%" \
-      | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-      | xargs -I {} echo -n "Installing redshift package -------------------------------------- {}   " $'\r' \
-      && echo -e "Installing redshift package -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+    sudo unbuffer apt install -y redshift | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${CLEAR}"Installing redshift package -------------------------------------- {}" \
+      && echo -e ${CLEAR}"Installing redshift package -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
   else
     echo -e $(tput setaf 2)"OK   "$(tput sgr0)
   fi
 
-  [ $? -ne 0 ] && echo -e "Installing redshift package -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
+  [ $? -ne 0 ] && echo -e ${CLEAR}"Installing redshift package -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) && return 1
 fi
 
 echo -n "Checking VIM version --------------------------------------------- "
@@ -215,12 +215,11 @@ fi
 command mkdir -p ${CLONE_DIR}
 
 unbuffer git clone https://github.com/vim/vim.git ${CLONE_DIR}/vim \
-  | unbuffer -p grep -E "[0-9]+%" \
-  | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-  | xargs -I {} echo -n "Cloning VIM repository ------------------------------------------- {}   " $'\r' \
-  && echo -e "Cloning VIM repository ------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  | unbuffer -p grep -E -o "[0-9]+%" \
+  | xargs -I {} echo -n -e ${CLEAR}"Cloning VIM repository ------------------------------------------- {}" \
+  && echo -e ${CLEAR}"Cloning VIM repository ------------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e "Cloning VIM repository ------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+[ $? -ne 0 ] && echo -e ${CLEAR}"Cloning VIM repository ------------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
   && sudo \rm -rf ${CLONE_DIR} && return 1
 
 command cd ${CLONE_DIR}/vim/src
@@ -255,12 +254,11 @@ else
 fi
 
 unbuffer git clone https://github.com/tmux/tmux.git ${CLONE_DIR}/tmux \
-  | unbuffer -p grep -E "[0-9]+%" \
-  | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-  | xargs -I {} echo -n "Cloning TMUX repository ------------------------------------------ {}   " $'\r' \
-  && echo -e "Cloning TMUX repository ------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
+  | unbuffer -p grep -E -o "[0-9]+%" \
+  | xargs -I {} echo -n -e ${CLEAR}"Cloning TMUX repository ------------------------------------------ {}" \
+  && echo -e ${CLEAR}"Cloning TMUX repository ------------------------------------------ "$(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e "Cloning TMUX repository ------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
+[ $? -ne 0 ] && echo -e ${CLEAR}"Cloning TMUX repository ------------------------------------------ "$(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
 
 echo -n "Configuring TMUX ------------------------------------------------- "
@@ -287,12 +285,11 @@ echo -e "\n"$(tmux -V)"\n"
 TPM_DEST="${HOME}/.tmux/plugins/tpm"
 [ -d ${TPM_DEST} ] && sudo \rm -rf ${TPM_DEST}
 unbuffer git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} \
-  | unbuffer -p grep -E "[0-9]+%" \
-  | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-  | xargs -I {} echo -n "Cloning TMUX Plugin Manager repository --------------------------- {}   " $'\r' \
-  && echo -e "Cloning TMUX Plugin Manager repository --------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+  | unbuffer -p grep -E -o "[0-9]+%" \
+  | xargs -I {} echo -n -e ${CLEAR}"Cloning TMUX Plugin Manager repository --------------------------- {}" \
+  && echo -e ${CLEAR}"Cloning TMUX Plugin Manager repository --------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 
-[ $? -ne 0 ] && echo -e "Cloning TMUX Plugin Manager repository --------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+[ $? -ne 0 ] && echo -e ${CLEAR}"Cloning TMUX Plugin Manager repository --------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
   && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
 
 if [ ${GNOME} -eq 1 ]; then
@@ -300,12 +297,11 @@ if [ ${GNOME} -eq 1 ]; then
   EXECUTOR_DEST+="/extensions/executor@raujonas.github.io/"
   [ -d ${EXECUTOR_DEST} ] && sudo \rm -rf ${EXECUTOR_DEST}
   unbuffer git clone https://github.com/raujonas/executor.git ${EXECUTOR_DEST} \
-    | unbuffer -p grep -E "[0-9]+%" \
-    | sed --unbuffered "s/[^0-9]*\([0-9]\+%\).*/"${NC}"\1/" \
-    | xargs -I {} echo -n "Cloning EXECUTOR repository -------------------------------------- {}   " $'\r' \
-    && echo -e "Cloning EXECUTOR repository -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
+    | unbuffer -p grep -E -o "[0-9]+%" \
+    | xargs -I {} echo -n -e ${CLEAR}"Cloning EXECUTOR repository -------------------------------------- {}" \
+    && echo -e ${CLEAR}"Cloning EXECUTOR repository -------------------------------------- "$(tput setaf 2)"OK   "$(tput sgr0)
 
-  [ $? -ne 0 ] && echo -e "Cloning EXECUTOR repository -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
+  [ $? -ne 0 ] && echo -e ${CLEAR}"Cloning EXECUTOR repository -------------------------------------- "$(tput setaf 9)"Not OK"$(tput sgr0) \
     && command cd ${BACKUP} && sudo \rm -rf ${CLONE_DIR} && return 1
 fi
 
@@ -334,15 +330,23 @@ ${HOME}/.tmux/plugins/tpm/bin/install_plugins &> /dev/null \
 
 echo -n "Copying .bashrc -------------------------------------------------- "
 command cp /etc/skel/.bashrc ${HOME} &> /dev/null \
-  && echo -e "\n$(cat bash/.bashrc/basic_settings)" >> ${HOME}/.bashrc \
-  && [ ${GNOME} -eq 1 ] && echo -e "\n$(cat bash/.bashrc/redshift_settings)" \
-    >> ${HOME}/.bashrc
+  && echo -e "\n$(cat bash/.bashrc/basic_settings)" >> ${HOME}/.bashrc
 
 if [ $? -ne 0 ]; then
   echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && command cd ${BACKUP} \
     && return 1
 else
-  echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  if [ ${GNOME} -eq 1 ]; then
+    echo -e "\n$(cat bash/.bashrc/redshift_settings)" >> ${HOME}/.bashrc
+    if [ $? -ne 0 ]; then
+      echo -e $(tput setaf 9)"Not OK"$(tput sgr0) && command cd ${BACKUP} \
+        && return 1
+    else
+      echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+    fi
+  else
+    echo -e $(tput setaf 2)"OK   "$(tput sgr0)
+  fi
 fi
 
 echo -n "Copying .bash_profile -------------------------------------------- "
@@ -400,13 +404,6 @@ if [ ${GNOME} -eq 1 ]; then
   echo -n -e "\nPress Enter when GNOME service is functional again " \
     && read && echo
 fi
-
-echo -n "Disabling bluetooth by default ----------------------------------- "
-sudo systemctl disable bluetooth.service &> /dev/null \
-  && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
-
-[ $? -ne 0 ] && echo -e $(tput setaf 9)"Not OK"$(tput sgr0) \
-  && command cd ${BACKUP} && return 1
 
 echo -n "Sourcing .bashrc ------------------------------------------------- "
 source ${HOME}/.bashrc &> /dev/null && echo -e $(tput setaf 2)"OK   "$(tput sgr0)
