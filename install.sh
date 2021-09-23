@@ -23,6 +23,16 @@ function main () {
   local -r CLONE_DIR="/tmp/repositories_clone"
   local -r BACKUP="$(pwd)"
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+  local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
+  local -r TMUXCONF="${SCRIPT_DIR}/tmux/.tmux.conf"
+  local -r BASIC_BASHRC="${SCRIPT_DIR}/bash/.bashrc/basic_settings"
+  local -r GUI_BASHRC="${SCRIPT_DIR}/bash/.bashrc/gui_settings"
+  local -r PROFILE="${SCRIPT_DIR}/bash/.bash_profile"
+  local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
+  local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
+  local -r HOOKS="${SCRIPT_DIR}/git/.hooks"
+  local -r EXECUTOR_SCRIPTS="${SCRIPT_DIR}/executor/scripts"
+  local -r SCHEMA="${SCRIPT_DIR}/executor/schema/org.gnome.shell.extensions.executor.gschema.xml "
   local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
   local -r EXECUTOR_DEST="${HOME}/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
   local -r EXECUTOR_REPO="https://github.com/raujonas/executor.git"
@@ -358,7 +368,7 @@ function main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  ./configure &> /dev/null
+  ${CLONE_DIR}/vim/src/configure &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -372,7 +382,7 @@ function main () {
       && sudo \rm -rf ${CLONE_DIR} && return 1
   fi
 
-  DASHED=$(dashed "Making VIM")
+  DASHED=$(dashed "Compiling VIM")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
@@ -439,8 +449,8 @@ function main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cd ${CLONE_DIR}/tmux && sh autogen.sh &> /dev/null \
-    && ./configure &> /dev/null
+  command cd ${CLONE_DIR}/tmux && sh ${CLONE_DIR}/tmux/autogen.sh \
+    &> /dev/null && ${CLONE_DIR}/tmux/configure &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -454,7 +464,7 @@ function main () {
       && sudo \rm -rf ${CLONE_DIR} && return 1
   fi
 
-  DASHED=$(dashed "Making TMUX")
+  DASHED=$(dashed "Compiling TMUX")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
@@ -531,7 +541,7 @@ function main () {
   DASHED=$(dashed "Copying .vimrc")
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cp vim/.vimrc ${HOME} &> /dev/null
+  command cp ${VIMRC} ${HOME} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -548,7 +558,7 @@ function main () {
   DASHED=$(dashed "Copying .tmux.conf")
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cp tmux/.tmux.conf ${HOME} &> /dev/null
+  command cp ${TMUXCONF} ${HOME} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -583,7 +593,7 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cp /etc/skel/.bashrc ${HOME} &> /dev/null \
-    && echo -e "\n$(cat bash/.bashrc/basic_settings)" >> ${HOME}/.bashrc
+    && echo -e "\n$(cat ${BASIC_BASHRC})" >> ${HOME}/.bashrc
 
   if [ $? -ne 0 ]; then
     kill ${DOTS_PID} &> /dev/null
@@ -593,7 +603,7 @@ function main () {
       && return 1
   else
     if [ ${GNOME} -eq 1 ]; then
-      echo -e "\n$(cat bash/.bashrc/redshift_settings)" >> ${HOME}/.bashrc
+      echo -e "\n$(cat ${GUI_BASHRC})" >> ${HOME}/.bashrc
       STATUS=$?
       kill ${DOTS_PID} &> /dev/null
       wait ${DOTS_PID} &> /dev/null
@@ -615,7 +625,7 @@ function main () {
   DASHED=$(dashed "Copying .bash_profile")
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cp bash/.bash_profile ${HOME} &> /dev/null
+  command cp ${PROFILE} ${HOME} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -632,7 +642,7 @@ function main () {
   DASHED=$(dashed "Copying .bash_aliases")
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cp bash/.bash_aliases/usual ${HOME}/.bash_aliases &> /dev/null
+  command cp ${ALIASES} ${HOME}/.bash_aliases &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -651,7 +661,7 @@ function main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  sudo \cp git/.gitignore ${GIT_TEMPLATE_DIR} &> /dev/null
+  sudo \cp ${GITIGNORE} ${GIT_TEMPLATE_DIR} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -670,7 +680,7 @@ function main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  sudo \cp -r git/.hooks ${GIT_TEMPLATE_DIR} &> /dev/null
+  sudo \cp -r ${HOOKS} ${GIT_TEMPLATE_DIR} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -685,13 +695,49 @@ function main () {
   fi
 
   if [ ${GNOME} -eq 1 ]; then
-    DASHED=$(dashed "Copying executor scripts")
+    DASHED=$(dashed "Copying EXECUTOR scripts")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     [ -d ${HOME}/.executor ] && sudo \rm -rf ${HOME}/.executor
-    command cp -r executor ${HOME}/.executor &> /dev/null
+    command cp -r ${EXECUTOR_SCRIPTS} ${HOME}/.executor &> /dev/null
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
+    DASHED=$(dashed "Copying EXECUTOR schema")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    DOTS_PID=$!
+    sudo \cp ${SCHEMA} ${EXECUTOR_DEST}/schemas
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
+    DASHED=$(dashed "Compiling EXECUTOR schema")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    DOTS_PID=$!
+    sudo glib-compile-schemas ${EXECUTOR_DEST}/schemas &> /dev/null
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
@@ -725,7 +771,8 @@ function main () {
     DASHED=$(dashed "Enabling EXECUTOR")
     dots "${DASHED}" &
     DOTS_PID=$!
-    gnome-extensions enable executor@raujonas.github.io &> /dev/null
+    gnome-extensions reset executor@raujonas.github.io &> /dev/null \
+      && gnome-extensions enable executor@raujonas.github.io &> /dev/null
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
@@ -759,7 +806,7 @@ function main () {
 
     if [ $(gnome-extensions list | grep -E "desktop-icons" | wc -l) -eq 1 ];
       then
-        DASHED=$(dashed "Hidding desktop extension icons")
+        DASHED=$(dashed "Disabling desktop-icons extension")
         dots "${DASHED}" &
         DOTS_PID=$!
         gsettings set org.gnome.shell.extensions.desktop-icons show-home \
