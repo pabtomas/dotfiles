@@ -28,6 +28,9 @@ set number
 " put the new window right of the current one
 set splitright
 
+" put the new window below of the current one
+set splitbelow
+
 " tabulation
 set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 
@@ -1042,9 +1045,21 @@ endfunction
 function! s:DisplayObsession()
   call inputsave()
   while v:true
+    redraw!
+    echon 'Build a new session in "'
     echohl PMenu
-    let l:mkses = input('Build a new session in "' . fnamemodify('.', ':p')
-      \ . '": [Y]es or [N]o ? ')
+    echon fnamemodify('.', ':p')
+    echohl NONE
+    echon '": ['
+    echohl PMenu
+    echon 'Y'
+    echohl NONE
+    echon ']es or ['
+    echohl PMenu
+    echon 'N'
+    echohl NONE
+    echon ']o ? '
+    let l:mkses = input('')
     let l:mkses = tolower(l:mkses)
     if l:mkses == s:yes_obsessionkey
       mksession!

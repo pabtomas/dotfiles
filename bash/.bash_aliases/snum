@@ -1,7 +1,14 @@
 #!/bin/bash
 
-alias ls='ls --color'
-alias ll='ls -lA --color'
+function ls () {
+  command ls -lA --color "$@" | tail -n+2 \
+    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}" | less -R +g
+}
+
+function ll () {
+  command ls -lA --color "$@" | tail -n+2 | less -R +g
+}
+
 alias grep='grep --color'
 
 function cd () {
@@ -20,40 +27,39 @@ function cd () {
 \ \ \ '     | (while read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
 \ \ \ '          ((SZ+=1));'\
 \ \ \ '        done; echo ${SZ}));'\
-\ \ \ 'NC="$(tput sgr0)";'\
+\ \ \ 'RESET="$(tput sgr0)";'\
 \ \ \ 'if [ ${SZ} -eq 0 ]; then'\
 \ \ \ '  COL="$(tput bold)$(tput setaf 6)";'\
-\ \ \ '  echo -e "${COL}No regular files found in this directory.${NC}";'\
+\ \ \ '  echo -e "${COL}No regular files found in this directory.${RESET}";'\
 \ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
-\ \ \ '  ls -l --color | tail -n+2'\
+\ \ \ '  command ls -l --color | tail -n+2'\
 \ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}";'\
 \ \ \ 'else'\
 \ \ \ '  COL="$(tput bold)$(tput setaf 3)";'\
 \ \ \ '  echo -e "${COL}Huge current directory."'\
-\ \ \ \ '"Use listing commands carrefully.${NC}";'\
+\ \ \ \ '"Use listing commands carrefully.${RESET}";'\
 \ \ \ 'fi')
 
     if [ $? -eq 124 ]; then
       local COL="$(tput bold)$(tput setaf 9)"
-      local NC="$(tput sgr0)"
+      local RESET="$(tput sgr0)"
       echo -e "${COL}Timeout occured."\
-        "Avoid listing commands in current directory.${NC}"
+        "Avoid listing commands in current directory.${RESET}"
       exit 1
     fi
 
     HID=$(timeout 0.3 bash -c \
-\ \ \ 'if [ $(ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then'\
+\ \ \ 'if [ $(command ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then'\
 \ \ \ ' COL="$(tput bold)$(tput setaf 13)";'\
-\ \ \ ' NC="$(tput sgr0)";'\
-\ \ \ ' echo -e "${COL}Hidden file(s) detected."'\
-\ \ \ \ '"Use ls -d .??* | column to see them.${NC}";'\
+\ \ \ ' RESET="$(tput sgr0)";'\
+\ \ \ ' echo -e "${COL}Hidden file(s) detected.${RESET}";'\
 \ \ \ 'fi')
 
     if [ $? -eq 124 ]; then
       local COL="$(tput bold)$(tput setaf 9)"
-      local NC="$(tput sgr0)"
+      local RESET="$(tput sgr0)"
       echo -e "${COL}Timeout occured."\
-        "Avoid listing commands in current directory.${NC}"
+        "Avoid listing commands in current directory.${RESET}"
       exit 1
     fi
 
@@ -79,7 +85,6 @@ function mkdir () {
   fi
 }
 
-alias vi='vim'
 alias rm='rm -iv'
 alias cp='cp -iv'
 alias mv='mv -iv'
@@ -160,6 +165,10 @@ function extract () {
   esac
 }
 
+alias vi='vim'
+alias vs='vim -S'
+alias tx='tmux'
+
 git config --global --replace-all alias.podium "!git ls-files \
   | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
   | sort -f | uniq -ic | sort -nr"
@@ -177,7 +186,7 @@ function git-tree () {
     | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
     | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
     | sed 's/(il y a \(.\+\))$/$(tput setaf 2)(\1)$(tput sgr0)/' \
-    | less -R -S
+    | less -R -S +g
 }
 git-tree\""
 
@@ -210,7 +219,7 @@ function gc () {
 }
 
 function gd () {
-  git diff --color-words "$@" | less -R -S
+  git diff --color "$@" | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -R -S +g
 }
 
 function gamP () {
