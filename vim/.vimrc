@@ -28,6 +28,9 @@ set number
 " put the new window right of the current one
 set splitright
 
+" put the new window below of the current one
+set splitbelow
+
 " tabulation
 set tabstop=2 softtabstop=2 expandtab shiftwidth=2 smarttab
 
