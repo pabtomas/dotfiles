@@ -705,6 +705,23 @@ function main () {
         && command cd ${BACKUP} && return 1
     fi
 
+    DASHED=$(dashed "Enabling GNOME extensions")
+    dots "${DASHED}" &
+    DOTS_PID=$!
+    gsettings set org.gnome.shell disable-user-extensions false &> /dev/null
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
     DASHED=$(dashed "Enabling EXECUTOR")
     dots "${DASHED}" &
     DOTS_PID=$!
