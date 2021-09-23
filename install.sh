@@ -739,6 +739,69 @@ function main () {
         && command cd ${BACKUP} && return 1
     fi
 
+    DASHED=$(dashed "Hidding desktop icons")
+    dots "${DASHED}" &
+    DOTS_PID=$!
+    gsettings set org.gnome.desktop.background show-desktop-icons false \
+      &> /dev/null
+
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET}
+    fi
+
+    if [ $(gnome-extensions list | grep -E "desktop-icons" | wc -l) -eq 1 ];
+      then
+        DASHED=$(dashed "Hidding desktop extension icons")
+        dots "${DASHED}" &
+        DOTS_PID=$!
+        gsettings set org.gnome.shell.extensions.desktop-icons show-home \
+          false &> /dev/null && gsettings set \
+            org.gnome.shell.extensions.desktop-icons show-trash false \
+              &> /dev/null && gnome-extensions disable desktop-icons@csoriano \
+                &> /dev/null
+        STATUS=$?
+
+        kill ${DOTS_PID} &> /dev/null
+        wait ${DOTS_PID} &> /dev/null
+        DASHED=${CLEAR}${DASHED}
+
+        if [ ${STATUS} -eq 0 ]; then
+          echo -e ${DASHED} ${GREEN}"OK"${RESET}
+        else
+          echo -e ${DASHED} ${RED}"Not OK"${RESET}
+        fi
+    fi
+
+    DASHED=$(dashed "Setting GNOME Interface")
+    dots "${DASHED}" &
+    DOTS_PID=$!
+    gsettings set org.gnome.desktop.interface show-battery-percentage true \
+      &> /dev/null && [ -f /etc/X11/cursors/redglass.theme ] \
+      && gsettings set org.gnome.desktop.interface cursor-theme 'redglass' \
+        &> /dev/null && [ -d /usr/share/icons/HighContrast ] \
+      && gsettings set org.gnome.desktop.interface gtk-theme \
+        'HightContrastiInverse' &> /dev/null
+
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET}
+    fi
+
     DASHED=$(dashed "Restarting GNOME")
     echo -n -e "${DASHED}"$' '
     killall -3 gnome-shell &> /dev/null
