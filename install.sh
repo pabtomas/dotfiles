@@ -24,7 +24,8 @@ function main () {
   local -r BACKUP="$(pwd)"
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
-  local -r EXEC_DEST="${HOME}/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
+  local -r EXECUTOR_DEST="${HOME}/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
+  local -r EXECUTOR_REPO="https://github.com/raujonas/executor.git"
   local -r GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
   local GNOME=1
   local DASHED=""
@@ -515,8 +516,8 @@ function main () {
     DASHED=${CLEAR}$(dashed "Cloning EXECUTOR repository")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    [ -d ${EXEC_DEST} ] && sudo \rm -rf ${EXEC_DEST}
-    unbuffer git clone https://github.com/raujonas/executor.git ${EXEC_DEST} \
+    [ -d ${EXECUTOR_DEST} ] && sudo \rm -rf ${EXECUTOR_DEST}
+    sudo unbuffer git clone ${EXECUTOR_REPO} ${EXECUTOR_DEST} \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
     if [ $? -eq 0 ]; then
