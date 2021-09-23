@@ -191,7 +191,7 @@ function git-tree () {
     | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
     | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
     | sed 's/(il y a \(.\+\))$/$(tput setaf 2)(\1)$(tput sgr0)/' \
-    | less -R -S
+    | less -R -S +g
 }
 git-tree\""
 
@@ -228,7 +228,7 @@ function gc () {
 }
 
 function gd () {
-  git diff --color "$@" | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -R -S
+  git diff --color "$@" | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -R -S +g
 }
 
 function gamP () {
