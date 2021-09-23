@@ -788,7 +788,7 @@ function main () {
       && gsettings set org.gnome.desktop.interface cursor-theme 'redglass' \
         &> /dev/null && [ -d /usr/share/icons/HighContrast ] \
       && gsettings set org.gnome.desktop.interface gtk-theme \
-        'HightContrastiInverse' &> /dev/null
+        'HightContrastInverse' &> /dev/null
 
     STATUS=$?
 
