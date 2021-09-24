@@ -733,24 +733,6 @@ function main () {
         && command cd ${BACKUP} && return 1
     fi
 
-    DASHED=$(dashed "Compiling EXECUTOR schema")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    DOTS_PID=$!
-    sudo glib-compile-schemas ${EXECUTOR_DEST}/schemas &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [ ${STATUS} -eq 0 ]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
-    fi
-
     DASHED=$(dashed "Enabling GNOME extensions")
     dots "${DASHED}" &
     DOTS_PID=$!
@@ -768,11 +750,29 @@ function main () {
         && command cd ${BACKUP} && return 1
     fi
 
+    DASHED=$(dashed "Compiling EXECUTOR schema")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    DOTS_PID=$!
+    sudo glib-compile-schemas ${EXECUTOR_DEST}/schemas &> /dev/null \
+      && dconf reset -f /org/gnome/shell/extensions/executor &> /dev/null
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
     DASHED=$(dashed "Enabling EXECUTOR")
     dots "${DASHED}" &
     DOTS_PID=$!
-    gnome-extensions reset executor@raujonas.github.io &> /dev/null \
-      && gnome-extensions enable executor@raujonas.github.io &> /dev/null
+    gnome-extensions enable executor@raujonas.github.io &> /dev/null
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
