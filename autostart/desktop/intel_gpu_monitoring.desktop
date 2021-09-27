@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Intel GPU Monitoring
+Exec=/usr/bin/intel_gpu_monitoring.sh
+X-GNOME-Autostart-enabled=true

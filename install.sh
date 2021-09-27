@@ -31,6 +31,8 @@ function main () {
   local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
   local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
   local -r HOOKS="${SCRIPT_DIR}/git/.hooks"
+  local -r AUTOSTART_SCRIPTS="${SCRIPT_DIR}/autostart/scripts"
+  local -r DESKTOP="${SCRIPT_DIR}/autostart/desktop"
   local -r EXECUTOR_SCRIPTS="${SCRIPT_DIR}/executor/scripts"
   local -r SCHEMA="${SCRIPT_DIR}/executor/schema/org.gnome.shell.extensions.executor.gschema.xml "
   local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
@@ -41,6 +43,7 @@ function main () {
   local DASHED=""
   local DOTS_PID=0
   local STATUS=0
+  local GPU=""
 
   echo -n -e $(dashed "Checking apt installation")$' '
   if [ $(which apt | wc -l) -gt 0 ]; then
@@ -50,7 +53,7 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking GNOME installation")$' '
-  if [ $(echo "${XDG_CURRENT_DESKTOP}" | grep -E "GNOME" | wc -l) -gt 0 ] \
+  if [ $(echo "${XDG_CURRENT_DESKTOP}" | grep -E -i "GNOME" | wc -l) -gt 0 ] \
     && [ $(which gnome-shell | wc -l) -gt 0 ]; then
       echo -e ${GREEN}"OK"${RESET}
   else
@@ -317,16 +320,15 @@ function main () {
   fi
 
   if [ ${GNOME} -eq 1 ]; then
-    echo -n -e $(dashed "Checking redshift installation")$' '
-    if [ $(which redshift | wc -l) -eq 0 ]; then
+    echo -n -e $(dashed "Checking glxinfo installation")$' '
+    if [ $(which glxinfo | wc -l) -eq 0 ]; then
       echo -e ${RED}"Not OK"${RESET}
-      DASHED=${CLEAR}$(dashed "Installing redshift package")
+      DASHED=${CLEAR}$(dashed "Installing mesa-utils package")
       [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-      sudo unbuffer apt install -y redshift \
+      sudo unbuffer apt install -y mesa-utils \
         | unbuffer -p grep -E -o "[0-9]+%" \
         | xargs -I {} echo -n -e ${DASHED} {}
-
       if [ $? -eq 0 ]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
@@ -335,13 +337,106 @@ function main () {
     else
       echo -e ${GREEN}"OK"${RESET}
     fi
+
+    echo -n -e $(dashed "Checking X-server reachability")$' '
+    if [ $(glxinfo | grep -E -i "Device" | wc -l) -eq 0 ]; then
+      echo -e ${RED}"Not OK"${RESET}
+    else
+      echo -e ${GREEN}"OK"${RESET}
+      GPU=$(glxinfo | grep -E -i "Device")
+      echo -e "\n${GPU}\n"
+
+      if [ $(echo ${GPU} | grep -E -i "Intel" | wc -l) -eq 1 ]; then
+        echo -n -e $(dashed "Checking intel_gpu_top installation")$' '
+        if [ $(which intel_gpu_top | wc -l) -eq 0 ]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Installing intel-gpu-tools package")
+          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          sudo unbuffer apt install -y intel-gpu-tools \
+            | unbuffer -p grep -E -o "[0-9]+%" \
+            | xargs -I {} echo -n -e ${DASHED} {}
+
+          if [ $? -eq 0 ]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+
+        echo -n -e $(dashed "Checking intel_gpu_top usage")$' '
+        [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        if [ $(sudo \cat /etc/sudoers | grep -E "intel_gpu_top" | wc -l) -eq 0 ]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Modifying intel_gpu_top usage")
+          dots "${DASHED}" &
+          DOTS_PID=$!
+          echo "$(whoami) ALL = NOPASSWD: $(which intel_gpu_top)" \
+            | sudo EDITOR='tee -a' visudo &> /dev/null
+          STATUS=$?
+
+          kill ${DOTS_PID} &> /dev/null
+          wait ${DOTS_PID} &> /dev/null
+          DASHED=${CLEAR}${DASHED}
+
+          if [ ${STATUS} -eq 0 ]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+              && sudo \rm -rf ${CLONE_DIR} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+
+        echo -n -e $(dashed "Checking redshift installation")$' '
+        if [ $(which redshift | wc -l) -eq 0 ]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Installing redshift package")
+          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          sudo unbuffer apt install -y redshift \
+            | unbuffer -p grep -E -o "[0-9]+%" \
+            | xargs -I {} echo -n -e ${DASHED} {}
+
+          if [ $? -eq 0 ]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+
+        echo -n -e $(dashed "Checking jq installation")$' '
+        if [ $(which jq | wc -l) -eq 0 ]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Installing jq package")
+          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          sudo unbuffer apt install -y jq | unbuffer -p grep -E -o "[0-9]+%" \
+            | xargs -I {} echo -n -e ${DASHED} {}
+
+          if [ $? -eq 0 ]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+      fi
+    fi
   fi
 
   echo -n -e $(dashed "Checking VIM version")$' '
   if [ $(which vim | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\nvim "$(echo $(vim --version | head -n 2 | grep -E -o \
-      " [[:digit:]]+\.[[:digit:]]+ |[[:digit:]]+$") | tr ' ' '.')"\n"
+    echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
+      " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
   else
     echo -e ${RED}"Not OK"${RESET}
   fi
@@ -420,13 +515,13 @@ function main () {
       && sudo \rm -rf ${CLONE_DIR} && return 1
   fi
 
-  echo -e "\nvim "$(echo $(vim --version | head -n 2 | grep -E -o \
-    " [[:digit:]]+\.[[:digit:]]+ |[[:digit:]]+$") | tr ' ' '.')"\n"
+  echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
+    " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
 
   echo -n -e $(dashed "Checking TMUX version")$' '
   if [ $(which tmux | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n"$(tmux -V)"\n"
+    echo -e "\n    $(tmux -V)\n"
   else
     echo -e ${RED}"Not OK"${RESET}
   fi
@@ -502,7 +597,7 @@ function main () {
       && sudo \rm -rf ${CLONE_DIR} && return 1
   fi
 
-  echo -e "\n"$(tmux -V)"\n"
+  echo -e "\n    $(tmux -V)\n"
 
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
@@ -718,8 +813,50 @@ function main () {
     DASHED=$(dashed "Copying EXECUTOR schema")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    dots "${DASHED}" &
     DOTS_PID=$!
     sudo \cp ${SCHEMA} ${EXECUTOR_DEST}/schemas
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
+    DASHED=$(dashed "Copying autostart scripts")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    dots "${DASHED}" &
+    DOTS_PID=$!
+    for SCRIPT in $(command ls ${AUTOSTART_SCRIPTS}); do
+      sudo \cp ${AUTOSTART_SCRIPTS}/${SCRIPT} /usr/bin &> /dev/null
+    done
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
+    DASHED=$(dashed "Copying desktop entries")
+    dots "${DASHED}" &
+    DOTS_PID=$!
+    command rm -r ${HOME}/.config/autostart/*
+    for ENTRY in $(command ls ${DESKTOP}); do
+      command cp ${DESKTOP}/${ENTRY} ${HOME}/.config/autostart &> /dev/null
+    done
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
@@ -855,7 +992,7 @@ function main () {
 
     if [ $? -eq 0 ]; then
       echo -n -e ${GREEN}"OK"${RESET}\
-        "\n\nPress Enter when GNOME service is functional again " \
+        "\n\n    Press Enter when GNOME service is functional again " \
           && read && echo
     else
       echo -e ${RED}"Not OK"${RESET} && command cd ${BACKUP} && return 1
