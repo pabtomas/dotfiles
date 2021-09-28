@@ -169,9 +169,18 @@ alias vi='vim'
 alias vs='vim -S'
 alias tx='tmux'
 
-git config --global --replace-all alias.podium "!git ls-files \
-  | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
-  | sort -f | uniq -ic | sort -nr"
+git config --global --replace-all alias.ranking "!bash -c \"
+function git-ranking () {
+  if [ \$# -eq 0 ]; then
+    git ls-files \
+      | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
+      | sort -f | uniq -ic | sort -nr
+  else
+    git blame --line-porcelain \$* | sed -n 's/^author //p' | sort -f \
+      | uniq -ic | sort -nr
+  fi
+}
+git-ranking\""
 
 git config --global --replace-all alias.tree "!bash -c \"
 function git-tree () {
@@ -205,11 +214,11 @@ alias ga='git add'
 alias gA='git add -A'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
-alias gD='git podium'
 alias gh='git checkout'
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
+alias gr='git ranking'
 alias gs='git status -s'
 alias gt='git tree'
 alias gu='git undo'

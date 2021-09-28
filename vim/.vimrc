@@ -1043,33 +1043,35 @@ endfunction
 "   Obsession {{{2
 
 function! s:DisplayObsession()
-  call inputsave()
-  while v:true
-    redraw!
-    echon 'Build a new session in "'
-    echohl PMenu
-    echon fnamemodify('.', ':p')
-    echohl NONE
-    echon '": ['
-    echohl PMenu
-    echon 'Y'
-    echohl NONE
-    echon ']es or ['
-    echohl PMenu
-    echon 'N'
-    echohl NONE
-    echon ']o ? '
-    let l:mkses = input('')
-    let l:mkses = tolower(l:mkses)
-    if l:mkses == s:yes_obsessionkey
-      mksession!
-      break
-    elseif l:mkses == s:no_obsessionkey
-      break
-    endif
-    echohl NONE
-  endwhile
-  call inputrestore()
+  if len(getbufinfo(#{ buflisted: 1 })) > 1
+    call inputsave()
+    while v:true
+      redraw!
+      echon 'Build a new session in "'
+      echohl PMenu
+      echon fnamemodify('.', ':p')
+      echohl NONE
+      echon '": ['
+      echohl PMenu
+      echon 'Y'
+      echohl NONE
+      echon ']es or ['
+      echohl PMenu
+      echon 'N'
+      echohl NONE
+      echon ']o ? '
+      let l:mkses = input('')
+      let l:mkses = tolower(l:mkses)
+      if l:mkses == s:yes_obsessionkey
+        mksession!
+        break
+      elseif l:mkses == s:no_obsessionkey
+        break
+      endif
+      echohl NONE
+    endwhile
+    call inputrestore()
+  endif
 endfunction
 
 "   }}}
