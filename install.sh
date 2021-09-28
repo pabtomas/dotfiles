@@ -369,25 +369,25 @@ function main () {
         echo -n -e $(dashed "Checking intel_gpu_top usage")$' '
         [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
           && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-        if [ $(sudo \cat /etc/sudoers | grep -E "intel_gpu_top" | wc -l) -eq 0 ]; then
-          echo -e ${RED}"Not OK"${RESET}
-          DASHED=${CLEAR}$(dashed "Modifying intel_gpu_top usage")
-          dots "${DASHED}" &
-          DOTS_PID=$!
-          echo "$(whoami) ALL = NOPASSWD: $(which intel_gpu_top)" \
-            | sudo EDITOR='tee -a' visudo &> /dev/null
-          STATUS=$?
+        if [ $(sudo \cat /etc/sudoers \
+          | grep -E "intel_gpu_top" | wc -l) -eq 0 ]; then
+            echo -e ${RED}"Not OK"${RESET}
+            DASHED=${CLEAR}$(dashed "Modifying intel_gpu_top usage")
+            dots "${DASHED}" &
+            DOTS_PID=$!
+            echo "$(whoami) ALL = NOPASSWD: $(which intel_gpu_top)" \
+              | sudo EDITOR='tee -a' visudo &> /dev/null
+            STATUS=$?
 
-          kill ${DOTS_PID} &> /dev/null
-          wait ${DOTS_PID} &> /dev/null
-          DASHED=${CLEAR}${DASHED}
+            kill ${DOTS_PID} &> /dev/null
+            wait ${DOTS_PID} &> /dev/null
+            DASHED=${CLEAR}${DASHED}
 
-          if [ ${STATUS} -eq 0 ]; then
-            echo -e ${DASHED} ${GREEN}"OK"${RESET}
-          else
-            echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-              && sudo \rm -rf ${CLONE_DIR} && return 1
-          fi
+            if [ ${STATUS} -eq 0 ]; then
+              echo -e ${DASHED} ${GREEN}"OK"${RESET}
+            else
+              echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+            fi
         else
           echo -e ${GREEN}"OK"${RESET}
         fi
@@ -853,7 +853,8 @@ function main () {
     DASHED=$(dashed "Copying desktop entries")
     dots "${DASHED}" &
     DOTS_PID=$!
-    command rm -r ${HOME}/.config/autostart/*
+    [ $(command ls ${HOME}/.config/autostart/ | wc -l) gt 0 ] \
+      && command rm ${HOME}/.config/autostart/*
     for ENTRY in $(command ls ${DESKTOP}); do
       command cp ${DESKTOP}/${ENTRY} ${HOME}/.config/autostart &> /dev/null
     done
