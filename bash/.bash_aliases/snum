@@ -169,9 +169,18 @@ alias vi='vim'
 alias vs='vim -S'
 alias tx='tmux'
 
-git config --global --replace-all alias.podium "!git ls-files \
-  | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
-  | sort -f | uniq -ic | sort -nr"
+git config --global --replace-all alias.podium "!bash -c \"
+function git-podium () {
+  if [ \$# -eq 0 ]; then
+    git ls-files \
+      | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
+      | sort -f | uniq -ic | sort -nr
+  else
+    git blame --line-porcelain \$* | sed -n 's/^author //p' | sort -f \
+      | uniq -ic | sort -nr
+  fi
+}
+git-podium\""
 
 git config --global --replace-all alias.tree "!bash -c \"
 function git-tree () {
