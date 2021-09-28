@@ -853,7 +853,7 @@ function main () {
     DASHED=$(dashed "Copying desktop entries")
     dots "${DASHED}" &
     DOTS_PID=$!
-    [ $(command ls ${HOME}/.config/autostart/ | wc -l) gt 0 ] \
+    [ $(command ls ${HOME}/.config/autostart/ | wc -l) -gt 0 ] \
       && command rm ${HOME}/.config/autostart/*
     for ENTRY in $(command ls ${DESKTOP}); do
       command cp ${DESKTOP}/${ENTRY} ${HOME}/.config/autostart &> /dev/null
