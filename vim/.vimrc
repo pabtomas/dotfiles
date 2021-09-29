@@ -1357,7 +1357,16 @@ cnoreabbrev w update
 " avoid intuitive tabpage usage
 cnoreabbrev tabe silent tabonly
 
+" allow vertical split designation with bufnr instead of full filename
 cnoreabbrev vb vertical sbuffer
+
+" next-previous intuitive usage for multi file opening
+cnoreabbrev fn next
+cnoreabbrev fp previous
+
+" allow to ignore splitbelow option for help split
+cnoreabbrev h top help
+cnoreabbrev help top help
 
 " }}}
 " Autocommands {{{1
