@@ -596,7 +596,9 @@ function! s:BuffersMenuFilter(winid, key)
         \ {_, val -> match(val, '^' . s:menu_bufnr) > -1})
       if len(l:matches) == 1
         execute 'buffer ' . l:matches[0]
-        call popup_clear()
+        call s:ReplaceCursorOnCurrentBuffer(a:winid)
+        let s:menu_bufnr = ""
+        echo len(l:matches) . ' match: ' . l:matches[0]
       else
         echo s:menu_bufnr . ' (' . len(l:matches) . ' matches:'
           \ . string(l:matches) . ')'
