@@ -2,6 +2,9 @@
 
 " - buffers menu: test
 " - tree: - test
+" - plugins: - undotree
+"            - rainbow parenthesis
+"            - tag list
 
 " }}}
 " Quality of life {{{1
@@ -674,7 +677,7 @@ function! s:DisplayBuffersMenu()
 endfunction
 
 "   }}}
-"   Tree {{{2
+"   File tree {{{2
 "     Help {{{3
 function! s:HelpTree()
   let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
@@ -1076,6 +1079,12 @@ function! s:DisplayObsession()
   endif
 endfunction
 
+"   }}}
+"   Undo tree {{{2
+"   }}}
+"   Rainbow parenthesis {{{2
+"   }}}
+"   Tag summary {{{2
 "   }}}
 " }}}
 " Filetype specific {{{1
