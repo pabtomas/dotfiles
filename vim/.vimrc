@@ -677,7 +677,7 @@ function! s:DisplayBuffersMenu()
 endfunction
 
 "   }}}
-"   File tree {{{2
+"   Tree {{{2
 "     Help {{{3
 function! s:HelpTree()
   let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
@@ -1081,6 +1081,110 @@ endfunction
 
 "   }}}
 "   Undo tree {{{2
+
+function! s:HelpUndotree()
+endfunction
+
+function! s:UndotreeFilter(winid, key)
+  if a:key == s:exit_undokey
+    call popup_clear()
+  elseif a:key == s:next_change_undokey
+  elseif a:key == s:previous_change_undokey
+  elseif a:key == s:help_undokey
+    call HelpUndotree()
+  endif
+  return v:true
+endfunction
+
+function! s:ParseNode(in, out)
+  if empty(a:in)
+    return
+  endif
+  let l:currentnode = a:out
+  for l:entry in a:in
+    if has_key(l:entry, 'alt')
+      call s:ParseNode(l:entry.alt, l:currentnode)
+    endif
+    let l:newnode = #{ seq: l:entry.seq, p: [] }
+    call extend(l:currentnode.p, [l:newnode])
+    let l:currentnode = l:newnode
+  endfor
+endfunction
+
+function! s:Undotree()
+  let l:rawtree = undotree().entries
+  let l:tree = #{ seq: 0, p: [] }
+  let l:text = []
+
+  call s:ParseNode(l:rawtree, l:tree)
+
+  let l:slots = [l:tree]
+  while l:slots != []
+    let l:foundstring = v:false
+    let l:index = 0
+
+    for l:i in range(len(l:slots))
+      if type(l:slots[l:i]) == v:t_string
+        let l:foundstring = v:true
+        let l:index = l:i
+        break
+      endif
+    endfor
+
+    let l:minseq = v:numbermax
+    let l:minnode = {}
+
+    if !l:foundstring
+      for l:i in range(len(l:slots))
+        if type(l:slots[l:i]) == v:t_dict
+          if l:slots[l:i].seq < l:minseq
+            let l:minseq = l:slots[l:i].seq
+            let l:index = l:i
+            let l:minnode = l:slots[l:i]
+            continue
+          endif
+        endif
+        if type(l:slots[l:i]) == v:t_list
+          for l:j in l:slots[l:i]
+            if l:j.seq < l:minseq
+              let l:minseq = l:j.seq
+              let l:index = l:i
+              let l:minnode = l:j
+              continue
+            endif
+          endfor
+        endif
+      endfor
+    endif
+
+  endwhile
+
+  return #{ text: l:text }
+endfunction
+
+function! s:DisplayUndotree()
+  let l:tree = s:Undotree()
+  let l:popup_id = popup_create(l:tree.text,
+  \ #{
+    \ pos: 'topleft',
+    \ line: win_screenpos(0)[0],
+    \ col: win_screenpos(0)[1],
+    \ zindex: 2,
+    \ minwidth: winwidth(0),
+    \ maxwidth: winwidth(0),
+    \ minheight: winheight(0),
+    \ maxheight: winheight(0),
+    \ drag: v:true,
+    \ wrap: v:true,
+    \ filter: expand('<SID>') . 'UndotreeFilter',
+    \ mapping: v:false,
+    \ scrollbar: v:true,
+    \ cursorline: v:true,
+  \ })
+  "call win_execute(l:popup_id, 'call cursor(2, 0)')
+  call s:HelpUndotree()
+endfunction
+
 "   }}}
 "   Rainbow parenthesis {{{2
 "   }}}
@@ -1297,6 +1401,57 @@ const s:erase_menukey    =    "\<BS>"
 const s:help_menukey     =        "?"
 
 "   }}}
+"   Tree keys {{{2
+
+if exists('s:next_file_treekey')      | unlet s:next_file_treekey      | endif
+if exists('s:previous_file_treekey')  | unlet s:previous_file_treekey  | endif
+if exists('s:first_file_treekey')     | unlet s:first_file_treekey     | endif
+if exists('s:last_file_treekey')      | unlet s:last_file_treekey      | endif
+if exists('s:dotfiles_treekey')       | unlet s:dotfiles_treekey       | endif
+if exists('s:yank_treekey')           | unlet s:yank_treekey           | endif
+if exists('s:badd_treekey')           | unlet s:badd_treekey           | endif
+if exists('s:open_treekey')           | unlet s:open_treekey           | endif
+if exists('s:reset_treekey')          | unlet s:reset_treekey          | endif
+if exists('s:exit_treekey')           | unlet s:exit_treekey           | endif
+if exists('s:help_treekey')           | unlet s:help_treekey           | endif
+if exists('s:searchmode_treekey')     | unlet s:searchmode_treekey     | endif
+if exists('s:next_match_treekey')     | unlet s:next_match_treekey     | endif
+if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
+if exists('s:left_smtreekey')         | unlet s:left_smtreekey         | endif
+if exists('s:right_smtreekey')        | unlet s:right_smtreekey        | endif
+if exists('s:wide_left_smtreekey')    | unlet s:wide_left_smtreekey    | endif
+if exists('s:wide_right_smtreekey')   | unlet s:wide_right_smtreekey   | endif
+if exists('s:next_smtreekey')         | unlet s:next_smtreekey         | endif
+if exists('s:previous_smtreekey')     | unlet s:previous_smtreekey     | endif
+if exists('s:evaluate_smtreekey')     | unlet s:evaluate_smtreekey     | endif
+if exists('s:erase_smtreekey')        | unlet s:erase_smtreekey        | endif
+if exists('s:exit_smtreekey')         | unlet s:exit_smtreekey         | endif
+
+const s:next_file_treekey      =    "\<Down>"
+const s:previous_file_treekey  =      "\<Up>"
+const s:first_file_treekey     =          "g"
+const s:last_file_treekey      =          "G"
+const s:dotfiles_treekey       =          "."
+const s:yank_treekey           =          "y"
+const s:badd_treekey           =          "b"
+const s:open_treekey           =          "o"
+const s:reset_treekey          =          "c"
+const s:exit_treekey           =     "\<Esc>"
+const s:help_treekey           =          "?"
+const s:searchmode_treekey     =          "/"
+const s:next_match_treekey     =          "n"
+const s:previous_match_treekey =          "N"
+const s:right_smtreekey        =   "\<Right>"
+const s:left_smtreekey         =    "\<Left>"
+const s:wide_right_smtreekey   = "\<C-Right>"
+const s:wide_left_smtreekey    =  "\<C-Left>"
+const s:next_smtreekey         =    "\<Down>"
+const s:previous_smtreekey     =      "\<Up>"
+const s:evaluate_smtreekey     =   "\<Enter>"
+const s:erase_smtreekey        =      "\<BS>"
+const s:exit_smtreekey         =     "\<Esc>"
+
+"   }}}
 "   Obsession keys {{{2
 
 if exists('s:yes_obsessionkey') | unlet s:yes_obsessionkey | endif
@@ -1306,55 +1461,17 @@ const s:yes_obsessionkey = "y"
 const s:no_obsessionkey  = "n"
 
 "   }}}
-"   Tree keys {{{2
+"   Undo tree keys {{{2
 
-if exists('s:next_file_treekey') | unlet s:next_file_treekey | endif
-if exists('s:previous_file_treekey') | unlet s:previous_file_treekey | endif
-if exists('s:first_file_treekey') | unlet s:first_file_treekey | endif
-if exists('s:last_file_treekey') | unlet s:last_file_treekey | endif
-if exists('s:dotfiles_treekey') | unlet s:dotfiles_treekey | endif
-if exists('s:yank_treekey') | unlet s:yank_treekey | endif
-if exists('s:badd_treekey') | unlet s:badd_treekey | endif
-if exists('s:open_treekey') | unlet s:open_treekey | endif
-if exists('s:reset_treekey') | unlet s:reset_treekey | endif
-if exists('s:exit_treekey') | unlet s:exit_treekey | endif
-if exists('s:help_treekey') | unlet s:help_treekey | endif
-if exists('s:searchmode_treekey') | unlet s:searchmode_treekey | endif
-if exists('s:next_match_treekey') | unlet s:next_match_treekey | endif
-if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
-if exists('s:left_smtreekey') | unlet s:left_smtreekey | endif
-if exists('s:right_smtreekey') | unlet s:right_smtreekey | endif
-if exists('s:wide_left_smtreekey') | unlet s:wide_left_smtreekey | endif
-if exists('s:wide_right_smtreekey') | unlet s:wide_right_smtreekey | endif
-if exists('s:next_smtreekey') | unlet s:next_smtreekey | endif
-if exists('s:previous_smtreekey') | unlet s:previous_smtreekey | endif
-if exists('s:evaluate_smtreekey') | unlet s:evaluate_smtreekey | endif
-if exists('s:erase_smtreekey') | unlet s:erase_smtreekey | endif
-if exists('s:exit_smtreekey') | unlet s:exit_smtreekey | endif
+if exists('s:next_change_undokey')     | unlet s:next_change_undokey     | endif
+if exists('s:previous_change_undokey') | unlet s:previous_change_undokey | endif
+if exists('s:exit_undokey')            | unlet s:exit_undokey            | endif
+if exists('s:help_undokey')            | unlet s:help_undokey            | endif
 
-const s:next_file_treekey =        "\<Down>"
-const s:previous_file_treekey =      "\<Up>"
-const s:first_file_treekey =             "g"
-const s:last_file_treekey =              "G"
-const s:dotfiles_treekey =               "."
-const s:yank_treekey =                   "y"
-const s:badd_treekey =                   "b"
-const s:open_treekey =                   "o"
-const s:reset_treekey =                  "c"
-const s:exit_treekey =              "\<Esc>"
-const s:help_treekey =                   "?"
-const s:searchmode_treekey =             "/"
-const s:next_match_treekey =             "n"
-const s:previous_match_treekey =         "N"
-const s:right_smtreekey =         "\<Right>"
-const s:left_smtreekey =           "\<Left>"
-const s:wide_right_smtreekey =  "\<C-Right>"
-const s:wide_left_smtreekey =    "\<C-Left>"
-const s:next_smtreekey =           "\<Down>"
-const s:previous_smtreekey =         "\<Up>"
-const s:evaluate_smtreekey =      "\<Enter>"
-const s:erase_smtreekey =            "\<BS>"
-const s:exit_smtreekey =            "\<Esc>"
+const s:next_change_undokey     =    "\<Down>"
+const s:previous_change_undokey =      "\<Up>"
+const s:exit_undokey            =     "\<Esc>"
+const s:help_undokey            =          "h"
 
 "   }}}
 " }}}
