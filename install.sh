@@ -25,8 +25,7 @@ function main () {
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
   local -r TMUXCONF="${SCRIPT_DIR}/tmux/.tmux.conf"
-  local -r BASIC_BASHRC="${SCRIPT_DIR}/bash/.bashrc/basic_settings"
-  local -r GUI_BASHRC="${SCRIPT_DIR}/bash/.bashrc/gui_settings"
+  local -r BASHRC="${SCRIPT_DIR}/bash/.bashrc"
   local -r PROFILE="${SCRIPT_DIR}/bash/.bash_profile"
   local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
   local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
@@ -688,33 +687,18 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cp /etc/skel/.bashrc ${HOME} &> /dev/null \
-    && echo -e "\n$(cat ${BASIC_BASHRC})" >> ${HOME}/.bashrc
+    && echo -e "\n$(cat ${BASHRC})" >> ${HOME}/.bashrc
+  STATUS=$?
 
-  if [ $? -ne 0 ]; then
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
       && return 1
-  else
-    if [ ${GNOME} -eq 1 ]; then
-      echo -e "\n$(cat ${GUI_BASHRC})" >> ${HOME}/.bashrc
-      STATUS=$?
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-      if [ ${STATUS} -eq 0 ]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-          && command cd ${BACKUP} && return 1
-      fi
-    else
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    fi
   fi
 
   DASHED=$(dashed "Copying .bash_profile")
