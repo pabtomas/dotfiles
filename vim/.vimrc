@@ -1081,15 +1081,34 @@ endfunction
 
 "   }}}
 "   Undo tree {{{2
+"     Help {{{3
 
 function! s:HelpUndotree()
 endfunction
 
+"     }}}
+
+let s:line_undotree = changenr()
+
 function! s:UndotreeFilter(winid, key)
   if a:key == s:exit_undokey
     call popup_clear()
-  elseif a:key == s:next_change_undokey
-  elseif a:key == s:previous_change_undokey
+    execute 'highlight Pmenu         term=bold cterm=bold ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+      \      highlight PopupSelected term=bold cterm=bold ctermfg=' . s:black    . ' ctermbg=' . s:purple_2
+  elseif a:key == s:next_undokey
+    call win_execute(a:winid, 'while line(".") < line("$")'
+      \ . '| call cursor(line(".") + 1, 0)'
+      \ . '| if match(getline("."), "\\d$") > -1 | break | endif | endwhile')
+  elseif a:key == s:previous_undokey
+    call win_execute(a:winid, 'while line(".") > 1'
+      \ . '| call cursor(line(".") - 1, 0)'
+      \ . '| if match(getline("."), "\\d$") > -1 | break | endif | endwhile')
+  elseif a:key == s:select_undokey
+    call win_execute(a:winid, 'let s:line_undotree = getline(".")')
+    call popup_clear()
+    execute 'highlight Pmenu         term=bold cterm=bold ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+      \      highlight PopupSelected term=bold cterm=bold ctermfg=' . s:black    . ' ctermbg=' . s:purple_2
+    execute 'undo ' . substitute(s:line_undotree, '\D*\(\d\+\)$', '\1', '')
   elseif a:key == s:help_undokey
     call HelpUndotree()
   endif
@@ -1157,13 +1176,88 @@ function! s:Undotree()
       endfor
     endif
 
+    let l:newline = " "
+    let l:node = l:slots[l:index]
+    if type(l:node) == v:t_string
+      if l:index + 1 != len(l:slots)
+        for l:i in range(len(l:slots))
+          if l:i < l:index
+            let l:newline = l:newline . '| '
+          endif
+          if l:i > l:index
+            let l:newline = l:newline . ' \'
+          endif
+        endfor
+      endif
+      call remove(l:slots, l:index)
+    endif
+
+    if type(l:node) == v:t_dict
+      for l:i in range(len(l:slots))
+        if l:index == l:i
+          let l:newline = l:newline . '• '
+        else
+          let l:newline = l:newline . '| '
+        endif
+      endfor
+      let l:newline = l:newline . '   ' . l:node.seq
+      if empty(l:node.p)
+        let l:slots[l:index] = 'x'
+      endif
+      if len(l:node.p) == 1
+        let l:slots[l:index] = l:node.p[0]
+      endif
+      if len(l:node.p) > 1
+        let l:slots[l:index] = l:node.p
+      endif
+      let l:node.p = []
+    endif
+
+    if type(l:node) == v:t_list
+      for l:k in range(len(l:slots))
+        if l:k < l:index
+          let l:newline = l:newline . '| '
+        endif
+        if l:k == l:index
+          let l:newline = l:newline . '|/ '
+        endif
+        if l:k > l:index
+          let l:newline = l:newline . '/ '
+        endif
+      endfor
+      call remove(l:slots, l:index)
+      if len(l:node) == 2
+        if l:node[0].seq > l:node[1].seq
+          call insert(l:slots, l:node[1], l:index)
+          call insert(l:slots, l:node[0], l:index)
+        else
+          call insert(l:slots, l:node[0], l:index)
+          call insert(l:slots, l:node[1], l:index)
+        endif
+      endif
+      if len(l:node) > 2
+        call remove(l:node, index(l:node, l:minnode))
+        call insert(l:slots, l:minnode, l:index)
+        call insert(l:slots, l:node, l:index)
+      endif
+    endif
+    unlet l:node
+
+    if l:newline != " "
+      let l:newline = substitute(l:newline, '\s*$', '', 'g')
+      call insert(l:text, l:newline, 0)
+    endif
+
   endwhile
 
   return #{ text: l:text }
 endfunction
 
 function! s:DisplayUndotree()
+  let s:line_undotree = changenr()
   let l:tree = s:Undotree()
+  execute 'highlight Pmenu         term=bold           cterm=bold           ctermfg=' . s:blue_4  . ' ctermbg=' . s:black . ' |
+    \      highlight PopupSelected term=bold,underline cterm=bold,underline ctermfg=' . s:pink    . ' ctermbg=' . s:black
   let l:popup_id = popup_create(l:tree.text,
   \ #{
     \ pos: 'topleft',
@@ -1276,6 +1370,7 @@ if exists('s:call_quit_function_mapping')             | unlet s:call_quit_functi
 if exists('s:call_writequit_function_mapping')        | unlet s:call_writequit_function_mapping        | endif
 if exists('s:buffers_menu_mapping')                   | unlet s:buffers_menu_mapping                   | endif
 if exists('s:tree_mapping')                           | unlet s:tree_mapping                           | endif
+if exists('s:undotree_mapping')                       | unlet s:undotree_mapping                       | endif
 if exists('s:window_next_mapping')                    | unlet s:window_next_mapping                    | endif
 if exists('s:window_previous_mapping')                | unlet s:window_previous_mapping                | endif
 if exists('s:unfold_vim_fold_mapping')                | unlet s:unfold_vim_fold_mapping                | endif
@@ -1301,6 +1396,7 @@ const s:call_quit_function_mapping             = s:leader       .            'q'
 const s:call_writequit_function_mapping        = s:leader       .            'w'
 const s:buffers_menu_mapping                   = s:leader       .       s:leader
 const s:tree_mapping                           = s:shift_leader . s:shift_leader
+const s:undotree_mapping                       = s:shift_leader .            'U'
 const s:window_next_mapping                    = s:leader       .      '<Right>'
 const s:window_previous_mapping                = s:leader       .       '<Left>'
 const s:unfold_vim_fold_mapping                =                       '<Space>'
@@ -1358,6 +1454,10 @@ execute 'nnoremap <silent> ' . s:buffers_menu_mapping
 " tree
 execute 'nnoremap <silent> ' . s:tree_mapping
   \ . ' :call <SID>DisplayTree()<CR>'
+
+" undotree
+execute 'nnoremap <silent> ' . s:undotree_mapping
+  \ . ' :call <SID>DisplayUndotree()<CR>'
 
 " windows navigation
 execute 'nnoremap <silent> ' . s:window_next_mapping
@@ -1463,15 +1563,17 @@ const s:no_obsessionkey  = "n"
 "   }}}
 "   Undo tree keys {{{2
 
-if exists('s:next_change_undokey')     | unlet s:next_change_undokey     | endif
-if exists('s:previous_change_undokey') | unlet s:previous_change_undokey | endif
-if exists('s:exit_undokey')            | unlet s:exit_undokey            | endif
-if exists('s:help_undokey')            | unlet s:help_undokey            | endif
+if exists('s:next_undokey')     | unlet s:next_undokey     | endif
+if exists('s:previous_undokey') | unlet s:previous_undokey | endif
+if exists('s:select_undokey')   | unlet s:select_undokey   | endif
+if exists('s:exit_undokey')     | unlet s:exit_undokey     | endif
+if exists('s:help_undokey')     | unlet s:help_undokey     | endif
 
-const s:next_change_undokey     =    "\<Down>"
-const s:previous_change_undokey =      "\<Up>"
-const s:exit_undokey            =     "\<Esc>"
-const s:help_undokey            =          "h"
+const s:next_undokey     =  "\<Down>"
+const s:previous_undokey =    "\<Up>"
+const s:select_undokey   = "\<Enter>"
+const s:exit_undokey     =   "\<Esc>"
+const s:help_undokey     =        "h"
 
 "   }}}
 " }}}
