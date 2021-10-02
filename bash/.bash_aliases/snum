@@ -1,12 +1,12 @@
 #!/bin/bash
 
 function ls () {
-  command ls -lA --color "$@" | tail -n+2 \
+  command ls -lA --color "$@" | grep -v -E "^total [0-9]+" \
     | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}" | less -R +g
 }
 
 function ll () {
-  command ls -lA --color "$@" | tail -n+2 | less -R +g
+  command ls -lA --color "$@" | grep -v -E "^total [0-9]+" | less -R +g
 }
 
 alias grep='grep --color'
@@ -106,50 +106,56 @@ function extract () {
     return 2 # File not found
   fi
 
-  local DESTDIR="."
+  local DESTDIR="$1_extracted"
+  if [ -d "${DESTDIR}" ]; then
+    echo -e "${DESTDIR} already exists. Can't extract in a safe destination."
+    return 3 # extracted dest already exists
+  fi
+
+  command mkdir -p ${DESTDIR}
 
   local FILE=$(basename "$1")
 
   case "${FILE##*.}" in
     tar)
-      echo -e "Extracting $1 to $DESTDIR: (uncompressed tar)"
-      tar xvf "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to ${DESTDIR}: (uncompressed tar)"
+      tar xvf "$1" -C "${DESTDIR}"
       ;;
     gz)
-      echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
-      tar xvfz "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to ${DESTDIR}: (gip compressed tar)"
+      tar xvfz "$1" -C "${DESTDIR}"
     ;;
     tgz)
-      echo -e "Extracting $1 to $DESTDIR: (gip compressed tar)"
-      tar xvfz "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to ${DESTDIR}: (gip compressed tar)"
+      tar xvfz "$1" -C "${DESTDIR}"
       ;;
     xz)
-      echo -e "Extracting  $1 to $DESTDIR: (gip compressed tar)"
-      tar xvf -J "$1" -C "$DESTDIR"
+      echo -e "Extracting  $1 to ${DESTDIR}: (gip compressed tar)"
+      tar xvf -J "$1" -C "${DESTDIR}"
       ;;
     bz2)
-      echo -e "Extracting $1 to $DESTDIR: (bzip compressed tar)"
-      tar xvfj "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to ${DESTDIR}: (bzip compressed tar)"
+      tar xvfj "$1" -C "${DESTDIR}"
       ;;
     tbz2)
-      echo -e "Extracting $1 to $DESTDIR: (tbz2 compressed tar)"
-      tar xvjf "$1" -C "$DESTDIR"
+      echo -e "Extracting $1 to ${DESTDIR}: (tbz2 compressed tar)"
+      tar xvjf "$1" -C "${DESTDIR}"
       ;;
     zip)
-      echo -e "Extracting $1 to $DESTDIR: (zip compressed file)"
-      unzip "$1" -d "$DESTDIR"
+      echo -e "Extracting $1 to ${DESTDIR}: (zip compressed file)"
+      unzip "$1" -d "${DESTDIR}"
       ;;
     lzma)
       echo -e "Extracting $1 : (lzma compressed file)"
       unlzma "$1"
       ;;
     rar)
-      echo -e "Extracting $1 to $DESTDIR: (rar compressed file)"
-      unrar x "$1" "$DESTDIR"
+      echo -e "Extracting $1 to ${DESTDIR}: (rar compressed file)"
+      unrar x "$1" "${DESTDIR}"
       ;;
     7z)
-      echo -e  "Extracting $1 to $DESTDIR: (7zip compressed file)"
-      7za e "$1" -o "$DESTDIR"
+      echo -e  "Extracting $1 to ${DESTDIR}: (7zip compressed file)"
+      7za e "$1" -o "${DESTDIR}"
       ;;
     xz)
       echo -e  "Extracting $1 : (xz compressed file)"

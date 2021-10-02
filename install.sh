@@ -25,15 +25,13 @@ function main () {
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
   local -r TMUXCONF="${SCRIPT_DIR}/tmux/.tmux.conf"
-  local -r BASIC_BASHRC="${SCRIPT_DIR}/bash/.bashrc/basic_settings"
-  local -r GUI_BASHRC="${SCRIPT_DIR}/bash/.bashrc/gui_settings"
+  local -r BASHRC="${SCRIPT_DIR}/bash/.bashrc"
   local -r PROFILE="${SCRIPT_DIR}/bash/.bash_profile"
   local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
   local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
   local -r HOOKS="${SCRIPT_DIR}/git/.hooks"
-  local -r AUTOSTART_SCRIPTS="${SCRIPT_DIR}/autostart/scripts"
-  local -r DESKTOP="${SCRIPT_DIR}/autostart/desktop"
-  local -r EXECUTOR_SCRIPTS="${SCRIPT_DIR}/executor/scripts"
+  local -r DESKTOP="${SCRIPT_DIR}/desktop"
+  local -r SCRIPTS="${SCRIPT_DIR}/scripts"
   local -r SCHEMA="${SCRIPT_DIR}/executor/schema/org.gnome.shell.extensions.executor.gschema.xml "
   local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
   local -r EXECUTOR_DEST="${HOME}/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
@@ -688,33 +686,18 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cp /etc/skel/.bashrc ${HOME} &> /dev/null \
-    && echo -e "\n$(cat ${BASIC_BASHRC})" >> ${HOME}/.bashrc
+    && echo -e "\n$(cat ${BASHRC})" >> ${HOME}/.bashrc
+  STATUS=$?
 
-  if [ $? -ne 0 ]; then
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
       && return 1
-  else
-    if [ ${GNOME} -eq 1 ]; then
-      echo -e "\n$(cat ${GUI_BASHRC})" >> ${HOME}/.bashrc
-      STATUS=$?
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-      if [ ${STATUS} -eq 0 ]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-          && command cd ${BACKUP} && return 1
-      fi
-    else
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    fi
   fi
 
   DASHED=$(dashed "Copying .bash_profile")
@@ -790,26 +773,6 @@ function main () {
   fi
 
   if [ ${GNOME} -eq 1 ]; then
-    DASHED=$(dashed "Copying EXECUTOR scripts")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    [ -d ${HOME}/.executor ] && sudo \rm -rf ${HOME}/.executor
-    command cp -r ${EXECUTOR_SCRIPTS} ${HOME}/.executor &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [ ${STATUS} -eq 0 ]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
-    fi
-
     DASHED=$(dashed "Copying EXECUTOR schema")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
@@ -829,14 +792,54 @@ function main () {
         && command cd ${BACKUP} && return 1
     fi
 
-    DASHED=$(dashed "Copying autostart scripts")
+    DASHED=$(dashed "Create scripts directory")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
-    for SCRIPT in $(command ls ${AUTOSTART_SCRIPTS}); do
-      sudo \cp ${AUTOSTART_SCRIPTS}/${SCRIPT} /usr/bin &> /dev/null
+    sudo \mkdir -p /opt/scripts &> /dev/null
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
+    DASHED=$(dashed "Copying scripts")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    dots "${DASHED}" &
+    DOTS_PID=$!
+    for SCRIPT in $(command ls ${SCRIPTS}); do
+      sudo \cp ${SCRIPTS}/${SCRIPT} /opt/scripts &> /dev/null
     done
+    STATUS=$?
+
+    kill ${DOTS_PID} &> /dev/null
+    wait ${DOTS_PID} &> /dev/null
+    DASHED=${CLEAR}${DASHED}
+
+    if [ ${STATUS} -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && command cd ${BACKUP} && return 1
+    fi
+
+    DASHED=$(dashed "Copying crons")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    dots "${DASHED}" &
+    DOTS_PID=$!
+    [ $(which crontab | wc -l) -eq 1 ] && crontab -l 2> /dev/null \
+      | { cat ; echo "* * * * * export DISPLAY=:0.0;\
+sh /opt/scripts/redshift.sh > /dev/null 2>&1"; } | crontab - &> /dev/null
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
@@ -1004,6 +1007,25 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   source ${HOME}/.bashrc &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  DASHED=$(dashed "Reloading CRON service")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  sudo service cron reload &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null

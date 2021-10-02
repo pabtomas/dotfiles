@@ -26,7 +26,7 @@
             <default>2</default>
         </key>
         <key name="right-commands-json" type="s">
-            <default>'{"commands":[{"isActive":true,"command":"sh ${HOME}/.executor/hardware_monitoring.sh","interval":1,"uuid":"3a38985c-128b-4533-80c3-d79f1d2940bd"}]}'</default>
+            <default>'{"commands":[{"isActive":true,"command":"sh /opt/scripts/hardware_monitoring.sh","interval":1,"uuid":"3a38985c-128b-4533-80c3-d79f1d2940bd"}]}'</default>
         </key>
         <key name="location" type="i">
             <default>0</default>
