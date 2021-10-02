@@ -257,9 +257,12 @@ function! s:AnimateStatusLine()
 endfunction
 
 function! s:RestoreStatusLines(timer_id)
-  execute 'highlight StatusLine   term=bold cterm=bold ctermfg=' . s:blue_4   . ' ctermbg=' . s:black . ' |
-    \      highlight StatusLineNC term=NONE cterm=NONE ctermfg=' . s:blue_1   . ' ctermbg=' . s:black . ' |
-    \      highlight VertSplit    term=NONE cterm=NONE ctermfg=' . s:purple_2 . ' ctermbg=' . s:black
+  execute 'highlight StatusLine   term=bold cterm=bold ctermfg=' . s:blue_4
+    \  . ' ctermbg=' . s:black . ' |
+    \      highlight StatusLineNC term=NONE cterm=NONE ctermfg=' . s:blue_1
+    \  . ' ctermbg=' . s:black . ' |
+    \      highlight VertSplit    term=NONE cterm=NONE ctermfg=' . s:purple_2
+    \  . ' ctermbg=' . s:black
 endfunction
 
 function! s:HighlightStatusLines()
@@ -318,7 +321,8 @@ const s:black = 232
 
 let s:redhighlight_cmd = 'highlight RedHighlight ctermfg=White ctermbg=DarkRed'
 
-set background=dark | highlight clear | if exists('syntax_on') | syntax reset | endif
+set background=dark | highlight clear | if exists('syntax_on') | syntax reset
+  \ | endif
 set wincolor=NormalAlt
 
 execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
@@ -397,14 +401,14 @@ execute s:redhighlight_cmd
 "   Text properties {{{2
 
 if index(prop_type_list(), 'statusline') != -1 | call prop_type_delete('statusline') | endif
-if index(prop_type_list(), 'key') != -1 | call prop_type_delete('key') | endif
-if index(prop_type_list(), 'help') != -1 | call prop_type_delete('help') | endif
-if index(prop_type_list(), 'mode') != -1 | call prop_type_delete('mode') | endif
+if index(prop_type_list(), 'key')        != -1 | call prop_type_delete('key')        | endif
+if index(prop_type_list(), 'help')       != -1 | call prop_type_delete('help')       | endif
+if index(prop_type_list(), 'mode')       != -1 | call prop_type_delete('mode')       | endif
 
 call prop_type_add('statusline', #{ highlight: 'StatusLine' })
-call prop_type_add('key', #{ highlight: 'HelpKey' })
-call prop_type_add('help', #{ highlight: 'Help' })
-call prop_type_add('mode', #{ highlight: 'HelpMode' })
+call prop_type_add('key',        #{ highlight: 'HelpKey' })
+call prop_type_add('help',       #{ highlight: 'Help' })
+call prop_type_add('mode',       #{ highlight: 'HelpMode' })
 
 "     Buffers menu {{{3
 
@@ -1088,13 +1092,13 @@ endfunction
 
 "     }}}
 
-let s:line_undotree = changenr()
-
 function! s:UndotreeFilter(winid, key)
   if a:key == s:exit_undokey
     call popup_clear()
-    execute 'highlight Pmenu         term=bold cterm=bold ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-      \      highlight PopupSelected term=bold cterm=bold ctermfg=' . s:black    . ' ctermbg=' . s:purple_2
+    execute 'highlight Pmenu         term=bold cterm=bold ctermfg='
+      \    . s:green_1  . ' ctermbg=' . s:black    . ' |
+      \      highlight PopupSelected term=bold cterm=bold ctermfg='
+      \    . s:black    . ' ctermbg=' . s:purple_2
   elseif a:key == s:next_undokey
     call win_execute(a:winid, 'while line(".") < line("$")'
       \ . '| call cursor(line(".") + 1, 0)'
@@ -1104,11 +1108,10 @@ function! s:UndotreeFilter(winid, key)
       \ . '| call cursor(line(".") - 1, 0)'
       \ . '| if match(getline("."), "\\d$") > -1 | break | endif | endwhile')
   elseif a:key == s:select_undokey
+    let s:line_undotree = ""
     call win_execute(a:winid, 'let s:line_undotree = getline(".")')
-    call popup_clear()
-    execute 'highlight Pmenu         term=bold cterm=bold ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-      \      highlight PopupSelected term=bold cterm=bold ctermfg=' . s:black    . ' ctermbg=' . s:purple_2
     execute 'undo ' . substitute(s:line_undotree, '\D*\(\d\+\)$', '\1', '')
+    call popup_settext(a:winid, s:Undotree().text)
   elseif a:key == s:help_undokey
     call HelpUndotree()
   endif
@@ -1134,6 +1137,7 @@ function! s:Undotree()
   let l:rawtree = undotree().entries
   let l:tree = #{ seq: 0, p: [] }
   let l:text = []
+  let l:maxlength = 0
 
   call s:ParseNode(l:rawtree, l:tree)
 
@@ -1195,7 +1199,11 @@ function! s:Undotree()
     if type(l:node) == v:t_dict
       for l:i in range(len(l:slots))
         if l:index == l:i
-          let l:newline = l:newline . '• '
+          if l:node.seq == changenr()
+            let l:newline = l:newline . '◊ '
+          else
+            let l:newline = l:newline . '• '
+          endif
         else
           let l:newline = l:newline . '| '
         endif
@@ -1245,27 +1253,30 @@ function! s:Undotree()
 
     if l:newline != " "
       let l:newline = substitute(l:newline, '\s*$', '', 'g')
+      let l:maxlength = max([l:maxlength, len(l:newline)])
       call insert(l:text, l:newline, 0)
     endif
 
   endwhile
 
-  return #{ text: l:text }
+  return #{ text: l:text, max_length: l:maxlength }
 endfunction
 
 function! s:DisplayUndotree()
-  let s:line_undotree = changenr()
+  let s:change_before_undotree = changenr()
   let l:tree = s:Undotree()
-  execute 'highlight Pmenu         term=bold           cterm=bold           ctermfg=' . s:blue_4  . ' ctermbg=' . s:black . ' |
-    \      highlight PopupSelected term=bold,underline cterm=bold,underline ctermfg=' . s:pink    . ' ctermbg=' . s:black
+  execute 'highlight Pmenu         term=bold cterm=bold ctermfg=' . s:blue_4
+    \ . ' ctermbg=' . s:black . ' |
+    \      highlight PopupSelected term=bold cterm=bold ctermfg=' . s:pink
+    \ . ' ctermbg=' . s:black
   let l:popup_id = popup_create(l:tree.text,
   \ #{
     \ pos: 'topleft',
     \ line: win_screenpos(0)[0],
     \ col: win_screenpos(0)[1],
     \ zindex: 2,
-    \ minwidth: winwidth(0),
-    \ maxwidth: winwidth(0),
+    \ minwidth: l:tree.max_length,
+    \ maxwidth: l:tree.max_length,
     \ minheight: winheight(0),
     \ maxheight: winheight(0),
     \ drag: v:true,
@@ -1275,7 +1286,11 @@ function! s:DisplayUndotree()
     \ scrollbar: v:true,
     \ cursorline: v:true,
   \ })
-  "call win_execute(l:popup_id, 'call cursor(2, 0)')
+  call win_execute(l:popup_id, 'let c = 1 | call cursor(c, 0)'
+  \ . ' | while substitute(getline("."), "\\D*\\(\\d\\+\\)$", "\\1", "")'
+  \ . ' != s:change_before_undotree'
+  \ . ' | let c += 1 | call cursor(c, 0) | endwhile')
+  "diff --unchanged-line-format="" --new-line-format="+%dn %L" --old-line-format="-%dn %L$" file1 file2
   call s:HelpUndotree()
 endfunction
 
@@ -1601,46 +1616,50 @@ cnoreabbrev help top help
 
 augroup vimrc_autocomands
   autocmd!
-"   Dependencies autocommands group {{{2
+"   Dependencies autocommands {{{2
 
   autocmd VimEnter * :call <SID>CheckDependencies()
 
 "   }}}
-"   Color autocommands group {{{2
+"   Color autocommands {{{2
 
   autocmd WinEnter * set wincolor=NormalAlt
 
 "   }}}
-"   Good practices autocommands group {{{2
+"   Good practices autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>ExtraSpaces() |
     \ silent call <SID>OverLength()
 
 "   }}}
-"   Buffers autocommands group {{{2
+"   Buffers autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
 
 "   }}}
-"   Sessions autocommands group {{{2
+"   Plugins autocommands {{{3
+"     Obsessions autocommands {{{3
 
   autocmd VimLeavePre * :call <SID>DisplayObsession()
 
+"     }}}
 "   }}}
-"   Vimscript filetype autocommands group {{{2
+"   Filetype specific autocommands {{{3
+"     Vimscript autocommands {{{3
 
   autocmd FileType vim setlocal foldmethod=marker
 
-"   }}}
-"   Tmux filetype autocommands group {{{2
+"     }}}
+"     Tmux autocommands {{{3
 
   autocmd FileType tmux setlocal foldmethod=marker
 
-"   }}}
-"   Bash filetype autocommands group {{{2
+"     }}}
+"     Bash autocommands {{{3
 
   autocmd BufNewFile *.sh :call <SID>PrefillShFile()
 
+"     }}}
 "   }}}
 augroup END
 
