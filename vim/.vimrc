@@ -335,7 +335,7 @@ execute 'highlight       Buffer             term=bold         cterm=bold        
   \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
   \      highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
-  \      highlight       UndoButton         term=bold         cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:pink     . ' |
+  \      highlight       UndoButton         term=bold,reverse cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
   \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
   \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -1095,12 +1095,44 @@ endfunction
 
 "     }}}
 
+function! s:Diff(winid)
+  call win_execute(a:winid, 'let s:line_undotree = getline(".")')
+  let l:newchange = changenr()
+  let l:oldchange = substitute(s:line_undotree, '\D*\(\d\+\)$', '\1', '')
+
+  let l:eventignore_backup = &eventignore
+  set eventignore=all
+  let l:savedview = winsaveview()
+  let l:new = getbufline(bufnr(), 1, '$')
+  execute 'silent undo ' . l:oldchange
+  let l:old = getbufline(bufnr(), 1, '$')
+  execute 'silent undo ' . l:newchange
+  call winrestview(savedview)
+
+  let l:tmp1 = tempname()
+  let l:tmp2 = tempname()
+  if writefile(l:old, l:tmp1) == -1
+    echoerr 'Can not write to temp file: ' . l:tmp1
+  endif
+  if writefile(l:new, l:tmp2) == -1
+    echoerr 'Can not write to temp file: ' . l:tmp2
+  endif
+  let l:diffcommand = 'diff --unchanged-line-format=""'
+    \ . ' --new-line-format="+%dn %L" --old-line-format="-%dn %L$"'
+  let diff = systemlist(l:diffcommand . ' ' . l:tmp1 . ' ' . l:tmp2)
+  if delete(l:tmp1) != 0
+    echoerr 'Can not delete temp file: ' . l:tmp1
+  endif
+  if delete(l:tmp2) != 0
+    echoerr 'Can not delete temp file: ' . l:tmp2
+  endif
+  let &eventignore = l:eventignore_backup
+endfunction
+
 function! s:UndotreeFilter(winid, key)
   if a:key == s:exit_undokey
     call popup_clear()
-    execute 'highlight Pmenu         term=bold cterm=bold ctermfg='
-      \    . s:green_1  . ' ctermbg=' . s:black    . ' |
-      \      highlight PopupSelected term=bold cterm=bold ctermfg='
+    execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
       \    . s:black    . ' ctermbg=' . s:purple_2
   elseif a:key == s:next_undokey
     call win_execute(a:winid, 'while line(".") < line("$")'
@@ -1109,6 +1141,7 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | let s:first_line_undotree = line("w0")'
       \ . ' | let s:last_line_undotree = line("w$")')
     call s:UndotreeButtons(s:Undotree(), a:winid)
+    #call s:Diff(a:winid)
   elseif a:key == s:previous_undokey
     call win_execute(a:winid, 'while line(".") > 1'
       \ . ' | call cursor(line(".") - 1, 0)'
@@ -1116,10 +1149,12 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | let s:first_line_undotree = line("w0")'
       \ . ' | let s:last_line_undotree = line("w$")')
     call s:UndotreeButtons(s:Undotree(), a:winid)
+    #call s:Diff(a:winid)
   elseif a:key == s:select_undokey
     let s:line_undotree = ""
     call win_execute(a:winid, 'let s:line_undotree = getline(".")')
-    execute 'undo ' . substitute(s:line_undotree, '\D*\(\d\+\)$', '\1', '')
+    execute 'silent undo '
+      \ . substitute(s:line_undotree, '\D*\(\d\+\)$', '\1', '')
     call popup_settext(a:winid, s:Undotree().text)
   elseif a:key == s:help_undokey
     call HelpUndotree()
@@ -1308,10 +1343,14 @@ function! s:UndotreeButtons(tree, winid)
 endfunction
 
 function! s:DisplayUndotree()
+  if !buflisted(bufnr()) || !bufloaded(bufnr())
+    echoerr "Unlisted or Unloaded current buffer. Can't use undo tree."
+    return
+  endif
+
   let s:change_before_undotree = changenr()
   let l:tree = s:Undotree()
-  execute 'highlight PopupSelected term=bold cterm=bold ctermfg=' . s:pink
-    \ . ' ctermbg=' . s:black
+  execute 'highlight PopupSelected ctermfg=' . s:pink . ' ctermbg=' . s:black
   let l:popup_id = popup_create(l:tree.text,
   \ #{
     \ pos: 'topleft',
@@ -1336,7 +1375,6 @@ function! s:DisplayUndotree()
   \ . ' | let s:first_line_undotree = line("w0")'
   \ . ' | let s:last_line_undotree = line("w$")')
   call s:UndotreeButtons(l:tree, l:popup_id)
-  "diff --unchanged-line-format="" --new-line-format="+%dn %L" --old-line-format="-%dn %L$" file1 file2
   call s:HelpUndotree()
 endfunction
 
