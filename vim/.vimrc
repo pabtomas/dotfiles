@@ -1,7 +1,7 @@
 " TODO {{{1
 
 " - buffers menu: test
-" - tree: - test
+" - explorer: - test
 " - plugins: - undotree
 "            - rainbow parenthesis
 "            - tag list
@@ -335,6 +335,7 @@ execute 'highlight       Buffer             term=bold         cterm=bold        
   \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
   \      highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       UndoButton         term=bold         cterm=bold         ctermfg=' . s:black    . ' ctermbg=' . s:pink     . ' |
   \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
   \      highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
@@ -404,11 +405,13 @@ if index(prop_type_list(), 'statusline') != -1 | call prop_type_delete('statusli
 if index(prop_type_list(), 'key')        != -1 | call prop_type_delete('key')        | endif
 if index(prop_type_list(), 'help')       != -1 | call prop_type_delete('help')       | endif
 if index(prop_type_list(), 'mode')       != -1 | call prop_type_delete('mode')       | endif
+if index(prop_type_list(), 'undobutton') != -1 | call prop_type_delete('undobutton') | endif
 
 call prop_type_add('statusline', #{ highlight: 'StatusLine' })
 call prop_type_add('key',        #{ highlight: 'HelpKey' })
 call prop_type_add('help',       #{ highlight: 'Help' })
 call prop_type_add('mode',       #{ highlight: 'HelpMode' })
+call prop_type_add('undobutton', #{ highlight: 'UndoButton' })
 
 "     Buffers menu {{{3
 
@@ -419,15 +422,15 @@ call prop_type_add('buf', #{ highlight: 'Buffer' })
 call prop_type_add('mbuf', #{ highlight: 'ModifiedBuf' })
 
 "     }}}
-"     Tree {{{3
+"     Explorer {{{3
 
-if index(prop_type_list(), 'rpath') != -1 | call prop_type_delete('rpath') | endif
-if index(prop_type_list(), 'fpath') != -1 | call prop_type_delete('fpath') | endif
+if index(prop_type_list(), 'rpath') != -1  | call prop_type_delete('rpath')  | endif
+if index(prop_type_list(), 'fpath') != -1  | call prop_type_delete('fpath')  | endif
 if index(prop_type_list(), 'cdpath') != -1 | call prop_type_delete('cdpath') | endif
 if index(prop_type_list(), 'odpath') != -1 | call prop_type_delete('odpath') | endif
 
-call prop_type_add('rpath', #{ highlight: 'RootPath' })
-call prop_type_add('fpath', #{ highlight: 'FilePath' })
+call prop_type_add('rpath',  #{ highlight: 'RootPath' })
+call prop_type_add('fpath',  #{ highlight: 'FilePath' })
 call prop_type_add('cdpath', #{ highlight: 'ClosedDirPath' })
 call prop_type_add('odpath', #{ highlight: 'OpenedDirPath' })
 
@@ -681,32 +684,32 @@ function! s:DisplayBuffersMenu()
 endfunction
 
 "   }}}
-"   Tree {{{2
+"   Explorer {{{2
 "     Help {{{3
-function! s:HelpTree()
+function! s:HelpExplorer()
   let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
     \ '      NORMAL Mode                        ┃        '
-      \ . s:Key([s:reset_treekey]) . '        - Reset tree',
-    \ '   ' . s:Key([s:help_treekey]) . '   - Show this help              ┃  '
-      \ . '    ' . s:Key([s:searchmode_treekey])
+      \ . s:Key([s:reset_explkey]) . '        - Reset explorer',
+    \ '   ' . s:Key([s:help_explkey]) . '   - Show this help              ┃  '
+      \ . '    ' . s:Key([s:searchmode_explkey])
       \ . '      - Enter SEARCH Mode',
-    \ '  ' . s:Key([s:exit_treekey]) . '  - Exit tree                   ┃    '
-      \ . '  ' . s:Key([s:next_match_treekey, s:previous_match_treekey])
+    \ '  ' . s:Key([s:exit_explkey]) . '  - Exit explorer               ┃    '
+      \ . '  ' . s:Key([s:next_match_explkey, s:previous_match_explkey])
       \ . '      - Next/Previous SEARCH match',
-    \ ' ' . s:Key([s:next_file_treekey, s:previous_file_treekey])
+    \ ' ' . s:Key([s:next_file_explkey, s:previous_file_explkey])
       \ . ' - Next/Previous file          ┃                SEARCH Mode',
-    \ ' ' . s:Key([s:first_file_treekey, s:last_file_treekey])
+    \ ' ' . s:Key([s:first_file_explkey, s:last_file_explkey])
       \ . ' - First/Last file             ┃       '
-      \ . s:Key([s:exit_smtreekey]) . '       - Exit SEARCH Mode',
-    \ '   ' . s:Key([s:open_treekey]) . '   - Open/Close dir & Open files ┃  '
-      \ . '    ' . s:Key([s:evaluate_smtreekey]) . '      - Evaluate SEARCH',
-    \ '   ' . s:Key([s:badd_treekey]) . '   - Add to buffers list         ┃  '
-      \ . '  ' . s:Key([s:erase_smtreekey]) . '    - Erase SEARCH',
-    \ '   ' . s:Key([s:yank_treekey]) . '   - Yank path                   ┃ '
-      \ . '     ' . s:Key([s:next_smtreekey, s:previous_smtreekey])
+      \ . s:Key([s:exit_smexplkey]) . '       - Exit SEARCH Mode',
+    \ '   ' . s:Key([s:open_explkey]) . '   - Open/Close dir & Open files ┃  '
+      \ . '    ' . s:Key([s:evaluate_smexplkey]) . '      - Evaluate SEARCH',
+    \ '   ' . s:Key([s:badd_explkey]) . '   - Add to buffers list         ┃  '
+      \ . '  ' . s:Key([s:erase_smexplkey]) . '    - Erase SEARCH',
+    \ '   ' . s:Key([s:yank_explkey]) . '   - Yank path                   ┃ '
+      \ . '     ' . s:Key([s:next_smexplkey, s:previous_smexplkey])
       \ . '      - Next/Previous SEARCH',
-    \ '   ' . s:Key([s:dotfiles_treekey]) . '   - Show/Hide dot files        '
-      \ . ' ┃ ' . s:Key([s:wide_left_smtreekey, s:wide_right_smtreekey])
+    \ '   ' . s:Key([s:dotfiles_explkey]) . '   - Show/Hide dot files        '
+      \ . ' ┃ ' . s:Key([s:wide_left_smexplkey, s:wide_right_smexplkey])
       \ . ' - Navigation',
   \ ]
   let l:text = [#{ text: l:lines[0], props: [#{ type: 'statusline',
@@ -782,42 +785,42 @@ function! s:FullPath(path, value)
   return l:content
 endfunction
 
-function! s:InitTree()
-  let s:tree = {}
-  let s:tree['.'] = fnamemodify('.', ':p')
-  let s:tree[fnamemodify('.', ':p')] = sort(map(reverse(
+function! s:InitExplorer()
+  let s:expl = {}
+  let s:expl['.'] = fnamemodify('.', ':p')
+  let s:expl[fnamemodify('.', ':p')] = sort(map(reverse(
     \ readdir('.', '1', #{ sort: 'icase' })), {_, val ->
-      \ s:FullPath(s:tree['.'], val)}), expand('<SID>') . 'PathCompare')
-  let s:tree_searchmode = v:false
-  let s:tree_search = ''
+      \ s:FullPath(s:expl['.'], val)}), expand('<SID>') . 'PathCompare')
+  let s:expl_searchmode = v:false
+  let s:expl_search = ''
 endfunction
 
 let s:show_dotfiles = v:false
 let s:search_cursor = 0
 let s:search_hist_cursor = 0
-call s:InitTree()
+call s:InitExplorer()
 
 function! s:Depth(path)
   return len(split(substitute(a:path, '/$', '', 'g'), '/'))
 endfunction
 
-function! s:NormalModeTreeFilter(winid, key)
-  if a:key == s:dotfiles_treekey
+function! s:NormalModeExplorerFilter(winid, key)
+  if a:key == s:dotfiles_explkey
     let s:show_dotfiles = !s:show_dotfiles
-    call popup_settext(a:winid, s:Tree().text)
+    call popup_settext(a:winid, s:Explorer().text)
     call win_execute(a:winid, 'if line(".") > line("$") |'
       \ . ' call cursor(line("$"), 0) | endif')
-  elseif a:key == s:yank_treekey
-    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
-    let l:path = s:Tree().paths[s:tree_line]
+  elseif a:key == s:yank_explkey
+    call win_execute(a:winid, 'let s:expl_line = line(".") - 2')
+    let l:path = s:Explorer().paths[s:expl_line]
     let @" = l:path
     echo 'Unnamed register content is:'
     echohl OpenedDirPath
     echon @"
     echohl NONE
-  elseif a:key == s:badd_treekey
-    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
-    let l:path = s:Tree().paths[s:tree_line]
+  elseif a:key == s:badd_explkey
+    call win_execute(a:winid, 'let s:expl_line = line(".") - 2')
+    let l:path = s:Explorer().paths[s:expl_line]
     if !isdirectory(l:path)
       execute 'badd ' . l:path
       echohl OpenedDirPath
@@ -825,153 +828,153 @@ function! s:NormalModeTreeFilter(winid, key)
       echohl NONE
       echon ' added to buffers list'
     endif
-  elseif a:key == s:open_treekey
-    call win_execute(a:winid, 'let s:tree_line = line(".") - 2')
-    let l:path = s:Tree().paths[s:tree_line]
+  elseif a:key == s:open_explkey
+    call win_execute(a:winid, 'let s:expl_line = line(".") - 2')
+    let l:path = s:Explorer().paths[s:expl_line]
     if isdirectory(l:path)
-      if has_key(s:tree, l:path)
-        unlet s:tree[l:path]
+      if has_key(s:expl, l:path)
+        unlet s:expl[l:path]
       else
-        let s:tree[l:path] = sort(map(reverse(
+        let s:expl[l:path] = sort(map(reverse(
           \ readdir(l:path, '1', #{ sort: 'icase' })), {_, val ->
             \s:FullPath(l:path, val)}), expand('<SID>') . 'PathCompare')
       endif
-      call popup_settext(a:winid, s:Tree().text)
+      call popup_settext(a:winid, s:Explorer().text)
     else
       call popup_clear()
       execute 'edit ' . l:path
     endif
-  elseif a:key == s:reset_treekey
-    call s:InitTree()
-    call popup_settext(a:winid, s:Tree().text)
+  elseif a:key == s:reset_explkey
+    call s:InitExplorer()
+    call popup_settext(a:winid, s:Explorer().text)
     call win_execute(a:winid, 'call cursor(2, 0)')
-  elseif a:key == s:next_match_treekey
+  elseif a:key == s:next_match_explkey
     call win_execute(a:winid, 'call search(histget("/", -1), "")')
-  elseif a:key == s:previous_match_treekey
+  elseif a:key == s:previous_match_explkey
     call win_execute(a:winid, 'call search(histget("/", -1), "b")')
-  elseif a:key == s:first_file_treekey
+  elseif a:key == s:first_file_explkey
     call win_execute(a:winid,
       \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
-  elseif a:key == s:last_file_treekey
+  elseif a:key == s:last_file_explkey
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif a:key == s:exit_treekey
+  elseif a:key == s:exit_explkey
     call win_execute(a:winid, 'call clearmatches()')
     call popup_clear()
-  elseif a:key == s:next_file_treekey
+  elseif a:key == s:next_file_explkey
     call win_execute(a:winid, 'if line(".") < line("$") |'
       \ . ' call cursor(line(".") + 1, 0) | endif')
-  elseif a:key == s:previous_file_treekey
+  elseif a:key == s:previous_file_explkey
     call win_execute(a:winid, 'if line(".") > 2 |'
       \ . ' call cursor(line(".") - 1, 0) | else |'
       \ . ' execute "normal! \<C-Y>" | endif')
-  elseif a:key == s:help_treekey
-    call s:HelpTree()
-  elseif a:key == s:searchmode_treekey
-    let s:tree_searchmode = v:true
-    let s:tree_search = a:key
+  elseif a:key == s:help_explkey
+    call s:HelpExplorer()
+  elseif a:key == s:searchmode_explkey
+    let s:expl_searchmode = v:true
+    let s:expl_search = a:key
     let s:search_cursor = 1
     let s:search_hist_cursor = 0
-    echo s:tree_search
+    echo s:expl_search
     echohl Visual
     echon ' '
     echohl NONE
   endif
 endfunction
 
-function! s:SearchModeTreeFilter(winid, key)
-  if a:key == s:evaluate_smtreekey
-    let @/ = '\%>1l' . s:tree_search[1:]
+function! s:SearchModeExplorerFilter(winid, key)
+  if a:key == s:evaluate_smexplkey
+    let @/ = '\%>1l' . s:expl_search[1:]
     call win_execute(a:winid,
-      \ 'if s:tree_search[0] == "/" | call search(@/, "c") | '
-      \ . 'elseif s:tree_search[0] == "?" | call search(@/, "bc") | endif')
+      \ 'if s:expl_search[0] == "/" | call search(@/, "c") | '
+      \ . 'elseif s:expl_search[0] == "?" | call search(@/, "bc") | endif')
     call histadd('/', @/)
-    let s:tree_search = ''
-  elseif a:key == s:erase_smtreekey
+    let s:expl_search = ''
+  elseif a:key == s:erase_smexplkey
     if s:search_cursor > 1
-      let s:tree_search = slice(s:tree_search, 0, s:search_cursor - 1)
-        \ . slice(s:tree_search, s:search_cursor)
+      let s:expl_search = slice(s:expl_search, 0, s:search_cursor - 1)
+        \ . slice(s:expl_search, s:search_cursor)
       let s:search_cursor -= 1
     endif
-  elseif a:key == s:exit_smtreekey
-    let s:tree_search = ''
-  elseif a:key == s:next_smtreekey
+  elseif a:key == s:exit_smexplkey
+    let s:expl_search = ''
+  elseif a:key == s:next_smexplkey
     if s:search_hist_cursor < 0
       let s:search_hist_cursor += 1
-      let s:tree_search = '/' . histget('search', s:search_hist_cursor)
+      let s:expl_search = '/' . histget('search', s:search_hist_cursor)
     else
-      let s:tree_search = '/'
+      let s:expl_search = '/'
     endif
-    let s:search_cursor = len(s:tree_search)
-  elseif a:key == s:previous_smtreekey
+    let s:search_cursor = len(s:expl_search)
+  elseif a:key == s:previous_smexplkey
     if abs(s:search_hist_cursor) < &history
       let s:search_hist_cursor -= 1
-      let s:tree_search = '/' . histget('search', s:search_hist_cursor)
-      let s:search_cursor = len(s:tree_search)
+      let s:expl_search = '/' . histget('search', s:search_hist_cursor)
+      let s:search_cursor = len(s:expl_search)
     endif
-  elseif a:key == s:left_smtreekey
+  elseif a:key == s:left_smexplkey
     if s:search_cursor > 1
       let s:search_cursor -= 1
     endif
-  elseif a:key == s:right_smtreekey
-    if s:search_cursor < len(s:tree_search)
+  elseif a:key == s:right_smexplkey
+    if s:search_cursor < len(s:expl_search)
       let s:search_cursor += 1
     endif
-  elseif a:key == s:wide_left_smtreekey
+  elseif a:key == s:wide_left_smexplkey
     for l:i in range(s:search_cursor - 2, 0, -1)
-      if match(s:tree_search[l:i], '[[:punct:][:space:]]') > -1
+      if match(s:expl_search[l:i], '[[:punct:][:space:]]') > -1
         let s:search_cursor = l:i + 1
         break
       endif
     endfor
-  elseif a:key == s:wide_right_smtreekey
+  elseif a:key == s:wide_right_smexplkey
     let s:search_cursor =
-      \ match(s:tree_search[1:], '[[:punct:][:space:]]', s:search_cursor + 1)
+      \ match(s:expl_search[1:], '[[:punct:][:space:]]', s:search_cursor + 1)
     if s:search_cursor == -1
-      let s:search_cursor = len(s:tree_search)
+      let s:search_cursor = len(s:expl_search)
     endif
   else
-    let s:tree_search = slice(s:tree_search, 0, s:search_cursor) . a:key
-      \ . slice(s:tree_search, s:search_cursor)
+    let s:expl_search = slice(s:expl_search, 0, s:search_cursor) . a:key
+      \ . slice(s:expl_search, s:search_cursor)
     let s:search_cursor += 1
     call win_execute(a:winid, 'call clearmatches() | '
-      \ . 'try | call matchadd("Search", "\\%>1l" . s:tree_search[1:]) | '
+      \ . 'try | call matchadd("Search", "\\%>1l" . s:expl_search[1:]) | '
       \ . 'catch | endtry ')
   endif
 
-  if empty(s:tree_search)
-    let s:tree_searchmode = v:false
+  if empty(s:expl_search)
+    let s:expl_searchmode = v:false
   endif
-  echo slice(s:tree_search, 0, s:search_cursor)
+  echo slice(s:expl_search, 0, s:search_cursor)
   echohl Visual
-  echon slice(s:tree_search, s:search_cursor, s:search_cursor + 1)
-  if s:search_cursor == len(s:tree_search)
+  echon slice(s:expl_search, s:search_cursor, s:search_cursor + 1)
+  if s:search_cursor == len(s:expl_search)
     echon ' '
   endif
   echohl NONE
-  echon slice(s:tree_search, s:search_cursor + 1)
+  echon slice(s:expl_search, s:search_cursor + 1)
 endfunction
 
-function! s:TreeFilter(winid, key)
-  if !s:tree_searchmode
-    call s:NormalModeTreeFilter(a:winid, a:key)
+function! s:ExplorerFilter(winid, key)
+  if !s:expl_searchmode
+    call s:NormalModeExplorerFilter(a:winid, a:key)
   else
-    call s:SearchModeTreeFilter(a:winid, a:key)
+    call s:SearchModeExplorerFilter(a:winid, a:key)
   endif
   return v:true
 endfunction
 
-function! s:Tree()
+function! s:Explorer()
   let l:text = []
   let l:paths = []
 
-  let l:line = s:tree['.']
+  let l:line = s:expl['.']
   let l:property = [#{ type: 'rpath', col: 0, length: len(l:line) + 1 }]
 
   call add(l:text, #{ text: l:line, props: l:property })
 
-  let l:stack = s:tree[s:tree['.']]
+  let l:stack = s:expl[s:expl['.']]
   let l:visited = {}
-  let l:visited[s:tree['.']] = v:true
+  let l:visited[s:expl['.']] = v:true
   while !empty(l:stack)
     " pop
     let l:current = l:stack[-1]
@@ -984,7 +987,7 @@ function! s:Tree()
     if isdirectory(l:current)
       let l:name = fnamemodify(l:current, ':p:s?/$??:t')
       let l:id = '/'
-      if has_key(s:tree, l:current)
+      if has_key(s:expl, l:current)
         let l:arrow = '▾ '
       else
         let l:arrow = '▸ '
@@ -993,13 +996,13 @@ function! s:Tree()
 
     if s:show_dotfiles || l:name[0] != '.'
       let l:indent = repeat('  ',
-        \ s:Depth(l:current) - s:Depth(s:tree['.']) - isdirectory(l:current))
+        \ s:Depth(l:current) - s:Depth(s:expl['.']) - isdirectory(l:current))
       let l:line = l:indent . l:arrow . l:name . l:id
 
       " construct property
       let l:property = [#{ type: 'fpath', col: 0, length: winwidth(0) + 1}]
       if isdirectory(l:current)
-        if has_key(s:tree, l:current)
+        if has_key(s:expl, l:current)
           let l:property =
             \ [#{ type: 'odpath', col: 0, length: winwidth(0) + 1}]
         else
@@ -1015,19 +1018,19 @@ function! s:Tree()
     " continue dfs
     if !has_key(l:visited, l:current)
       let l:visited[l:current] = v:true
-      if has_key(s:tree, l:current)
-        let l:stack += s:tree[l:current]
+      if has_key(s:expl, l:current)
+        let l:stack += s:expl[l:current]
       endif
     endif
   endwhile
   return #{ text: l:text, paths: l:paths }
 endfunction
 
-function! s:DisplayTree()
-  call s:InitTree()
+function! s:DisplayExplorer()
+  call s:InitExplorer()
 
-  let l:tree = s:Tree()
-  let l:popup_id = popup_create(l:tree.text,
+  let l:expl = s:Explorer()
+  let l:popup_id = popup_create(l:expl.text,
   \ #{
     \ pos: 'topleft',
     \ line: win_screenpos(0)[0],
@@ -1039,13 +1042,13 @@ function! s:DisplayTree()
     \ maxheight: winheight(0),
     \ drag: v:true,
     \ wrap: v:true,
-    \ filter: expand('<SID>') . 'TreeFilter',
+    \ filter: expand('<SID>') . 'ExplorerFilter',
     \ mapping: v:false,
     \ scrollbar: v:true,
     \ cursorline: v:true,
   \ })
   call win_execute(l:popup_id, 'call cursor(2, 0)')
-  call s:HelpTree()
+  call s:HelpExplorer()
 endfunction
 
 "   }}}
@@ -1101,12 +1104,18 @@ function! s:UndotreeFilter(winid, key)
       \    . s:black    . ' ctermbg=' . s:purple_2
   elseif a:key == s:next_undokey
     call win_execute(a:winid, 'while line(".") < line("$")'
-      \ . '| call cursor(line(".") + 1, 0)'
-      \ . '| if match(getline("."), "\\d$") > -1 | break | endif | endwhile')
+      \ . ' | call cursor(line(".") + 1, 0)'
+      \ . ' | if match(getline("."), "\\d$") > -1 | break | endif | endwhile'
+      \ . ' | let s:first_line_undotree = line("w0")'
+      \ . ' | let s:last_line_undotree = line("w$")')
+    call s:UndotreeButtons(s:Undotree(), a:winid)
   elseif a:key == s:previous_undokey
     call win_execute(a:winid, 'while line(".") > 1'
-      \ . '| call cursor(line(".") - 1, 0)'
-      \ . '| if match(getline("."), "\\d$") > -1 | break | endif | endwhile')
+      \ . ' | call cursor(line(".") - 1, 0)'
+      \ . ' | if match(getline("."), "\\d$") > -1 | break | endif | endwhile'
+      \ . ' | let s:first_line_undotree = line("w0")'
+      \ . ' | let s:last_line_undotree = line("w$")')
+    call s:UndotreeButtons(s:Undotree(), a:winid)
   elseif a:key == s:select_undokey
     let s:line_undotree = ""
     call win_execute(a:winid, 'let s:line_undotree = getline(".")')
@@ -1253,21 +1262,55 @@ function! s:Undotree()
 
     if l:newline != " "
       let l:newline = substitute(l:newline, '\s*$', '', 'g')
-      let l:maxlength = max([l:maxlength, len(l:newline)])
-      call insert(l:text, l:newline, 0)
+      let l:maxlength = max([l:maxlength, len(split(l:newline, '\zs'))])
+      let l:properties =
+        \ [#{ type: 'statusline', col: 1, length: len(l:newline) }]
+      call insert(l:text, #{ text: l:newline, props: l:properties }, 0)
     endif
 
   endwhile
 
-  return #{ text: l:text, max_length: l:maxlength }
+  return #{ text: l:text, max_length: l:maxlength + 1 }
+endfunction
+
+function! s:UndotreeButtons(tree, winid)
+  let l:midlength = a:tree.max_length / 2
+  let l:modified = v:false
+  if s:first_line_undotree > 1
+    if l:midlength * 2 == a:tree.max_length
+      let a:tree.text[s:first_line_undotree - 1].text =
+      \ repeat(' ', l:midlength - 1) . '▲' . repeat(' ', l:midlength)
+    else
+      let a:tree.text[s:first_line_undotree - 1].text =
+      \ repeat(' ', l:midlength) . '▴' . repeat(' ', l:midlength)
+    endif
+    let a:tree.text[s:first_line_undotree - 1].props =
+    \ [#{ type: 'undobutton', col: 1,
+      \ length: len(a:tree.text[s:first_line_undotree - 1].text) }]
+    let l:modified = v:true
+  endif
+  if s:last_line_undotree < len(a:tree.text)
+    if l:midlength * 2 == a:tree.max_length
+      let a:tree.text[s:last_line_undotree - 1].text =
+      \ repeat(' ', l:midlength - 1) . '▼' . repeat(' ', l:midlength)
+    else
+      let a:tree.text[s:last_line_undotree - 1].text =
+      \ repeat(' ', l:midlength) . '▾' . repeat(' ', l:midlength)
+    endif
+    let a:tree.text[s:last_line_undotree - 1].props =
+    \ [#{ type: 'undobutton', col: 1,
+      \ length: len(a:tree.text[s:last_line_undotree - 1].text) }]
+    let l:modified = v:true
+  endif
+  if l:modified
+    call popup_settext(a:winid, a:tree.text)
+  endif
 endfunction
 
 function! s:DisplayUndotree()
   let s:change_before_undotree = changenr()
   let l:tree = s:Undotree()
-  execute 'highlight Pmenu         term=bold cterm=bold ctermfg=' . s:blue_4
-    \ . ' ctermbg=' . s:black . ' |
-    \      highlight PopupSelected term=bold cterm=bold ctermfg=' . s:pink
+  execute 'highlight PopupSelected term=bold cterm=bold ctermfg=' . s:pink
     \ . ' ctermbg=' . s:black
   let l:popup_id = popup_create(l:tree.text,
   \ #{
@@ -1283,13 +1326,16 @@ function! s:DisplayUndotree()
     \ wrap: v:true,
     \ filter: expand('<SID>') . 'UndotreeFilter',
     \ mapping: v:false,
-    \ scrollbar: v:true,
+    \ scrollbar: v:false,
     \ cursorline: v:true,
   \ })
-  call win_execute(l:popup_id, 'let c = 1 | call cursor(c, 0)'
+  call win_execute(l:popup_id, 'let w:c = 1 | call cursor(w:c, 0)'
   \ . ' | while substitute(getline("."), "\\D*\\(\\d\\+\\)$", "\\1", "")'
-  \ . ' != s:change_before_undotree'
-  \ . ' | let c += 1 | call cursor(c, 0) | endwhile')
+  \ . '   != s:change_before_undotree'
+  \ . ' | let w:c += 1 | call cursor(w:c, 0) | endwhile'
+  \ . ' | let s:first_line_undotree = line("w0")'
+  \ . ' | let s:last_line_undotree = line("w$")')
+  call s:UndotreeButtons(l:tree, l:popup_id)
   "diff --unchanged-line-format="" --new-line-format="+%dn %L" --old-line-format="-%dn %L$" file1 file2
   call s:HelpUndotree()
 endfunction
@@ -1384,7 +1430,7 @@ if exists('s:toggle_good_practices_mapping')          | unlet s:toggle_good_prac
 if exists('s:call_quit_function_mapping')             | unlet s:call_quit_function_mapping             | endif
 if exists('s:call_writequit_function_mapping')        | unlet s:call_writequit_function_mapping        | endif
 if exists('s:buffers_menu_mapping')                   | unlet s:buffers_menu_mapping                   | endif
-if exists('s:tree_mapping')                           | unlet s:tree_mapping                           | endif
+if exists('s:explorer_mapping')                       | unlet s:explorer_mapping                       | endif
 if exists('s:undotree_mapping')                       | unlet s:undotree_mapping                       | endif
 if exists('s:window_next_mapping')                    | unlet s:window_next_mapping                    | endif
 if exists('s:window_previous_mapping')                | unlet s:window_previous_mapping                | endif
@@ -1410,7 +1456,7 @@ const s:toggle_good_practices_mapping          = s:leader       .            '"'
 const s:call_quit_function_mapping             = s:leader       .            'q'
 const s:call_writequit_function_mapping        = s:leader       .            'w'
 const s:buffers_menu_mapping                   = s:leader       .       s:leader
-const s:tree_mapping                           = s:shift_leader . s:shift_leader
+const s:explorer_mapping                       = s:shift_leader . s:shift_leader
 const s:undotree_mapping                       = s:shift_leader .            'U'
 const s:window_next_mapping                    = s:leader       .      '<Right>'
 const s:window_previous_mapping                = s:leader       .       '<Left>'
@@ -1466,9 +1512,9 @@ execute 'nnoremap <silent> ' . s:animate_statusline_mapping
 execute 'nnoremap <silent> ' . s:buffers_menu_mapping
   \ . ' :call <SID>DisplayBuffersMenu()<CR>'
 
-" tree
-execute 'nnoremap <silent> ' . s:tree_mapping
-  \ . ' :call <SID>DisplayTree()<CR>'
+" explorer
+execute 'nnoremap <silent> ' . s:explorer_mapping
+  \ . ' :call <SID>DisplayExplorer()<CR>'
 
 " undotree
 execute 'nnoremap <silent> ' . s:undotree_mapping
@@ -1516,55 +1562,55 @@ const s:erase_menukey    =    "\<BS>"
 const s:help_menukey     =        "?"
 
 "   }}}
-"   Tree keys {{{2
+"   Explorer keys {{{2
 
-if exists('s:next_file_treekey')      | unlet s:next_file_treekey      | endif
-if exists('s:previous_file_treekey')  | unlet s:previous_file_treekey  | endif
-if exists('s:first_file_treekey')     | unlet s:first_file_treekey     | endif
-if exists('s:last_file_treekey')      | unlet s:last_file_treekey      | endif
-if exists('s:dotfiles_treekey')       | unlet s:dotfiles_treekey       | endif
-if exists('s:yank_treekey')           | unlet s:yank_treekey           | endif
-if exists('s:badd_treekey')           | unlet s:badd_treekey           | endif
-if exists('s:open_treekey')           | unlet s:open_treekey           | endif
-if exists('s:reset_treekey')          | unlet s:reset_treekey          | endif
-if exists('s:exit_treekey')           | unlet s:exit_treekey           | endif
-if exists('s:help_treekey')           | unlet s:help_treekey           | endif
-if exists('s:searchmode_treekey')     | unlet s:searchmode_treekey     | endif
-if exists('s:next_match_treekey')     | unlet s:next_match_treekey     | endif
-if exists('s:previous_match_treekey') | unlet s:previous_match_treekey | endif
-if exists('s:left_smtreekey')         | unlet s:left_smtreekey         | endif
-if exists('s:right_smtreekey')        | unlet s:right_smtreekey        | endif
-if exists('s:wide_left_smtreekey')    | unlet s:wide_left_smtreekey    | endif
-if exists('s:wide_right_smtreekey')   | unlet s:wide_right_smtreekey   | endif
-if exists('s:next_smtreekey')         | unlet s:next_smtreekey         | endif
-if exists('s:previous_smtreekey')     | unlet s:previous_smtreekey     | endif
-if exists('s:evaluate_smtreekey')     | unlet s:evaluate_smtreekey     | endif
-if exists('s:erase_smtreekey')        | unlet s:erase_smtreekey        | endif
-if exists('s:exit_smtreekey')         | unlet s:exit_smtreekey         | endif
+if exists('s:next_file_explkey')      | unlet s:next_file_explkey      | endif
+if exists('s:previous_file_explkey')  | unlet s:previous_file_explkey  | endif
+if exists('s:first_file_explkey')     | unlet s:first_file_explkey     | endif
+if exists('s:last_file_explkey')      | unlet s:last_file_explkey      | endif
+if exists('s:dotfiles_explkey')       | unlet s:dotfiles_explkey       | endif
+if exists('s:yank_explkey')           | unlet s:yank_explkey           | endif
+if exists('s:badd_explkey')           | unlet s:badd_explkey           | endif
+if exists('s:open_explkey')           | unlet s:open_explkey           | endif
+if exists('s:reset_explkey')          | unlet s:reset_explkey          | endif
+if exists('s:exit_explkey')           | unlet s:exit_explkey           | endif
+if exists('s:help_explkey')           | unlet s:help_explkey           | endif
+if exists('s:searchmode_explkey')     | unlet s:searchmode_explkey     | endif
+if exists('s:next_match_explkey')     | unlet s:next_match_explkey     | endif
+if exists('s:previous_match_explkey') | unlet s:previous_match_explkey | endif
+if exists('s:left_smexplkey')         | unlet s:left_smexplkey         | endif
+if exists('s:right_smexplkey')        | unlet s:right_smexplkey        | endif
+if exists('s:wide_left_smexplkey')    | unlet s:wide_left_smexplkey    | endif
+if exists('s:wide_right_smexplkey')   | unlet s:wide_right_smexplkey   | endif
+if exists('s:next_smexplkey')         | unlet s:next_smexplkey         | endif
+if exists('s:previous_smexplkey')     | unlet s:previous_smexplkey     | endif
+if exists('s:evaluate_smexplkey')     | unlet s:evaluate_smexplkey     | endif
+if exists('s:erase_smexplkey')        | unlet s:erase_smexplkey        | endif
+if exists('s:exit_smexplkey')         | unlet s:exit_smexplkey         | endif
 
-const s:next_file_treekey      =    "\<Down>"
-const s:previous_file_treekey  =      "\<Up>"
-const s:first_file_treekey     =          "g"
-const s:last_file_treekey      =          "G"
-const s:dotfiles_treekey       =          "."
-const s:yank_treekey           =          "y"
-const s:badd_treekey           =          "b"
-const s:open_treekey           =          "o"
-const s:reset_treekey          =          "c"
-const s:exit_treekey           =     "\<Esc>"
-const s:help_treekey           =          "?"
-const s:searchmode_treekey     =          "/"
-const s:next_match_treekey     =          "n"
-const s:previous_match_treekey =          "N"
-const s:right_smtreekey        =   "\<Right>"
-const s:left_smtreekey         =    "\<Left>"
-const s:wide_right_smtreekey   = "\<C-Right>"
-const s:wide_left_smtreekey    =  "\<C-Left>"
-const s:next_smtreekey         =    "\<Down>"
-const s:previous_smtreekey     =      "\<Up>"
-const s:evaluate_smtreekey     =   "\<Enter>"
-const s:erase_smtreekey        =      "\<BS>"
-const s:exit_smtreekey         =     "\<Esc>"
+const s:next_file_explkey      =    "\<Down>"
+const s:previous_file_explkey  =      "\<Up>"
+const s:first_file_explkey     =          "g"
+const s:last_file_explkey      =          "G"
+const s:dotfiles_explkey       =          "."
+const s:yank_explkey           =          "y"
+const s:badd_explkey           =          "b"
+const s:open_explkey           =          "o"
+const s:reset_explkey          =          "c"
+const s:exit_explkey           =     "\<Esc>"
+const s:help_explkey           =          "?"
+const s:searchmode_explkey     =          "/"
+const s:next_match_explkey     =          "n"
+const s:previous_match_explkey =          "N"
+const s:right_smexplkey        =   "\<Right>"
+const s:left_smexplkey         =    "\<Left>"
+const s:wide_right_smexplkey   = "\<C-Right>"
+const s:wide_left_smexplkey    =  "\<C-Left>"
+const s:next_smexplkey         =    "\<Down>"
+const s:previous_smexplkey     =      "\<Up>"
+const s:evaluate_smexplkey     =   "\<Enter>"
+const s:erase_smexplkey        =      "\<BS>"
+const s:exit_smexplkey         =     "\<Esc>"
 
 "   }}}
 "   Obsession keys {{{2
