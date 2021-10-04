@@ -2,8 +2,11 @@
 
 " - buffers menu: test
 " - explorer: - test
-" - plugins: - undotree
-"            - rainbow parenthesis
+"             - hijack netrw ?
+" - undotree: - test
+"             - fix display border diff popup window
+"             - fix scrolland diff popup window
+" - plugins: - rainbow parenthesis
 "            - tag list
 
 " }}}
@@ -276,7 +279,8 @@ endfunction
 " Style {{{1
 "   Palette {{{2
 
-if exists('s:red') | unlet s:red | endif
+if exists('s:red_1') | unlet s:red_1 | endif
+if exists('s:red_2') | unlet s:red_2 | endif
 if exists('s:pink') | unlet s:pink | endif
 if exists('s:orange_1') | unlet s:orange_1 | endif
 if exists('s:orange_2') | unlet s:orange_2 | endif
@@ -290,13 +294,15 @@ if exists('s:blue_3') | unlet s:blue_3 | endif
 if exists('s:blue_4') | unlet s:blue_4 | endif
 if exists('s:green_1') | unlet s:green_1 | endif
 if exists('s:green_2') | unlet s:green_2 | endif
+if exists('s:green_3') | unlet s:green_3 | endif
 if exists('s:white_1') | unlet s:white_1 | endif
 if exists('s:white_2') | unlet s:white_2 | endif
 if exists('s:grey_1') | unlet s:grey_1 | endif
 if exists('s:grey_2') | unlet s:grey_2 | endif
 if exists('s:black') | unlet s:black | endif
 
-const s:red = 196
+const s:red_1 = 196
+const s:red_2 = 1
 const s:pink = 205
 const s:orange_1 = 202
 const s:orange_2 = 209
@@ -310,6 +316,7 @@ const s:blue_3 = 111
 const s:blue_4 = 45
 const s:green_1 = 42
 const s:green_2 = 120
+const s:green_3 = 2
 const s:white_1 = 147
 const s:white_2 = 153
 const s:grey_1 = 236
@@ -326,7 +333,7 @@ set background=dark | highlight clear | if exists('syntax_on') | syntax reset
 set wincolor=NormalAlt
 
 execute 'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:grey_2   . ' ctermbg=' . s:black    . ' |
-  \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red      .                            ' |
+  \      highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:red_1    .                            ' |
   \      highlight       BuffersMenuBorders term=bold         cterm=bold         ctermfg=' . s:blue_4   .                            ' |
   \      highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
   \      highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:green_2  . ' ctermbg=' . s:black    . ' |
@@ -335,6 +342,8 @@ execute 'highlight       Buffer             term=bold         cterm=bold        
   \      highlight       Help               term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:pink     . ' ctermbg=' . s:black    . ' |
   \      highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
+  \      highlight       DiffAdd            term=NONE         cterm=NONE         ctermfg=' . s:green_3  . ' ctermbg=' . s:black    . ' |
+  \      highlight       DiffDelete         term=NONE         cterm=NONE         ctermfg=' . s:red_2    . ' ctermbg=' . s:black    . ' |
   \      highlight       UndoButton         term=bold,reverse cterm=bold,reverse ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
   \      highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:white_2  . ' ctermbg=' . s:black    . ' |
@@ -346,7 +355,7 @@ execute 'highlight       Buffer             term=bold         cterm=bold        
   \      highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
   \      highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:blue_2   . ' ctermbg=' . s:black    . ' |
   \      highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-  \      highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+  \      highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:red_1    . ' ctermbg=' . s:black    . ' |
   \      highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:purple_2 . ' ctermbg=' . s:black    . ' |
   \      highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
   \      highlight       Visual             term=reverse      cterm=reverse                                 ctermbg=' . s:black    . ' |
@@ -354,8 +363,8 @@ execute 'highlight       Buffer             term=bold         cterm=bold        
   \      highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
   \      highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:green_1  . ' ctermbg=' . s:black    . ' |
   \      highlight       Tag                term=NONE         cterm=NONE         ctermfg=' . s:blue_3   . ' ctermbg=' . s:black    . ' |
-  \      highlight       Error                                                   ctermfg=' . s:black    . ' ctermbg=' . s:red      . ' |
-  \      highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:red      . ' ctermbg=' . s:black    . ' |
+  \      highlight       Error                                                   ctermfg=' . s:black    . ' ctermbg=' . s:red_1    . ' |
+  \      highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:red_1    . ' ctermbg=' . s:black    . ' |
   \      highlight       Todo               term=standout                        ctermfg=' . s:black    . ' ctermbg=' . s:blue_1   . ' |
   \      highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:blue_4   . ' ctermbg=' . s:black    . ' |
   \      highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:blue_1   . ' ctermbg=' . s:black    . ' |
@@ -406,12 +415,16 @@ if index(prop_type_list(), 'key')        != -1 | call prop_type_delete('key')   
 if index(prop_type_list(), 'help')       != -1 | call prop_type_delete('help')       | endif
 if index(prop_type_list(), 'mode')       != -1 | call prop_type_delete('mode')       | endif
 if index(prop_type_list(), 'undobutton') != -1 | call prop_type_delete('undobutton') | endif
+if index(prop_type_list(), 'diffadd')    != -1 | call prop_type_delete('diffadd')    | endif
+if index(prop_type_list(), 'diffdelete') != -1 | call prop_type_delete('diffdelete') | endif
 
 call prop_type_add('statusline', #{ highlight: 'StatusLine' })
-call prop_type_add('key',        #{ highlight: 'HelpKey' })
-call prop_type_add('help',       #{ highlight: 'Help' })
-call prop_type_add('mode',       #{ highlight: 'HelpMode' })
+call prop_type_add('key',        #{ highlight: 'HelpKey'    })
+call prop_type_add('help',       #{ highlight: 'Help'       })
+call prop_type_add('mode',       #{ highlight: 'HelpMode'   })
 call prop_type_add('undobutton', #{ highlight: 'UndoButton' })
+call prop_type_add('diffadd',    #{ highlight: 'DiffAdd'    })
+call prop_type_add('diffdelete', #{ highlight: 'DiffDelete' })
 
 "     Buffers menu {{{3
 
@@ -553,7 +566,7 @@ function! s:HelpBuffersMenu()
                              \ time: 10000,
                              \ border: [1, 0, 0, 0],
                              \ borderchars: ['━'],
-                             \ borderhighlight: ["StatusLine"],
+                             \ borderhighlight: ['StatusLine'],
                              \ highlight: 'Help',
                              \ })
 endfunction
@@ -565,8 +578,8 @@ let s:menu_bufnr = ''
 
 function! s:ReplaceCursorOnCurrentBuffer(winid)
   call win_execute(a:winid,
-    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),
-    \ {_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
+    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),'
+    \ . '{_, val -> val.bufnr}), winbufnr(s:win_before_menu)) + 1, 0)')
 endfunction
 
 function! s:BuffersMenuFilter(winid, key)
@@ -1095,10 +1108,12 @@ endfunction
 
 "     }}}
 
-function! s:Diff(winid)
-  call win_execute(a:winid, 'let s:line_undotree = getline(".")')
+let s:undotree = {}
+
+function! s:Diff(treepopup_id)
+  call win_execute(a:treepopup_id, 'let s:line_undotree = line(".")')
   let l:newchange = changenr()
-  let l:oldchange = substitute(s:line_undotree, '\D*\(\d\+\)$', '\1', '')
+  let l:oldchange = s:undotree.meta[s:line_undotree - 1]
 
   let l:eventignore_backup = &eventignore
   set eventignore=all
@@ -1107,7 +1122,7 @@ function! s:Diff(winid)
   execute 'silent undo ' . l:oldchange
   let l:old = getbufline(bufnr(), 1, '$')
   execute 'silent undo ' . l:newchange
-  call winrestview(savedview)
+  call winrestview(l:savedview)
 
   let l:tmp1 = tempname()
   let l:tmp2 = tempname()
@@ -1118,8 +1133,8 @@ function! s:Diff(winid)
     echoerr 'Can not write to temp file: ' . l:tmp2
   endif
   let l:diffcommand = 'diff --unchanged-line-format=""'
-    \ . ' --new-line-format="+%dn %L" --old-line-format="-%dn %L$"'
-  let diff = systemlist(l:diffcommand . ' ' . l:tmp1 . ' ' . l:tmp2)
+    \ . ' --new-line-format="-%dn: %L" --old-line-format="+%dn: %L"'
+  let l:text = systemlist(l:diffcommand . ' ' . l:tmp1 . ' ' . l:tmp2)
   if delete(l:tmp1) != 0
     echoerr 'Can not delete temp file: ' . l:tmp1
   endif
@@ -1127,35 +1142,56 @@ function! s:Diff(winid)
     echoerr 'Can not delete temp file: ' . l:tmp2
   endif
   let &eventignore = l:eventignore_backup
+
+  for l:i in range(len(l:text))
+    let l:properties = []
+    if l:text[l:i][0] == '+'
+      let l:properties =
+        \ [ #{ type: 'diffadd', col: 1, length: len(l:text[l:i]) - 1 }]
+    elseif l:text[l:i][0] == '-'
+      let l:properties =
+        \ [ #{ type: 'diffdelete', col: 1, length: len(l:text[l:i]) - 1 }]
+    endif
+    let l:text[l:i] = #{ text: l:text[l:i][1:], props: l:properties }
+  endfor
+
+  call popup_settext(s:diffpopup_id, l:text)
 endfunction
 
 function! s:UndotreeFilter(winid, key)
   if a:key == s:exit_undokey
-    call popup_clear()
     execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-      \    . s:black    . ' ctermbg=' . s:purple_2
+      \ . s:black . ' ctermbg=' . s:purple_2
+    call popup_clear()
   elseif a:key == s:next_undokey
-    call win_execute(a:winid, 'while line(".") < line("$")'
-      \ . ' | call cursor(line(".") + 1, 0)'
-      \ . ' | if match(getline("."), "\\d$") > -1 | break | endif | endwhile'
-      \ . ' | let s:first_line_undotree = line("w0")'
-      \ . ' | let s:last_line_undotree = line("w$")')
-    call s:UndotreeButtons(s:Undotree(), a:winid)
-    #call s:Diff(a:winid)
-  elseif a:key == s:previous_undokey
+    let s:undotree = s:Undotree()
     call win_execute(a:winid, 'while line(".") > 1'
       \ . ' | call cursor(line(".") - 1, 0)'
-      \ . ' | if match(getline("."), "\\d$") > -1 | break | endif | endwhile'
-      \ . ' | let s:first_line_undotree = line("w0")'
-      \ . ' | let s:last_line_undotree = line("w$")')
-    call s:UndotreeButtons(s:Undotree(), a:winid)
-    #call s:Diff(a:winid)
+      \ . ' | if (line(".") < line("w0") + 1) && (line("w0") > 1)'
+      \ . ' | execute "normal! \<C-y>" | endif'
+      \ . ' | if s:undotree.meta[line(".") - 1] > -1 | break | endif'
+      \ . ' | endwhile')
+    call s:Diff(a:winid)
+    call s:UndotreeButtons(a:winid)
+  elseif a:key == s:previous_undokey
+    let s:undotree = s:Undotree()
+    call win_execute(a:winid, 'while line(".") < line("$")'
+      \ . ' | call cursor(line(".") + 1, 0)'
+      \ . ' | if (line(".") > line("w$") - 1) && (line("$") > line("w$"))'
+      \ . ' | execute "normal! \<C-e>" | endif'
+      \ . ' | if s:undotree.meta[line(".") - 1] > -1 | break | endif'
+      \ . ' | endwhile')
+    call s:Diff(a:winid)
+    call s:UndotreeButtons(a:winid)
+  elseif a:key == s:scrollup_undokey
+    call win_execute(s:diffpopup_id, 'call cursor(line("w0") - 1, 0)')
+  elseif a:key == s:scrolldown_undokey
+    call win_execute(s:diffpopup_id, 'call cursor(line("w$") + 1, 0)')
   elseif a:key == s:select_undokey
-    let s:line_undotree = ""
-    call win_execute(a:winid, 'let s:line_undotree = getline(".")')
-    execute 'silent undo '
-      \ . substitute(s:line_undotree, '\D*\(\d\+\)$', '\1', '')
-    call popup_settext(a:winid, s:Undotree().text)
+    call win_execute(a:winid, 'let s:line_undotree = line(".")')
+    execute 'silent undo ' . s:undotree.meta[s:line_undotree - 1]
+    let s:undotree = s:Undotree()
+    call popup_settext(a:winid, s:undotree.text)
   elseif a:key == s:help_undokey
     call HelpUndotree()
   endif
@@ -1181,6 +1217,7 @@ function! s:Undotree()
   let l:rawtree = undotree().entries
   let l:tree = #{ seq: 0, p: [] }
   let l:text = []
+  let l:meta = []
   let l:maxlength = 0
 
   call s:ParseNode(l:rawtree, l:tree)
@@ -1225,8 +1262,10 @@ function! s:Undotree()
     endif
 
     let l:newline = " "
+    let l:newmeta = -1
     let l:node = l:slots[l:index]
     if type(l:node) == v:t_string
+      let l:newmeta = -1
       if l:index + 1 != len(l:slots)
         for l:i in range(len(l:slots))
           if l:i < l:index
@@ -1241,6 +1280,7 @@ function! s:Undotree()
     endif
 
     if type(l:node) == v:t_dict
+      let l:newmeta = l:node.seq
       for l:i in range(len(l:slots))
         if l:index == l:i
           if l:node.seq == changenr()
@@ -1266,6 +1306,7 @@ function! s:Undotree()
     endif
 
     if type(l:node) == v:t_list
+      let l:newmeta = -1
       for l:k in range(len(l:slots))
         if l:k < l:index
           let l:newline = l:newline . '| '
@@ -1301,67 +1342,71 @@ function! s:Undotree()
       let l:properties =
         \ [#{ type: 'statusline', col: 1, length: len(l:newline) }]
       call insert(l:text, #{ text: l:newline, props: l:properties }, 0)
+      call insert(l:meta, l:newmeta, 0)
     endif
 
   endwhile
 
-  return #{ text: l:text, max_length: l:maxlength + 1 }
+  return #{ text: l:text, meta: l:meta, max_length: l:maxlength + 1 }
 endfunction
 
-function! s:UndotreeButtons(tree, winid)
-  let l:midlength = a:tree.max_length / 2
-  let l:modified = v:false
+function! s:UndotreeButtons(winid)
+  let l:midlength = s:undotree.max_length / 2
+  let l:modified = 0
+  call win_execute(a:winid, 'let s:first_line_undotree = line("w0")'
+    \ . ' | let s:last_line_undotree = line("w$")')
   if s:first_line_undotree > 1
-    if l:midlength * 2 == a:tree.max_length
-      let a:tree.text[s:first_line_undotree - 1].text =
+    if l:midlength * 2 == s:undotree.max_length
+      let s:undotree.text[s:first_line_undotree - 1].text =
       \ repeat(' ', l:midlength - 1) . '▲' . repeat(' ', l:midlength)
     else
-      let a:tree.text[s:first_line_undotree - 1].text =
+      let s:undotree.text[s:first_line_undotree - 1].text =
       \ repeat(' ', l:midlength) . '▴' . repeat(' ', l:midlength)
     endif
-    let a:tree.text[s:first_line_undotree - 1].props =
+    let s:undotree.text[s:first_line_undotree - 1].props =
     \ [#{ type: 'undobutton', col: 1,
-      \ length: len(a:tree.text[s:first_line_undotree - 1].text) }]
-    let l:modified = v:true
+      \ length: len(s:undotree.text[s:first_line_undotree - 1].text) }]
+    let l:modified = 1
   endif
-  if s:last_line_undotree < len(a:tree.text)
-    if l:midlength * 2 == a:tree.max_length
-      let a:tree.text[s:last_line_undotree - 1].text =
+  if s:last_line_undotree < len(s:undotree.text)
+    if l:midlength * 2 == s:undotree.max_length
+      let s:undotree.text[s:last_line_undotree - 1].text =
       \ repeat(' ', l:midlength - 1) . '▼' . repeat(' ', l:midlength)
     else
-      let a:tree.text[s:last_line_undotree - 1].text =
+      let s:undotree.text[s:last_line_undotree - 1].text =
       \ repeat(' ', l:midlength) . '▾' . repeat(' ', l:midlength)
     endif
-    let a:tree.text[s:last_line_undotree - 1].props =
+    let s:undotree.text[s:last_line_undotree - 1].props =
     \ [#{ type: 'undobutton', col: 1,
-      \ length: len(a:tree.text[s:last_line_undotree - 1].text) }]
-    let l:modified = v:true
+      \ length: len(s:undotree.text[s:last_line_undotree - 1].text) }]
+    let l:modified = 2
   endif
-  if l:modified
-    call popup_settext(a:winid, a:tree.text)
+  if l:modified > 0
+    call popup_settext(a:winid, s:undotree.text)
   endif
 endfunction
 
 function! s:DisplayUndotree()
   if !buflisted(bufnr()) || !bufloaded(bufnr())
-    echoerr "Unlisted or Unloaded current buffer. Can't use undo tree."
+    echoerr "Unlisted or Unloaded current buffer. Can not use undo tree."
     return
   endif
 
   let s:change_before_undotree = changenr()
-  let l:tree = s:Undotree()
-  execute 'highlight PopupSelected ctermfg=' . s:pink . ' ctermbg=' . s:black
-  let l:popup_id = popup_create(l:tree.text,
+  let s:undotree = s:Undotree()
+  execute 'highlight PopupSelected term=bold cterm=bold ctermfg=' . s:pink
+    \ . ' ctermbg=' . s:black
+  let l:popup_id = popup_create(s:undotree.text,
   \ #{
     \ pos: 'topleft',
     \ line: win_screenpos(0)[0],
     \ col: win_screenpos(0)[1],
     \ zindex: 2,
-    \ minwidth: l:tree.max_length,
-    \ maxwidth: l:tree.max_length,
+    \ minwidth: s:undotree.max_length,
+    \ maxwidth: s:undotree.max_length,
     \ minheight: winheight(0),
     \ maxheight: winheight(0),
-    \ drag: v:true,
+    \ drag: v:false,
     \ wrap: v:true,
     \ filter: expand('<SID>') . 'UndotreeFilter',
     \ mapping: v:false,
@@ -1369,12 +1414,29 @@ function! s:DisplayUndotree()
     \ cursorline: v:true,
   \ })
   call win_execute(l:popup_id, 'let w:c = 1 | call cursor(w:c, 0)'
-  \ . ' | while substitute(getline("."), "\\D*\\(\\d\\+\\)$", "\\1", "")'
-  \ . '   != s:change_before_undotree'
-  \ . ' | let w:c += 1 | call cursor(w:c, 0) | endwhile'
-  \ . ' | let s:first_line_undotree = line("w0")'
-  \ . ' | let s:last_line_undotree = line("w$")')
-  call s:UndotreeButtons(l:tree, l:popup_id)
+  \ . ' | while s:undotree.meta[line(".") - 1] != s:change_before_undotree'
+  \ . ' | let w:c += 1 | call cursor(w:c, 0) | endwhile')
+  call s:UndotreeButtons(l:popup_id)
+
+  let s:diffpopup_id = popup_create('',
+  \ #{
+    \ pos: 'topleft',
+    \ line: win_screenpos(0)[0],
+    \ col: win_screenpos(0)[1] + s:undotree.max_length,
+    \ zindex: 2,
+    \ minwidth: winwidth(0),
+    \ maxwidth: winwidth(0),
+    \ minheight: winheight(0),
+    \ maxheight: winheight(0),
+    \ drag: v:false,
+    \ wrap: v:true,
+    \ mapping: v:false,
+    \ scrollbar: v:true,
+    \ border: [0, 0, 0, 1],
+    \ borderchars: ['│'],
+    \ borderhighlight: ['VertSplit'],
+  \ })
+
   call s:HelpUndotree()
 endfunction
 
@@ -1662,17 +1724,21 @@ const s:no_obsessionkey  = "n"
 "   }}}
 "   Undo tree keys {{{2
 
-if exists('s:next_undokey')     | unlet s:next_undokey     | endif
-if exists('s:previous_undokey') | unlet s:previous_undokey | endif
-if exists('s:select_undokey')   | unlet s:select_undokey   | endif
-if exists('s:exit_undokey')     | unlet s:exit_undokey     | endif
-if exists('s:help_undokey')     | unlet s:help_undokey     | endif
+if exists('s:next_undokey')       | unlet s:next_undokey       | endif
+if exists('s:previous_undokey')   | unlet s:previous_undokey   | endif
+if exists('s:scrollup_undokey')   | unlet s:scrollup_undokey   | endif
+if exists('s:scrolldown_undokey') | unlet s:scrolldown_undokey | endif
+if exists('s:select_undokey')     | unlet s:select_undokey     | endif
+if exists('s:exit_undokey')       | unlet s:exit_undokey       | endif
+if exists('s:help_undokey')       | unlet s:help_undokey       | endif
 
-const s:next_undokey     =  "\<Down>"
-const s:previous_undokey =    "\<Up>"
-const s:select_undokey   = "\<Enter>"
-const s:exit_undokey     =   "\<Esc>"
-const s:help_undokey     =        "h"
+const s:next_undokey       =    "\<Up>"
+const s:previous_undokey   =  "\<Down>"
+const s:scrollup_undokey   =  "\<Left>"
+const s:scrolldown_undokey = "\<Right>"
+const s:select_undokey     = "\<Enter>"
+const s:exit_undokey       =   "\<Esc>"
+const s:help_undokey       =        "h"
 
 "   }}}
 " }}}
