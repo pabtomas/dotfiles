@@ -10,6 +10,8 @@
 "             - help function
 " - plugins: - rainbow parenthesis
 "            - tag list
+" - see other VIMRC
+" - use ctags
 
 " }}}
 " Quality of life {{{1
@@ -66,10 +68,37 @@ set backspace=indent,eol,start
 function! FoldText()
   return substitute(substitute(foldtext(), '\s*\(\d\+\)',
     \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' [\1', ''),
-    \ 'lines: "\s\+', 'lines] ', '')
+    \ 'lines: ["#]\s\+', 'lines] ', '')
 endfunction
 
 set foldtext=FoldText()
+
+" gg and G normal map open folds
+set foldopen+=jump
+
+" undo persistence
+set undofile
+set undodir=~/.cache/vim/undo
+if !isdirectory(&undodir)
+  call mkdir(&undodir, 'p', 0700)
+endif
+
+" more commands saved in history
+set history=1000
+
+" highlight and marks not restored
+set viminfo='0,f0,h
+
+" vimdiff vertical splits
+set diffopt=vertical
+
+" write swap files to disk and trigger CursorHold event faster
+set updatetime=200
+
+" use popup menu & additional info when completion is used
+set completeopt=menu,preview
+
+" set tags=./tags;
 
 " }}}
 " Performance {{{1
@@ -245,6 +274,9 @@ call prop_type_add('diffdelete', #{ highlight: 'DiffDelete' })
 " allow to switch between buffers without writting them
 set hidden
 
+" use already opened buffers instead of loading it in a new window
+set switchbuf=useopen
+
 "   }}}
 "   Functions {{{2
 
@@ -284,6 +316,10 @@ endfunction
 " Dependencies {{{1
 
 function! s:CheckDependencies()
+  if !has('unix')
+    echoerr 'Personal Error Message: your VimRC needs UNIX OS to be'
+      \ . ' functionnal'
+  endif
   if v:version < 802
     let l:major_version = v:version / 100
     echoerr 'Personal Error Message: your VimRC needs Vim 8.2 to be'
@@ -701,7 +737,7 @@ function! s:BuffersMenu()
   endfor
 
   let s:menu.width = l:width
-  let s:menu.height = len(l:text)
+  let s:menu.height = len(s:menu.text)
 endfunction
 
 function! s:DisplayBuffersMenu()
@@ -1157,10 +1193,17 @@ if exists('s:obsessionkey') | unlet s:obsessionkey | endif
 "     Options {{{3
 
 " unset blank (empty windows), options (sometimes buggy) and tabpages (unused)
-set sessionoptions=buffers,curdir,folds,help,winsize,terminal
+set sessionoptions=buffers,sesdir,folds,help,winsize
 
 "     }}}
 "     Functions {{{3
+
+function! s:SourceObsession()
+  if !argc() && empty(v:this_session) && filereadable('Session.vim')
+    \ && !&modified
+    source Session.vim
+  endif
+endfunction
 
 function! s:DisplayObsession()
   if len(getbufinfo(#{ buflisted: 1 })) > 1
@@ -1653,6 +1696,7 @@ if exists('s:mappings') | unlet s:mappings | endif | const s:mappings = #{
 \   next_window:                s:leaders.global .        '<Right>',
 \   previous_window:            s:leaders.global .         '<Left>',
 \   unfold:                                               '<Space>',
+\   tag:                        s:leaders.global .              't',
 \   messages:                   s:leaders.global .              'm',
 \   map:                        s:leaders.global .             'mm',
 \   autocompletion:                                       '<S-Tab>',
@@ -1729,6 +1773,9 @@ execute 'nnoremap <silent> ' . s:mappings.previous_window
 execute 'nnoremap '          . s:mappings.unfold
   \ . ' za'
 
+execute 'nnoremap '          . s:mappings.tag
+  \ . ' <C-]>'
+
 " for debug purposes
 execute 'nnoremap '          . s:mappings.messages
   \ . ' :messages<CR>'
@@ -1744,6 +1791,9 @@ execute 'inoremap '          . s:mappings.autocompletion
 
 " avoid intuitive write usage
 cnoreabbrev w update
+
+" save buffer as sudo user
+cnoreabbrev sw silent write ! sudo tee % > /dev/null
 
 " avoid intuitive tabpage usage
 cnoreabbrev tabe silent tabonly
@@ -1769,6 +1819,12 @@ augroup vimrc_autocomands
   autocmd VimEnter * :call <SID>CheckDependencies()
 
 "   }}}
+"   Sudo-save autoreload autocommands {{{2
+
+  " reload file automatically after sudo save command
+  autocmd FileChangedShell * let v:fcs_choice="reload"
+
+"   }}}
 "   Color autocommands {{{2
 
   autocmd WinEnter * set wincolor=NormalAlt
@@ -1786,8 +1842,9 @@ augroup vimrc_autocomands
 
 "   }}}
 "   Plugins autocommands {{{3
-"     Obsessions autocommands {{{3
+"     Obsession autocommands {{{3
 
+  autocmd VimEnter * nested :call <SID>SourceObsession()
   autocmd VimLeavePre * :call <SID>DisplayObsession()
 
 "     }}}

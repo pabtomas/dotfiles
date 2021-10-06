@@ -516,6 +516,90 @@ function main () {
   echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
     " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
 
+  echo -n -e $(dashed "Checking Universal Ctags version")$' '
+  if [ $(which ctags | wc -l) -eq 1 ]; then
+    echo -e ${GREEN}"OK"${RESET}
+    echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+      | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")\n"
+  else
+    echo -e ${RED}"Not OK"${RESET}
+  fi
+
+  DASHED=${CLEAR}$(dashed "Cloning Universal Ctags repository")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  unbuffer git clone https://github.com/universal-ctags/ctags.git \
+    ${CLONE_DIR}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+  if [ $? -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && sudo \rm -rf ${CLONE_DIR} && return 1
+  fi
+
+  DASHED=$(dashed "Configuring Universal Ctags")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  command cd ${CLONE_DIR}/ctags && sh ${CLONE_DIR}/ctags/autogen.sh \
+    &> /dev/null && ${CLONE_DIR}/ctags/configure &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && sudo \rm -rf ${CLONE_DIR} && return 1
+  fi
+
+  DASHED=$(dashed "Compiling Universal Ctags")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  make &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && sudo \rm -rf ${CLONE_DIR} && return 1
+  fi
+
+  DASHED=$(dashed "Installing Universal Ctags")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  sudo make install &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && sudo \rm -rf ${CLONE_DIR} && return 1
+  fi
+
+  echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+    | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")\n"
+
   echo -n -e $(dashed "Checking TMUX version")$' '
   if [ $(which tmux | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
@@ -837,9 +921,8 @@ function main () {
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
-    [ $(which crontab | wc -l) -eq 1 ] && crontab -l 2> /dev/null \
-      | { cat ; echo "* * * * * export DISPLAY=:0.0;\
-sh /opt/scripts/redshift.sh > /dev/null 2>&1"; } | crontab - &> /dev/null
+    [ $(which crontab | wc -l) -eq 1 ] && echo "* * * * * export DISPLAY=:0.0;\
+ sh /opt/scripts/redshift.sh > /dev/null 2>&1" | crontab - &> /dev/null
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
