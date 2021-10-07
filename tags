@@ -1,0 +1,69 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/ptomas/Workspace/dotfiles/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/p5.9.20211003.0/
+Bar	vim/.vimrc	/^function! Bar()$/;"	f
+ComputeStatusLineLength	vim/.vimrc	/^function! ComputeStatusLineLength()$/;"	f
+EndLine	vim/.vimrc	/^function! EndLine()$/;"	f
+EndMode	vim/.vimrc	/^function! EndMode()$/;"	f
+EndWave	vim/.vimrc	/^function! EndWave()$/;"	f
+FileName	vim/.vimrc	/^function! FileName(modified, is_current_win)$/;"	f
+FoldText	vim/.vimrc	/^function! FoldText()$/;"	f
+IndexedMatch	vim/.vimrc	/^function! IndexedMatch()$/;"	f
+Mode	vim/.vimrc	/^function! Mode()$/;"	f
+StartLine	vim/.vimrc	/^function! StartLine()$/;"	f
+StartMode	vim/.vimrc	/^function! StartMode()$/;"	f
+StartWave	vim/.vimrc	/^function! StartWave()$/;"	f
+TotalMatch	vim/.vimrc	/^function! TotalMatch()$/;"	f
+s:ActiveListedBuffers	vim/.vimrc	/^function! s:ActiveListedBuffers()$/;"	f
+s:AnimateStatusLine	vim/.vimrc	/^function! s:AnimateStatusLine()$/;"	f
+s:BuffersMenu	vim/.vimrc	/^function! s:BuffersMenu()$/;"	f
+s:BuffersMenuFilter	vim/.vimrc	/^function! s:BuffersMenuFilter(winid, key)$/;"	f
+s:CheckDependencies	vim/.vimrc	/^function! s:CheckDependencies()$/;"	f
+s:CloseLonelyUnlistedBuffers	vim/.vimrc	/^function! s:CloseLonelyUnlistedBuffers()$/;"	f
+s:Depth	vim/.vimrc	/^function! s:Depth(path)$/;"	f
+s:Diff	vim/.vimrc	/^function! s:Diff(treepopup_id)$/;"	f
+s:DisplayBuffersMenu	vim/.vimrc	/^function! s:DisplayBuffersMenu()$/;"	f
+s:DisplayExplorer	vim/.vimrc	/^function! s:DisplayExplorer()$/;"	f
+s:DisplayObsession	vim/.vimrc	/^function! s:DisplayObsession()$/;"	f
+s:DisplayUndotree	vim/.vimrc	/^function! s:DisplayUndotree()$/;"	f
+s:Explorer	vim/.vimrc	/^function! s:Explorer()$/;"	f
+s:ExplorerFilter	vim/.vimrc	/^function! s:ExplorerFilter(winid, key)$/;"	f
+s:ExtraSpaces	vim/.vimrc	/^function! s:ExtraSpaces()$/;"	f
+s:FullPath	vim/.vimrc	/^function! s:FullPath(path, value)$/;"	f
+s:HelpBuffersMenu	vim/.vimrc	/^function! s:HelpBuffersMenu()$/;"	f
+s:HelpExplorer	vim/.vimrc	/^function! s:HelpExplorer()$/;"	f
+s:HelpUndotree	vim/.vimrc	/^function! s:HelpUndotree()$/;"	f
+s:HighlightStatusLines	vim/.vimrc	/^function! s:HighlightStatusLines()$/;"	f
+s:InitExplorer	vim/.vimrc	/^function! s:InitExplorer()$/;"	f
+s:Key	vim/.vimrc	/^function! s:Key(keys)$/;"	f
+s:NextWindow	vim/.vimrc	/^function! s:NextWindow()$/;"	f
+s:NormalModeExplorerFilter	vim/.vimrc	/^function! s:NormalModeExplorerFilter(winid, key)$/;"	f
+s:OverLength	vim/.vimrc	/^function! s:OverLength()$/;"	f
+s:ParseNode	vim/.vimrc	/^function! s:ParseNode(in, out)$/;"	f
+s:PathCompare	vim/.vimrc	/^function! s:PathCompare(file1, file2)$/;"	f
+s:PrefillShFile	vim/.vimrc	/^function! s:PrefillShFile()$/;"	f
+s:PreviousWindow	vim/.vimrc	/^function! s:PreviousWindow()$/;"	f
+s:ReplaceCursorOnCurrentBuffer	vim/.vimrc	/^function! s:ReplaceCursorOnCurrentBuffer(winid)$/;"	f
+s:RestoreStatusLines	vim/.vimrc	/^function! s:RestoreStatusLines(timer_id)$/;"	f
+s:SearchModeExplorerFilter	vim/.vimrc	/^function! s:SearchModeExplorerFilter(winid, key)$/;"	f
+s:SourceObsession	vim/.vimrc	/^function! s:SourceObsession()$/;"	f
+s:StaticLine	vim/.vimrc	/^function! s:StaticLine()$/;"	f
+s:StatusLineData	vim/.vimrc	/^function! s:StatusLineData()$/;"	f
+s:ToggleRedHighlight	vim/.vimrc	/^function! s:ToggleRedHighlight()$/;"	f
+s:Undotree	vim/.vimrc	/^function! s:Undotree()$/;"	f
+s:UndotreeButtons	vim/.vimrc	/^function! s:UndotreeButtons(winid)$/;"	f
+s:UndotreeFilter	vim/.vimrc	/^function! s:UndotreeFilter(winid, key)$/;"	f
+s:Wave	vim/.vimrc	/^function! s:Wave(start, end)$/;"	f
+s:WaveLine	vim/.vimrc	/^function! s:WaveLine(timer_id)$/;"	f
+s:redhighlight	vim/.vimrc	/^let s:redhighlight = #{$/;"	v
+s:statusline	vim/.vimrc	/^let s:statusline = #{$/;"	v
+s:statusline	vim/.vimrc	/^let s:statusline.timer =$/;"	v
+vimrc_autocomands	vim/.vimrc	/^augroup vimrc_autocomands$/;"	a

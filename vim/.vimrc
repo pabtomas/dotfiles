@@ -14,7 +14,25 @@
 " - use ctags
 
 " }}}
+" Dependencies {{{1
+
+function! s:CheckDependencies()
+  if !has('unix')
+    echoerr 'Personal Error Message: your VimRC needs UNIX OS to be'
+      \ . ' functionnal'
+  endif
+  if v:version < 802
+    let l:major_version = v:version / 100
+    echoerr 'Personal Error Message: your VimRC needs Vim 8.2 to be'
+      \ . ' functionnal. Your Vim version is ' l:major_version . '.'
+      \ . (v:version - l:major_version * 100)
+    quit
+  endif
+endfunction
+
+" }}}
 " Quality of life {{{1
+"   Options {{{2
 
 " Vi default options unused
 set nocompatible
@@ -65,24 +83,6 @@ set wildmenu
 " give backspace its original power
 set backspace=indent,eol,start
 
-function! FoldText()
-  return substitute(substitute(foldtext(), '\s*\(\d\+\)',
-    \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' [\1', ''),
-    \ 'lines: ["#]\s\+', 'lines] ', '')
-endfunction
-
-set foldtext=FoldText()
-
-" gg and G normal map open folds
-set foldopen+=jump
-
-" undo persistence
-set undofile
-set undodir=~/.cache/vim/undo
-if !isdirectory(&undodir)
-  call mkdir(&undodir, 'p', 0700)
-endif
-
 " more commands saved in history
 set history=1000
 
@@ -98,10 +98,10 @@ set updatetime=200
 " use popup menu & additional info when completion is used
 set completeopt=menu,preview
 
-" set tags=./tags;
+" specify tags file path (semi-colon really important)
+set tags=./tags;
 
-" }}}
-" Performance {{{1
+"     Performance {{{3
 
 " draw only when needed
 set lazyredraw
@@ -109,9 +109,168 @@ set lazyredraw
 " indicates terminal connection, Vim will be faster
 set ttyfast
 
+"     }}}
+"   }}}
+"   Search {{{2
+"     Variables & constants {{{3
+
+if exists('s:search') | unlet s:search | endif
+  \ | const s:search = #{
+\   sensitive_replace: ':s/\%V//g<Left><Left><Left>',
+\   insensitive_replace: ':s/\%V\c//g<Left><Left><Left>',
+\   insensitive: '/\c',
+\ }
+
+"     }}}
+"     Functions {{{3
+
+function! s:NextSearch()
+  normal! n
+  if foldlevel('.') > 0
+    foldopen!
+  endif
+  normal! zz
+endfunction
+
+function! s:PreviousSearch()
+  normal! N
+  if foldlevel('.') > 0
+    foldopen!
+  endif
+  normal! zz
+endfunction
+
+"     }}}
+"   }}}
+"   Buffers {{{2
+"     Options {{{3
+
+" allow to switch between buffers without writting them
+set hidden
+
+" use already opened buffers instead of loading it in a new window
+set switchbuf=useopen
+
+"     }}}
+"     Functions {{{3
+
+" return number of active listed-buffers
+function! s:ActiveListedBuffers()
+  return len(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> !val.hidden}))
+endfunction
+
+" close Vim if only unlisted-buffers are active
+function! s:CloseLonelyUnlistedBuffers()
+  if s:ActiveListedBuffers() == 0
+    quitall
+  endif
+endfunction
+
+"     }}}
+"   }}}
+"   Windows {{{2
+
+function! s:NextWindow()
+  if winnr() < winnr('$')
+    execute winnr() + 1 . 'wincmd w'
+  else
+    1wincmd w
+  endif
+endfunction
+
+function! s:PreviousWindow()
+  if winnr() > 1
+    execute winnr() - 1 . 'wincmd w'
+  else
+    execute winnr('$') . 'wincmd w'
+  endif
+endfunction
+
+"   }}}
+"   Visual {{{2
+"     Options {{{3
+
 " avoid visual mod lags
 set noshowcmd
 
+"     }}}
+"     Functions {{{3
+
+function! s:VisualUp()
+  if line('.') - v:count1 > 0
+    execute "'" . '<,' . "'" . '>move ' . "'" . '<-' . (v:count1 + 1)
+  else
+    '<,'>move 0
+  endif
+  normal! gv
+endfunction
+
+function! s:VisualDown()
+  if line('.') + line("'>") - line ("'<") + v:count1 > line('$')
+    '<,'>move $
+  else
+    execute "'" . '<,' . "'" . '>move ' . "'" . '>+' . v:count1
+  endif
+  normal! gv
+endfunction
+
+"     }}}
+"   }}}
+"   Blank {{{2
+
+function! s:BlankUp()
+  call append(line('.') - 1, repeat([''], v:count1))
+endfunction
+
+function! s:BlankDown()
+  call append(line('.'), repeat([''], v:count1))
+endfunction
+
+"   }}}
+"   Redhighlight {{{2
+"     Variables & constants {{{3
+
+let s:redhighlight = #{
+\   active: v:true,
+\   command: 'highlight RedHighlight ctermfg=White ctermbg=DarkRed',
+\ }
+
+"     }}}
+"     Functions {{{3
+
+function! s:RedHighlight()
+  " highlight unused spaces before the end of the line
+  call matchadd('RedHighlight', '\v\s+$')
+  " highlight characters which overpass 80 columns
+  call matchadd('RedHighlight', '\v%80v.*')
+endfunction
+
+" clear/add red highlight matching patterns
+function! s:ToggleRedHighlight()
+  if s:redhighlight.active
+    highlight clear RedHighlight | set synmaxcol=3000
+  else
+    execute s:redhighlight.command | set synmaxcol=200
+  endif
+  let s:redhighlight.active = !s:redhighlight.active
+endfunction
+
+"     }}}
+"   }}}
+"   VimRC {{{2
+
+function! s:OpenVimRC()
+  vsplit $MYVIMRC
+endfunction
+
+if !exists("*s:SourceVimRC")
+  function! s:SourceVimRC()
+    execute 'source ' . $MYVIMRC
+    call s:HighlightStatusLines()
+  endfunction
+endif
+
+"   }}}
 " }}}
 " Style {{{1
 "   Palette {{{2
@@ -220,6 +379,8 @@ highlight  link Delimiter          Special
 highlight  link SpecialComment     Special
 highlight  link Debug              Special
 
+execute s:redhighlight.command
+
 "   }}}
 "   Text properties {{{2
 
@@ -267,68 +428,29 @@ call prop_type_add('diffdelete', #{ highlight: 'DiffDelete' })
 
 "     }}}
 "   }}}
-" }}}
-" Buffers {{{1
-"   Options {{{2
+"   Folds {{{2
+"     Functions {{{3
 
-" allow to switch between buffers without writting them
-set hidden
+function! s:Unfold()
+  normal za
+endfunction
 
-" use already opened buffers instead of loading it in a new window
-set switchbuf=useopen
+function! FoldText()
+  return substitute(substitute(foldtext(), '\s*\(\d\+\)',
+    \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' [\1', ''),
+    \ 'lines: ["#]\s\+', 'lines] ', '')
+endfunction
 
+"     }}}
+"     Options {{{3
+
+set foldtext=FoldText()
+
+" gg and G normal map open folds
+set foldopen+=jump
+
+"     }}}
 "   }}}
-"   Functions {{{2
-
-" return number of active listed-buffers
-function! s:ActiveListedBuffers()
-  return len(filter(getbufinfo(#{ buflisted: 1 }), {_, val -> !val.hidden}))
-endfunction
-
-" close Vim if only unlisted-buffers are active
-function! s:CloseLonelyUnlistedBuffers()
-  if s:ActiveListedBuffers() == 0
-    quitall
-  endif
-endfunction
-
-"   }}}
-" }}}
-" Windows {{{1
-
-function! s:NextWindow()
-  if winnr() < winnr('$')
-    execute winnr() + 1 . 'wincmd w'
-  else
-    1wincmd w
-  endif
-endfunction
-
-function! s:PreviousWindow()
-  if winnr() > 1
-    execute winnr() - 1 . 'wincmd w'
-  else
-    execute winnr('$') . 'wincmd w'
-  endif
-endfunction
-
-" }}}
-" Dependencies {{{1
-
-function! s:CheckDependencies()
-  if !has('unix')
-    echoerr 'Personal Error Message: your VimRC needs UNIX OS to be'
-      \ . ' functionnal'
-  endif
-  if v:version < 802
-    let l:major_version = v:version / 100
-    echoerr 'Personal Error Message: your VimRC needs Vim 8.2 to be'
-      \ . ' functionnal. Your Vim version is ' l:major_version . '.'
-      \ . (v:version - l:major_version * 100)
-    quit
-  endif
-endfunction
-
 " }}}
 " Plugins {{{1
 "   Waveline {{{2
@@ -510,7 +632,7 @@ function! s:WaveLine(timer_id)
   endif
 endfunction
 
-function! s:AnimateStatusLine()
+function! s:WaveLine()
   let s:statusline.wavecolor = 0.0
   let s:statusline.start = localtime()
   call timer_pause(s:statusline.timer, v:false)
@@ -542,42 +664,6 @@ call timer_pause(s:statusline.timer, v:true)
 call s:StaticLine()
 
 " }}}
-"   Redhighlight {{{2
-"     Variables & constants {{{3
-
-let s:redhighlight = #{
-\   active: v:true,
-\   command: 'highlight RedHighlight ctermfg=White ctermbg=DarkRed',
-\ }
-
-"     }}}
-"     Functions {{{3
-
-" highlight unused spaces before the end of the line
-function! s:ExtraSpaces()
-  call matchadd('RedHighlight', '\v\s+$')
-endfunction
-
-" highlight characters which overpass 80 columns
-function! s:OverLength()
-  call matchadd('RedHighlight', '\v%80v.*')
-endfunction
-
-" clear/add red highlight matching patterns
-function! s:ToggleRedHighlight()
-  if s:redhighlight.active
-    highlight clear RedHighlight | set synmaxcol=3000
-  else
-    execute s:redhighlight.command | set synmaxcol=200
-  endif
-  let s:redhighlight.active = !s:redhighlight.active
-endfunction
-
-"     }}}
-
-execute s:redhighlight.command
-
-"   }}}
 "   Buffers menu {{{2
 "     Keys {{{3
 
@@ -644,7 +730,7 @@ endfunction
 function! s:ReplaceCursorOnCurrentBuffer(winid)
   call win_execute(a:winid,
     \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),'
-    \ . '{_, val -> val.bufnr}), winbufnr(s:menu.win_backup)) + 1, 0)')
+    \ . '{ _, val -> val.bufnr }), winbufnr(s:menu.win_backup)) + 1, 0)')
 endfunction
 
 function! s:BuffersMenuFilter(winid, key)
@@ -668,7 +754,7 @@ function! s:BuffersMenuFilter(winid, key)
           bnext
         endif
         execute 'silent bdelete ' . l:buf
-        let s:menu = s:BufferMenu()
+        let s:menu = s:UpdateBuffersMenu()
         call popup_settext(a:winid, s:menu.text)
         call s:ReplaceCursorOnCurrentBuffer(a:winid)
       endif
@@ -683,8 +769,8 @@ function! s:BuffersMenuFilter(winid, key)
     if (a:key != "0") || (len(s:menu.input) > 0)
       let s:menu.input = s:menu.input . a:key
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
-        \ {_, val -> val.bufnr}),
-        \ {_, val -> match(val, '^' . s:menu.input) > -1})
+        \ { _, val -> val.bufnr }),
+        \ { _, val -> match(val, '^' . s:menu.input) > -1 })
       if len(l:matches) == 1
         execute 'buffer ' . l:matches[0]
         call s:ReplaceCursorOnCurrentBuffer(a:winid)
@@ -699,8 +785,8 @@ function! s:BuffersMenuFilter(winid, key)
     let s:menu.input = s:menu.input[:-2]
     if len(s:menu.input) > 0
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
-        \ {_, val -> val.bufnr}),
-        \ {_, val -> match(val, '^' . s:menu.input) > -1})
+        \ { _, val -> val.bufnr }),
+        \ { _, val -> match(val, '^' . s:menu.input) > -1 })
       echo s:menu.input . ' (' . len(l:matches) . ' matches:'
         \ . string(l:matches) . ')'
     else
@@ -712,7 +798,7 @@ function! s:BuffersMenuFilter(winid, key)
   return v:true
 endfunction
 
-function! s:BuffersMenu()
+function! s:UpdateBuffersMenu()
   let l:listed_buf = getbufinfo(#{ buflisted: 1 })
   let l:listedbuf_nb = len(l:listed_buf)
 
@@ -740,9 +826,9 @@ function! s:BuffersMenu()
   let s:menu.height = len(s:menu.text)
 endfunction
 
-function! s:DisplayBuffersMenu()
+function! s:BuffersMenu()
   let s:menu = {}
-  call s:BuffersMenu()
+  call s:UpdateBuffersMenu()
   let s:menu.buf_backup = bufnr()
   let s:menu.win_backup = winnr()
   let s:menu.input = ''
@@ -904,8 +990,8 @@ function! s:InitExplorer()
   let s:explorer.tree = {}
   let s:explorer.tree['.'] = fnamemodify('.', ':p')
   let s:explorer.tree[fnamemodify('.', ':p')] = sort(map(reverse(
-    \ readdir('.', '1', #{ sort: 'icase' })), {_, val ->
-      \ s:FullPath(s:explorer.tree['.'], val)}), expand('<SID>')
+    \ readdir('.', '1', #{ sort: 'icase' })), { _, val ->
+      \ s:FullPath(s:explorer.tree['.'], val) }), expand('<SID>')
       \ . 'PathCompare')
   let s:explorer.SEARCH = v:true
   let s:explorer.NORMAL = v:false
@@ -922,7 +1008,7 @@ endfunction
 function! s:NormalModeExplorerFilter(winid, key)
   if a:key == s:explorerkey.dotfiles
     let s:explorer.dotfiles = !s:explorer.dotfiles
-    call s:Explorer()
+    call s:UpdateExplorer()
     call popup_settext(a:winid, s:explorer.text)
     call win_execute(a:winid, 'if line(".") > line("$") |'
       \ . ' call cursor(line("$"), 0) | endif')
@@ -955,10 +1041,10 @@ function! s:NormalModeExplorerFilter(winid, key)
         unlet s:explorer.tree[l:path]
       else
         let s:explorer.tree[l:path] = sort(map(reverse(
-          \ readdir(l:path, '1', #{ sort: 'icase' })), {_, val ->
-            \s:FullPath(l:path, val)}), expand('<SID>') . 'PathCompare')
+          \ readdir(l:path, '1', #{ sort: 'icase' })), { _, val ->
+            \s:FullPath(l:path, val) }), expand('<SID>') . 'PathCompare')
       endif
-      call s:Explorer()
+      call s:UpdateExplorer()
       call popup_settext(a:winid, s:explorer.text)
     else
       call popup_clear()
@@ -967,7 +1053,7 @@ function! s:NormalModeExplorerFilter(winid, key)
     endif
   elseif a:key == s:explorerkey.reset
     call s:InitExplorer()
-    call s:Explorer()
+    call s:UpdateExplorer()
     call popup_settext(a:winid, s:explorer.text)
     call win_execute(a:winid, 'call cursor(2, 0)')
   elseif a:key == s:explorerkey.next_match
@@ -1089,7 +1175,7 @@ function! s:ExplorerFilter(winid, key)
   return v:true
 endfunction
 
-function! s:Explorer()
+function! s:UpdateExplorer()
   let s:explorer.text = []
   let s:explorer.paths = []
 
@@ -1152,12 +1238,12 @@ function! s:Explorer()
   endwhile
 endfunction
 
-function! s:DisplayExplorer()
+function! s:Explorer()
   let s:explorer = {}
   call s:InitExplorer()
   let s:explorer.dotfiles = v:false
 
-  call s:Explorer()
+  call s:UpdateExplorer()
   let l:popup_id = popup_create(s:explorer.text,
   \ #{
     \ pos: 'topleft',
@@ -1198,6 +1284,11 @@ set sessionoptions=buffers,sesdir,folds,help,winsize
 "     }}}
 "     Functions {{{3
 
+function! s:Obsession()
+  mksession!
+  call s:HighlightStatusLines()
+endfunction
+
 function! s:SourceObsession()
   if !argc() && empty(v:this_session) && filereadable('Session.vim')
     \ && !&modified
@@ -1205,7 +1296,7 @@ function! s:SourceObsession()
   endif
 endfunction
 
-function! s:DisplayObsession()
+function! s:PromptObsession()
   if len(getbufinfo(#{ buflisted: 1 })) > 1
     call inputsave()
     while v:true
@@ -1318,7 +1409,7 @@ function! s:UndotreeFilter(winid, key)
     call popup_clear()
     unlet s:undo
   elseif a:key == s:undokey.next
-    call s:Undotree()
+    call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
       \ . ' | call cursor(line(".") - 1, 0)'
       \ . ' | if (line(".") < line("w0") + 1) && (line("w0") > 1)'
@@ -1328,7 +1419,7 @@ function! s:UndotreeFilter(winid, key)
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
   elseif a:key == s:undokey.previous
-    call s:Undotree()
+    call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") < line("$")'
       \ . ' | call cursor(line(".") + 1, 0)'
       \ . ' | if (line(".") > line("w$") - 1) && (line("$") > line("w$"))'
@@ -1347,7 +1438,7 @@ function! s:UndotreeFilter(winid, key)
     call win_execute(a:winid, 'let s:undo.line = line(".")')
     execute 'silent undo ' . s:undo.meta[s:undo.line - 1]
     unlet s:undo.line
-    call s:Undotree()
+    call s:UpdateUndotree()
     call popup_settext(a:winid, s:undo.text)
   elseif a:key == s:undokey.help
     call HelpUndotree()
@@ -1370,7 +1461,7 @@ function! s:ParseNode(in, out)
   endfor
 endfunction
 
-function! s:Undotree()
+function! s:UpdateUndotree()
   let l:rawtree = undotree().entries
   let s:undo.tree = #{ seq: 0, p: [] }
   let s:undo.text = []
@@ -1546,7 +1637,7 @@ function! s:UndotreeButtons(winid)
   endif
 endfunction
 
-function! s:DisplayUndotree()
+function! s:Undotree()
   if !buflisted(bufnr()) || !bufloaded(bufnr())
     echoerr 'Personal Error Message: Unlisted or Unloaded current buffer.'
       \ . ' Can not use undo tree.'
@@ -1554,10 +1645,10 @@ function! s:DisplayUndotree()
   endif
 
   let s:undo = {}
-  call s:Undotree()
+  call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
   execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-    . s:palette.pink . ' ctermbg=' . s:palette.black
+    \ . s:palette.pink . ' ctermbg=' . s:palette.black
   let l:popup_id = popup_create(s:undo.text,
   \ #{
     \ pos: 'topleft',
@@ -1605,7 +1696,7 @@ endfunction
 "   }}}
 "   Rainbow parenthesis {{{2
 "   }}}
-"   Tag summary {{{2
+"   Tag list {{{2
 "   }}}
 " }}}
 " Filetype specific {{{1
@@ -1677,6 +1768,19 @@ function! s:Key(keys)
   return l:text . ' >'
 endfunction
 
+function! s:Mappings()
+  let l:text = ""
+  let l:max = max(mapnew(s:mappings, { _, val -> len(split(val.key, '\zs')) }))
+  let test = values(s:mappings)
+  for l:mapping in sort(filter(values(s:mappings), 'v:val.order > 0'),
+  \ { val1, val2 -> val1.order - val2.order })
+    let l:text = l:text . l:mapping.mode . ' ' . l:mapping.key
+      \ . repeat(' ', l:max - len(split(l:mapping.key, '\zs')) + 1)
+      \ . l:mapping.description . "\n"
+  endfor
+  echo l:text
+endfunction
+
 "   }}}
 "   Variables & constants {{{2
 
@@ -1686,105 +1790,165 @@ if exists('s:leaders') | unlet s:leaders | endif | const s:leaders = #{
 \ }
 
 if exists('s:mappings') | unlet s:mappings | endif | const s:mappings = #{
-\   search_replace:                                             ':',
-\   insensitive_search_replace: s:leaders.global .              ':',
-\   insensitive_search:         s:leaders.global .              '/',
-\   past_unnamed_reg:           s:leaders.global .              'p',
-\   vsplit_vimrc:               s:leaders.global .              '&',
-\   source_vimrc:               s:leaders.shift  .              '1',
-\   nohighlight_search:         s:leaders.global .              'é',
-\   next_window:                s:leaders.global .        '<Right>',
-\   previous_window:            s:leaders.global .         '<Left>',
-\   unfold:                                               '<Space>',
-\   tag:                        s:leaders.global .              't',
-\   messages:                   s:leaders.global .              'm',
-\   map:                        s:leaders.global .             'mm',
-\   autocompletion:                                       '<S-Tab>',
-\   waveline:                   s:leaders.global .              's',
-\   redhighlight:               s:leaders.global .              '"',
-\   buffers_menu:               s:leaders.global . s:leaders.global,
-\   explorer:                   s:leaders.shift  .  s:leaders.shift,
-\   obsession:                  s:leaders.global .              'z',
-\   undotree:                   s:leaders.shift  .              'U',
+\   search_replace:             #{ key:                                 ':',
+  \ mode: 'v', description: 'Search and replace', order: 0 },
+\   insensitive_search_replace: #{ key: s:leaders.global .              ':',
+  \ mode: 'v', description: 'Case-insensitive search and replace', order: 1 },
+\   insensitive_search:         #{ key: s:leaders.global .              '/',
+  \ mode: 'n', description: 'Case-insensitive search', order: 2 },
+\   paste_unnamed_reg:          #{ key: s:leaders.global .              'p',
+  \ mode: 'c', description: 'Paste unnamed register in command-line', order: 3 },
+\   vsplit_vimrc:               #{ key: s:leaders.global .              '&',
+  \ mode: 'n', description: 'Open .vimrc in vertical split', order: 4 },
+\   source_vimrc:               #{ key: s:leaders.shift  .              '1',
+  \ mode: 'n', description: 'Source .vimrc', order: 5 },
+\   nohighlight_search:         #{ key: s:leaders.global .              'é',
+  \ mode: 'n', description: 'No highlight search', order: 6 },
+\   next_window:                #{ key: s:leaders.global .        '<Right>',
+  \ mode: 'n', description: 'Next window', order: 7 },
+\   previous_window:            #{ key: s:leaders.global .         '<Left>',
+  \ mode: 'n', description: 'Previous window', order: 8 },
+\   next_search:                #{ key:                                 'n',
+  \ mode: 'n', description: 'Next search', order: -1 },
+\   previous_search:            #{ key:                                 'N',
+  \ mode: 'n', description: 'Previous search', order: -1 },
+\   unfold:                     #{ key:                           '<Space>',
+  \ mode: 'n', description: 'Unfold', order: 9 },
+\   next_tag:                   #{ key: s:leaders.global .              't',
+  \ mode: 'n', description: 'Jump to definition of tag under cursor', order: 10 },
+\   previous_tag:               #{ key: s:leaders.global .              'T',
+  \ mode: 'n', description: 'Jump to position before previous tag', order: 11 },
+\   messages:                   #{ key: s:leaders.global .              'm',
+  \ mode: 'n', description: 'Messages log', order: 12 },
+\   map:                        #{ key: s:leaders.global .             'mm',
+  \ mode: 'n', description: 'Mappings', order: 13 },
+\   autocompletion:             #{ key:                           '<S-Tab>',
+  \ mode: 'i', description: 'Auto-completion', order: 14 },
+\   visualup:                   #{ key:                            '<S-Up>',
+  \ mode: 'v', description: 'Move up visual block', order: 15 },
+\   visualdown:                 #{ key:                          '<S-Down>',
+  \ mode: 'v', description: 'Move down visual block', order: 16 },
+\   blankup:                    #{ key: s:leaders.global .           '<CR>',
+  \ mode: 'n', description: 'Append blank line(s) under current line', order: 17 },
+\   blankdown:                  #{ key:                              '<CR>',
+  \ mode: 'n', description: 'Append blank line(s) above current line', order: 18 },
+\   waveline:                   #{ key: s:leaders.global .              's',
+  \ mode: 'n', description: 'Waveline', order: 19 },
+\   redhighlight:               #{ key: s:leaders.global .              '"',
+  \ mode: 'n', description: 'Toggle Redhighlight', order: 20 },
+\   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
+  \ mode: 'n', description: 'Open Buffers Menu', order: 21 },
+\   explorer:                   #{ key: s:leaders.shift  .  s:leaders.shift,
+  \ mode: 'n', description: 'Open File Explorer', order: 22 },
+\   obsession:                  #{ key: s:leaders.global .              'z',
+  \ mode: 'n', description: 'Save session', order: 23 },
+\   undotree:                   #{ key: s:leaders.shift  .              'U',
+  \ mode: 'n', description: 'Open Undo Tree', order: 24 },
 \ }
 
 "   }}}
 
 " search and replace
-execute 'vnoremap '          . s:mappings.search_replace
-  \ . ' :s/\%V//g<Left><Left><Left>'
+execute s:mappings.search_replace.mode             . 'noremap '
+  \ . s:mappings.search_replace.key      . ' ' . s:search.sensitive_replace
 
 " search and replace (case-insensitive)
-execute 'vnoremap '          . s:mappings.insensitive_search_replace
-  \ . ' :s/\%V\c//g<Left><Left><Left>'
+execute s:mappings.insensitive_search_replace.mode . 'noremap '
+  \ . s:mappings.insensitive_search_replace.key
+  \ . ' ' . s:search.insensitive_replace
 
 " search (case-insensitive)
-execute 'nnoremap '          . s:mappings.insensitive_search
-  \ . ' /\c'
+execute s:mappings.insensitive_search.mode         . 'noremap '
+  \ . s:mappings.insensitive_search.key  . ' ' . s:search.insensitive
 
 " copy the unnamed register's content in the command line
 " unnamed register = any text deleted or yank (with y)
-execute 'cnoremap '          . s:mappings.past_unnamed_reg
-  \ . ' <C-R><C-O>"'
+execute s:mappings.paste_unnamed_reg.mode           . 'noremap '
+  \ . s:mappings.paste_unnamed_reg.key    . ' <C-R><C-O>"'
 
 " open .vimrc in a vertical split window
-execute 'nnoremap <silent> ' . s:mappings.vsplit_vimrc
-  \ . ' :vsplit $MYVIMRC<CR>'
+execute s:mappings.vsplit_vimrc.mode               . 'noremap '
+  \ . s:mappings.vsplit_vimrc.key        . ' <Cmd>call <SID>OpenVimRC()<CR>'
 
 " source .vimrc
-execute 'nnoremap <silent> ' . s:mappings.source_vimrc
-  \ . ' :source $MYVIMRC <bar> call <SID>HighlightStatusLines()<CR>'
+execute s:mappings.source_vimrc.mode               . 'noremap '
+  \ . s:mappings.source_vimrc.key        . ' <Cmd>call <SID>SourceVimRC()<CR>'
 
 " stop highlighting from the last search
-execute 'nnoremap <silent> ' . s:mappings.nohighlight_search
-  \ . ' :nohlsearch<CR>'
+execute s:mappings.nohighlight_search.mode         . 'noremap '
+  \ . s:mappings.nohighlight_search.key  . ' <Cmd>nohlsearch<CR>'
 
 " hide/show redhighlight
-execute 'nnoremap <silent> ' . s:mappings.redhighlight
-  \ . ' :call <SID>ToggleRedHighlight()<CR>'
+execute s:mappings.redhighlight.mode               . 'noremap '
+  \ . s:mappings.redhighlight.key
+  \ . ' <Cmd>call <SID>ToggleRedHighlight()<CR>'
 
 " create session
-execute 'nnoremap <silent> ' . s:mappings.obsession
-  \ . ' :mksession! <bar> call <SID>HighlightStatusLines()<CR>'
+execute s:mappings.obsession.mode                  . 'noremap '
+  \ . s:mappings.obsession.key           . ' <Cmd>call <SID>Obsession()<CR>'
 
 " animate statusline
-execute 'nnoremap <silent> ' . s:mappings.waveline
-  \ . ' :call <SID>AnimateStatusLine()<CR>'
+execute s:mappings.waveline.mode                   . 'noremap '
+  \ . s:mappings.waveline.key            . ' <Cmd>call <SID>WaveLine()<CR>'
 
 " buffers menu
-execute 'nnoremap <silent> ' . s:mappings.buffers_menu
-  \ . ' :call <SID>DisplayBuffersMenu()<CR>'
+execute s:mappings.buffers_menu.mode               . 'noremap '
+  \ . s:mappings.buffers_menu.key        . ' <Cmd>call <SID>BuffersMenu()<CR>'
 
 " explorer
-execute 'nnoremap <silent> ' . s:mappings.explorer
-  \ . ' :call <SID>DisplayExplorer()<CR>'
+execute s:mappings.explorer.mode                   . 'noremap '
+  \ . s:mappings.explorer.key            . ' <Cmd>call <SID>Explorer()<CR>'
 
 " undotree
-execute 'nnoremap <silent> ' . s:mappings.undotree
-  \ . ' :call <SID>DisplayUndotree()<CR>'
+execute s:mappings.undotree.mode                   . 'noremap '
+  \ . s:mappings.undotree.key            . ' <Cmd>call <SID>Undotree()<CR>'
 
 " windows navigation
-execute 'nnoremap <silent> ' . s:mappings.next_window
-  \ . ' :silent call <SID>NextWindow()<CR>'
-execute 'nnoremap <silent> ' . s:mappings.previous_window
-  \ . ' :silent call <SID>PreviousWindow()<CR>'
+execute s:mappings.next_window.mode                . 'noremap '
+  \ . s:mappings.next_window.key         . ' <Cmd>call <SID>NextWindow()<CR>'
+execute s:mappings.previous_window.mode            . 'noremap '
+  \ . s:mappings.previous_window.key
+  \ . ' <Cmd>call <SID>PreviousWindow()<CR>'
 
 " unfold vimscipt's folds
-execute 'nnoremap '          . s:mappings.unfold
-  \ . ' za'
+execute s:mappings.unfold.mode                     . 'noremap '
+  \ . s:mappings.unfold.key              . ' <Cmd>call <SID>Unfold()<CR>'
 
-execute 'nnoremap '          . s:mappings.tag
-  \ . ' <C-]>'
+" navigate between tags
+execute s:mappings.next_tag.mode                   . 'noremap '
+  \ . s:mappings.next_tag.key            . ' <C-]>'
+execute s:mappings.previous_tag.mode               . 'noremap '
+  \ . s:mappings.previous_tag.key        . ' <C-T>'
 
 " for debug purposes
-execute 'nnoremap '          . s:mappings.messages
-  \ . ' :messages<CR>'
-execute 'nnoremap '          . s:mappings.map
-  \ . ' :map<CR>'
+execute s:mappings.messages.mode                   . 'noremap '
+  \ . s:mappings.messages.key            . ' <Cmd>messages<CR>'
+execute s:mappings.map.mode                        . 'noremap '
+  \ . s:mappings.map.key                 . ' <Cmd>call <SID>Mappings()<CR>'
 
 " autocompletion
-execute 'inoremap '          . s:mappings.autocompletion
-  \ . ' <C-n>'
+execute s:mappings.autocompletion.mode             . 'noremap '
+  \ . s:mappings.autocompletion.key      . ' <C-n>'
+
+" move visual block
+execute s:mappings.visualup.mode                   . 'noremap <silent> '
+  \ . s:mappings.visualup.key
+  \ . ' :<C-U>silent call <SID>VisualUp()<CR>'
+execute s:mappings.visualdown.mode                 . 'noremap <silent> '
+  \ . s:mappings.visualdown.key
+  \ . ' :<C-U>silent call <SID>VisualDown()<CR>'
+
+" add blank lines
+execute s:mappings.blankup.mode                    . 'noremap '
+  \ . s:mappings.blankup.key             . ' <Cmd>call <SID>BlankUp()<CR>'
+execute s:mappings.blankdown.mode                  . 'noremap '
+  \ . s:mappings.blankdown.key           . ' <Cmd>call <SID>BlankDown()<CR>'
+
+" centered search
+execute s:mappings.next_search.mode                . 'noremap '
+  \ . s:mappings.next_search.key         . ' <Cmd>call <SID>NextSearch()<CR>'
+execute s:mappings.previous_search.mode            . 'noremap '
+  \ . s:mappings.previous_search.key     . ' <Cmd>call <SID>PreviousSearch()<CR>'
 
 " }}}
 " Abbreviations {{{1
@@ -1793,7 +1957,7 @@ execute 'inoremap '          . s:mappings.autocompletion
 cnoreabbrev w update
 
 " save buffer as sudo user
-cnoreabbrev sw silent write ! sudo tee % > /dev/null
+cnoreabbrev sw silent write ! sudo tee % > /dev/null | echo ''
 
 " avoid intuitive tabpage usage
 cnoreabbrev tabe silent tabonly
@@ -1832,8 +1996,7 @@ augroup vimrc_autocomands
 "   }}}
 "   Redhighlight autocommands {{{2
 
-  autocmd BufEnter * :silent call <SID>ExtraSpaces() |
-    \ silent call <SID>OverLength()
+  autocmd BufEnter * :silent call <SID>RedHighlight()
 
 "   }}}
 "   Buffers autocommands {{{2
@@ -1841,15 +2004,22 @@ augroup vimrc_autocomands
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
 
 "   }}}
-"   Plugins autocommands {{{3
+"   Plugins autocommands {{{2
 "     Obsession autocommands {{{3
 
   autocmd VimEnter * nested :call <SID>SourceObsession()
-  autocmd VimLeavePre * :call <SID>DisplayObsession()
+  autocmd VimLeavePre * :call <SID>PromptObsession()
 
 "     }}}
 "   }}}
-"   Filetype specific autocommands {{{3
+"   Filetype specific autocommands {{{2
+"     Bash autocommands {{{3
+
+  autocmd BufNewFile *.sh :call <SID>PrefillShFile()
+
+"     }}}
+"   }}}
+"   Folds autocommands {{{2
 "     Vimscript autocommands {{{3
 
   autocmd FileType vim setlocal foldmethod=marker
@@ -1858,11 +2028,6 @@ augroup vimrc_autocomands
 "     Tmux autocommands {{{3
 
   autocmd FileType tmux setlocal foldmethod=marker
-
-"     }}}
-"     Bash autocommands {{{3
-
-  autocmd BufNewFile *.sh :call <SID>PrefillShFile()
 
 "     }}}
 "   }}}
