@@ -230,7 +230,7 @@ alias gt='git tree'
 alias gu='git undo'
 
 function gc () {
-  git clone "$1" && command cd "$(basename "$1" .git)"
+  git clone "$@" && cd $(command ls -t | head -n1)
 }
 
 function gd () {
