@@ -1907,38 +1907,36 @@ if exists('s:mappings') | unlet s:mappings | endif | const s:mappings = #{
   \ mode: 'n', description: 'Unfold', order: 9 },
 \   follow_tag:                 #{ key: s:leaders.global .              't',
   \ mode: 'n', description: 'Follow tag under cursor', order: 10 },
-\   generate_tags:              #{ key: s:leaders.shift  .              'T',
-  \ mode: 'n', description: 'Generate tags', order: 11 },
 \   next_tag:                   #{ key:                                'TT',
-  \ mode: 'n', description: 'Next tag', order: 12 },
+  \ mode: 'n', description: 'Next tag', order: 11 },
 \   previous_tag:               #{ key:                                'tt',
-  \ mode: 'n', description: 'Previous tag', order: 13 },
+  \ mode: 'n', description: 'Previous tag', order: 12 },
 \   messages:                   #{ key: s:leaders.global .              'l',
-  \ mode: 'n', description: 'Messages', order: 14 },
+  \ mode: 'n', description: 'Messages', order: 13 },
 \   map:                        #{ key: s:leaders.global .              'm',
-  \ mode: 'n', description: 'Mappings', order: 15 },
+  \ mode: 'n', description: 'Mappings', order: 14 },
 \   autocompletion:             #{ key:                           '<S-Tab>',
-  \ mode: 'i', description: 'Auto-completion', order: 16 },
+  \ mode: 'i', description: 'Auto-completion', order: 15 },
 \   visualup:                   #{ key:                            '<S-Up>',
-  \ mode: 'v', description: 'Move up visual block', order: 17 },
+  \ mode: 'v', description: 'Move up visual block', order: 16 },
 \   visualdown:                 #{ key:                          '<S-Down>',
-  \ mode: 'v', description: 'Move down visual block', order: 18 },
+  \ mode: 'v', description: 'Move down visual block', order: 17 },
 \   blankup:                    #{ key: s:leaders.global .           '<CR>',
-  \ mode: 'n', description: 'Blank line under current line', order: 19 },
+  \ mode: 'n', description: 'Blank line under current line', order: 18 },
 \   blankdown:                  #{ key:                              '<CR>',
-  \ mode: 'n', description: 'Blank line above current line', order: 20 },
+  \ mode: 'n', description: 'Blank line above current line', order: 19 },
 \   waveline:                   #{ key: s:leaders.global .              's',
-  \ mode: 'n', description: 'Waveline', order: 21 },
+  \ mode: 'n', description: 'Waveline', order: 20 },
 \   redhighlight:               #{ key: s:leaders.global .              '"',
-  \ mode: 'n', description: 'Toggle Redhighlight', order: 22 },
+  \ mode: 'n', description: 'Toggle Redhighlight', order: 21 },
 \   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
-  \ mode: 'n', description: 'Open Buffers Menu', order: 23 },
+  \ mode: 'n', description: 'Open Buffers Menu', order: 22 },
 \   explorer:                   #{ key: s:leaders.shift  .  s:leaders.shift,
-  \ mode: 'n', description: 'Open File Explorer', order: 24 },
+  \ mode: 'n', description: 'Open File Explorer', order: 23 },
 \   obsession:                  #{ key: s:leaders.global .              'z',
-  \ mode: 'n', description: 'Save session', order: 25 },
+  \ mode: 'n', description: 'Save session', order: 24 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
-  \ mode: 'n', description: 'Open Undo Tree', order: 26 },
+  \ mode: 'n', description: 'Open Undo Tree', order: 25 },
 \ }
 
 "   }}}
@@ -2008,10 +2006,6 @@ execute s:mappings.previous_window.mode            . 'noremap '
 " unfold vimscipt's folds
 execute s:mappings.unfold.mode                     . 'noremap '
   \ . s:mappings.unfold.key              . ' <Cmd>call <SID>Unfold()<CR>'
-
-" generate tags
-execute s:mappings.generate_tags.mode              . 'noremap '
-  \ . s:mappings.generate_tags.key       . ' <Cmd>call <SID>GenerateTags()<CR>'
 
 " navigate between tags
 execute s:mappings.follow_tag.mode                 . 'noremap '
@@ -2108,6 +2102,7 @@ augroup vimrc_autocomands
 "   Tags autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>HighlightTags()
+  autocmd BufWritePost * :silent call <SID>GenerateTags()
 
 "   }}}
 "   Buffers autocommands {{{2
