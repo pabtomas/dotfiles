@@ -5,13 +5,12 @@
 "             - hijack netrw ?
 " - undotree: - test
 "             - fix display border diff popup window
-"             - fix scrolland diff popup window
+"             - fix scroll diff popup window
 "             - first/last mappings
 "             - help function
 " - plugins: - rainbow parenthesis
 "            - tag list
 " - see other VIMRC
-" - use ctags
 
 " }}}
 " Dependencies {{{1
@@ -285,7 +284,9 @@ function! s:HighlightTags()
     \ 'v:val == "Tag"'))
       call setmatches(filter(l:matches, { _, val -> val.group != 'Tag' }))
     endif
-    call matchadd('Tag', join(map(taglist('.*'), { _, val -> val.name }), '\|'))
+    call matchadd('Tag', join(sort(map(taglist('.*'), { _, val -> val.name }),
+      \ { val1, val2 -> len(split(val2, '\zs')) - len(split(val1, '\zs')) }),
+      \ '\|'))
   endif
 endfunction
 
@@ -299,6 +300,29 @@ function! s:GenerateTags()
 endfunction
 
 function! s:FollowTag()
+  let l:iskeyword_backup = ''
+  if &ft == 'vim'
+    let l:iskeyword_backup = &iskeyword
+    setlocal iskeyword+=:
+  endif
+  let l:cword = expand('<cword>')
+  execute 'tag ' . l:cword
+  if len(taglist('^' . l:cword . '$')) == 1
+    normal! zz
+  endif
+  if !empty(l:iskeyword_backup)
+    let &iskeyword = l:iskeyword_backup
+  endif
+endfunction
+
+function! s:NextTag()
+  tag
+  normal! zz
+endfunction
+
+function! s:PreviousTag()
+  pop
+  normal! zz
 endfunction
 
 "   }}}
@@ -1472,7 +1496,7 @@ function! s:UndotreeFilter(winid, key)
     call s:UpdateUndotree()
     call popup_settext(a:winid, s:undo.text)
   elseif a:key == s:undokey.help
-    call HelpUndotree()
+    call s:HelpUndotree()
   endif
   return v:true
 endfunction
@@ -1956,11 +1980,11 @@ execute s:mappings.generate_tags.mode              . 'noremap '
 
 " navigate between tags
 execute s:mappings.follow_tag.mode                 . 'noremap '
-  \ . s:mappings.follow_tag.key          . ' <C-]>'
+  \ . s:mappings.follow_tag.key          . ' <Cmd>call <SID>FollowTag()<CR>'
 execute s:mappings.next_tag.mode                   . 'noremap '
-  \ . s:mappings.next_tag.key            . ' <Cmd>tag<CR>'
+  \ . s:mappings.next_tag.key            . ' <Cmd>call <SID>NextTag()<CR>'
 execute s:mappings.previous_tag.mode               . 'noremap '
-  \ . s:mappings.previous_tag.key        . ' <Cmd>pop<CR>'
+  \ . s:mappings.previous_tag.key        . ' <Cmd>call <SID>PreviousTag()<CR>'
 
 " for debug purposes
 execute s:mappings.messages.mode                   . 'noremap '
@@ -2044,7 +2068,6 @@ augroup vimrc_autocomands
 "   Tags autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>HighlightTags()
-  autocmd FileType vim setlocal iskeyword+=:
 
 "   }}}
 "   Buffers autocommands {{{2
