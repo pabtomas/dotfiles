@@ -291,7 +291,8 @@ endfunction
 
 function! s:GenerateTags()
   if !empty(systemlist('which ctags'))
-    call system('ctags -R $(for FILE in $(cat ./exclude_tags); do echo -n "--exclude="${FILE}" "; done) .')
+    call system('ctags -R $(for FILE in $(cat ./tagsignore);'
+      \ . ' do echo -n "--exclude="${FILE}" "; done) .')
     call s:HighlightTags()
     call s:HighlightStatusLines()
   endif
