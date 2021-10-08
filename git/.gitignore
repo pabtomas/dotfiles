@@ -1,5 +1,5 @@
 .*.sw[a-z]
 Session.vim
-/tags
+tags
 /bin
 /obj

@@ -232,17 +232,22 @@ endfunction
 
 let s:redhighlight = #{
 \   active: v:true,
-\   command: 'highlight RedHighlight ctermfg=White ctermbg=DarkRed',
+\   command: 'highlight RedHighlight term=NONE cterm=NONE ctermfg=White ctermbg=DarkRed',
 \ }
 
 "     }}}
 "     Functions {{{3
 
 function! s:RedHighlight()
-  " highlight unused spaces before the end of the line
-  call matchadd('RedHighlight', '\v\s+$')
-  " highlight characters which overpass 80 columns
-  call matchadd('RedHighlight', '\v%80v.*')
+  if buflisted(bufnr())
+    if empty(filter(map(getmatches(), { _, val -> val.group }),
+    \ 'v:val == "RedHighlight"'))
+      " highlight unused spaces before the end of the line
+      call matchadd('RedHighlight', '\v\s+$')
+      " highlight characters which overpass 80 columns
+      call matchadd('RedHighlight', '\v%80v.*')
+    endif
+  endif
 endfunction
 
 " clear/add red highlight matching patterns
@@ -269,6 +274,31 @@ if !exists("*s:SourceVimRC")
     call s:HighlightStatusLines()
   endfunction
 endif
+
+"   }}}
+"   Tags {{{2
+
+function! s:HighlightTags()
+  if buflisted(bufnr())
+    let l:matches = getmatches()
+    if !empty(filter(mapnew(l:matches, { _, val -> val.group }),
+    \ 'v:val == "Tag"'))
+      call setmatches(filter(l:matches, { _, val -> val.group != 'Tag' }))
+    endif
+    call matchadd('Tag', join(map(taglist('.*'), { _, val -> val.name }), '\|'))
+  endif
+endfunction
+
+function! s:GenerateTags()
+  if !empty(systemlist('which ctags'))
+    call system('ctags -R $(for FILE in $(cat ./exclude_tags); do echo -n "--exclude="${FILE}" "; done) .')
+    call s:HighlightTags()
+    call s:HighlightStatusLines()
+  endif
+endfunction
+
+function! s:FollowTag()
+endfunction
 
 "   }}}
 " }}}
@@ -336,7 +366,7 @@ execute  'highlight       Buffer             term=bold         cterm=bold       
   \ . ' | highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
   \ . ' | highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
   \ . ' | highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Tag                term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+  \ . ' | highlight       Tag                term=underline    cterm=underline'
   \ . ' | highlight       Error                                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
   \ . ' | highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
   \ . ' | highlight       Todo               term=standout                        ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
@@ -596,7 +626,7 @@ function! s:StaticLine()
   set statusline+=%{EndLine()}
 endfunction
 
-function! s:Wave(start, end)
+function! s:ComputeWave(start, end)
   let l:wave = ''
   for l:col in range(a:start, a:end - 1)
     let l:wave = l:wave . s:statusline.dots[5 + float2nr(5.0 * sin(l:col *
@@ -607,15 +637,15 @@ function! s:Wave(start, end)
 endfunction
 
 function! StartWave()
-  return s:Wave(0, 4)
+  return s:ComputeWave(0, 4)
 endfunction
 
 function! EndWave()
   let l:win_width = winwidth(winnr())
-  return s:Wave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
+  return s:ComputeWave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
 endfunction
 
-function! s:WaveLine(timer_id)
+function! s:Waves(timer_id)
   let s:statusline.wavecolor = fmod(s:statusline.wavecolor + 0.75, 30.0)
   execute 'highlight User5 term=bold cterm=bold ctermfg='
     \ . s:statusline.spectrum[float2nr(floor(s:statusline.wavecolor))]
@@ -632,7 +662,7 @@ function! s:WaveLine(timer_id)
   endif
 endfunction
 
-function! s:WaveLine()
+function! s:Waveline()
   let s:statusline.wavecolor = 0.0
   let s:statusline.start = localtime()
   call timer_pause(s:statusline.timer, v:false)
@@ -658,7 +688,7 @@ endfunction
 
 if exists('s:statusline.timer') | call timer_stop(s:statusline.timer) | endif
 let s:statusline.timer =
-  \ timer_start(1000, function('s:WaveLine'), #{ repeat: -1 })
+  \ timer_start(1000, function('s:Waves'), #{ repeat: -1 })
 call timer_pause(s:statusline.timer, v:true)
 
 call s:StaticLine()
@@ -1710,6 +1740,7 @@ endfunction
 "   }}}
 " }}}
 " Mappings and Keys {{{1
+
 "   Functions {{{2
 
 function! s:Key(keys)
@@ -1814,36 +1845,40 @@ if exists('s:mappings') | unlet s:mappings | endif | const s:mappings = #{
   \ mode: 'n', description: 'Previous search', order: -1 },
 \   unfold:                     #{ key:                           '<Space>',
   \ mode: 'n', description: 'Unfold', order: 9 },
-\   next_tag:                   #{ key: s:leaders.global .              't',
-  \ mode: 'n', description: 'Jump to definition of tag under cursor', order: 10 },
-\   previous_tag:               #{ key: s:leaders.global .              'T',
-  \ mode: 'n', description: 'Jump to position before previous tag', order: 11 },
-\   messages:                   #{ key: s:leaders.global .              'm',
-  \ mode: 'n', description: 'Messages log', order: 12 },
-\   map:                        #{ key: s:leaders.global .             'mm',
-  \ mode: 'n', description: 'Mappings', order: 13 },
+\   follow_tag:                 #{ key: s:leaders.global .              't',
+  \ mode: 'n', description: 'Follow tag under cursor', order: 10 },
+\   generate_tags:              #{ key: s:leaders.shift  .              'T',
+  \ mode: 'n', description: 'Generate tags', order: 11 },
+\   next_tag:                   #{ key:                                'TT',
+  \ mode: 'n', description: 'Next tag', order: 12 },
+\   previous_tag:               #{ key:                                'tt',
+  \ mode: 'n', description: 'Previous tag', order: 13 },
+\   messages:                   #{ key: s:leaders.global .              'l',
+  \ mode: 'n', description: 'Messages', order: 14 },
+\   map:                        #{ key: s:leaders.global .              'm',
+  \ mode: 'n', description: 'Mappings', order: 15 },
 \   autocompletion:             #{ key:                           '<S-Tab>',
-  \ mode: 'i', description: 'Auto-completion', order: 14 },
+  \ mode: 'i', description: 'Auto-completion', order: 16 },
 \   visualup:                   #{ key:                            '<S-Up>',
-  \ mode: 'v', description: 'Move up visual block', order: 15 },
+  \ mode: 'v', description: 'Move up visual block', order: 17 },
 \   visualdown:                 #{ key:                          '<S-Down>',
-  \ mode: 'v', description: 'Move down visual block', order: 16 },
+  \ mode: 'v', description: 'Move down visual block', order: 18 },
 \   blankup:                    #{ key: s:leaders.global .           '<CR>',
-  \ mode: 'n', description: 'Append blank line(s) under current line', order: 17 },
+  \ mode: 'n', description: 'Blank line under current line', order: 19 },
 \   blankdown:                  #{ key:                              '<CR>',
-  \ mode: 'n', description: 'Append blank line(s) above current line', order: 18 },
+  \ mode: 'n', description: 'Blank line above current line', order: 20 },
 \   waveline:                   #{ key: s:leaders.global .              's',
-  \ mode: 'n', description: 'Waveline', order: 19 },
+  \ mode: 'n', description: 'Waveline', order: 21 },
 \   redhighlight:               #{ key: s:leaders.global .              '"',
-  \ mode: 'n', description: 'Toggle Redhighlight', order: 20 },
+  \ mode: 'n', description: 'Toggle Redhighlight', order: 22 },
 \   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
-  \ mode: 'n', description: 'Open Buffers Menu', order: 21 },
+  \ mode: 'n', description: 'Open Buffers Menu', order: 23 },
 \   explorer:                   #{ key: s:leaders.shift  .  s:leaders.shift,
-  \ mode: 'n', description: 'Open File Explorer', order: 22 },
+  \ mode: 'n', description: 'Open File Explorer', order: 24 },
 \   obsession:                  #{ key: s:leaders.global .              'z',
-  \ mode: 'n', description: 'Save session', order: 23 },
+  \ mode: 'n', description: 'Save session', order: 25 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
-  \ mode: 'n', description: 'Open Undo Tree', order: 24 },
+  \ mode: 'n', description: 'Open Undo Tree', order: 26 },
 \ }
 
 "   }}}
@@ -1889,7 +1924,7 @@ execute s:mappings.obsession.mode                  . 'noremap '
 
 " animate statusline
 execute s:mappings.waveline.mode                   . 'noremap '
-  \ . s:mappings.waveline.key            . ' <Cmd>call <SID>WaveLine()<CR>'
+  \ . s:mappings.waveline.key            . ' <Cmd>call <SID>Waveline()<CR>'
 
 " buffers menu
 execute s:mappings.buffers_menu.mode               . 'noremap '
@@ -1914,11 +1949,17 @@ execute s:mappings.previous_window.mode            . 'noremap '
 execute s:mappings.unfold.mode                     . 'noremap '
   \ . s:mappings.unfold.key              . ' <Cmd>call <SID>Unfold()<CR>'
 
+" generate tags
+execute s:mappings.generate_tags.mode              . 'noremap '
+  \ . s:mappings.generate_tags.key       . ' <Cmd>call <SID>GenerateTags()<CR>'
+
 " navigate between tags
+execute s:mappings.follow_tag.mode                 . 'noremap '
+  \ . s:mappings.follow_tag.key          . ' <C-]>'
 execute s:mappings.next_tag.mode                   . 'noremap '
-  \ . s:mappings.next_tag.key            . ' <C-]>'
+  \ . s:mappings.next_tag.key            . ' <Cmd>tag<CR>'
 execute s:mappings.previous_tag.mode               . 'noremap '
-  \ . s:mappings.previous_tag.key        . ' <C-T>'
+  \ . s:mappings.previous_tag.key        . ' <Cmd>pop<CR>'
 
 " for debug purposes
 execute s:mappings.messages.mode                   . 'noremap '
@@ -1997,6 +2038,12 @@ augroup vimrc_autocomands
 "   Redhighlight autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>RedHighlight()
+
+"   }}}
+"   Tags autocommands {{{2
+
+  autocmd BufEnter * :silent call <SID>HighlightTags()
+  autocmd FileType vim setlocal iskeyword+=:
 
 "   }}}
 "   Buffers autocommands {{{2
