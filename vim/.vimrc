@@ -303,7 +303,7 @@ function! s:HighlightTags()
     endif
     call matchadd('Tag', join(sort(map(taglist('.*'), { _, val -> val.name }),
       \ { val1, val2 -> len(split(val2, '\zs')) - len(split(val1, '\zs')) }),
-      \ '\|'))
+      \ '\|'), -1)
   endif
 endfunction
 
@@ -410,8 +410,8 @@ execute  'highlight       Buffer             term=bold         cterm=bold       
   \ . ' | highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
   \ . ' | highlight       Visual             term=reverse      cterm=reverse      ctermbg=' . s:palette.black
   \ . ' | highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+  \ . ' | highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+  \ . ' | highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
   \ . ' | highlight       Tag                term=underline    cterm=underline'
   \ . ' | highlight       Error                                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
   \ . ' | highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
@@ -2102,7 +2102,7 @@ augroup vimrc_autocomands
 "   Tags autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>HighlightTags()
-  autocmd BufWritePost * :silent call <SID>GenerateTags()
+  autocmd VimEnter,BufWritePost * :silent call <SID>GenerateTags()
 
 "   }}}
 "   Buffers autocommands {{{2
