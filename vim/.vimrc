@@ -83,7 +83,10 @@ set wildmenu
 set backspace=indent,eol,start
 
 " more commands saved in history
-set history=1000
+set history=2000
+
+" more undo saved
+set undolevels=2000
 
 " highlight and marks not restored
 set viminfo='0,f0,h
@@ -97,8 +100,15 @@ set updatetime=200
 " use popup menu & additional info when completion is used
 set completeopt=menu,preview
 
-" specify tags file path (semi-colon really important)
-set tags=./tags;
+" no beep
+set noerrorbells
+set visualbell
+
+" specify which shell use with shell commands
+set shell=bash
+
+" more pairs for % command and MatchParen highlight
+set matchpairs+=<:>
 
 "     Performance {{{3
 
@@ -276,6 +286,13 @@ endif
 
 "   }}}
 "   Tags {{{2
+"     Options {{{3
+
+" specify tags file path (semi-colon really important)
+set tags=./tags;
+
+"     }}}
+"     Functions {{{3
 
 function! s:HighlightTags()
   if buflisted(bufnr())
@@ -325,6 +342,7 @@ function! s:PreviousTag()
   normal! zz
 endfunction
 
+"     }}}
 "   }}}
 " }}}
 " Style {{{1
@@ -357,10 +375,13 @@ if exists('s:palette') | unlet s:palette | endif | const s:palette = #{
 "   }}}
 "   Colorscheme {{{2
 
+set t_Co=256
+set t_ut=
 set background=dark | highlight clear | if exists('syntax_on') | syntax reset
   \ | endif
 set wincolor=NormalAlt
 
+highlight clear
 execute  'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:palette.grey_2   . ' ctermbg=' . s:palette.black
   \ . ' | highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:palette.red_1
   \ . ' | highlight       BuffersMenuBorders term=bold         cterm=bold         ctermfg=' . s:palette.blue_4
@@ -432,6 +453,7 @@ highlight  link Typedef            Type
 highlight  link SpecialChar        Special
 highlight  link Delimiter          Special
 highlight  link SpecialComment     Special
+highlight  link SpecialKey         Special
 highlight  link Debug              Special
 
 execute s:redhighlight.command
@@ -1825,16 +1847,29 @@ function! s:Key(keys)
 endfunction
 
 function! s:Mappings()
-  let l:text = ""
   let l:max = max(mapnew(s:mappings, { _, val -> len(split(val.key, '\zs')) }))
   let test = values(s:mappings)
   for l:mapping in sort(filter(values(s:mappings), 'v:val.order > 0'),
   \ { val1, val2 -> val1.order - val2.order })
-    let l:text = l:text . l:mapping.mode . ' ' . l:mapping.key
-      \ . repeat(' ', l:max - len(split(l:mapping.key, '\zs')) + 1)
+    echon l:mapping.mode . ' '
+    let l:start = match(l:mapping.key, '<.*>')
+    if l:start > -1
+      if l:start > 0
+        echon l:mapping.key[0:l:start - 1]
+      endif
+      let l:end = matchend(l:mapping.key, '<.*>')
+      echohl SpecialKey
+      echon l:mapping.key[l:start:l:end - 1]
+      echohl NONE
+      if l:end < len(l:mapping.key)
+        echon l:mapping.key[l:end:]
+      endif
+    else
+      echon l:mapping.key
+    endif
+    echon repeat(' ', l:max - len(split(l:mapping.key, '\zs')) + 1)
       \ . l:mapping.description . "\n"
   endfor
-  echo l:text
 endfunction
 
 "   }}}
@@ -2049,7 +2084,12 @@ augroup vimrc_autocomands
   autocmd VimEnter * :call <SID>CheckDependencies()
 
 "   }}}
-"   Sudo-save autoreload autocommands {{{2
+"   VimRC sourcing autocommands {{{2
+
+  autocmd BufWritePost $MYVIMRC source $MYVIMRC
+
+"   }}}
+"   Save-as-sudo loading autocommands {{{2
 
   " reload file automatically after sudo save command
   autocmd FileChangedShell * let v:fcs_choice="reload"
