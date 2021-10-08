@@ -2086,7 +2086,7 @@ augroup vimrc_autocomands
 "   }}}
 "   VimRC sourcing autocommands {{{2
 
-  autocmd BufWritePost $MYVIMRC source $MYVIMRC
+  autocmd BufWritePost $MYVIMRC :silent call <SID>SourceVimRC()
 
 "   }}}
 "   Save-as-sudo loading autocommands {{{2
