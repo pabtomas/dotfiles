@@ -1,5 +1,6 @@
 " TODO {{{1
 
+
 " - buffers menu: test
 " - explorer: - test
 "             - hijack netrw ?
@@ -124,7 +125,7 @@ set ttyfast
 "     Variables & constants {{{3
 
 if exists('s:search') | unlet s:search | endif
-  \ | const s:search = #{
+const s:search = #{
 \   sensitive_replace: ':s/\%V//g<Left><Left><Left>',
 \   insensitive_replace: ':s/\%V\c//g<Left><Left><Left>',
 \   insensitive: '/\c',
@@ -309,8 +310,16 @@ endfunction
 
 function! s:GenerateTags()
   if !empty(systemlist('which ctags'))
-    call system('ctags -R $(for FILE in $(cat ./tagsignore);'
-      \ . ' do echo -n "--exclude="${FILE}" "; done) .')
+    let l:command = 'ctags -R'
+    let l:ctags_kinds = #{
+    \   Vim: 'fvC',
+    \ }
+    for [l:lang, l:flags] in items(l:ctags_kinds)
+      let l:command .= ' --kinds-' . l:lang . '=' . l:flags
+    endfor
+    let l:command .= ' $(for FILE in $(cat ./tagsignore);'
+      \ . ' do echo -n "--exclude="${FILE}" "; done) .'
+    call system(l:command)
     call s:HighlightTags()
     call s:HighlightStatusLines()
   endif
@@ -318,7 +327,7 @@ endfunction
 
 function! s:FollowTag()
   let l:iskeyword_backup = ''
-  if &ft == 'vim'
+  if &filetype == 'vim'
     let l:iskeyword_backup = &iskeyword
     setlocal iskeyword+=:
   endif
@@ -348,7 +357,8 @@ endfunction
 " Style {{{1
 "   Palette {{{2
 
-if exists('s:palette') | unlet s:palette | endif | const s:palette = #{
+if exists('s:palette') | unlet s:palette | endif
+const s:palette = #{
 \   red_1: 196,
 \   red_2: 1,
 \   pink: 205,
@@ -581,7 +591,7 @@ function! ComputeStatusLineLength()
   let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
     \ + len('[') + len(winnr()) + len('] ')
     \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
-    \ + len(' [') + len(&ft) + len(']')
+    \ + len(' [') + len(&filetype) + len(']')
     \ + len(' C') + len(virtcol('.'))
     \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
     \ + len(split('├', '\zs')))
@@ -660,7 +670,7 @@ function! s:StatusLineData()
                    \%2*%{FileName(v:false,v:false)}%0*
                    \%4*%{FileName(v:true,v:false)}%0*
                    \%1*%{FileName(v:true,v:true)}%0*
-  set statusline+=\ [%3*%{&ft}%0*]
+  set statusline+=\ [%3*%{&filetype}%0*]
   set statusline+=\ C%3*%{virtcol('.')}%0*
   set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
   set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
@@ -744,7 +754,8 @@ call s:StaticLine()
 "   Buffers menu {{{2
 "     Keys {{{3
 
-if exists('s:menukey') | unlet s:menukey | endif | const s:menukey = #{
+if exists('s:menukey') | unlet s:menukey | endif
+const s:menukey = #{
 \   next:         "\<Down>",
 \   previous:       "\<Up>",
 \   select:      "\<Enter>",
@@ -934,7 +945,7 @@ endfunction
 "     Keys {{{3
 
 if exists('s:explorerkey') | unlet s:explorerkey | endif
-  \ | const s:explorerkey = #{
+const s:explorerkey = #{
 \   next:              "\<Down>",
 \   previous:            "\<Up>",
 \   first:                   "g",
@@ -1347,7 +1358,7 @@ endfunction
 "     Keys {{{3
 
 if exists('s:obsessionkey') | unlet s:obsessionkey | endif
-  \ | const s:obsessionkey = #{
+const s:obsessionkey = #{
 \   yes: "y",
 \   no:  "n",
 \ }
@@ -1410,7 +1421,8 @@ endfunction
 "   Undo tree {{{2
 "     Keys {{{3
 
-if exists('s:undokey') | unlet s:undokey | endif | const s:undokey = #{
+if exists('s:undokey') | unlet s:undokey | endif
+const s:undokey = #{
 \   next:          "\<Up>",
 \   previous:    "\<Down>",
 \   first:             "G",
@@ -1726,6 +1738,26 @@ function! s:Undotree()
   let s:undo.change_backup = changenr()
   execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
     \ . s:palette.pink . ' ctermbg=' . s:palette.black
+
+  let s:undo.diff_id = popup_create('',
+  \ #{
+    \ pos: 'topleft',
+    \ line: win_screenpos(0)[0],
+    \ col: win_screenpos(0)[1] + s:undo.max_length,
+    \ zindex: 2,
+    \ minwidth: winwidth(0),
+    \ maxwidth: winwidth(0),
+    \ minheight: winheight(0),
+    \ maxheight: winheight(0),
+    \ drag: v:false,
+    \ wrap: v:true,
+    \ mapping: v:false,
+    \ scrollbar: v:true,
+    \ border: [0, 0, 0, 1],
+    \ borderchars: ['│'],
+    \ borderhighlight: ['VertSplit'],
+  \ })
+
   let l:popup_id = popup_create(s:undo.text,
   \ #{
     \ pos: 'topleft',
@@ -1747,26 +1779,6 @@ function! s:Undotree()
   \ . ' | while s:undo.meta[line(".") - 1] != s:undo.change_backup'
   \ . ' | let w:c += 1 | call cursor(w:c, 0) | endwhile')
   call s:UndotreeButtons(l:popup_id)
-
-  let s:undo.diff_id = popup_create('',
-  \ #{
-    \ pos: 'topleft',
-    \ line: win_screenpos(0)[0],
-    \ col: win_screenpos(0)[1] + s:undo.max_length,
-    \ zindex: 2,
-    \ minwidth: winwidth(0),
-    \ maxwidth: winwidth(0),
-    \ minheight: winheight(0),
-    \ maxheight: winheight(0),
-    \ drag: v:false,
-    \ wrap: v:true,
-    \ mapping: v:false,
-    \ scrollbar: v:true,
-    \ border: [0, 0, 0, 1],
-    \ borderchars: ['│'],
-    \ borderhighlight: ['VertSplit'],
-  \ })
-
   call s:HelpUndotree()
 endfunction
 
@@ -1875,12 +1887,14 @@ endfunction
 "   }}}
 "   Variables & constants {{{2
 
-if exists('s:leaders') | unlet s:leaders | endif | const s:leaders = #{
+if exists('s:leaders') | unlet s:leaders | endif
+const s:leaders = #{
 \   global: '²',
 \   shift:  '³',
 \ }
 
-if exists('s:mappings') | unlet s:mappings | endif | const s:mappings = #{
+if exists('s:mappings') | unlet s:mappings | endif
+const s:mappings = #{
 \   search_replace:             #{ key:                                 ':',
   \ mode: 'v', description: 'Search and replace', order: 0 },
 \   insensitive_search_replace: #{ key: s:leaders.global .              ':',
