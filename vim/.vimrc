@@ -1,14 +1,13 @@
 " TODO {{{1
 
-
 " - buffers menu: test
 " - explorer: - test
 "             - hijack netrw ?
 " - undotree: - test
-"             - fix display border diff popup window
 "             - fix scroll diff popup window
 "             - first/last mappings
 "             - help function
+" - gutentags: test
 " - plugins: - rainbow parenthesis
 "            - tag list
 " - see other VIMRC
@@ -473,7 +472,7 @@ set foldopen+=jump
 "   }}}
 " }}}
 " Plugins {{{1
-"   Waveline {{{2
+"   Tinsel {{{2
 "     Options {{{3
 
 " display status line
@@ -482,7 +481,7 @@ set laststatus=2
 "     }}}
 "     Variables & constants {{{3
 
-let s:statusline = #{
+let s:tinsel = #{
 \   modes: {
 \     'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
 \     'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
@@ -496,7 +495,7 @@ let s:statusline = #{
 \     51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
 \     202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50,
 \   ],
-\   wavecolor: 0.0,
+\   color: 0.0,
 \   localtime: localtime(),
 \   start: localtime(),
 \   matches: {},
@@ -530,9 +529,8 @@ function! ComputeStatusLineLength()
     \ + len(split('├', '\zs')))
   if g:actual_curwin == win_getid()
     let l:length -= len(StartMode()) + len(Mode()) + len(EndMode())
-    if v:hlsearch && !empty(s:statusline.matches)
-      \ && (s:statusline.matches.total > 0)
-        let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
+    if v:hlsearch && !empty(s:tinsel.matches) && (s:tinsel.matches.total > 0)
+      let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
     endif
   endif
   return l:length
@@ -550,7 +548,7 @@ function! Mode()
   if g:actual_curwin != win_getid()
     return ''
   endif
-  return s:statusline.modes[mode()[0]]
+  return s:tinsel.modes[mode()[0]]
 endfunction
 
 function! StartMode()
@@ -571,17 +569,17 @@ function! IndexedMatch()
   if (g:actual_curwin != win_getid()) || !v:hlsearch
     return ''
   endif
-  let s:statusline.matches =
+  let s:tinsel.matches =
     \ searchcount(#{ recompute: 1, maxcount: 0, timeout: 0 })
-  if empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+  if empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
     return ''
   endif
-  return s:statusline.matches.current
+  return s:tinsel.matches.current
 endfunction
 
 function! Bar()
   if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+  \ || empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
     return ''
   endif
   return '/'
@@ -589,10 +587,10 @@ endfunction
 
 function! TotalMatch()
   if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+  \ || empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
     return ''
   endif
-  return s:statusline.matches.total . ' '
+  return s:tinsel.matches.total . ' '
 endfunction
 
 " status line content:
@@ -619,9 +617,8 @@ endfunction
 function! s:ComputeWave(start, end)
   let l:wave = ''
   for l:col in range(a:start, a:end - 1)
-    let l:wave = l:wave . s:statusline.dots[5 + float2nr(5.0 * sin(l:col *
-    \ (fmod(0.05 * (s:statusline.localtime - s:statusline.start) + 1.0, 2.0)
-    \ - 1.0)))]
+    let l:wave = l:wave . s:tinsel.dots[5 + float2nr(5.0 * sin(l:col *
+    \ (fmod(0.05 * (s:tinsel.localtime - s:tinsel.start) + 1.0, 2.0) - 1.0)))]
   endfor
   return l:wave
 endfunction
@@ -635,27 +632,27 @@ function! EndWave()
   return s:ComputeWave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
 endfunction
 
-function! s:Waves(timer_id)
-  let s:statusline.wavecolor = fmod(s:statusline.wavecolor + 0.75, 30.0)
+function! s:Tinsel(timer_id)
+  let s:tinsel.color = fmod(s:tinsel.color + 0.75, 30.0)
   execute 'highlight User5 term=bold cterm=bold ctermfg='
-    \ . s:statusline.spectrum[float2nr(floor(s:statusline.wavecolor))]
+    \ . s:tinsel.spectrum[float2nr(floor(s:tinsel.color))]
     \ . ' ctermbg=' . s:palette.black
 
-  let s:statusline.localtime = localtime()
+  let s:tinsel.localtime = localtime()
   set statusline=%5*%{StartWave()}%0*
   call s:StatusLineData()
   set statusline+=%5*%{EndWave()}%0*
 
-  if (s:statusline.localtime - s:statusline.start) > 40
-    call timer_pause(s:statusline.timer, v:true)
+  if (s:tinsel.localtime - s:tinsel.start) > 40
+    call timer_pause(s:tinsel.timer, v:true)
     call s:StaticLine()
   endif
 endfunction
 
-function! s:Waveline()
-  let s:statusline.wavecolor = 0.0
-  let s:statusline.start = localtime()
-  call timer_pause(s:statusline.timer, v:false)
+function! s:InitTinsel()
+  let s:tinsel.color = 0.0
+  let s:tinsel.start = localtime()
+  call timer_pause(s:tinsel.timer, v:false)
 endfunction
 
 function! s:RestoreStatusLines(timer_id)
@@ -676,10 +673,9 @@ endfunction
 
 "     }}}
 
-if exists('s:statusline.timer') | call timer_stop(s:statusline.timer) | endif
-let s:statusline.timer =
-  \ timer_start(1000, function('s:Waves'), #{ repeat: -1 })
-call timer_pause(s:statusline.timer, v:true)
+if exists('s:tinsel.timer') | call timer_stop(s:tinsel.timer) | endif
+let s:tinsel.timer = timer_start(100, function('s:Tinsel'), #{ repeat: -1 })
+call timer_pause(s:tinsel.timer, v:true)
 
 call s:StaticLine()
 
@@ -1430,6 +1426,7 @@ function! s:UndotreeFilter(winid, key)
       \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
     call popup_clear()
     unlet s:undo
+    echo ''
   elseif a:key == s:undokey.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1440,6 +1437,9 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
+    call win_execute(a:winid, 'redraw!')
+    call win_execute(s:undo.diff_id, 'redraw!')
+    redrawstatus!
   elseif a:key == s:undokey.previous
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") < line("$")'
@@ -1450,6 +1450,9 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
+    call win_execute(a:winid, 'redraw!')
+    call win_execute(s:undo.diff_id, 'redraw!')
+    redrawstatus!
   elseif a:key == s:undokey.first
   elseif a:key == s:undokey.last
   elseif a:key == s:undokey.scrollup
@@ -1696,7 +1699,7 @@ function! s:Undotree()
     \ pos: 'topleft',
     \ line: win_screenpos(0)[0],
     \ col: win_screenpos(0)[1],
-    \ zindex: 2,
+    \ zindex: 3,
     \ minwidth: s:undo.max_length,
     \ maxwidth: s:undo.max_length,
     \ minheight: winheight(0),
@@ -1955,8 +1958,8 @@ const s:mappings = #{
   \ mode: 'n', description: 'Blank line under current line', order: 18 },
 \   blankdown:                  #{ key:                              '<CR>',
   \ mode: 'n', description: 'Blank line above current line', order: 19 },
-\   waveline:                   #{ key: s:leaders.global .              's',
-  \ mode: 'n', description: 'Waveline', order: 20 },
+\   tinsel:                     #{ key: s:leaders.global .              's',
+  \ mode: 'n', description: 'Start Tinsel', order: 20 },
 \   redhighlight:               #{ key: s:leaders.global .              '"',
   \ mode: 'n', description: 'Toggle Redhighlight', order: 21 },
 \   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
@@ -2010,9 +2013,9 @@ execute s:mappings.redhighlight.mode               . 'noremap '
 execute s:mappings.obsession.mode                  . 'noremap '
   \ . s:mappings.obsession.key           . ' <Cmd>call <SID>Obsession()<CR>'
 
-" animate statusline
-execute s:mappings.waveline.mode                   . 'noremap '
-  \ . s:mappings.waveline.key            . ' <Cmd>call <SID>Waveline()<CR>'
+" statusline become a tinsel
+execute s:mappings.tinsel.mode                     . 'noremap '
+  \ . s:mappings.tinsel.key              . ' <Cmd>call <SID>InitTinsel()<CR>'
 
 " buffers menu
 execute s:mappings.buffers_menu.mode               . 'noremap '
