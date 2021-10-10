@@ -188,6 +188,8 @@ function git-ranking () {
 }
 git-ranking\""
 
+git config --global --replace-all alias.root 'rev-parse --show-toplevel'
+
 git config --global --replace-all alias.tree "!bash -c \"
 function git-tree () {
   git log --graph --color --abbrev-commit --date=relative \
@@ -221,10 +223,11 @@ alias gA='git add -A'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
 alias gh='git checkout'
+alias gk='git ranking'
 alias gm='git commit -m'
 alias gp='git pull'
 alias gP='git push'
-alias gr='git ranking'
+alias gr='git root'
 alias gs='git status -s'
 alias gt='git tree'
 alias gu='git undo'

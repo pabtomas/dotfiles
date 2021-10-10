@@ -287,12 +287,6 @@ endif
 
 "   }}}
 "   Tags {{{2
-"     Options {{{3
-
-" specify tags file path (semi-colon really important)
-set tags=./tags;
-
-"     }}}
 "     Functions {{{3
 
 function! s:HighlightTags()
@@ -309,19 +303,34 @@ function! s:HighlightTags()
 endfunction
 
 function! s:GenerateTags()
-  if !empty(systemlist('which ctags'))
-    let l:command = 'ctags -R'
-    let l:ctags_kinds = #{
-    \   Vim: 'fvC',
-    \ }
-    for [l:lang, l:flags] in items(l:ctags_kinds)
-      let l:command .= ' --kinds-' . l:lang . '=' . l:flags
-    endfor
-    let l:command .= ' $(for FILE in $(cat ./tagsignore);'
-      \ . ' do echo -n "--exclude="${FILE}" "; done) .'
-    call system(l:command)
-    call s:HighlightTags()
-    call s:HighlightStatusLines()
+  if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
+    let l:bufdir = fnamemodify(expand('%'), ':p:h')
+    let l:isingitdir = !empty(systemlist('command cd '
+      \ . l:bufdir . ' && git rev-parse --git-dir 2> /dev/null'))
+    if l:isingitdir
+      let l:root = systemlist('command cd ' . l:bufdir
+        \ . ' && git rev-parse --show-toplevel')[0]
+      let l:tags_path = l:root . '/tags'
+      let l:tagsignore_path = l:root . '/tagsignore'
+
+      " specify tags file path (semi-colon really important)
+      let l:tags_setting = l:tags_path . ';'
+      let &tags = l:tags_setting
+
+      let l:command = 'ctags -R'
+      let l:ctags_kinds = #{
+      \   Vim: 'fvC',
+      \ }
+      for [l:lang, l:flags] in items(l:ctags_kinds)
+        let l:command .= ' --kinds-' . l:lang . '=' . l:flags
+      endfor
+      let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
+        \ . ' do echo -n "--exclude=' . l:root . '"/${FILE}" "; done) -o '
+        \ . l:tags_path . ' ' . l:root
+      call system(l:command)
+      call s:HighlightTags()
+      call s:HighlightStatusLines()
+    endif
   endif
 endfunction
 
@@ -333,6 +342,9 @@ function! s:FollowTag()
   endif
   let l:cword = expand('<cword>')
   execute 'tag ' . l:cword
+  if foldlevel('.') > 0
+    foldopen!
+  endif
   if len(taglist('^' . l:cword . '$')) == 1
     normal! zz
   endif
@@ -343,11 +355,17 @@ endfunction
 
 function! s:NextTag()
   tag
+  if foldlevel('.') > 0
+    foldopen!
+  endif
   normal! zz
 endfunction
 
 function! s:PreviousTag()
   pop
+  if foldlevel('.') > 0
+    foldopen!
+  endif
   normal! zz
 endfunction
 
