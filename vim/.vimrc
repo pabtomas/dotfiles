@@ -100,7 +100,7 @@ set updatetime=200
 " use popup menu & additional info when completion is used
 set completeopt=menu,preview
 
-" no beep
+" stop beeping
 set noerrorbells
 set visualbell
 
