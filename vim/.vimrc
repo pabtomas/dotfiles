@@ -286,91 +286,6 @@ if !exists("*s:SourceVimRC")
 endif
 
 "   }}}
-"   Tags {{{2
-"     Functions {{{3
-
-function! s:HighlightTags()
-  if buflisted(bufnr())
-    let l:matches = getmatches()
-    if !empty(filter(mapnew(l:matches, { _, val -> val.group }),
-    \ 'v:val == "Tag"'))
-      call setmatches(filter(l:matches, { _, val -> val.group != 'Tag' }))
-    endif
-    call matchadd('Tag', join(sort(map(taglist('.*'), { _, val -> val.name }),
-      \ { val1, val2 -> len(split(val2, '\zs')) - len(split(val1, '\zs')) }),
-      \ '\|'), -1)
-  endif
-endfunction
-
-function! s:GenerateTags()
-  if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
-    let l:bufdir = fnamemodify(expand('%'), ':p:h')
-    let l:isingitdir = !empty(systemlist('command cd '
-      \ . l:bufdir . ' && git rev-parse --git-dir 2> /dev/null'))
-    if l:isingitdir
-      let l:root = systemlist('command cd ' . l:bufdir
-        \ . ' && git rev-parse --show-toplevel')[0]
-      let l:tags_path = l:root . '/tags'
-      let l:tagsignore_path = l:root . '/tagsignore'
-
-      " specify tags file path (semi-colon really important)
-      let l:tags_setting = l:tags_path . ';'
-      let &tags = l:tags_setting
-
-      let l:command = 'ctags -R'
-      let l:ctags_kinds = #{
-      \   Vim: 'fvC',
-      \ }
-      for [l:lang, l:flags] in items(l:ctags_kinds)
-        let l:command .= ' --kinds-' . l:lang . '=' . l:flags
-      endfor
-      let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
-        \ . ' do echo -n "--exclude=' . l:root . '"/${FILE}" "; done) -o '
-        \ . l:tags_path . ' ' . l:root
-      call system(l:command)
-      call s:HighlightTags()
-      call s:HighlightStatusLines()
-    endif
-  endif
-endfunction
-
-function! s:FollowTag()
-  let l:iskeyword_backup = ''
-  if &filetype == 'vim'
-    let l:iskeyword_backup = &iskeyword
-    setlocal iskeyword+=:
-  endif
-  let l:cword = expand('<cword>')
-  execute 'tag ' . l:cword
-  if foldlevel('.') > 0
-    foldopen!
-  endif
-  if len(taglist('^' . l:cword . '$')) == 1
-    normal! zz
-  endif
-  if !empty(l:iskeyword_backup)
-    let &iskeyword = l:iskeyword_backup
-  endif
-endfunction
-
-function! s:NextTag()
-  tag
-  if foldlevel('.') > 0
-    foldopen!
-  endif
-  normal! zz
-endfunction
-
-function! s:PreviousTag()
-  pop
-  if foldlevel('.') > 0
-    foldopen!
-  endif
-  normal! zz
-endfunction
-
-"     }}}
-"   }}}
 " }}}
 " Style {{{1
 "   Palette {{{2
@@ -543,7 +458,7 @@ endfunction
 function! FoldText()
   return substitute(substitute(foldtext(), '\s*\(\d\+\)',
     \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' [\1', ''),
-    \ 'lines: ["#]\s\+', 'lines] ', '')
+    \ 'lignes : ["#]\s\+', 'lines] ', '')
 endfunction
 
 "     }}}
@@ -1801,6 +1716,89 @@ function! s:Undotree()
 endfunction
 
 "   }}}
+"   Gutentags {{{2
+
+function! s:HighlightGutentags()
+  if buflisted(bufnr())
+    let l:matches = getmatches()
+    if !empty(filter(mapnew(l:matches, { _, val -> val.group }),
+    \ 'v:val == "Tag"'))
+      call setmatches(filter(l:matches, { _, val -> val.group != 'Tag' }))
+    endif
+    call matchadd('Tag', join(sort(map(taglist('.*'), { _, val -> val.name }),
+      \ { val1, val2 -> len(split(val2, '\zs')) - len(split(val1, '\zs')) }),
+      \ '\|'), -1)
+  endif
+endfunction
+
+function! s:GenerateGutentags()
+  if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
+    let l:bufdir = fnamemodify(expand('%'), ':p:h')
+    let l:isingitdir = !empty(systemlist('command cd '
+      \ . l:bufdir . ' && git rev-parse --git-dir 2> /dev/null'))
+    if l:isingitdir
+      let l:root = systemlist('command cd ' . l:bufdir
+        \ . ' && git rev-parse --show-toplevel')[0]
+      let l:tags_path = l:root . '/tags'
+      let l:tagsignore_path = l:root . '/tagsignore'
+
+      " specify tags file path (semi-colon really important)
+      let l:tags_setting = l:tags_path . ';'
+      let &tags = l:tags_setting
+
+      let l:command = 'ctags -R'
+      let l:ctags_kinds = #{
+      \   Vim: 'fvC',
+      \ }
+      for [l:lang, l:flags] in items(l:ctags_kinds)
+        let l:command .= ' --kinds-' . l:lang . '=' . l:flags
+      endfor
+      let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
+        \ . ' do echo -n "--exclude=' . l:root . '"/${FILE}" "; done) -o '
+        \ . l:tags_path . ' ' . l:root
+      call system(l:command)
+      call s:HighlightGutentags()
+      call s:HighlightStatusLines()
+    endif
+  endif
+endfunction
+
+function! s:FollowTag()
+  let l:iskeyword_backup = ''
+  if &filetype == 'vim'
+    let l:iskeyword_backup = &iskeyword
+    setlocal iskeyword+=:
+  endif
+  let l:cword = expand('<cword>')
+  execute 'tag ' . l:cword
+  if foldlevel('.') > 0
+    foldopen!
+  endif
+  if len(taglist('^' . l:cword . '$')) == 1
+    normal! zz
+  endif
+  if !empty(l:iskeyword_backup)
+    let &iskeyword = l:iskeyword_backup
+  endif
+endfunction
+
+function! s:NextTag()
+  tag
+  if foldlevel('.') > 0
+    foldopen!
+  endif
+  normal! zz
+endfunction
+
+function! s:PreviousTag()
+  pop
+  if foldlevel('.') > 0
+    foldopen!
+  endif
+  normal! zz
+endfunction
+
+"   }}}
 "   Rainbow parenthesis {{{2
 "   }}}
 "   Tag list {{{2
@@ -2131,12 +2129,6 @@ augroup vimrc_autocomands
   autocmd BufEnter * :silent call <SID>RedHighlight()
 
 "   }}}
-"   Tags autocommands {{{2
-
-  autocmd BufEnter * :silent call <SID>HighlightTags()
-  autocmd VimEnter,BufWritePost * :silent call <SID>GenerateTags()
-
-"   }}}
 "   Buffers autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
@@ -2147,6 +2139,12 @@ augroup vimrc_autocomands
 
   autocmd VimEnter * nested :call <SID>SourceObsession()
   autocmd VimLeavePre * :call <SID>PromptObsession()
+
+"     }}}
+"     Gutentags autocommands {{{3
+
+  autocmd BufEnter * :silent call <SID>HighlightGutentags()
+  autocmd VimEnter,BufWritePost * :silent call <SID>GenerateGutentags()
 
 "     }}}
 "   }}}
