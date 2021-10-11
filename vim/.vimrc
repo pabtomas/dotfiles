@@ -4,7 +4,6 @@
 " - explorer: - test
 "             - hijack netrw ?
 " - undotree: - test
-"             - fix scroll diff popup window
 "             - first/last mappings
 "             - help function
 " - gutentags: test
@@ -1426,7 +1425,6 @@ function! s:UndotreeFilter(winid, key)
       \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
     call popup_clear()
     unlet s:undo
-    echo ''
   elseif a:key == s:undokey.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1439,6 +1437,7 @@ function! s:UndotreeFilter(winid, key)
     call s:UndotreeButtons(a:winid)
     call win_execute(a:winid, 'redraw!')
     call win_execute(s:undo.diff_id, 'redraw!')
+    echo ''
     redrawstatus!
   elseif a:key == s:undokey.previous
     call s:UpdateUndotree()
@@ -1452,13 +1451,16 @@ function! s:UndotreeFilter(winid, key)
     call s:UndotreeButtons(a:winid)
     call win_execute(a:winid, 'redraw!')
     call win_execute(s:undo.diff_id, 'redraw!')
+    echo ''
     redrawstatus!
   elseif a:key == s:undokey.first
   elseif a:key == s:undokey.last
   elseif a:key == s:undokey.scrollup
-    call win_execute(s:undo.diff_id, 'call cursor(line("w0") - 1, 0)')
+    call win_execute(s:undo.diff_id,
+      \ 'call cursor(line("w0") - 1, 0) | redraw')
   elseif a:key == s:undokey.scrolldown
-    call win_execute(s:undo.diff_id, 'call cursor(line("w$") + 1, 0)')
+    call win_execute(s:undo.diff_id,
+      \ 'call cursor(line("w$") + 1, 0) | redraw')
   elseif a:key == s:undokey.select
     call win_execute(a:winid, 'let s:undo.line = line(".")')
     execute 'silent undo ' . s:undo.meta[s:undo.line - 1]
@@ -1711,9 +1713,9 @@ function! s:Undotree()
     \ scrollbar: v:false,
     \ cursorline: v:true,
   \ })
-  call win_execute(l:popup_id, 'let w:c = 1 | call cursor(w:c, 0)'
+  call win_execute(l:popup_id, 'let w:line = 1 | call cursor(w:line, 0)'
   \ . ' | while s:undo.meta[line(".") - 1] != s:undo.change_backup'
-  \ . ' | let w:c += 1 | call cursor(w:c, 0) | endwhile')
+  \ . ' | let w:line += 1 | call cursor(w:line, 0) | endwhile')
   call s:UndotreeButtons(l:popup_id)
   call s:HelpUndotree()
 endfunction
