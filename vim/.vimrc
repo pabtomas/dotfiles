@@ -1079,7 +1079,7 @@ function! s:NormalModeExplorerFilter(winid, key)
     call win_execute(a:winid, 'call search(histget("/", -1), "b")')
   elseif a:key == s:explorerkey.first
     call win_execute(a:winid,
-      \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
+      \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
   elseif a:key == s:explorerkey.last
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
   elseif a:key == s:explorerkey.exit
@@ -1092,7 +1092,7 @@ function! s:NormalModeExplorerFilter(winid, key)
   elseif a:key == s:explorerkey.previous
     call win_execute(a:winid, 'if line(".") > 2 |'
       \ . ' call cursor(line(".") - 1, 0) | else |'
-      \ . ' execute "normal! \<C-Y>" | endif')
+      \ . ' execute "normal! \<C-y>" | endif')
   elseif a:key == s:explorerkey.help
     call s:HelpExplorer()
   elseif a:key == s:explorerkey.searchmode
@@ -1750,12 +1750,12 @@ function! s:GenerateGutentags()
       let &tags = l:tags_setting
 
       let l:command = 'ctags -R'
-      let l:ctags_kinds = #{
-      \   Vim: 'fvC',
+      let l:ctags_flags = #{
+      \   vim: ' --kinds-Vim=fvC',
       \ }
-      for [l:lang, l:flags] in items(l:ctags_kinds)
-        let l:command .= ' --kinds-' . l:lang . '=' . l:flags
-      endfor
+      if has_key(l:ctags_flags, &filetype)
+        let l:command .= l:ctags_flags[&filetype]
+      endif
       let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
         \ . ' do echo -n "--exclude=' . l:root . '"/${FILE}" "; done) -o '
         \ . l:tags_path . ' ' . l:root
@@ -1990,7 +1990,7 @@ execute s:mappings.insensitive_search.mode         . 'noremap '
 " copy the unnamed register's content in the command line
 " unnamed register = any text deleted or yank (with y)
 execute s:mappings.paste_unnamed_reg.mode           . 'noremap '
-  \ . s:mappings.paste_unnamed_reg.key    . ' <C-R><C-O>"'
+  \ . s:mappings.paste_unnamed_reg.key    . ' <C-r><C-o>"'
 
 " open .vimrc in a vertical split window
 execute s:mappings.vsplit_vimrc.mode               . 'noremap '
@@ -2061,10 +2061,10 @@ execute s:mappings.autocompletion.mode             . 'noremap '
 " move visual block
 execute s:mappings.visualup.mode                   . 'noremap <silent> '
   \ . s:mappings.visualup.key
-  \ . ' :<C-U>silent call <SID>VisualUp()<CR>'
+  \ . ' :<C-u>silent call <SID>VisualUp()<CR>'
 execute s:mappings.visualdown.mode                 . 'noremap <silent> '
   \ . s:mappings.visualdown.key
-  \ . ' :<C-U>silent call <SID>VisualDown()<CR>'
+  \ . ' :<C-u>silent call <SID>VisualDown()<CR>'
 
 " add blank lines
 execute s:mappings.blankup.mode                    . 'noremap '
