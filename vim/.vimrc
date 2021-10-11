@@ -457,7 +457,7 @@ endfunction
 function! FoldText()
   return substitute(substitute(foldtext(), '\s*\(\d\+\)',
     \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' [\1', ''),
-    \ 'lignes : ["#]\s\+', 'lines] ', '')
+    \ '\(\a\+\)\s\?: ["#]\s\+', '\1] ', '')
 endfunction
 
 "     }}}
