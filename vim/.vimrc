@@ -6,6 +6,7 @@
 " - undotree: - test
 "             - first/last mappings
 "             - help function
+"             - fix cursor display when scrolling
 " - gutentags: test
 " - plugins: - rainbow parenthesis
 "            - tag list
@@ -1425,6 +1426,7 @@ function! s:UndotreeFilter(winid, key)
       \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
     call popup_clear()
     unlet s:undo
+    set lazyredraw
   elseif a:key == s:undokey.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1435,10 +1437,6 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-    call win_execute(a:winid, 'redraw!')
-    call win_execute(s:undo.diff_id, 'redraw!')
-    echo ''
-    redrawstatus!
   elseif a:key == s:undokey.previous
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") < line("$")'
@@ -1449,10 +1447,6 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-    call win_execute(a:winid, 'redraw!')
-    call win_execute(s:undo.diff_id, 'redraw!')
-    echo ''
-    redrawstatus!
   elseif a:key == s:undokey.first
   elseif a:key == s:undokey.last
   elseif a:key == s:undokey.scrollup
@@ -1718,6 +1712,7 @@ function! s:Undotree()
   \ . ' | let w:line += 1 | call cursor(w:line, 0) | endwhile')
   call s:UndotreeButtons(l:popup_id)
   call s:HelpUndotree()
+  set nolazyredraw
 endfunction
 
 "   }}}
