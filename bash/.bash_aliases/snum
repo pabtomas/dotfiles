@@ -69,6 +69,22 @@ function cd () {
 }
 
 # change directories easily
+function , () {
+  if [ -v __MARK__ ]; then
+    cd ${__MARK__} && unset __MARK__
+  else
+    __MARK__=$(realpath \.)
+  fi
+}
+
+function ,, () {
+  if [ -v __MARK__ ]; then
+    cd ${__MARK__}
+  else
+    __MARK__=$(realpath \.)
+  fi
+}
+
 for I in $(seq 2 1 10); do
   ALIAS=$(printf '.%.0s' $(seq 1 ${I}))
   DIR=$(printf '../%.0s' $(seq 1 $(( ${I} - 1 ))))
