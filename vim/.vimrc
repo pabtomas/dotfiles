@@ -1371,6 +1371,38 @@ endfunction
 
 "     }}}
 
+function! s:DiffHandler(job, status)
+  let l:eventignore_backup = &eventignore
+  set eventignore=all
+
+  let l:diffbuf = ch_getbufnr(a:job, 'out')
+  let l:text = getbufline(l:diffbuf, 1, '$')
+
+  execute 'silent bdelete ' . l:diffbuf
+  if delete(s:undo.tmp[0]) != 0
+    echoerr 'Personal Error Message: Can not delete temp file: '
+      \ . s:undo.tmp[0]
+  endif
+  if delete(s:undo.tmp[1]) != 0
+    echoerr 'Personal Error Message: Can not delete temp file: '
+      \ . s:undo.tmp[1]
+  endif
+  let &eventignore = l:eventignore_backup
+
+  for l:i in range(len(l:text))
+    let l:properties =
+      \ [ #{ type: 'diffadd', col: 1, length: max([0, len(l:text[l:i]) - 1]) }]
+    if l:text[l:i][0] == '-'
+      let l:properties = [ #{ type: 'diffdelete', col: 1,
+        \ length: max([0, len(l:text[l:i]) - 1]) }]
+    endif
+    let l:text[l:i] = #{ text: l:text[l:i][1:], props: l:properties }
+  endfor
+
+  call popup_settext(s:undo.diff_id, l:text)
+  unlet s:undo.job
+endfunction
+
 function! s:Diff(treepopup_id)
   call win_execute(a:treepopup_id, 'let s:undo.line = line(".")')
   let l:newchange = changenr()
@@ -1386,38 +1418,24 @@ function! s:Diff(treepopup_id)
   execute 'silent undo ' . l:newchange
   call winrestview(l:savedview)
 
-  let l:tmp1 = tempname()
-  let l:tmp2 = tempname()
-  if writefile(l:old, l:tmp1) == -1
-    echoerr 'Personal Error Message: Can not write to temp file: ' . l:tmp1
-  endif
-  if writefile(l:new, l:tmp2) == -1
-    echoerr 'Personal Error Message: Can not write to temp file: ' . l:tmp2
-  endif
   let l:diffcommand = 'diff --unchanged-line-format=""'
     \ . ' --new-line-format="-%dn: %L" --old-line-format="+%dn: %L"'
-  let l:text = systemlist(l:diffcommand . ' ' . l:tmp1 . ' ' . l:tmp2)
-  if delete(l:tmp1) != 0
-    echoerr 'Personal Error Message: Can not delete temp file: ' . l:tmp1
+  while !empty(job_info())
+    sleep 1m
+  endwhile
+  let s:undo.tmp = [tempname(), tempname()]
+  if writefile(l:old, s:undo.tmp[0]) == -1
+    echoerr 'Personal Error Message: Can not write to temp file: '
+      \ . s:undo.tmp[0]
   endif
-  if delete(l:tmp2) != 0
-    echoerr 'Personal Error Message: Can not delete temp file: ' . l:tmp2
+  if writefile(l:new, s:undo.tmp[1]) == -1
+    echoerr 'Personal Error Message: Can not write to temp file: '
+      \ . s:undo.tmp[1]
   endif
+  let s:undo.job = job_start(['/bin/sh', '-c', l:diffcommand . ' '
+    \ . s:undo.tmp[0] . ' ' . s:undo.tmp[1]], #{ out_io: 'buffer',
+    \ out_msg: v:false, exit_cb: expand('<SID>') . 'DiffHandler' })
   let &eventignore = l:eventignore_backup
-
-  for l:i in range(len(l:text))
-    let l:properties = []
-    if l:text[l:i][0] == '+'
-      let l:properties =
-        \ [ #{ type: 'diffadd', col: 1, length: len(l:text[l:i]) - 1 }]
-    elseif l:text[l:i][0] == '-'
-      let l:properties =
-        \ [ #{ type: 'diffdelete', col: 1, length: len(l:text[l:i]) - 1 }]
-    endif
-    let l:text[l:i] = #{ text: l:text[l:i][1:], props: l:properties }
-  endfor
-
-  call popup_settext(s:undo.diff_id, l:text)
 endfunction
 
 function! s:UndotreeFilter(winid, key)
@@ -1426,7 +1444,6 @@ function! s:UndotreeFilter(winid, key)
       \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
     call popup_clear()
     unlet s:undo
-    set lazyredraw
   elseif a:key == s:undokey.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1712,7 +1729,6 @@ function! s:Undotree()
   \ . ' | let w:line += 1 | call cursor(w:line, 0) | endwhile')
   call s:UndotreeButtons(l:popup_id)
   call s:HelpUndotree()
-  set nolazyredraw
 endfunction
 
 "   }}}
