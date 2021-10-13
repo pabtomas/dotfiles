@@ -6,11 +6,9 @@
 " - undotree: - test
 "             - first/last mappings
 "             - help function
-"             - fix cursor display when scrolling
 " - gutentags: test
 " - plugins: - rainbow parenthesis
 "            - tag list
-" - see other VIMRC
 
 " }}}
 " Dependencies {{{1
@@ -1401,6 +1399,7 @@ function! s:DiffHandler(job, status)
 
   call popup_settext(s:undo.diff_id, l:text)
   unlet s:undo.job
+  let &eventignore = l:eventignore_backup
 endfunction
 
 function! s:Diff(treepopup_id)
@@ -1435,6 +1434,7 @@ function! s:Diff(treepopup_id)
   let s:undo.job = job_start(['/bin/sh', '-c', l:diffcommand . ' '
     \ . s:undo.tmp[0] . ' ' . s:undo.tmp[1]], #{ out_io: 'buffer',
     \ out_msg: v:false, exit_cb: expand('<SID>') . 'DiffHandler' })
+
   let &eventignore = l:eventignore_backup
 endfunction
 
