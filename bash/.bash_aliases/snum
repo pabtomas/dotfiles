@@ -68,27 +68,66 @@ function cd () {
   fi
 }
 
-# change directories easily
-function , () {
-  if [ -v __MARK__ ]; then
-    cd ${__MARK__} && unset __MARK__
-  else
-    __MARK__=$(realpath \.)
-  fi
+# marks
+__NB_MARKS__=4
+alias ???="\???"
+alias ????="\????"
+eval 'declare -a __MARKS__=( '"$(printf %${__NB_MARKS__}s | sed "s/ /'' /g")"')'
+for I in $(seq 1 ${__NB_MARKS__}); do
+  eval 'function '$(printf %${I}s | tr ' ' ',')' () { '\
+\ \ 'if [ "x${__MARKS__['$(( ${I} - 1 ))']}" == "x" ]; then'\
+\ \ '  __MARKS__['$(( ${I} - 1 ))']=$(realpath .);'\
+\ \ 'else'\
+\ \ '  cd ${__MARKS__['$(( ${I} - 1 ))']};'\
+\ \ 'fi;'\
+\ \ '}'
+done
+
+for I in $(seq 1 $(( 2 ** ${__NB_MARKS__} - 1 )) ); do
+  BIN=$(echo "obase=2;${I}" | bc)
+  BIN="$(printf %$(( ${__NB_MARKS__} - ${#BIN}))s | tr ' ' '0')${BIN}"
+  BIN="$(echo ${BIN} | sed 's/0/,/g; s/1/?/g')"
+  FN="function "${BIN}" () {"
+  for J in $(seq 0 $(( ${#BIN} - 1 )) ); do
+    if [ "${BIN:${J}:1}" == '?' ]; then
+      FN=${FN}" __MARKS__["${J}"]='';"
+    fi
+  done
+  eval "${FN} ?; }"
+  unset BIN
+  unset FN
+done
+
+function ? () {
+  for I in $(seq 1 ${__NB_MARKS__}); do
+    echo $(printf %${I}s | tr ' ' ',')" = ${__MARKS__[$(( ${I} - 1 ))]}"
+  done
 }
 
-function ,, () {
-  if [ -v __MARK__ ]; then
-    cd ${__MARK__}
+function ?? () {
+  local CONCAT=""
+  local BACKUP="${HOME}/.marks_backup"
+  if [ "x${1}" != "x" ]; then
+    BACKUP="${1}"
+  fi
+  for MARK in ${__MARKS__[@]}; do
+    CONCAT="${CONCAT}x${MARK}"
+  done
+  if [ "${CONCAT}" == "$(printf %${#__MARKS__}s | tr ' ' 'x')" ]; then
+    [ -f "${BACKUP}" ] && readarray -t __MARKS__ < ${BACKUP}
+    ? && echo "$(tput setaf 2)Marks restored with:$(tput sgr0) ${BACKUP}"
   else
-    __MARK__=$(realpath \.)
+    echo "${__MARKS__[@]}" | tr ' ' '\n' > "${BACKUP}"
+    echo "$(tput setaf 2)Marks saved at:$(tput sgr0) ${BACKUP}"
   fi
 }
 
 for I in $(seq 2 1 10); do
-  ALIAS=$(printf '.%.0s' $(seq 1 ${I}))
-  DIR=$(printf '../%.0s' $(seq 1 $(( ${I} - 1 ))))
+  ALIAS=$(printf %${I}s | tr ' ' '.')
+  DIR=$(printf %$(( ${I} - 1 ))s | sed "s/ /..\//g")
   alias "${ALIAS}"='cd '${DIR}
+  unset ALIAS
+  unset DIR
 done
 
 function mkdir () {
@@ -245,6 +284,8 @@ alias gp='git pull'
 alias gP='git push'
 alias gr='git root'
 alias gs='git status -s'
+alias gsa='git stash apply'
+alias gsp='git stash push'
 alias gt='git tree'
 alias gu='git undo'
 

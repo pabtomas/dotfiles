@@ -8,7 +8,7 @@ function dots () {
   local -r CLEAR="\e[K"
   local START=$(($(date +%s) + 1))
   while [ 1 ]; do
-    printf '.%.0s' $(seq 0 1 $((($(date +%s) - ${START}) % 3)) ) \
+    printf %$((($(date +%s) - ${START}) % 3))s | tr ' ' '.' \
       | xargs -I {} echo -n -e ${CLEAR}"$1 "{}$'\r' && sleep 0.2
   done
 }

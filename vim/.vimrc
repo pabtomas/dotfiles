@@ -1,5 +1,6 @@
 " TODO {{{1
 
+" - replace system()/systemlist() calls with job_start()
 " - buffers menu: test
 " - explorer: - test
 "             - hijack netrw ?
@@ -769,7 +770,7 @@ function! s:BuffersMenuFilter(winid, key)
           bnext
         endif
         execute 'silent bdelete ' . l:buf
-        let s:menu = s:UpdateBuffersMenu()
+        call s:UpdateBuffersMenu()
         call popup_settext(a:winid, s:menu.text)
         call s:ReplaceCursorOnCurrentBuffer(a:winid)
       endif
