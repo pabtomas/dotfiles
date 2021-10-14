@@ -83,20 +83,24 @@ for I in $(seq 1 ${__NB_MARKS__}); do
 \ \ '}'
 done
 
-for I in $(seq 1 $(( 2 ** ${__NB_MARKS__} - 1 )) ); do
-  BIN=$(echo "obase=2;${I}" | bc)
-  BIN="$(printf %$(( ${__NB_MARKS__} - ${#BIN}))s | tr ' ' '0')${BIN}"
-  BIN="$(echo ${BIN} | sed 's/0/,/g; s/1/?/g')"
-  FN="function "${BIN}" () {"
-  for J in $(seq 0 $(( ${#BIN} - 1 )) ); do
-    if [ "${BIN:${J}:1}" == '?' ]; then
-      FN=${FN}" __MARKS__["${J}"]='';"
-    fi
-  done
-  eval "${FN} ?; }"
-  unset BIN
-  unset FN
+eval 'declare -a __BIN__=( '"$(printf %${__NB_MARKS__}s \
+  | sed "s/ /{0..1}/g")"' )'
+__FN__=''
+for I in ${__BIN__[@]}; do
+  if [ "x$(echo "${I}" | sed "s/0//g")" != "x" ]; then
+    I="$(echo "${I}" | sed 's/0/,/g; s/1/?/g')"
+    __FN__=${__FN__}"function "${I}" () {"
+    for J in $(seq 0 $(( ${#I} - 1 )) ); do
+      if [ "${I:${J}:1}" == '?' ]; then
+        __FN__=${__FN__}" __MARKS__["${J}"]='';"
+      fi
+    done
+    __FN__=${__FN__}" ?; }; "
+  fi
 done
+eval "${__FN__}"
+unset __FN__
+unset __BIN__
 
 function ? () {
   for I in $(seq 1 ${__NB_MARKS__}); do
