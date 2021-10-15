@@ -1,8 +1,8 @@
 #!/bin/bash
 
 TYPE="(fixing|feature|update|refactoring)"
-REGEX='(\['${TYPE}' - [^[:space:]]+\]|'
-REGEX=${REGEX}'\['${TYPE}' - [^[:space:]]+\][[:space:]][^[:space:]].*|'
+REGEX='(\['${TYPE}' - [^[:space:]].*\]|'
+REGEX=${REGEX}'\['${TYPE}' - [^[:space:]].*\][[:space:]][^[:space:]].*|'
 REGEX=${REGEX}'\['${TYPE}'\][[:space:]][^[:space:]].*)'
 
 if ! grep -ixqE "$REGEX" "$1"; then

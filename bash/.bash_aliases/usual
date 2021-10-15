@@ -249,8 +249,9 @@ function gc () {
   local A=".gitignore"
   local B="${GIT_TEMPLATE_DIR}/.gitignore"
   [ $? -eq 0 ] && [ -f "${GIT_TEMPLATE_DIR}/.gitignore" ] \
-    && echo -e "$(cat ${A} ${B} | sort)\n$(cat ${A})" | sort | uniq -u \
-      >> .gitignore
+    && echo -e "$(cat ${A} ${B} 2> /dev/null | sort)\n$(cat ${A} \
+      2> /dev/null)" | sort | uniq -u | grep -v -E '^[[:space:]]*$' \
+        >> .gitignore
   [ $? -eq 0 ] && [ -d "${GIT_TEMPLATE_DIR}/.hooks" ] \
     && command cp ${GIT_TEMPLATE_DIR}/.hooks/* .git/hooks
 }
