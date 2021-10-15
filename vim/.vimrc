@@ -2173,16 +2173,9 @@ augroup vimrc_autocomands
 "     }}}
 "   }}}
 "   Folds autocommands {{{2
-"     Vimscript autocommands {{{3
 
-  autocmd FileType vim setlocal foldmethod=marker
+  autocmd FileType vim,tmux,sh setlocal foldmethod=marker
 
-"     }}}
-"     Tmux autocommands {{{3
-
-  autocmd FileType tmux setlocal foldmethod=marker
-
-"     }}}
 "   }}}
 augroup END
 
