@@ -8,7 +8,7 @@ function dots () {
   local -r CLEAR="\e[K"
   local START=$(($(date +%s) + 1))
   while [ 1 ]; do
-    printf %$((($(date +%s) - ${START}) % 3))s | tr ' ' '.' \
+    printf %$(( (($(date +%s) - ${START}) % 3) + 1 ))s | tr ' ' '.' \
       | xargs -I {} echo -n -e ${CLEAR}"$1 "{}$'\r' && sleep 0.2
   done
 }
@@ -42,6 +42,7 @@ function main () {
   local DOTS_PID=0
   local STATUS=0
   local GPU=""
+  local VERSION=""
 
   echo -n -e $(dashed "Checking apt installation")$' '
   if [ $(which apt | wc -l) -gt 0 ]; then
@@ -609,8 +610,12 @@ function main () {
   echo -n -e $(dashed "Checking Universal Ctags version")$' '
   if [ $(which ctags | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-      | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")\n"
+    VERSION=$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+      | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")
+    [ "x${VERSION}" == "x" ] && VERSION=$(ctags --version \
+      | grep -m1 -E -o "\([.a-z0-9]+\)" | grep -E -o "[.0-9a-z]+" \
+      | xargs -I {} echo "Universal Ctags {}")
+    echo -e "\n    ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
   fi
@@ -687,8 +692,12 @@ function main () {
       && sudo \rm -rf ${CLONE_DIR} && return 1
   fi
 
-  echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-    | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")\n"
+  VERSION=$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+    | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")
+  [ "x${VERSION}" == "x" ] && VERSION=$(ctags --version \
+    | grep -m1 -E -o "\([.a-z0-9]+\)" | grep -E -o "[.0-9a-z]+" \
+    | xargs -I {} echo "Universal Ctags {}")
+  echo -e "\n    ${VERSION}\n"
 
   echo -n -e $(dashed "Checking TMUX version")$' '
   if [ $(which tmux | wc -l) -eq 1 ]; then
