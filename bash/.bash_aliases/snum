@@ -241,6 +241,11 @@ alias gu='git undo'
 
 function gc () {
   git clone "$@" && cd $(command ls -t | head -n1)
+  local A=".gitignore"
+  local B="${HOME}/.gitignore"
+  [ $? -eq 0 ] && [ -f "${HOME}/.gitignore" ] \
+    && echo -e "$(cat ${A} ${B} | sort)\n$(cat ${A})" | sort | uniq -u \
+      >> .gitignore
 }
 
 function gd () {
