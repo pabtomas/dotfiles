@@ -1,16 +1,15 @@
 " TODO {{{1
 
+" - replace system()/systemlist() calls with job_start()
 " - buffers menu: test
 " - explorer: - test
 "             - hijack netrw ?
 " - undotree: - test
-"             - fix scroll diff popup window
 "             - first/last mappings
 "             - help function
 " - gutentags: test
 " - plugins: - rainbow parenthesis
 "            - tag list
-" - see other VIMRC
 
 " }}}
 " Dependencies {{{1
@@ -457,7 +456,7 @@ endfunction
 function! FoldText()
   return substitute(substitute(foldtext(), '\s*\(\d\+\)',
     \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' [\1', ''),
-    \ 'lignes : ["#]\s\+', 'lines] ', '')
+    \ '\(\a\+\)\s\?: ["#]\s\+', '\1] ', '')
 endfunction
 
 "     }}}
@@ -771,7 +770,7 @@ function! s:BuffersMenuFilter(winid, key)
           bnext
         endif
         execute 'silent bdelete ' . l:buf
-        let s:menu = s:UpdateBuffersMenu()
+        call s:UpdateBuffersMenu()
         call popup_settext(a:winid, s:menu.text)
         call s:ReplaceCursorOnCurrentBuffer(a:winid)
       endif
@@ -1079,7 +1078,7 @@ function! s:NormalModeExplorerFilter(winid, key)
     call win_execute(a:winid, 'call search(histget("/", -1), "b")')
   elseif a:key == s:explorerkey.first
     call win_execute(a:winid,
-      \ 'call cursor(2, 0) | execute "normal! \<C-Y>"')
+      \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
   elseif a:key == s:explorerkey.last
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
   elseif a:key == s:explorerkey.exit
@@ -1092,7 +1091,7 @@ function! s:NormalModeExplorerFilter(winid, key)
   elseif a:key == s:explorerkey.previous
     call win_execute(a:winid, 'if line(".") > 2 |'
       \ . ' call cursor(line(".") - 1, 0) | else |'
-      \ . ' execute "normal! \<C-Y>" | endif')
+      \ . ' execute "normal! \<C-y>" | endif')
   elseif a:key == s:explorerkey.help
     call s:HelpExplorer()
   elseif a:key == s:explorerkey.searchmode
@@ -1371,6 +1370,39 @@ endfunction
 
 "     }}}
 
+function! s:DiffHandler(job, status)
+  let l:eventignore_backup = &eventignore
+  set eventignore=all
+
+  let l:diffbuf = ch_getbufnr(a:job, 'out')
+  let l:text = getbufline(l:diffbuf, 1, '$')
+
+  execute 'silent bdelete ' . l:diffbuf
+  if delete(s:undo.tmp[0]) != 0
+    echoerr 'Personal Error Message: Can not delete temp file: '
+      \ . s:undo.tmp[0]
+  endif
+  if delete(s:undo.tmp[1]) != 0
+    echoerr 'Personal Error Message: Can not delete temp file: '
+      \ . s:undo.tmp[1]
+  endif
+  let &eventignore = l:eventignore_backup
+
+  for l:i in range(len(l:text))
+    let l:properties =
+      \ [ #{ type: 'diffadd', col: 1, length: max([0, len(l:text[l:i]) - 1]) }]
+    if l:text[l:i][0] == '-'
+      let l:properties = [ #{ type: 'diffdelete', col: 1,
+        \ length: max([0, len(l:text[l:i]) - 1]) }]
+    endif
+    let l:text[l:i] = #{ text: l:text[l:i][1:], props: l:properties }
+  endfor
+
+  call popup_settext(s:undo.diff_id, l:text)
+  unlet s:undo.job
+  let &eventignore = l:eventignore_backup
+endfunction
+
 function! s:Diff(treepopup_id)
   call win_execute(a:treepopup_id, 'let s:undo.line = line(".")')
   let l:newchange = changenr()
@@ -1386,38 +1418,25 @@ function! s:Diff(treepopup_id)
   execute 'silent undo ' . l:newchange
   call winrestview(l:savedview)
 
-  let l:tmp1 = tempname()
-  let l:tmp2 = tempname()
-  if writefile(l:old, l:tmp1) == -1
-    echoerr 'Personal Error Message: Can not write to temp file: ' . l:tmp1
-  endif
-  if writefile(l:new, l:tmp2) == -1
-    echoerr 'Personal Error Message: Can not write to temp file: ' . l:tmp2
-  endif
   let l:diffcommand = 'diff --unchanged-line-format=""'
     \ . ' --new-line-format="-%dn: %L" --old-line-format="+%dn: %L"'
-  let l:text = systemlist(l:diffcommand . ' ' . l:tmp1 . ' ' . l:tmp2)
-  if delete(l:tmp1) != 0
-    echoerr 'Personal Error Message: Can not delete temp file: ' . l:tmp1
+  while !empty(job_info())
+    sleep 1m
+  endwhile
+  let s:undo.tmp = [tempname(), tempname()]
+  if writefile(l:old, s:undo.tmp[0]) == -1
+    echoerr 'Personal Error Message: Can not write to temp file: '
+      \ . s:undo.tmp[0]
   endif
-  if delete(l:tmp2) != 0
-    echoerr 'Personal Error Message: Can not delete temp file: ' . l:tmp2
+  if writefile(l:new, s:undo.tmp[1]) == -1
+    echoerr 'Personal Error Message: Can not write to temp file: '
+      \ . s:undo.tmp[1]
   endif
+  let s:undo.job = job_start(['/bin/sh', '-c', l:diffcommand . ' '
+    \ . s:undo.tmp[0] . ' ' . s:undo.tmp[1]], #{ out_io: 'buffer',
+    \ out_msg: v:false, exit_cb: expand('<SID>') . 'DiffHandler' })
+
   let &eventignore = l:eventignore_backup
-
-  for l:i in range(len(l:text))
-    let l:properties = []
-    if l:text[l:i][0] == '+'
-      let l:properties =
-        \ [ #{ type: 'diffadd', col: 1, length: len(l:text[l:i]) - 1 }]
-    elseif l:text[l:i][0] == '-'
-      let l:properties =
-        \ [ #{ type: 'diffdelete', col: 1, length: len(l:text[l:i]) - 1 }]
-    endif
-    let l:text[l:i] = #{ text: l:text[l:i][1:], props: l:properties }
-  endfor
-
-  call popup_settext(s:undo.diff_id, l:text)
 endfunction
 
 function! s:UndotreeFilter(winid, key)
@@ -1426,7 +1445,6 @@ function! s:UndotreeFilter(winid, key)
       \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
     call popup_clear()
     unlet s:undo
-    echo ''
   elseif a:key == s:undokey.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1437,9 +1455,6 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-    call win_execute(a:winid, 'redraw!')
-    call win_execute(s:undo.diff_id, 'redraw!')
-    redrawstatus!
   elseif a:key == s:undokey.previous
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") < line("$")'
@@ -1450,15 +1465,14 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-    call win_execute(a:winid, 'redraw!')
-    call win_execute(s:undo.diff_id, 'redraw!')
-    redrawstatus!
   elseif a:key == s:undokey.first
   elseif a:key == s:undokey.last
   elseif a:key == s:undokey.scrollup
-    call win_execute(s:undo.diff_id, 'call cursor(line("w0") - 1, 0)')
+    call win_execute(s:undo.diff_id,
+      \ 'call cursor(line("w0") - 1, 0) | redraw')
   elseif a:key == s:undokey.scrolldown
-    call win_execute(s:undo.diff_id, 'call cursor(line("w$") + 1, 0)')
+    call win_execute(s:undo.diff_id,
+      \ 'call cursor(line("w$") + 1, 0) | redraw')
   elseif a:key == s:undokey.select
     call win_execute(a:winid, 'let s:undo.line = line(".")')
     execute 'silent undo ' . s:undo.meta[s:undo.line - 1]
@@ -1711,9 +1725,9 @@ function! s:Undotree()
     \ scrollbar: v:false,
     \ cursorline: v:true,
   \ })
-  call win_execute(l:popup_id, 'let w:c = 1 | call cursor(w:c, 0)'
+  call win_execute(l:popup_id, 'let w:line = 1 | call cursor(w:line, 0)'
   \ . ' | while s:undo.meta[line(".") - 1] != s:undo.change_backup'
-  \ . ' | let w:c += 1 | call cursor(w:c, 0) | endwhile')
+  \ . ' | let w:line += 1 | call cursor(w:line, 0) | endwhile')
   call s:UndotreeButtons(l:popup_id)
   call s:HelpUndotree()
 endfunction
@@ -1750,12 +1764,12 @@ function! s:GenerateGutentags()
       let &tags = l:tags_setting
 
       let l:command = 'ctags -R'
-      let l:ctags_kinds = #{
-      \   Vim: 'fvC',
+      let l:ctags_flags = #{
+      \   vim: ' --kinds-Vim=fvC',
       \ }
-      for [l:lang, l:flags] in items(l:ctags_kinds)
-        let l:command .= ' --kinds-' . l:lang . '=' . l:flags
-      endfor
+      if has_key(l:ctags_flags, &filetype)
+        let l:command .= l:ctags_flags[&filetype]
+      endif
       let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
         \ . ' do echo -n "--exclude=' . l:root . '"/${FILE}" "; done) -o '
         \ . l:tags_path . ' ' . l:root
@@ -1990,7 +2004,7 @@ execute s:mappings.insensitive_search.mode         . 'noremap '
 " copy the unnamed register's content in the command line
 " unnamed register = any text deleted or yank (with y)
 execute s:mappings.paste_unnamed_reg.mode           . 'noremap '
-  \ . s:mappings.paste_unnamed_reg.key    . ' <C-R><C-O>"'
+  \ . s:mappings.paste_unnamed_reg.key    . ' <C-r><C-o>"'
 
 " open .vimrc in a vertical split window
 execute s:mappings.vsplit_vimrc.mode               . 'noremap '
@@ -2061,10 +2075,10 @@ execute s:mappings.autocompletion.mode             . 'noremap '
 " move visual block
 execute s:mappings.visualup.mode                   . 'noremap <silent> '
   \ . s:mappings.visualup.key
-  \ . ' :<C-U>silent call <SID>VisualUp()<CR>'
+  \ . ' :<C-u>silent call <SID>VisualUp()<CR>'
 execute s:mappings.visualdown.mode                 . 'noremap <silent> '
   \ . s:mappings.visualdown.key
-  \ . ' :<C-U>silent call <SID>VisualDown()<CR>'
+  \ . ' :<C-u>silent call <SID>VisualDown()<CR>'
 
 " add blank lines
 execute s:mappings.blankup.mode                    . 'noremap '
