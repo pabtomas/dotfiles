@@ -2096,24 +2096,28 @@ execute s:mappings.previous_search.mode            . 'noremap '
 " Abbreviations {{{1
 
 " avoid intuitive write usage
-cnoreabbrev w update
+cnoreabbrev <expr> w (getcmdtype() == ':' ? "update" : "w")
+cnoreabbrev <expr> wq (getcmdtype() == ':' ? "update \| quit" : "wq")
 
 " save buffer as sudo user
-cnoreabbrev sw silent write ! sudo tee % > /dev/null | echo ''
+cnoreabbrev <expr> sw (getcmdtype() == ':' ?
+  \ "silent write ! sudo tee % > /dev/null \| echo ''" : "sw")
 
 " avoid intuitive tabpage usage
-cnoreabbrev tabe silent tabonly
+cnoreabbrev <expr> tabe (getcmdtype() == ':' ? "silent tabonly" : "tabe")
 
 " allow vertical split designation with bufnr instead of full filename
-cnoreabbrev vb vertical sbuffer
+cnoreabbrev <expr> vb (getcmdtype() == ':' ? "vertical sbuffer" : "vb")
 
 " next-previous intuitive usage for multi file opening
-cnoreabbrev fn next
-cnoreabbrev fp previous
+cnoreabbrev <expr> n (getcmdtype() == ':' ? "next" : "n")
+cnoreabbrev <expr> p (getcmdtype() == ':' ? "previous" : "p")
 
 " allow to ignore splitbelow option for help split
-cnoreabbrev h top help
-cnoreabbrev help top help
+cnoreabbrev <expr> h (getcmdtype() == ':' ? "top help" : "h")
+cnoreabbrev <expr> he (getcmdtype() == ':' ? "top help" : "he")
+cnoreabbrev <expr> hel (getcmdtype() == ':' ? "top help" : "hel")
+cnoreabbrev <expr> help (getcmdtype() == ':' ? "top help" : "help")
 
 " }}}
 " Autocommands {{{1
