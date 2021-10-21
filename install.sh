@@ -5,9 +5,9 @@ function dashed () {
 }
 
 function dots () {
-  local -r CLEAR="\e[K"
+  local -r CLEAR="$(tput ed)"
   local START=$(($(date +%s) + 1))
-  while [ 1 ]; do
+  while true; do
     printf %$(( (($(date +%s) - ${START}) % 3) + 1 ))s | tr ' ' '.' \
       | xargs -I {} echo -n -e ${CLEAR}"$1 "{}$'\r' && sleep 0.2
   done
@@ -16,7 +16,7 @@ function dots () {
 function main () {
   sudo -k && sudo echo &> /dev/null && local SUDO_START=$(date +%s)
 
-  local -r CLEAR="\e[K"
+  local -r CLEAR="$(tput ed)"
   local -r GREEN=$(tput setaf 2)
   local -r RED=$(tput setaf 9)
   local -r RESET=$(tput sgr0)

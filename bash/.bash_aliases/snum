@@ -68,7 +68,7 @@ function cd () {
   fi
 }
 
-for I in $(seq 2 1 10); do
+for I in $(seq 2 1 5); do
   ALIAS=$(printf %${I}s | tr ' ' '.')
   DIR=$(printf %$(( ${I} - 1 ))s | sed 's/ /..\//g')
   alias "${ALIAS}"='cd '${DIR}

@@ -1748,6 +1748,8 @@ function! s:HighlightGutentags()
   endif
 endfunction
 
+" TODO: Need fixing: Sometimes this function generates a 'fatal:' file
+"                    with CTAGS var env inside.
 function! s:GenerateGutentags()
   if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
     let l:bufdir = fnamemodify(expand('%'), ':p:h')
