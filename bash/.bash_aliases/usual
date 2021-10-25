@@ -165,10 +165,13 @@ function git-undo () {
 }
 git-undo\""
 
+git config -- global --replace-all alias.file "checkout HEAD -- "
+
 alias ga='git add'
 alias gaa='git add -A'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
+alias gf='git file'
 alias gh='git checkout'
 alias gk='git ranking'
 alias gl='git pull'
