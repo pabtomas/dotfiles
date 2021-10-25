@@ -2,73 +2,11 @@
 
 unalias -a
 
-function ls () {
-  command ls -lA --color "$@" | grep -v -E "^total [0-9]+" \
-    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}" | less -R +g
-}
-
-function ll () {
-  command ls -lA --color "$@" | grep -v -E "^total [0-9]+" | less -R +g
-}
+alias ls='command ls --color'
+alias lh='command ls -d --color .??*'
+alias ll='command ls -lA --color "$@" | grep -v -E "^total [0-9]+"'
 
 alias grep='grep --color'
-
-function cd () {
-
-  command cd "$@"
-
-  if [ $? -eq 0 ]; then
-
-    OUT=$(timeout 0.1 bash -c \
-\ \ \ 'SZ=0;'\
-\ \ \ 'DSZ=$(( (('${LINES}' / 2) * ('${COLUMNS}' / ((('\
-\ \ \ '  $(command ls -Ul'\
-\ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}"'\
-\ \ \ '    | wc -L) / 8) + 1) * 8))) + 1 ));'\
-\ \ \ 'SZ=$(command ls -U'\
-\ \ \ '     | (while read -r file && [ ${SZ} -lt ${DSZ} ]; do'\
-\ \ \ '          ((SZ+=1));'\
-\ \ \ '        done; echo ${SZ}));'\
-\ \ \ 'RESET="$(tput sgr0)";'\
-\ \ \ 'if [ ${SZ} -eq 0 ]; then'\
-\ \ \ '  COL="$(tput bold)$(tput setaf 6)";'\
-\ \ \ '  echo -e "${COL}No regular files found in this directory.${RESET}";'\
-\ \ \ 'elif [ ${SZ} -lt ${DSZ} ]; then'\
-\ \ \ '  command ls -l --color | tail -n+2'\
-\ \ \ '    | awk "{printf \"%s %s %s\n\", \$9, \$10, \$11}";'\
-\ \ \ 'else'\
-\ \ \ '  COL="$(tput bold)$(tput setaf 3)";'\
-\ \ \ '  echo -e "${COL}Huge current directory."'\
-\ \ \ \ '"Use listing commands carrefully.${RESET}";'\
-\ \ \ 'fi')
-
-    if [ $? -eq 124 ]; then
-      local COL="$(tput bold)$(tput setaf 9)"
-      local RESET="$(tput sgr0)"
-      echo -e "${COL}Timeout occured."\
-        "Avoid listing commands in current directory.${RESET}"
-      exit 1
-    fi
-
-    HID=$(timeout 0.1 bash -c \
-\ \ \ 'if [ $(command ls -d .??* 2> /dev/null | wc -m) -gt 0 ]; then'\
-\ \ \ ' COL="$(tput bold)$(tput setaf 13)";'\
-\ \ \ ' RESET="$(tput sgr0)";'\
-\ \ \ ' echo -e "${COL}Hidden file(s) detected.${RESET}";'\
-\ \ \ 'fi')
-
-    if [ $? -eq 124 ]; then
-      local COL="$(tput bold)$(tput setaf 9)"
-      local RESET="$(tput sgr0)"
-      echo -e "${COL}Timeout occured."\
-        "Avoid listing commands in current directory.${RESET}"
-      exit 1
-    fi
-
-    [ $(echo "${HID}" | wc -L) -gt 0 ] && echo -e "${HID}"
-    echo -e "${OUT}" | column
-  fi
-}
 
 for I in $(seq 2 1 5); do
   ALIAS=$(printf %${I}s | tr ' ' '.')
