@@ -772,6 +772,10 @@ function! s:BuffersMenuFilter(winid, key)
         execute 'silent bdelete ' . l:buf
         call s:UpdateBuffersMenu()
         call popup_settext(a:winid, s:menu.text)
+        call popup_setoptions(a:winid, #{
+        \ line: win_screenpos(0)[0] + (winheight(0) - s:menu.height) / 2,
+        \ col: win_screenpos(0)[1] + (winwidth(0) - s:menu.width) / 2,
+        \ })
         call s:ReplaceCursorOnCurrentBuffer(a:winid)
       endif
     endif
