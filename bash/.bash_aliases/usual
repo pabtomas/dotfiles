@@ -165,7 +165,7 @@ function git-undo () {
 }
 git-undo\""
 
-git config -- global --replace-all alias.file "checkout HEAD -- "
+git config --global --replace-all alias.file "checkout HEAD -- "
 
 alias ga='git add'
 alias gaa='git add -A'
