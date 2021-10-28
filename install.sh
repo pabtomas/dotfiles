@@ -408,6 +408,24 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  echo -n -e $(dashed "Checking xclip installation")$' '
+  if [ $(which xclip | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing xclip package")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y xclip | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [ $? -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
   if [ ${GNOME} -eq 1 ]; then
     echo -n -e $(dashed "Checking glxinfo installation")$' '
     if [ $(which glxinfo | wc -l) -eq 0 ]; then
