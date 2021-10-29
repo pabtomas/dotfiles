@@ -25,8 +25,8 @@ IDX=0
 TEXT="<executor.markup.true> "
 if [ $(which glxinfo | wc -l) -gt 0 ]; then
   if [ $(glxinfo | grep -E -i "Device" | grep -E -i "Intel" | wc -l) -gt 0 ]; then
-    if [ -d /tmp/autostart/intel_gpu_monitoring ]; then
-      PERCENT=$(command ls -t /tmp/autostart/intel_gpu_monitoring | head -n 1)
+    if [ -d ${HOME}/.cache/intel_gpu_monitoring ]; then
+      PERCENT=$(command ls -t ${HOME}/.cache/intel_gpu_monitoring | head -n 1)
       SPAN="<span foreground='#$(color ${PERCENT})'>\360\237\204\266 ${PERCENT}%</span>"
       TEXT="${TEXT} ${SPAN}"
     fi

@@ -3,7 +3,7 @@
 [ $(which glxinfo | wc -l) -eq 0 ] && exit 1
 [ $(glxinfo | grep -E -i "Device" | grep -E -i "Intel" | wc -l) -eq 0 ] \
   && exit 1
-DIR="/tmp/autostart/intel_gpu_monitoring"
+DIR="${HOME}/.cache/intel_gpu_monitoring"
 command mkdir -p ${DIR}
 sudo intel_gpu_top -J -s 500 \
   | sed --unbuffered -e 's/^{/'$(printf "\x1e")'{/' \
