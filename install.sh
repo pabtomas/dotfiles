@@ -839,7 +839,7 @@ function main () {
   fi
 
   DASHED=${CLEAR}$(dashed "Cloning flagbox repository")
-  unbuffer git clone https://github.com/pabtomas/flagbox ${TPM_DEST} \
+  unbuffer git clone https://github.com/pabtomas/flagbox ${CLONE_DIR}/flagbox \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
   if [ $? -eq 0 ]; then
