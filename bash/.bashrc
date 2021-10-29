@@ -1,5 +1,8 @@
-GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
+force_color_prompt=yes
+
+export VIMRUNTIME="${HOME}/vim_sources/runtime"
+
+export GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
 git config --global core.editor vim
 
-force_color_prompt=yes
-cd .
+source ${HOME}/.local/bin/flagbox.sh

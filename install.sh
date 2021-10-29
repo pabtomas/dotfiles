@@ -21,6 +21,7 @@ function main () {
   local -r RED=$(tput setaf 9)
   local -r RESET=$(tput sgr0)
   local -r CLONE_DIR="/tmp/repositories_clone"
+  local -r VIM_SOURCES="${HOME}/vim_sources"
   local -r BACKUP="$(pwd)"
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
@@ -550,27 +551,26 @@ function main () {
 
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [ -d ${CLONE_DIR} ] && sudo \rm -rf ${CLONE_DIR}
-  command mkdir -p ${CLONE_DIR}
+  [ -d ${VIM_SOURCES} ] && sudo \rm -rf ${VIM_SOURCES}
+  command mkdir -p ${VIM_SOURCES}
 
   DASHED=${CLEAR}$(dashed "Cloning VIM repository")
-  unbuffer git clone https://github.com/vim/vim.git ${CLONE_DIR}/vim \
+  unbuffer git clone https://github.com/vim/vim.git ${VIM_SOURCES} \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
   if [ $? -eq 0 ]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
-  command cd ${CLONE_DIR}/vim/src
+  command cd ${VIM_SOURCES}/src
 
   DASHED=$(dashed "Configuring VIM")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  ${CLONE_DIR}/vim/src/configure &> /dev/null
+  ${VIM_SOURCES}/src/configure &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -581,7 +581,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Compiling VIM")
@@ -600,7 +600,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Installing VIM")
@@ -619,11 +619,16 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
     " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
+
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  [ -d ${CLONE_DIR} ] && sudo \rm -rf ${CLONE_DIR}
+  command mkdir -p ${CLONE_DIR}
 
   echo -n -e $(dashed "Checking Universal Ctags version")$' '
   if [ $(which ctags | wc -l) -eq 1 ]; then
