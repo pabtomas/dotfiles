@@ -20,8 +20,7 @@ function main () {
   local -r GREEN=$(tput setaf 2)
   local -r RED=$(tput setaf 9)
   local -r RESET=$(tput sgr0)
-  local -r CLONE_DIR="/tmp/repositories_clone"
-  local -r VIM_SOURCES="${HOME}/.vim-sources"
+  local -r SOURCES="${HOME}/.local/sources"
   local -r BACKUP="$(pwd)"
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
@@ -45,6 +44,8 @@ function main () {
   local STATUS=0
   local GPU=""
   local VERSION=""
+
+  command mkdir -p ${HOME}/.local/bin ${HOME}/.local/share ${HOME}/.local/lib
 
   echo -n -e $(dashed "Checking apt installation")$' '
   if [ $(which apt | wc -l) -gt 0 ]; then
@@ -552,11 +553,11 @@ function main () {
 
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [ -d ${VIM_SOURCES} ] && sudo \rm -rf ${VIM_SOURCES}
-  command mkdir -p ${VIM_SOURCES}
+  [ -d ${SOURCES} ] && sudo \rm -rf ${SOURCES}
+  command mkdir -p ${SOURCES}
 
   DASHED=${CLEAR}$(dashed "Cloning VIM repository")
-  unbuffer git clone https://github.com/vim/vim.git ${VIM_SOURCES} \
+  unbuffer git clone https://github.com/vim/vim.git ${SOURCES}/vim \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
   if [ $? -eq 0 ]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
@@ -564,14 +565,14 @@ function main () {
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
-  command cd ${VIM_SOURCES}/src
+  command cd ${SOURCES}/vim/src
 
   DASHED=$(dashed "Configuring VIM")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  ${VIM_SOURCES}/src/configure &> /dev/null
+  ${SOURCES}/vim/src/configure &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -626,11 +627,6 @@ function main () {
   echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
     " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
 
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [ -d ${CLONE_DIR} ] && sudo \rm -rf ${CLONE_DIR}
-  command mkdir -p ${CLONE_DIR}
-
   echo -n -e $(dashed "Checking Universal Ctags version")$' '
   if [ $(which ctags | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
@@ -648,14 +644,14 @@ function main () {
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   unbuffer git clone https://github.com/universal-ctags/ctags.git \
-    ${CLONE_DIR}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
+    ${SOURCES}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
   if [ $? -eq 0 ]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Configuring Universal Ctags")
@@ -663,8 +659,8 @@ function main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cd ${CLONE_DIR}/ctags && sh ${CLONE_DIR}/ctags/autogen.sh \
-    &> /dev/null && ${CLONE_DIR}/ctags/configure &> /dev/null
+  command cd ${SOURCES}/ctags && sh ${SOURCES}/ctags/autogen.sh \
+    &> /dev/null && ${SOURCES}/ctags/configure &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -675,7 +671,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Compiling Universal Ctags")
@@ -694,7 +690,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Installing Universal Ctags")
@@ -713,7 +709,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   VERSION=$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
@@ -734,14 +730,14 @@ function main () {
   DASHED=${CLEAR}$(dashed "Cloning TMUX repository")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  unbuffer git clone https://github.com/tmux/tmux.git ${CLONE_DIR}/tmux \
+  unbuffer git clone https://github.com/tmux/tmux.git ${SOURCES}/tmux \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
   if [ $? -eq 0 ]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Configuring TMUX")
@@ -749,8 +745,8 @@ function main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cd ${CLONE_DIR}/tmux && sh ${CLONE_DIR}/tmux/autogen.sh \
-    &> /dev/null && ${CLONE_DIR}/tmux/configure &> /dev/null
+  command cd ${SOURCES}/tmux && sh ${SOURCES}/tmux/autogen.sh \
+    &> /dev/null && ${SOURCES}/tmux/configure &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -761,7 +757,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Compiling TMUX")
@@ -780,7 +776,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Installing TMUX")
@@ -799,14 +795,12 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   echo -e "\n    $(tmux -V)\n"
 
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  command cd ${SCRIPT_DIR} && sudo \rm -rf ${CLONE_DIR}
+  command cd ${SCRIPT_DIR}
 
   DASHED=${CLEAR}$(dashed "Cloning TMUX Plugin Manager repository")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
@@ -839,7 +833,7 @@ function main () {
   fi
 
   DASHED=${CLEAR}$(dashed "Cloning flagbox repository")
-  unbuffer git clone https://github.com/pabtomas/flagbox ${CLONE_DIR}/flagbox \
+  unbuffer git clone https://github.com/pabtomas/flagbox ${SOURCES}/flagbox \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
   if [ $? -eq 0 ]; then
@@ -852,7 +846,7 @@ function main () {
   DASHED=$(dashed "Installing flagbox")
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cd ${CLONE_DIR}/flagbox \
+  command cd ${SOURCES}/flagbox \
     && command cp flagbox.sh ${HOME}/.local/bin &> /dev/null
   STATUS=$?
 
@@ -864,7 +858,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Copying .vimrc")
