@@ -772,6 +772,10 @@ function! s:BuffersMenuFilter(winid, key)
         execute 'silent bdelete ' . l:buf
         call s:UpdateBuffersMenu()
         call popup_settext(a:winid, s:menu.text)
+        call popup_setoptions(a:winid, #{
+        \ line: win_screenpos(0)[0] + (winheight(0) - s:menu.height) / 2,
+        \ col: win_screenpos(0)[1] + (winwidth(0) - s:menu.width) / 2,
+        \ })
         call s:ReplaceCursorOnCurrentBuffer(a:winid)
       endif
     endif
@@ -1748,6 +1752,8 @@ function! s:HighlightGutentags()
   endif
 endfunction
 
+" TODO: Need fixing: Sometimes this function generates a 'fatal:' file
+"                    with CTAGS var env inside.
 function! s:GenerateGutentags()
   if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
     let l:bufdir = fnamemodify(expand('%'), ':p:h')
@@ -2096,24 +2102,28 @@ execute s:mappings.previous_search.mode            . 'noremap '
 " Abbreviations {{{1
 
 " avoid intuitive write usage
-cnoreabbrev w update
+cnoreabbrev <expr> w (getcmdtype() == ':' ? "update" : "w")
+cnoreabbrev <expr> wq (getcmdtype() == ':' ? "update \| quit" : "wq")
 
 " save buffer as sudo user
-cnoreabbrev sw silent write ! sudo tee % > /dev/null | echo ''
+cnoreabbrev <expr> sw (getcmdtype() == ':' ?
+  \ "silent write ! sudo tee % > /dev/null \| echo ''" : "sw")
 
 " avoid intuitive tabpage usage
-cnoreabbrev tabe silent tabonly
+cnoreabbrev <expr> tabe (getcmdtype() == ':' ? "silent tabonly" : "tabe")
 
 " allow vertical split designation with bufnr instead of full filename
-cnoreabbrev vb vertical sbuffer
+cnoreabbrev <expr> vb (getcmdtype() == ':' ? "vertical sbuffer" : "vb")
 
 " next-previous intuitive usage for multi file opening
-cnoreabbrev fn next
-cnoreabbrev fp previous
+cnoreabbrev <expr> n (getcmdtype() == ':' ? "next" : "n")
+cnoreabbrev <expr> p (getcmdtype() == ':' ? "previous" : "p")
 
 " allow to ignore splitbelow option for help split
-cnoreabbrev h top help
-cnoreabbrev help top help
+cnoreabbrev <expr> h (getcmdtype() == ':' ? "top help" : "h")
+cnoreabbrev <expr> he (getcmdtype() == ':' ? "top help" : "he")
+cnoreabbrev <expr> hel (getcmdtype() == ':' ? "top help" : "hel")
+cnoreabbrev <expr> help (getcmdtype() == ':' ? "top help" : "help")
 
 " }}}
 " Autocommands {{{1

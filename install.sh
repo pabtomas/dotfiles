@@ -5,9 +5,9 @@ function dashed () {
 }
 
 function dots () {
-  local -r CLEAR="\e[K"
+  local -r CLEAR="$(tput ed)"
   local START=$(($(date +%s) + 1))
-  while [ 1 ]; do
+  while true; do
     printf %$(( (($(date +%s) - ${START}) % 3) + 1 ))s | tr ' ' '.' \
       | xargs -I {} echo -n -e ${CLEAR}"$1 "{}$'\r' && sleep 0.2
   done
@@ -16,11 +16,12 @@ function dots () {
 function main () {
   sudo -k && sudo echo &> /dev/null && local SUDO_START=$(date +%s)
 
-  local -r CLEAR="\e[K"
+  local -r CLEAR="$(tput ed)"
   local -r GREEN=$(tput setaf 2)
   local -r RED=$(tput setaf 9)
   local -r RESET=$(tput sgr0)
   local -r CLONE_DIR="/tmp/repositories_clone"
+  local -r VIM_SOURCES="${HOME}/.vim-sources"
   local -r BACKUP="$(pwd)"
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
@@ -28,6 +29,7 @@ function main () {
   local -r BASHRC="${SCRIPT_DIR}/bash/.bashrc"
   local -r PROFILE="${SCRIPT_DIR}/bash/.bash_profile"
   local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
+  local -r FLAGBOXCONF="${SCRIPT_DIR}/flagbox/.flagbox.conf"
   local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
   local -r HOOKS="${SCRIPT_DIR}/git/.hooks"
   local -r DESKTOP="${SCRIPT_DIR}/desktop"
@@ -408,6 +410,24 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  echo -n -e $(dashed "Checking xsel installation")$' '
+  if [ $(which xsel | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing xsel package")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y xsel | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [ $? -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
   if [ ${GNOME} -eq 1 ]; then
     echo -n -e $(dashed "Checking glxinfo installation")$' '
     if [ $(which glxinfo | wc -l) -eq 0 ]; then
@@ -532,27 +552,26 @@ function main () {
 
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [ -d ${CLONE_DIR} ] && sudo \rm -rf ${CLONE_DIR}
-  command mkdir -p ${CLONE_DIR}
+  [ -d ${VIM_SOURCES} ] && sudo \rm -rf ${VIM_SOURCES}
+  command mkdir -p ${VIM_SOURCES}
 
   DASHED=${CLEAR}$(dashed "Cloning VIM repository")
-  unbuffer git clone https://github.com/vim/vim.git ${CLONE_DIR}/vim \
+  unbuffer git clone https://github.com/vim/vim.git ${VIM_SOURCES} \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
   if [ $? -eq 0 ]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
-  command cd ${CLONE_DIR}/vim/src
+  command cd ${VIM_SOURCES}/src
 
   DASHED=$(dashed "Configuring VIM")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  ${CLONE_DIR}/vim/src/configure &> /dev/null
+  ${VIM_SOURCES}/src/configure &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -563,7 +582,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Compiling VIM")
@@ -582,7 +601,7 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   DASHED=$(dashed "Installing VIM")
@@ -601,11 +620,16 @@ function main () {
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && sudo \rm -rf ${CLONE_DIR} && return 1
+      && return 1
   fi
 
   echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
     " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
+
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  [ -d ${CLONE_DIR} ] && sudo \rm -rf ${CLONE_DIR}
+  command mkdir -p ${CLONE_DIR}
 
   echo -n -e $(dashed "Checking Universal Ctags version")$' '
   if [ $(which ctags | wc -l) -eq 1 ]; then
@@ -814,6 +838,35 @@ function main () {
     fi
   fi
 
+  DASHED=${CLEAR}$(dashed "Cloning flagbox repository")
+  unbuffer git clone https://github.com/pabtomas/flagbox ${TPM_DEST} \
+    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+  if [ $? -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  DASHED=$(dashed "Installing flagbox")
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  command cd ${CLONE_DIR}/flagbox \
+    && command cp flagbox.sh ${HOME}/.local/bin &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && sudo \rm -rf ${CLONE_DIR} && return 1
+  fi
+
   DASHED=$(dashed "Copying .vimrc")
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -904,6 +957,23 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cp ${ALIASES} ${HOME}/.bash_aliases &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  DASHED=$(dashed "Copying .flagbox.conf")
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  command cp ${FLAGBOXCONF} ${HOME} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
