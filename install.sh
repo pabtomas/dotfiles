@@ -29,6 +29,7 @@ function main () {
   local -r BASHRC="${SCRIPT_DIR}/bash/.bashrc"
   local -r PROFILE="${SCRIPT_DIR}/bash/.bash_profile"
   local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
+  local -r FLAGBOXCONF="${SCRIPT_DIR}/flagbox/.flagbox.conf"
   local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
   local -r HOOKS="${SCRIPT_DIR}/git/.hooks"
   local -r DESKTOP="${SCRIPT_DIR}/desktop"
@@ -837,6 +838,35 @@ function main () {
     fi
   fi
 
+  DASHED=${CLEAR}$(dashed "Cloning flagbox repository")
+  unbuffer git clone https://github.com/pabtomas/flagbox ${TPM_DEST} \
+    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+  if [ $? -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  DASHED=$(dashed "Installing flagbox")
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  command cd ${CLONE_DIR}/flagbox \
+    && command cp flagbox.sh ${HOME}/.local/bin &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && sudo \rm -rf ${CLONE_DIR} && return 1
+  fi
+
   DASHED=$(dashed "Copying .vimrc")
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -927,6 +957,23 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cp ${ALIASES} ${HOME}/.bash_aliases &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  DASHED=$(dashed "Copying .flagbox.conf")
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  command cp ${FLAGBOXCONF} ${HOME} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
