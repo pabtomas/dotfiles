@@ -21,7 +21,7 @@ function main () {
   local -r RED=$(tput setaf 9)
   local -r RESET=$(tput sgr0)
   local -r CLONE_DIR="/tmp/repositories_clone"
-  local -r VIM_SOURCES="${HOME}/vim_sources"
+  local -r VIM_SOURCES="${HOME}/.vim-sources"
   local -r BACKUP="$(pwd)"
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
