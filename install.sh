@@ -408,13 +408,13 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  echo -n -e $(dashed "Checking xclip installation")$' '
-  if [ $(which xclip | wc -l) -eq 0 ]; then
+  echo -n -e $(dashed "Checking xsel installation")$' '
+  if [ $(which xsel | wc -l) -eq 0 ]; then
     echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing xclip package")
+    DASHED=${CLEAR}$(dashed "Installing xsel package")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y xclip | unbuffer -p grep -E -o "[0-9]+%" \
+    sudo unbuffer apt install -y xsel | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
     if [ $? -eq 0 ]; then
