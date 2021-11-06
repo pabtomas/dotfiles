@@ -1831,8 +1831,21 @@ endfunction
 "   Bash {{{2
 
 function! s:PrefillShFile()
-  call append(0, [ '#!/bin/bash',
-  \                '', ])
+  call append(0, [
+  \                '#!/bin/bash',
+  \                '',
+  \              ])
+endfunction
+
+"   }}}
+"   YAML {{{2
+
+function! s:PrefillYamlFile()
+  call append(0, [
+  \                '---',
+  \                '# Standards: 0.3',
+  \                '',
+  \              ])
 endfunction
 
 "   }}}
@@ -2179,6 +2192,11 @@ augroup vimrc_autocomands
 "     Bash autocommands {{{3
 
   autocmd BufNewFile *.sh :call <SID>PrefillShFile()
+
+"     }}}
+"     Yaml autocommands {{{3
+
+  autocmd BufNewFile *.yml,*.yaml :call <SID>PrefillYamlFile()
 
 "     }}}
 "   }}}
