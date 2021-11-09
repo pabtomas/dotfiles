@@ -18,8 +18,13 @@ function mkdir () {
   command mkdir -pv "$@"
   if [ $? -eq 0 ]; then
     for DIR in $(echo "$@"); do
-      echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
-        && read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
+      if [ "x${DIR}" != "x" ]; then
+        while [ ${DIR} != "." ]; do
+          echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
+            && read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
+          DIR=$(dirname ${DIR});
+        done
+      fi
     done
   fi
 }
