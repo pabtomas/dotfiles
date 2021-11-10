@@ -1,13 +1,11 @@
+" Ideas {{{1
+
+" - replace system()/systemlist() calls with job_start() ?
+" - explorer: - hijack netrw ?
+
+" }}}
 " TODO {{{1
 
-" - replace system()/systemlist() calls with job_start()
-" - buffers menu: test
-" - explorer: - test
-"             - hijack netrw ?
-" - undotree: - test
-"             - first/last mappings
-"             - help function
-" - gutentags: test
 " - plugins: - rainbow parenthesis
 "            - tag list
 
@@ -1357,19 +1355,60 @@ if exists('s:undokey') | unlet s:undokey | endif
 const s:undokey = #{
 \   next:          "\<Up>",
 \   previous:    "\<Down>",
-\   first:             "G",
-\   last:              "g",
+\   first:             "g",
+\   last:              "G",
 \   scrollup:    "\<Left>",
 \   scrolldown: "\<Right>",
 \   select:     "\<Enter>",
 \   exit:         "\<Esc>",
-\   help:              "h",
+\   help:              "?",
 \ }
 
 "     }}}
 "     Help {{{3
 
 function! s:HelpUndotree()
+  let l:lines = [ '     ' . s:Key([s:undokey.help]) . '   - Show this help',
+   \ '    ' . s:Key([s:undokey.exit]) . '  - Exit undotree',
+   \ '   ' . s:Key([s:undokey.next, s:undokey.previous])
+     \ . ' - Next/Previous change',
+   \ '   ' . s:Key([s:undokey.select]) . ' - Select change',
+   \ '   ' . s:Key([s:undokey.first, s:undokey.last])
+     \ . ' - First/Last change',
+   \ '   ' . s:Key([s:undokey.scrollup, s:undokey.scrolldown])
+     \ . ' - Scroll diff window',
+  \ ]
+  let l:text = []
+  for l:line in l:lines
+    let l:start = matchend(l:line, '^\s*< .\+ >\s* - \u')
+    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1}]
+    let l:properties = l:properties + [#{ type: 'statusline',
+      \ col: l:start - 2, length: 1 }]
+    let l:start = 0
+    while l:start > -1
+      let l:start = match(l:line,
+        \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ', l:start)
+      if l:start > -1
+        let l:start += 1
+        let l:properties = l:properties + [#{ type: 'statusline',
+          \ col: l:start, length: 1 }]
+      endif
+    endwhile
+    call add(l:text, #{ text: l:line, props: l:properties })
+  endfor
+  call popup_create(l:text, #{
+                           \   pos: 'topleft',
+                           \   line: win_screenpos(0)[0] + winheight(0)
+                           \     - len(l:text) - &cmdheight,
+                           \   col: win_screenpos(0)[1] + s:undo.max_length + 1,
+                           \   zindex: 4,
+                           \   minwidth: winwidth(0),
+                           \   time: 10000,
+                           \   border: [1, 0, 0, 0],
+                           \   borderchars: ['━'],
+                           \   borderhighlight: ['StatusLine'],
+                           \   highlight: 'Help',
+                           \ })
 endfunction
 
 "     }}}
@@ -1470,7 +1509,15 @@ function! s:UndotreeFilter(winid, key)
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
   elseif a:key == s:undokey.first
+    call s:UpdateUndotree()
+    call win_execute(a:winid, 'call cursor(1, 0)')
+    call s:Diff(a:winid)
+    call s:UndotreeButtons(a:winid)
   elseif a:key == s:undokey.last
+    call s:UpdateUndotree()
+    call win_execute(a:winid, 'call cursor(line("$"), 0)')
+    call s:Diff(a:winid)
+    call s:UndotreeButtons(a:winid)
   elseif a:key == s:undokey.scrollup
     call win_execute(s:undo.diff_id,
       \ 'call cursor(line("w0") - 1, 0) | redraw')
