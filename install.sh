@@ -650,7 +650,7 @@ function main () {
   if [ $(which ctags | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
     VERSION=$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-      | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")
+      | grep -E -o "[.0-9]+" | xargs -I {} echo -e "\nUniversal Ctags {}")
     [ "x${VERSION}" == "x" ] && VERSION=$(ctags --version \
       | grep -m1 -E -o "\([.a-z0-9]+\)" | grep -E -o "[.0-9a-z]+" \
       | xargs -I {} echo "Universal Ctags {}")
@@ -732,7 +732,7 @@ function main () {
   fi
 
   VERSION=$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-    | grep -E -o "[.0-9]+" | xargs -I {} echo "Universal Ctags {}")
+    | grep -E -o "[.0-9]+" | xargs -I {} echo -e "\nUniversal Ctags {}")
   [ "x${VERSION}" == "x" ] && VERSION=$(ctags --version \
     | grep -m1 -E -o "\([.a-z0-9]+\)" | grep -E -o "[.0-9a-z]+" \
     | xargs -I {} echo "Universal Ctags {}")
