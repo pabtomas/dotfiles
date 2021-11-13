@@ -237,7 +237,7 @@ endfunction
 "     Variables & constants {{{3
 
 let s:redhighlight = #{
-\   active: v:true,
+\   activated: v:true,
 \   command: 'highlight RedHighlight term=NONE cterm=NONE ctermfg=White ctermbg=DarkRed',
 \ }
 
@@ -258,12 +258,12 @@ endfunction
 
 " clear/add red highlight matching patterns
 function! s:ToggleRedHighlight()
-  if s:redhighlight.active
+  if s:redhighlight.activated
     highlight clear RedHighlight | set synmaxcol=3000
   else
     execute s:redhighlight.command | set synmaxcol=200
   endif
-  let s:redhighlight.active = !s:redhighlight.active
+  let s:redhighlight.activated = !s:redhighlight.activated
 endfunction
 
 "     }}}
@@ -314,88 +314,92 @@ const s:palette = #{
 "   }}}
 "   Colorscheme {{{2
 
-set t_Co=256
-set t_ut=
-set background=dark | highlight clear | if exists('syntax_on') | syntax reset
-  \ | endif
-set wincolor=NormalAlt
+function s:LoadColorscheme()
+  set t_Co=256
+  set t_ut=
+  set background=dark | highlight clear | if exists('syntax_on') | syntax reset
+    \ | endif
+  set wincolor=NormalAlt
 
-highlight clear
-execute  'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:palette.grey_2   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:palette.red_1
-  \ . ' | highlight       BuffersMenuBorders term=bold         cterm=bold         ctermfg=' . s:palette.blue_4
-  \ . ' | highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Help               term=bold         cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       DiffAdd            term=NONE         cterm=NONE         ctermfg=' . s:palette.green_3  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       DiffDelete         term=NONE         cterm=NONE         ctermfg=' . s:palette.red_2    . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Button             term=bold,reverse cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:palette.orange_1 . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Visual             term=reverse      cterm=reverse      ctermbg=' . s:palette.black
-  \ . ' | highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Tag                term=underline    cterm=underline'
-  \ . ' | highlight       Error                                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
-  \ . ' | highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Todo               term=standout                        ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
-  \ . ' | highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.orange_2
-  \ . ' | highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:palette.purple_1 . ' ctermbg=' . s:palette.white_1
-  \ . ' | highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.purple_2
-  \ . ' | highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_3
-  \ . ' | highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
-  \ . ' | highlight       User1              term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       User2              term=bold         cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       User3              term=bold         cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
-  \ . ' | highlight       User4              term=bold         cterm=bold         ctermfg=' . s:palette.red_2
-highlight! link WarningMsg         ErrorMsg
-highlight  link String             Constant
-highlight  link Character          Constant
-highlight  link Number             Constant
-highlight  link Boolean            Constant
-highlight  link Float              Number
-highlight  link Function           Identifier
-highlight  link Conditional        Statement
-highlight  link Repeat             Statement
-highlight  link Label              Statement
-highlight  link Operator           Statement
-highlight  link Keyword            Statement
-highlight  link Exception          Statement
-highlight  link Include            PreProc
-highlight  link Define             PreProc
-highlight  link Macro              PreProc
-highlight  link PreCondit          PreProc
-highlight  link StorageClass       Type
-highlight  link Structure          Type
-highlight  link Typedef            Type
-highlight  link SpecialChar        Special
-highlight  link Delimiter          Special
-highlight  link SpecialComment     Special
-highlight  link SpecialKey         Special
-highlight  link Debug              Special
+  highlight clear
+  execute  'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:palette.grey_2   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:palette.red_1
+    \ . ' | highlight       BuffersMenuBorders term=bold         cterm=bold         ctermfg=' . s:palette.blue_4
+    \ . ' | highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Help               term=bold         cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       DiffAdd            term=NONE         cterm=NONE         ctermfg=' . s:palette.green_3  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       DiffDelete         term=NONE         cterm=NONE         ctermfg=' . s:palette.red_2    . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Button             term=bold,reverse cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:palette.orange_1 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Visual             term=reverse      cterm=reverse      ctermbg=' . s:palette.black
+    \ . ' | highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Tag                term=underline    cterm=underline'
+    \ . ' | highlight       Error                                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
+    \ . ' | highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Todo               term=standout                        ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
+    \ . ' | highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.orange_2
+    \ . ' | highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:palette.purple_1 . ' ctermbg=' . s:palette.white_1
+    \ . ' | highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.purple_2
+    \ . ' | highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_3
+    \ . ' | highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
+    \ . ' | highlight       User1              term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       User2              term=bold         cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       User3              term=bold         cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       User4              term=bold         cterm=bold         ctermfg=' . s:palette.red_2
+  highlight! link WarningMsg         ErrorMsg
+  highlight  link String             Constant
+  highlight  link Character          Constant
+  highlight  link Number             Constant
+  highlight  link Boolean            Constant
+  highlight  link Float              Number
+  highlight  link Function           Identifier
+  highlight  link Conditional        Statement
+  highlight  link Repeat             Statement
+  highlight  link Label              Statement
+  highlight  link Operator           Statement
+  highlight  link Keyword            Statement
+  highlight  link Exception          Statement
+  highlight  link Include            PreProc
+  highlight  link Define             PreProc
+  highlight  link Macro              PreProc
+  highlight  link PreCondit          PreProc
+  highlight  link StorageClass       Type
+  highlight  link Structure          Type
+  highlight  link Typedef            Type
+  highlight  link SpecialChar        Special
+  highlight  link Delimiter          Special
+  highlight  link SpecialComment     Special
+  highlight  link SpecialKey         Special
+  highlight  link Debug              Special
 
-execute s:redhighlight.command
+  execute s:redhighlight.command
+endfunction
+
+call s:LoadColorscheme()
 
 "   }}}
 "   Text properties {{{2
@@ -613,8 +617,8 @@ endfunction
 
 function! s:ComputeWave(start, end)
   let l:wave = ''
-  for l:col in range(a:start, a:end - 1)
-    let l:wave = l:wave . s:tinsel.dots[5 + float2nr(5.0 * sin(l:col *
+  for l:each in range(a:start, a:end - 1)
+    let l:wave = l:wave . s:tinsel.dots[5 + float2nr(5.0 * sin(l:each *
     \ (fmod(0.05 * (s:tinsel.localtime - s:tinsel.start) + 1.0, 2.0) - 1.0)))]
   endfor
   return l:wave
@@ -707,14 +711,14 @@ function! s:HelpBuffersMenu()
    \ ' ' . s:Key([s:menukey.erase]) . ' - Erase last buffer-id character',
   \ ]
   let l:text = []
-  for l:line in l:lines
-    let l:start = matchend(l:line, '^\s*< .\+ >\s* - \u')
+  for l:each in l:lines
+    let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
     let l:properties = [#{ type: 'key', col: 1, length: l:start - 1}]
     let l:properties = l:properties + [#{ type: 'statusline',
       \ col: l:start - 2, length: 1 }]
     let l:start = 0
     while l:start > -1
-      let l:start = match(l:line,
+      let l:start = match(l:each,
         \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ', l:start)
       if l:start > -1
         let l:start += 1
@@ -722,7 +726,7 @@ function! s:HelpBuffersMenu()
           \ col: l:start, length: 1 }]
       endif
     endwhile
-    call add(l:text, #{ text: l:line, props: l:properties })
+    call add(l:text, #{ text: l:each, props: l:properties })
   endfor
   call popup_create(l:text, #{
                            \   pos: 'topleft',
@@ -828,12 +832,12 @@ function! s:UpdateBuffersMenu()
   let l:width = max(mapnew(l:listed_buf,
     \ {_, val -> len(val.bufnr . ': ""' . fnamemodify(val.name, ':.'))}))
 
-  for l:buf in l:listed_buf
-    let l:line = l:buf.bufnr . ': "' . fnamemodify(l:buf.name, ':.') . '"'
+  for l:each in l:listed_buf
+    let l:line = l:each.bufnr . ': "' . fnamemodify(l:each.name, ':.') . '"'
     let l:line = l:line . repeat(' ', l:width - len(l:line))
 
     let l:properties = [#{ type: 'buf', col: 0, length: l:width + 1 }]
-    if l:buf.changed
+    if l:each.changed
       let l:properties = [#{ type: 'modified', col: 0, length: l:width + 1 }]
     endif
 
@@ -934,29 +938,29 @@ function! s:HelpExplorer()
   \ ]
   let l:text = [#{ text: l:lines[0], props: [#{ type: 'statusline',
     \ col: 1, length: len(l:lines[0]) }] }]
-  for l:line in l:lines[1:]
+  for l:each in l:lines[1:]
 
-    let l:start = match(l:line, ' ┃ \s*<\zs .\+ >\s* - \u')
-    let l:end = matchend(l:line, ' ┃ \s*< .\+ \ze>\s* - \u')
+    let l:start = match(l:each, ' ┃ \s*<\zs .\+ >\s* - \u')
+    let l:end = matchend(l:each, ' ┃ \s*< .\+ \ze>\s* - \u')
     let l:properties =
       \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
 
-    let l:start = match(l:line, ' ┃ \s*< .\+ >\s* \zs- \u')
+    let l:start = match(l:each, ' ┃ \s*< .\+ >\s* \zs- \u')
     let l:properties = l:properties + [#{ type: 'statusline',
       \ col: l:start + 1, length: 1 }]
 
-    let l:start = match(l:line, '^\s*<\zs .\+ >\s* - \u.* ┃')
-    let l:end = matchend(l:line, '^\s*< .\+ \ze>\s* - \u.* ┃')
+    let l:start = match(l:each, '^\s*<\zs .\+ >\s* - \u.* ┃')
+    let l:end = matchend(l:each, '^\s*< .\+ \ze>\s* - \u.* ┃')
     let l:properties = l:properties +
       \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
 
-    let l:start = match(l:line, '^\s*< .\+ >\s* \zs- \u.* ┃')
+    let l:start = match(l:each, '^\s*< .\+ >\s* \zs- \u.* ┃')
     let l:properties = l:properties + [#{ type: 'statusline',
       \ col: l:start + 1, length: 1 }]
 
     let l:start = 0
     while l:start > -1
-      let l:start = match(l:line, ' ┃ \s*\zs< \|^\s*\zs< \| \zs> \s*- \u\'
+      let l:start = match(l:each, ' ┃ \s*\zs< \|^\s*\zs< \| \zs> \s*- \u\'
         \ . '| \zs| \|/\| .\zs-. \|[^<|] \zs& [^>|]', l:start)
       if l:start > -1
         let l:start += 1
@@ -966,14 +970,14 @@ function! s:HelpExplorer()
     endwhile
 
     let l:properties = l:properties + [#{ type: 'statusline',
-      \ col: match(l:line, ' \zs┃ '), length: len('┃')}]
+      \ col: match(l:each, ' \zs┃ '), length: len('┃')}]
 
-    let l:start = match(l:line, '\u\{2,}')
-    let l:end = matchend(l:line, '\u\{2,} Mode\|\u\{2,}')
+    let l:start = match(l:each, '\u\{2,}')
+    let l:end = matchend(l:each, '\u\{2,} Mode\|\u\{2,}')
     let l:properties = l:properties + [#{ type: 'mode',
       \ col: l:start, length: l:end + 1 - l:start }]
 
-    call add(l:text, #{ text: l:line, props: l:properties })
+    call add(l:text, #{ text: l:each, props: l:properties })
   endfor
   call popup_create(l:text, #{ pos: 'topleft',
                            \   line: win_screenpos(0)[0] + winheight(0)
@@ -1148,9 +1152,9 @@ function! s:SearchModeExplorerFilter(winid, key)
       let s:explorer.input_cursor += 1
     endif
   elseif a:key == s:explorerkey.SM_wide_left
-    for l:i in range(s:explorer.input_cursor - 2, 0, -1)
-      if match(s:explorer.input[l:i], '[[:punct:][:space:]]') > -1
-        let s:explorer.input_cursor = l:i + 1
+    for l:each in range(s:explorer.input_cursor - 2, 0, -1)
+      if match(s:explorer.input[l:each], '[[:punct:][:space:]]') > -1
+        let s:explorer.input_cursor = l:each + 1
         break
       endif
     endfor
@@ -1379,14 +1383,14 @@ function! s:HelpUndotree()
      \ . ' - Scroll diff window',
   \ ]
   let l:text = []
-  for l:line in l:lines
-    let l:start = matchend(l:line, '^\s*< .\+ >\s* - \u')
+  for l:each in l:lines
+    let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
     let l:properties = [#{ type: 'key', col: 1, length: l:start - 1}]
     let l:properties = l:properties + [#{ type: 'statusline',
       \ col: l:start - 2, length: 1 }]
     let l:start = 0
     while l:start > -1
-      let l:start = match(l:line,
+      let l:start = match(l:each,
         \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ', l:start)
       if l:start > -1
         let l:start += 1
@@ -1394,7 +1398,7 @@ function! s:HelpUndotree()
           \ col: l:start, length: 1 }]
       endif
     endwhile
-    call add(l:text, #{ text: l:line, props: l:properties })
+    call add(l:text, #{ text: l:each, props: l:properties })
   endfor
   call popup_create(l:text, #{
                            \   pos: 'topleft',
@@ -1433,14 +1437,14 @@ function! s:DiffHandler(job, status)
   endif
   let &eventignore = l:eventignore_backup
 
-  for l:i in range(len(l:text))
-    let l:properties =
-      \ [ #{ type: 'diffadd', col: 1, length: max([0, len(l:text[l:i]) - 1]) }]
-    if l:text[l:i][0] == '-'
+  for l:each in range(len(l:text))
+    let l:properties = \ [ #{ type: 'diffadd', col: 1,
+      \ length: max([0, len(l:text[l:each]) - 1]) }]
+    if l:text[l:each][0] == '-'
       let l:properties = [ #{ type: 'diffdelete', col: 1,
-        \ length: max([0, len(l:text[l:i]) - 1]) }]
+        \ length: max([0, len(l:text[l:each]) - 1]) }]
     endif
-    let l:text[l:i] = #{ text: l:text[l:i][1:], props: l:properties }
+    let l:text[l:each] = #{ text: l:text[l:each][1:], props: l:properties }
   endfor
 
   call popup_settext(s:undo.diff_id, l:text)
@@ -1543,11 +1547,11 @@ function! s:ParseNode(in, out)
     return
   endif
   let l:currentnode = a:out
-  for l:entry in a:in
-    if has_key(l:entry, 'alt')
-      call s:ParseNode(l:entry.alt, l:currentnode)
+  for l:each in a:in
+    if has_key(l:each, 'alt')
+      call s:ParseNode(l:each.alt, l:currentnode)
     endif
-    let l:newnode = #{ seq: l:entry.seq, p: [] }
+    let l:newnode = #{ seq: l:each.seq, p: [] }
     call extend(l:currentnode.p, [l:newnode])
     let l:currentnode = l:newnode
   endfor
@@ -1567,10 +1571,10 @@ function! s:UpdateUndotree()
     let l:foundstring = v:false
     let l:index = 0
 
-    for l:i in range(len(l:slots))
-      if type(l:slots[l:i]) == v:t_string
+    for l:each in range(len(l:slots))
+      if type(l:slots[l:each]) == v:t_string
         let l:foundstring = v:true
-        let l:index = l:i
+        let l:eachndex = l:each
         break
       endif
     endfor
@@ -1579,21 +1583,21 @@ function! s:UpdateUndotree()
     let l:minnode = {}
 
     if !l:foundstring
-      for l:i in range(len(l:slots))
-        if type(l:slots[l:i]) == v:t_dict
-          if l:slots[l:i].seq < l:minseq
-            let l:minseq = l:slots[l:i].seq
-            let l:index = l:i
-            let l:minnode = l:slots[l:i]
+      for l:each in range(len(l:slots))
+        if type(l:slots[l:each]) == v:t_dict
+          if l:slots[l:each].seq < l:minseq
+            let l:minseq = l:slots[l:each].seq
+            let l:eachndex = l:each
+            let l:minnode = l:slots[l:each]
             continue
           endif
         endif
-        if type(l:slots[l:i]) == v:t_list
-          for l:j in l:slots[l:i]
-            if l:j.seq < l:minseq
-              let l:minseq = l:j.seq
-              let l:index = l:i
-              let l:minnode = l:j
+        if type(l:slots[l:each]) == v:t_list
+          for l:each2 in l:slots[l:each]
+            if l:each2.seq < l:minseq
+              let l:minseq = l:each2.seq
+              let l:eachndex = l:each
+              let l:minnode = l:each2
               continue
             endif
           endfor
@@ -1607,11 +1611,11 @@ function! s:UpdateUndotree()
     if type(l:node) == v:t_string
       let l:newmeta = -1
       if l:index + 1 != len(l:slots)
-        for l:i in range(len(l:slots))
-          if l:i < l:index
+        for l:each in range(len(l:slots))
+          if l:each < l:eachndex
             let l:newline = l:newline . '| '
           endif
-          if l:i > l:index
+          if l:each > l:eachndex
             let l:newline = l:newline . ' \'
           endif
         endfor
@@ -1621,8 +1625,8 @@ function! s:UpdateUndotree()
 
     if type(l:node) == v:t_dict
       let l:newmeta = l:node.seq
-      for l:i in range(len(l:slots))
-        if l:index == l:i
+      for l:each in range(len(l:slots))
+        if l:eachndex == l:each
           if l:node.seq == changenr()
             let l:newline = l:newline . '◊ '
           else
@@ -1647,14 +1651,14 @@ function! s:UpdateUndotree()
 
     if type(l:node) == v:t_list
       let l:newmeta = -1
-      for l:k in range(len(l:slots))
-        if l:k < l:index
+      for l:each in range(len(l:slots))
+        if l:each < l:index
           let l:newline = l:newline . '| '
         endif
-        if l:k == l:index
+        if l:each == l:index
           let l:newline = l:newline . '|/ '
         endif
-        if l:k > l:index
+        if l:each > l:index
           let l:newline = l:newline . '/ '
         endif
       endfor
@@ -1872,6 +1876,63 @@ endfunction
 
 "   }}}
 "   Rainbow parenthesis {{{2
+"     Variables & constants {{{3
+
+let s:rainbow = #{
+\   colors: [
+\      9, 208, 11, 10, 14, 33, 93, 201
+\   ],
+\   activated: v:false,
+\ }
+
+"     }}}
+"     Functions {{{3
+
+function! s:ActivateRainbow()
+  syntax clear
+  syntax match Rainbow0 '[\[{()}\]]@!'
+  execute 'highlight Rainbow0 ctermfg=' . s:rainbow.colors[0]
+
+  let l:max = len(s:rainbow.colors)
+  let l:str = 'TOP'
+  for l:each in range(1, l:max)
+    let l:str .= ',RainbowRegion' . l:each
+  endfor
+
+  for [l:left, l:right] in [['(', ')'], ['\[', '\]'], ['{', '}']]
+    for l:each in range(1, l:max)
+      let l:fg = s:rainbow.colors[(l:max - l:each) % l:max]
+      execute 'syntax match Rainbow' . l:each
+        \ . ' "[\[{()}\]]@!" containedin=RainbowRegion' . l:each . ' contained'
+      execute 'syntax region RainbowRegion' . l:each
+        \ . ' matchgroup=RainbowRegion' . l:each . 'c' . ' start=+' . l:left
+        \ . '+ end=+' . l:right . '+ containedin=' . 'RainbowRegion'
+        \ . (l:each % l:max + 1) . ' contains=' . l:str . ',Rainbow' . l:each
+        \ . ',@Spell fold'
+      execute 'highlight Rainbow' . l:each . ' ctermfg=' . l:fg
+      execute 'highlight RainbowRegion' . l:each . 'c ctermfg=' . l:fg
+    endfor
+  endfor
+
+  syntax sync fromstart
+endfunction
+
+function! s:InactivateRainbow()
+  syntax clear
+  syntax enable
+  call s:LoadColorscheme()
+endfunction
+
+function! s:ToggleRainbow()
+  if s:rainbow.activated
+    call s:InactivateRainbow()
+  else
+    call s:ActivateRainbow()
+  endif
+  let s:rainbow.activated = !s:rainbow.activated
+endfunction
+
+"     }}}
 "   }}}
 "   Tag list {{{2
 "   }}}
@@ -1900,55 +1961,54 @@ endfunction
 "   }}}
 " }}}
 " Mappings and Keys {{{1
-
 "   Functions {{{2
 
 function! s:Key(keys)
   let l:text = '< '
   let l:index = 1
-  for l:key in a:keys
-    if l:key == "\<Down>"
+  for l:each in a:keys
+    if l:each == "\<Down>"
       let l:text = l:text . '↓'
-    elseif l:key == "\<Up>"
+    elseif l:each == "\<Up>"
       let l:text = l:text . '↑'
-    elseif l:key == "\<Right>"
+    elseif l:each == "\<Right>"
       let l:text = l:text . '→'
-    elseif l:key == "\<Left>"
+    elseif l:each == "\<Left>"
       let l:text = l:text . '←'
-    elseif l:key == "\<S-Down>"
+    elseif l:each == "\<S-Down>"
       let l:text = l:text . 'Shift ↓'
-    elseif l:key == "\<S-Up>"
+    elseif l:each == "\<S-Up>"
       let l:text = l:text . 'Shift ↑'
-    elseif l:key == "\<S-Right>"
+    elseif l:each == "\<S-Right>"
       let l:text = l:text . 'Shift →'
-    elseif l:key == "\<S-Left>"
+    elseif l:each == "\<S-Left>"
       let l:text = l:text . 'Shift ←'
-    elseif l:key == "\<C-Down>"
+    elseif l:each == "\<C-Down>"
       let l:text = l:text . 'Ctrl ↓'
-    elseif l:key == "\<C-Up>"
+    elseif l:each == "\<C-Up>"
       let l:text = l:text . 'Ctrl ↑'
-    elseif l:key == "\<C-Right>"
+    elseif l:each == "\<C-Right>"
       let l:text = l:text . 'Ctrl →'
-    elseif l:key == "\<C-Left>"
+    elseif l:each == "\<C-Left>"
       let l:text = l:text . 'Ctrl ←'
-    elseif l:key == "\<Enter>"
+    elseif l:each == "\<Enter>"
       let l:text = l:text . 'Enter'
-    elseif l:key == "\<Esc>"
+    elseif l:each == "\<Esc>"
       let l:text = l:text . 'Esc'
-    elseif l:key == "\<BS>"
+    elseif l:each == "\<BS>"
       let l:text = l:text . 'BackSpace'
-    elseif l:key == "/"
+    elseif l:each == "/"
       let l:text = l:text . 'Slash'
-    elseif l:key == "\\"
+    elseif l:each == "\\"
       let l:text = l:text . 'BackSlash'
-    elseif l:key == "|"
+    elseif l:each == "|"
       let l:text = l:text . 'Bar'
-    elseif l:key == "<"
+    elseif l:each == "<"
       let l:text = l:text . 'Less'
-    elseif l:key == ">"
+    elseif l:each == ">"
       let l:text = l:text . 'Greater'
     else
-      let l:text = l:text . l:key
+      let l:text = l:text . l:each
     endif
 
     if l:index < len(a:keys)
@@ -1962,26 +2022,26 @@ endfunction
 function! s:Mappings()
   let l:max = max(mapnew(s:mappings, { _, val -> len(split(val.key, '\zs')) }))
   let test = values(s:mappings)
-  for l:mapping in sort(filter(values(s:mappings), 'v:val.order > 0'),
+  for l:each in sort(filter(values(s:mappings), 'v:val.order > 0'),
   \ { val1, val2 -> val1.order - val2.order })
-    echon l:mapping.mode . ' '
-    let l:start = match(l:mapping.key, '<.*>')
+    echon l:each.mode . ' '
+    let l:start = match(l:each.key, '<.*>')
     if l:start > -1
       if l:start > 0
-        echon l:mapping.key[0:l:start - 1]
+        echon l:each.key[0:l:start - 1]
       endif
-      let l:end = matchend(l:mapping.key, '<.*>')
+      let l:end = matchend(l:each.key, '<.*>')
       echohl SpecialKey
-      echon l:mapping.key[l:start:l:end - 1]
+      echon l:each.key[l:start:l:end - 1]
       echohl NONE
-      if l:end < len(l:mapping.key)
-        echon l:mapping.key[l:end:]
+      if l:end < len(l:each.key)
+        echon l:each.key[l:end:]
       endif
     else
-      echon l:mapping.key
+      echon l:each.key
     endif
-    echon repeat(' ', l:max - len(split(l:mapping.key, '\zs')) + 1)
-      \ . l:mapping.description . "\n"
+    echon repeat(' ', l:max - len(split(l:each.key, '\zs')) + 1)
+      \ . l:each.description . "\n"
   endfor
 endfunction
 
@@ -2052,6 +2112,8 @@ const s:mappings = #{
   \ mode: 'n', description: 'Save session', order: 24 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
   \ mode: 'n', description: 'Open Undo Tree', order: 25 },
+\   rainbow:                    #{ key: s:leaders.global.               '(',
+  \ mode: 'n', description: 'Toggle Rainbow', order: 26 },
 \ }
 
 "   }}}
@@ -2086,7 +2148,7 @@ execute s:mappings.source_vimrc.mode               . 'noremap '
 execute s:mappings.nohighlight_search.mode         . 'noremap '
   \ . s:mappings.nohighlight_search.key  . ' <Cmd>nohlsearch<CR>'
 
-" hide/show redhighlight
+" toggle redhighlight
 execute s:mappings.redhighlight.mode               . 'noremap '
   \ . s:mappings.redhighlight.key
   \ . ' <Cmd>call <SID>ToggleRedHighlight()<CR>'
@@ -2110,6 +2172,11 @@ execute s:mappings.explorer.mode                   . 'noremap '
 " undotree
 execute s:mappings.undotree.mode                   . 'noremap '
   \ . s:mappings.undotree.key            . ' <Cmd>call <SID>Undotree()<CR>'
+
+" toggle rainbow
+execute s:mappings.rainbow.mode                    . 'noremap '
+  \ . s:mappings.rainbow.key
+  \ . ' <Cmd>call <SID>ToggleRainbow()<CR>'
 
 " windows navigation
 execute s:mappings.next_window.mode                . 'noremap '
