@@ -6,8 +6,7 @@
 " }}}
 " TODO {{{1
 
-" - plugins: - rainbow parenthesis
-"            - tag list
+" - plugins: taglist
 
 " }}}
 " Dependencies {{{1
