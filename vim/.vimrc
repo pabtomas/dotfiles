@@ -316,8 +316,8 @@ const s:palette = #{
 function s:LoadColorscheme()
   set t_Co=256
   set t_ut=
-  set background=dark | highlight clear | if exists('syntax_on') | syntax reset
-    \ | endif
+  set background=dark | highlight clear | if exists('g:syntax_on')
+    \ | syntax reset | endif
   set wincolor=NormalAlt
 
   highlight clear
@@ -1874,12 +1874,13 @@ function! s:PreviousTag()
 endfunction
 
 "   }}}
-"   Rainbow parenthesis {{{2
+"   Rainbow {{{2
 "     Variables & constants {{{3
 
+" \      196, 208, 226, 40, 45, 33, 129, 201
 let s:rainbow = #{
 \   colors: [
-\      9, 208, 11, 10, 14, 33, 93, 201
+\     196,40, 33
 \   ],
 \   activated: v:false,
 \ }
@@ -1889,31 +1890,73 @@ let s:rainbow = #{
 
 function! s:ActivateRainbow()
   syntax clear
-  syntax match Rainbow0 '[\[{()}\]]@!'
-  execute 'highlight Rainbow0 ctermfg=' . s:rainbow.colors[0]
 
   let l:max = len(s:rainbow.colors)
-  let l:str = 'TOP'
-  for l:each in range(1, l:max)
-    let l:str .= ',RainbowRegion' . l:each
-  endfor
+  let l:index = 0
 
-  for [l:left, l:right] in [['(', ')'], ['\[', '\]'], ['{', '}']]
-    for l:each in range(1, l:max)
-      let l:fg = s:rainbow.colors[(l:max - l:each) % l:max]
-      execute 'syntax match Rainbow' . l:each
-        \ . ' "[\[{()}\]]@!" containedin=RainbowRegion' . l:each . ' contained'
-      execute 'syntax region RainbowRegion' . l:each
-        \ . ' matchgroup=RainbowRegion' . l:each . 'c' . ' start=+' . l:left
-        \ . '+ end=+' . l:right . '+ containedin=' . 'RainbowRegion'
-        \ . (l:each % l:max + 1) . ' contains=' . l:str . ',Rainbow' . l:each
-        \ . ',@Spell fold'
-      execute 'highlight Rainbow' . l:each . ' ctermfg=' . l:fg
-      execute 'highlight RainbowRegion' . l:each . 'c ctermfg=' . l:fg
+  let l:options = ''
+  let l:parentheses =
+    \ ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold']
+  if &filetype == 'vim'
+    let l:parentheses =
+      \ ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold']
+    let l:options = ',vimFuncBody,vimExecute'
+  endif
+
+  for l:parenthesis in l:parentheses
+    for l:each in range(0, l:max - 1)
+      let l:fg = s:rainbow.colors[l:each % l:max]
+      execute 'syntax match ' . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
+        \ . ' _,_ containedin=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
+        \ . ' contained'
+      execute 'syntax region ' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
+        \ . ' matchgroup=' . &filetype . '_Rainbow' . l:each . '_Parenthesis' . l:index
+        \ . ((l:each > 0) ? ' contained' : '')
+        \ . ' ' . l:parenthesis . ' containedin=@' . &filetype
+        \ . '_RainbowRegions' . ((l:each + l:max - 1) % l:max)
+        \ . ((l:each == 0) ? l:options : '') . ' contains=TOP fold'
+      execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each . ' add='
+        \ . &filetype . '_Rainbow' . l:each . '_Region' . l:index
+      execute 'syntax cluster ' . &filetype . '_RainbowParentheses' . l:each . ' add='
+        \ . &filetype . '_Rainbow' . l:each . '_Parenthesis' . l:index
+      execute 'syntax cluster ' . &filetype . '_RainbowOperators' . l:each . ' add='
+        \ . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
+      execute 'highlight ' . &filetype . '_Rainbow' . l:each
+        \ . '_Operator' . l:index . ' ctermfg=' . l:fg
+      execute 'highlight ' . &filetype . '_Rainbow' . l:each
+        \ . '_Parenthesis' . l:index . ' ctermfg=' . l:fg
+      echom 'syntax match ' . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
+        \ . ' _,_ containedin=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
+        \ . ' contained'
+      echom 'syntax region ' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
+        \ . ' matchgroup=' . &filetype . '_Rainbow' . l:each . '_Parenthesis' . l:index
+        \ . ((l:each > 0) ? ' contained' : '')
+        \ . ' ' . l:parenthesis . ' containedin=@' . &filetype
+        \ . '_RainbowRegions' . ((l:each + l:max - 1) % l:max)
+        \ . ((l:each == 0) ? l:options : '') . ' contains=TOP fold'
+      echom 'highlight ' . &filetype . '_Rainbow' . l:each
+        \ . '_Operator' . l:index . ' ctermfg=' . l:fg
+      echom 'highlight ' . &filetype . '_Rainbow' . l:each
+        \ . '_Parenthesis' . l:index . ' ctermfg=' . l:fg
     endfor
+    let l:index += 1
   endfor
 
-  syntax sync fromstart
+  for l:each in range(0, l:max - 1)
+    execute 'syntax cluster ' . &filetype . '_RainbowRegions add=@'
+      \ . &filetype . '_RainbowRegions' . l:each
+    execute 'syntax cluster ' . &filetype . '_RainbowParentheses add=@'
+      \ . &filetype . '_RainbowParentheses' . l:each
+    execute 'syntax cluster ' . &filetype . '_RainbowOperators add=@'
+      \ . &filetype . '_RainbowOperators' . l:each
+    echom execute('syntax list @' . &ft . '_RainbowRegions' . l:each)
+    echom execute('syntax list @' . &ft . '_RainbowOperators' . l:each)
+    echom execute('syntax list @' . &ft . '_RainbowParentheses' . l:each)
+  endfor
+    echom execute('syntax list @' . &ft . '_RainbowRegions')
+    echom execute('syntax list @' . &ft . '_RainbowOperators')
+    echom execute('syntax list @' . &ft . '_RainbowParentheses')
+
 endfunction
 
 function! s:InactivateRainbow()
@@ -1929,6 +1972,7 @@ function! s:ToggleRainbow()
     call s:ActivateRainbow()
   endif
   let s:rainbow.activated = !s:rainbow.activated
+  echom s:rainbow.activated
 endfunction
 
 "     }}}
