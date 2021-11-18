@@ -38,7 +38,7 @@ set mouse=a
 " view tabulation, end of line and other hidden characters
 syntax on
 set list
-set listchars=tab:≫\ ,eol:.
+set listchars=eol:.,tab:>>
 set fillchars=vert:│,fold:-,eob:∼
 
 " highlight corresponding patterns during a search
@@ -111,7 +111,7 @@ set matchpairs+=<:>
 " draw only when needed
 set lazyredraw
 
-" indicates terminal connection, Vim will be faster
+" indicates terminal connection
 set ttyfast
 
 "     }}}
@@ -305,8 +305,10 @@ const s:palette = #{
 \   green_3: 2,
 \   white_1: 147,
 \   white_2: 153,
+\   white_3: 255,
 \   grey_1: 236,
 \   grey_2: 244,
+\   grey_3: 248,
 \   black: 232,
 \ }
 
@@ -316,59 +318,59 @@ const s:palette = #{
 function s:LoadColorscheme()
   set t_Co=256
   set t_ut=
-  set background=dark | highlight clear | if exists('g:syntax_on')
-    \ | syntax reset | endif
+  set background=dark
+  if exists('g:syntax_on') | syntax reset | endif
   set wincolor=NormalAlt
 
   highlight clear
-  execute  'highlight       Buffer             term=bold         cterm=bold         ctermfg=' . s:palette.grey_2   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       ModifiedBuf        term=bold         cterm=bold         ctermfg=' . s:palette.red_1
-    \ . ' | highlight       BuffersMenuBorders term=bold         cterm=bold         ctermfg=' . s:palette.blue_4
-    \ . ' | highlight       RootPath           term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       ClosedDirPath      term=bold         cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       OpenedDirPath      term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       FilePath           term=NONE         cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Help               term=bold         cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       HelpKey            term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       HelpMode           term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       DiffAdd            term=NONE         cterm=NONE         ctermfg=' . s:palette.green_3  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       DiffDelete         term=NONE         cterm=NONE         ctermfg=' . s:palette.red_2    . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Button             term=bold,reverse cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Normal             term=bold         cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       NormalAlt          term=NONE         cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       ModeMsg            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       MoreMsg            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Question           term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       NonText            term=NONE         cterm=NONE         ctermfg=' . s:palette.orange_1 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Comment            term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Constant           term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Special            term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Identifier         term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Statement          term=NONE         cterm=NONE         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       PreProc            term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Type               term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Visual             term=reverse      cterm=reverse      ctermbg=' . s:palette.black
-    \ . ' | highlight       LineNr             term=NONE         cterm=NONE         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Search             term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       IncSearch          term=reverse      cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Tag                term=underline    cterm=underline'
-    \ . ' | highlight       Error                                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
-    \ . ' | highlight       ErrorMsg           term=bold         cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Todo               term=standout                        ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
-    \ . ' | highlight       StatusLine         term=bold         cterm=bold         ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       StatusLineNC       term=NONE         cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Folded             term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.orange_2
-    \ . ' | highlight       VertSplit          term=NONE         cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       CursorLine         term=bold,reverse cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       MatchParen         term=bold         cterm=bold         ctermfg=' . s:palette.purple_1 . ' ctermbg=' . s:palette.white_1
-    \ . ' | highlight       Pmenu              term=bold         cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       PopupSelected      term=bold         cterm=bold         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.purple_2
-    \ . ' | highlight       PmenuSbar          term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_3
-    \ . ' | highlight       PmenuThumb         term=NONE         cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
-    \ . ' | highlight       User1              term=bold         cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       User2              term=bold         cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       User3              term=bold         cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       User4              term=bold         cterm=bold         ctermfg=' . s:palette.red_2
+  execute  'highlight       Buffer              cterm=bold         ctermfg=' . s:palette.grey_2   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       ModifiedBuf         cterm=bold         ctermfg=' . s:palette.red_1
+    \ . ' | highlight       BuffersMenuBorders  cterm=bold         ctermfg=' . s:palette.blue_4
+    \ . ' | highlight       RootPath            cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       ClosedDirPath       cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       FilePath            cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       DiffAdd             cterm=NONE         ctermfg=' . s:palette.green_3  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       DiffDelete          cterm=NONE         ctermfg=' . s:palette.red_2    . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Normal              cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       ModeMsg             cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       MoreMsg             cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Question            cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       NonText             cterm=NONE         ctermfg=' . s:palette.orange_1 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Comment             cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Constant            cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Special             cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Identifier          cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Statement           cterm=NONE         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       PreProc             cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Type                cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Visual              cterm=reverse      ctermbg=' . s:palette.black
+    \ . ' | highlight       LineNr              cterm=NONE         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Tag                 cterm=underline'
+    \ . ' | highlight       Error                                  ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
+    \ . ' | highlight       ErrorMsg            cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Todo                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
+    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Folded              cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.orange_2
+    \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       CursorLine          cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       MatchParen          cterm=bold         ctermfg=' . s:palette.purple_1 . ' ctermbg=' . s:palette.white_1
+    \ . ' | highlight       Pmenu               cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       PopupSelected       cterm=bold         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.purple_2
+    \ . ' | highlight       PmenuSbar           cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_3
+    \ . ' | highlight       PmenuThumb          cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
+    \ . ' | highlight       User1               cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:palette.red_2
   highlight! link WarningMsg         ErrorMsg
   highlight  link String             Constant
   highlight  link Character          Constant
@@ -395,7 +397,7 @@ function s:LoadColorscheme()
   highlight  link SpecialKey         Special
   highlight  link Debug              Special
 
-  execute s:redhighlight.command
+  if s:redhighlight.activated | execute s:redhighlight.command | endif
 endfunction
 
 call s:LoadColorscheme()
@@ -1877,67 +1879,64 @@ endfunction
 "   Rainbow {{{2
 "     Variables & constants {{{3
 
-" \      196, 208, 226, 40, 45, 33, 129, 201
 let s:rainbow = #{
 \   colors: [
-\     196,40, 33
+\      196, 208, 226, 40, 45, 33, 129, 201
 \   ],
-\   activated: v:false,
 \ }
 
 "     }}}
 "     Functions {{{3
 
 function! s:ActivateRainbow()
-  syntax clear
-
   let l:max = len(s:rainbow.colors)
+
   let l:index = 0
 
-  let l:options = ''
-  let l:parentheses =
-    \ ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold']
+  let l:containedin = ''
+  let l:parentheses = ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold',
+    \ 'start=/{/ end=/}/ fold']
+  let  l:stringsyn = '"^[^[:space:]]*String[^[:space:]]*"'
+
   if &filetype == 'vim'
     let l:parentheses =
       \ ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold']
-    let l:options = ',vimFuncBody,vimExecute'
+  elseif (&filetype == 'sh') || (&filetype == 'conf')
+    let l:stringsyn = '"shDoubleQuote"'
+    let l:containedin = ",shDoubleQuote"
+  elseif &filetype == 'yaml'
+    let l:containedin = ",yamlFlowString"
   endif
+
+  execute 'syntax clear ' . join(filter(filter(filter(map(filter(split(
+    \ execute('syntax list'), '\n'), 'match(v:val, "cluster") < 0'),
+    \ 'matchstr(v:val, "^[[:alnum:]_]*")'), '!empty(v:val)'),
+    \ 'match(v:val, "_Rainbow") < 0'),
+    \ 'match(v:val, ' . l:stringsyn . ') < 0'))
 
   for l:parenthesis in l:parentheses
     for l:each in range(0, l:max - 1)
       let l:fg = s:rainbow.colors[l:each % l:max]
-      execute 'syntax match ' . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
-        \ . ' _,_ containedin=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
-        \ . ' contained'
-      execute 'syntax region ' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
-        \ . ' matchgroup=' . &filetype . '_Rainbow' . l:each . '_Parenthesis' . l:index
-        \ . ((l:each > 0) ? ' contained' : '')
+      execute 'syntax match ' . &filetype . '_Rainbow' . l:each
+        \ . '_Operator' . l:index . ' _,_ containedin=' . &filetype
+        \ . '_Rainbow' . l:each . '_Region' . l:index . ' contained'
+      execute 'syntax region ' . &filetype . '_Rainbow' . l:each . '_Region'
+        \ . l:index . ' matchgroup=' . &filetype . '_Rainbow' . l:each
+        \ . '_Parenthesis' . l:index . ((l:each > 0) ? ' contained' : '')
         \ . ' ' . l:parenthesis . ' containedin=@' . &filetype
         \ . '_RainbowRegions' . ((l:each + l:max - 1) % l:max)
-        \ . ((l:each == 0) ? l:options : '') . ' contains=TOP fold'
-      execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each . ' add='
-        \ . &filetype . '_Rainbow' . l:each . '_Region' . l:index
-      execute 'syntax cluster ' . &filetype . '_RainbowParentheses' . l:each . ' add='
-        \ . &filetype . '_Rainbow' . l:each . '_Parenthesis' . l:index
-      execute 'syntax cluster ' . &filetype . '_RainbowOperators' . l:each . ' add='
-        \ . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
+        \ . ((l:each == 0) ? l:containedin : '') . ' contains=TOP fold'
+      execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each
+        \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
+      execute 'syntax cluster ' . &filetype . '_RainbowParentheses' . l:each
+        \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Parenthesis'
+        \ . l:index
+      execute 'syntax cluster ' . &filetype . '_RainbowOperators' . l:each
+        \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
       execute 'highlight ' . &filetype . '_Rainbow' . l:each
-        \ . '_Operator' . l:index . ' ctermfg=' . l:fg
+        \ . '_Operator' . l:index . ' cterm=bold ctermfg=' . l:fg
       execute 'highlight ' . &filetype . '_Rainbow' . l:each
-        \ . '_Parenthesis' . l:index . ' ctermfg=' . l:fg
-      echom 'syntax match ' . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
-        \ . ' _,_ containedin=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
-        \ . ' contained'
-      echom 'syntax region ' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
-        \ . ' matchgroup=' . &filetype . '_Rainbow' . l:each . '_Parenthesis' . l:index
-        \ . ((l:each > 0) ? ' contained' : '')
-        \ . ' ' . l:parenthesis . ' containedin=@' . &filetype
-        \ . '_RainbowRegions' . ((l:each + l:max - 1) % l:max)
-        \ . ((l:each == 0) ? l:options : '') . ' contains=TOP fold'
-      echom 'highlight ' . &filetype . '_Rainbow' . l:each
-        \ . '_Operator' . l:index . ' ctermfg=' . l:fg
-      echom 'highlight ' . &filetype . '_Rainbow' . l:each
-        \ . '_Parenthesis' . l:index . ' ctermfg=' . l:fg
+        \ . '_Parenthesis' . l:index . ' cterm=bold ctermfg=' . l:fg
     endfor
     let l:index += 1
   endfor
@@ -1949,13 +1948,9 @@ function! s:ActivateRainbow()
       \ . &filetype . '_RainbowParentheses' . l:each
     execute 'syntax cluster ' . &filetype . '_RainbowOperators add=@'
       \ . &filetype . '_RainbowOperators' . l:each
-    echom execute('syntax list @' . &ft . '_RainbowRegions' . l:each)
-    echom execute('syntax list @' . &ft . '_RainbowOperators' . l:each)
-    echom execute('syntax list @' . &ft . '_RainbowParentheses' . l:each)
   endfor
-    echom execute('syntax list @' . &ft . '_RainbowRegions')
-    echom execute('syntax list @' . &ft . '_RainbowOperators')
-    echom execute('syntax list @' . &ft . '_RainbowParentheses')
+
+  syntax sync fromstart
 
 endfunction
 
@@ -1966,13 +1961,19 @@ function! s:InactivateRainbow()
 endfunction
 
 function! s:ToggleRainbow()
-  if s:rainbow.activated
+  if !exists('b:rainbow_activated')
+    let b:rainbow_activated = v:false
+  endif
+
+  if b:rainbow_activated
     call s:InactivateRainbow()
+    for l:each in map(getbufinfo(), 'v:val.bufnr')
+      call setbufvar(l:each, 'rainbow_activated', v:false)
+    endfor
   else
     call s:ActivateRainbow()
+    let b:rainbow_activated = v:true
   endif
-  let s:rainbow.activated = !s:rainbow.activated
-  echom s:rainbow.activated
 endfunction
 
 "     }}}
