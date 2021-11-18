@@ -176,18 +176,22 @@ endfunction
 "   Windows {{{2
 
 function! s:NextWindow()
-  if winnr() < winnr('$')
-    execute winnr() + 1 . 'wincmd w'
-  else
-    1wincmd w
+  if empty(getcmdwintype())
+    if winnr() < winnr('$')
+      execute winnr() + 1 . 'wincmd w'
+    else
+      1wincmd w
+    endif
   endif
 endfunction
 
 function! s:PreviousWindow()
-  if winnr() > 1
-    execute winnr() - 1 . 'wincmd w'
-  else
-    execute winnr('$') . 'wincmd w'
+  if empty(getcmdwintype())
+    if winnr() > 1
+      execute winnr() - 1 . 'wincmd w'
+    else
+      execute winnr('$') . 'wincmd w'
+    endif
   endif
 endfunction
 
@@ -850,29 +854,31 @@ function! s:UpdateBuffersMenu()
 endfunction
 
 function! s:BuffersMenu()
-  let s:menu = {}
-  call s:UpdateBuffersMenu()
-  let s:menu.buf_backup = bufnr()
-  let s:menu.win_backup = winnr()
-  let s:menu.input = ''
+  if empty(getcmdwintype())
+    let s:menu = {}
+    call s:UpdateBuffersMenu()
+    let s:menu.buf_backup = bufnr()
+    let s:menu.win_backup = winnr()
+    let s:menu.input = ''
 
-  let l:popup_id = popup_create(s:menu.text,
-  \ #{
-    \ pos: 'topleft',
-    \ line: win_screenpos(0)[0] + (winheight(0) - s:menu.height) / 2,
-    \ col: win_screenpos(0)[1] + (winwidth(0) - s:menu.width) / 2,
-    \ zindex: 2,
-    \ drag: v:true,
-    \ wrap: v:false,
-    \ filter: expand('<SID>') . 'BuffersMenuFilter',
-    \ mapping: v:false,
-    \ border: [],
-    \ borderhighlight: ['BuffersMenuBorders'],
-    \ borderchars: ['━', '┃', '━', '┃', '┏', '┓', '┛', '┗'],
-    \ cursorline: v:true,
-  \ })
-  call s:ReplaceCursorOnCurrentBuffer(l:popup_id)
-  call s:HelpBuffersMenu()
+    let l:popup_id = popup_create(s:menu.text,
+    \ #{
+      \ pos: 'topleft',
+      \ line: win_screenpos(0)[0] + (winheight(0) - s:menu.height) / 2,
+      \ col: win_screenpos(0)[1] + (winwidth(0) - s:menu.width) / 2,
+      \ zindex: 2,
+      \ drag: v:true,
+      \ wrap: v:false,
+      \ filter: expand('<SID>') . 'BuffersMenuFilter',
+      \ mapping: v:false,
+      \ border: [],
+      \ borderhighlight: ['BuffersMenuBorders'],
+      \ borderchars: ['━', '┃', '━', '┃', '┏', '┓', '┛', '┗'],
+      \ cursorline: v:true,
+    \ })
+    call s:ReplaceCursorOnCurrentBuffer(l:popup_id)
+    call s:HelpBuffersMenu()
+  endif
 endfunction
 
 "   }}}
@@ -1262,30 +1268,32 @@ function! s:UpdateExplorer()
 endfunction
 
 function! s:Explorer()
-  let s:explorer = {}
-  call s:InitExplorer()
-  let s:explorer.dotfiles = v:false
+  if empty(getcmdwintype())
+    let s:explorer = {}
+    call s:InitExplorer()
+    let s:explorer.dotfiles = v:false
 
-  call s:UpdateExplorer()
-  let l:popup_id = popup_create(s:explorer.text,
-  \ #{
-    \ pos: 'topleft',
-    \ line: win_screenpos(0)[0],
-    \ col: win_screenpos(0)[1],
-    \ zindex: 2,
-    \ minwidth: winwidth(0),
-    \ maxwidth: winwidth(0),
-    \ minheight: winheight(0),
-    \ maxheight: winheight(0),
-    \ drag: v:true,
-    \ wrap: v:true,
-    \ filter: expand('<SID>') . 'ExplorerFilter',
-    \ mapping: v:false,
-    \ scrollbar: v:true,
-    \ cursorline: v:true,
-  \ })
-  call win_execute(l:popup_id, 'call cursor(2, 0)')
-  call s:HelpExplorer()
+    call s:UpdateExplorer()
+    let l:popup_id = popup_create(s:explorer.text,
+    \ #{
+      \ pos: 'topleft',
+      \ line: win_screenpos(0)[0],
+      \ col: win_screenpos(0)[1],
+      \ zindex: 2,
+      \ minwidth: winwidth(0),
+      \ maxwidth: winwidth(0),
+      \ minheight: winheight(0),
+      \ maxheight: winheight(0),
+      \ drag: v:true,
+      \ wrap: v:true,
+      \ filter: expand('<SID>') . 'ExplorerFilter',
+      \ mapping: v:false,
+      \ scrollbar: v:true,
+      \ cursorline: v:true,
+    \ })
+    call win_execute(l:popup_id, 'call cursor(2, 0)')
+    call s:HelpExplorer()
+  endif
 endfunction
 
 "   }}}
@@ -1436,7 +1444,6 @@ function! s:DiffHandler(job, status)
     echoerr 'Personal Error Message: Can not delete temp file: '
       \ . s:undo.tmp[1]
   endif
-  let &eventignore = l:eventignore_backup
 
   for l:each in range(len(l:text))
     let l:properties = \ [ #{ type: 'diffadd', col: 1,
@@ -1806,8 +1813,6 @@ function! s:HighlightGutentags()
   endif
 endfunction
 
-" TODO: Need fixing: Sometimes this function generates a 'fatal:' file
-"                    with CTAGS var env inside.
 function! s:GenerateGutentags()
   if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
     let l:bufdir = fnamemodify(expand('%'), ':p:h')
@@ -1883,96 +1888,129 @@ let s:rainbow = #{
 \   colors: [
 \      196, 208, 226, 40, 45, 33, 129, 201
 \   ],
+\   activated: v:false,
 \ }
 
 "     }}}
 "     Functions {{{3
 
 function! s:ActivateRainbow()
-  let l:max = len(s:rainbow.colors)
+  if !empty(split(execute('syntax list'), '\n')[1:])
+    if empty(filter(map(split(execute('syntax list'), '\n'),
+      \ 'matchstr(v:val, "^\[[:alnum:]_]*")'), 'match(v:val, "_Rainbow") > 0'))
+        let l:max = len(s:rainbow.colors)
+        let l:index = 0
 
-  let l:index = 0
+        let l:containedin = ''
+        let l:parentheses = ['start=/(/ end=/)/ fold',
+          \ 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold']
+        let l:stringsyn = '"^[^[:space:]]*String[^[:space:]]*"'
 
-  let l:containedin = ''
-  let l:parentheses = ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold',
-    \ 'start=/{/ end=/}/ fold']
-  let  l:stringsyn = '"^[^[:space:]]*String[^[:space:]]*"'
+        if &filetype == 'vim'
+          let l:parentheses = ['start=/(/ end=/)/', 'start=/\[/ end=/\]/',
+            \ 'start=/{/ end=/}/ fold']
+        elseif (&filetype == 'sh') || (&filetype == 'conf')
+          let l:stringsyn = '"shDoubleQuote"'
+          let l:containedin = ",shDoubleQuote"
+        elseif &filetype == 'yaml'
+          let l:containedin = ",yamlFlowString"
+        endif
 
-  if &filetype == 'vim'
-    let l:parentheses =
-      \ ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold']
-  elseif (&filetype == 'sh') || (&filetype == 'conf')
-    let l:stringsyn = '"shDoubleQuote"'
-    let l:containedin = ",shDoubleQuote"
-  elseif &filetype == 'yaml'
-    let l:containedin = ",yamlFlowString"
+        execute 'syntax clear ' . join(filter(filter(filter(map(filter(split(
+          \ execute('syntax list'), '\n'), 'match(v:val, "cluster") < 0'),
+          \ 'matchstr(v:val, "^[[:alnum:]_]*")'), '!empty(v:val)'),
+          \ 'match(v:val, "_Rainbow") < 0'),
+          \ 'match(v:val, ' . l:stringsyn . ') < 0'))
+
+        for l:parenthesis in l:parentheses
+          for l:each in range(0, l:max - 1)
+            let l:fg = s:rainbow.colors[l:each % l:max]
+            execute 'syntax match ' . &filetype . '_Rainbow' . l:each
+              \ . '_Operator' . l:index . ' _,_ containedin=' . &filetype
+              \ . '_Rainbow' . l:each . '_Region' . l:index . ' contained'
+            execute 'syntax region ' . &filetype . '_Rainbow' . l:each
+              \ . '_Region' . l:index . ' matchgroup=' . &filetype
+              \ . '_Rainbow' . l:each . '_Parenthesis' . l:index
+              \ . ((l:each > 0) ? ' contained' : '') . ' ' . l:parenthesis
+              \ . ' containedin=@' . &filetype . '_RainbowRegions'
+              \ . ((l:each + l:max - 1) % l:max)
+              \ . ((l:each == 0) ? l:containedin : '') . ' contains=TOP fold'
+            execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each
+              \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Region'
+              \ . l:index
+            execute 'syntax cluster ' . &filetype . '_RainbowParentheses'
+              \ . l:each . ' add=' . &filetype . '_Rainbow' . l:each
+              \ . '_Parenthesis' . l:index
+            execute 'syntax cluster ' . &filetype . '_RainbowOperators'
+              \ . l:each . ' add=' . &filetype . '_Rainbow' . l:each
+              \ . '_Operator' . l:index
+            execute 'highlight ' . &filetype . '_Rainbow' . l:each
+              \ . '_Operator' . l:index . ' cterm=bold ctermfg=' . l:fg
+            execute 'highlight ' . &filetype . '_Rainbow' . l:each
+              \ . '_Parenthesis' . l:index . ' cterm=bold ctermfg=' . l:fg
+          endfor
+          let l:index += 1
+        endfor
+
+        for l:each in range(0, l:max - 1)
+          execute 'syntax cluster ' . &filetype . '_RainbowRegions add=@'
+            \ . &filetype . '_RainbowRegions' . l:each
+          execute 'syntax cluster ' . &filetype . '_RainbowParentheses add=@'
+            \ . &filetype . '_RainbowParentheses' . l:each
+          execute 'syntax cluster ' . &filetype . '_RainbowOperators add=@'
+            \ . &filetype . '_RainbowOperators' . l:each
+        endfor
+
+        syntax sync fromstart
+    endif
   endif
-
-  execute 'syntax clear ' . join(filter(filter(filter(map(filter(split(
-    \ execute('syntax list'), '\n'), 'match(v:val, "cluster") < 0'),
-    \ 'matchstr(v:val, "^[[:alnum:]_]*")'), '!empty(v:val)'),
-    \ 'match(v:val, "_Rainbow") < 0'),
-    \ 'match(v:val, ' . l:stringsyn . ') < 0'))
-
-  for l:parenthesis in l:parentheses
-    for l:each in range(0, l:max - 1)
-      let l:fg = s:rainbow.colors[l:each % l:max]
-      execute 'syntax match ' . &filetype . '_Rainbow' . l:each
-        \ . '_Operator' . l:index . ' _,_ containedin=' . &filetype
-        \ . '_Rainbow' . l:each . '_Region' . l:index . ' contained'
-      execute 'syntax region ' . &filetype . '_Rainbow' . l:each . '_Region'
-        \ . l:index . ' matchgroup=' . &filetype . '_Rainbow' . l:each
-        \ . '_Parenthesis' . l:index . ((l:each > 0) ? ' contained' : '')
-        \ . ' ' . l:parenthesis . ' containedin=@' . &filetype
-        \ . '_RainbowRegions' . ((l:each + l:max - 1) % l:max)
-        \ . ((l:each == 0) ? l:containedin : '') . ' contains=TOP fold'
-      execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each
-        \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
-      execute 'syntax cluster ' . &filetype . '_RainbowParentheses' . l:each
-        \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Parenthesis'
-        \ . l:index
-      execute 'syntax cluster ' . &filetype . '_RainbowOperators' . l:each
-        \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Operator' . l:index
-      execute 'highlight ' . &filetype . '_Rainbow' . l:each
-        \ . '_Operator' . l:index . ' cterm=bold ctermfg=' . l:fg
-      execute 'highlight ' . &filetype . '_Rainbow' . l:each
-        \ . '_Parenthesis' . l:index . ' cterm=bold ctermfg=' . l:fg
-    endfor
-    let l:index += 1
-  endfor
-
-  for l:each in range(0, l:max - 1)
-    execute 'syntax cluster ' . &filetype . '_RainbowRegions add=@'
-      \ . &filetype . '_RainbowRegions' . l:each
-    execute 'syntax cluster ' . &filetype . '_RainbowParentheses add=@'
-      \ . &filetype . '_RainbowParentheses' . l:each
-    execute 'syntax cluster ' . &filetype . '_RainbowOperators add=@'
-      \ . &filetype . '_RainbowOperators' . l:each
-  endfor
-
-  syntax sync fromstart
-
 endfunction
 
 function! s:InactivateRainbow()
-  syntax clear
+  let l:buf_backup = bufnr()
+  let l:savedview = winsaveview()
+  let l:eventignore_backup = &eventignore
+  set eventignore=all
+
+  for l:each in map(getbufinfo(), 'v:val.bufnr')
+    execute 'buffer ' . l:each
+    syntax clear
+  endfor
+
+  execute 'buffer ' . l:buf_backup
+  call winrestview(l:savedview)
+  let &eventignore = l:eventignore_backup
+
   syntax enable
   call s:LoadColorscheme()
 endfunction
 
 function! s:ToggleRainbow()
-  if !exists('b:rainbow_activated')
-    let b:rainbow_activated = v:false
-  endif
+  if empty(getcmdwintype())
+    if s:rainbow.activated
+      call s:InactivateRainbow()
+    else
+      let l:buf_backup = bufnr()
+      let l:savedview = winsaveview()
+      let l:eventignore_backup = &eventignore
+      set eventignore=all
 
-  if b:rainbow_activated
-    call s:InactivateRainbow()
-    for l:each in map(getbufinfo(), 'v:val.bufnr')
-      call setbufvar(l:each, 'rainbow_activated', v:false)
-    endfor
-  else
+      for l:each in map(getbufinfo(), 'v:val.bufnr')
+        execute 'buffer ' . l:each
+        call s:ActivateRainbow()
+      endfor
+
+      execute 'buffer ' . l:buf_backup
+      call winrestview(l:savedview)
+      let &eventignore = l:eventignore_backup
+    endif
+    let s:rainbow.activated = !s:rainbow.activated
+  endif
+endfunction
+
+function! s:RefreshRainbow()
+  if s:rainbow.activated
     call s:ActivateRainbow()
-    let b:rainbow_activated = v:true
   endif
 endfunction
 
@@ -2345,6 +2383,11 @@ augroup vimrc_autocomands
 
   autocmd BufEnter * :silent call <SID>HighlightGutentags()
   autocmd VimEnter,BufWritePost * :silent call <SID>GenerateGutentags()
+
+"     }}}
+"     Rainbow autocommands {{{3
+
+  autocmd BufEnter * :silent call <SID>RefreshRainbow()
 
 "     }}}
 "   }}}
