@@ -1894,74 +1894,81 @@ let s:rainbow = #{
 "     }}}
 "     Functions {{{3
 
+function! s:IsRainbowUsed()
+  return empty(filter(map(split(execute('syntax list'), '\n'),
+    \ 'matchstr(v:val, "^\[[:alnum:]_]*")'), 'match(v:val, "_Rainbow") > 0'))
+endfunction
+
 function! s:ActivateRainbow()
-  if !empty(split(execute('syntax list'), '\n')[1:])
-    if empty(filter(map(split(execute('syntax list'), '\n'),
-      \ 'matchstr(v:val, "^\[[:alnum:]_]*")'), 'match(v:val, "_Rainbow") > 0'))
-        let l:max = len(s:rainbow.colors)
-        let l:index = 0
+  let l:buf_syntax = split(execute('syntax list'), '\n')[1:]
+  if !empty(l:buf_syntax) || empty(&filetype)
+    if s:IsRainbowUsed()
+      let l:max = len(s:rainbow.colors)
+      let l:index = 0
 
-        let l:containedin = ''
-        let l:parentheses = ['start=/(/ end=/)/ fold',
-          \ 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold']
-        let l:stringsyn = '"^[^[:space:]]*String[^[:space:]]*"'
+      let l:containedin = ''
+      let l:parentheses = ['start=/(/ end=/)/ fold',
+        \ 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold']
+      let l:stringsyn = '"^[^[:space:]]*String[^[:space:]]*"'
 
-        if &filetype == 'vim'
-          let l:parentheses = ['start=/(/ end=/)/', 'start=/\[/ end=/\]/',
-            \ 'start=/{/ end=/}/ fold']
-        elseif (&filetype == 'sh') || (&filetype == 'conf')
-          let l:stringsyn = '"shDoubleQuote"'
-          let l:containedin = ",shDoubleQuote"
-        elseif &filetype == 'yaml'
-          let l:containedin = ",yamlFlowString"
-        endif
+      if &filetype == 'vim'
+        let l:parentheses = ['start=/(/ end=/)/', 'start=/\[/ end=/\]/',
+          \ 'start=/{/ end=/}/ fold']
+      elseif (&filetype == 'sh') || (&filetype == 'conf')
+        let l:stringsyn = '"shDoubleQuote"'
+        let l:containedin = ",shDoubleQuote"
+      elseif &filetype == 'yaml'
+        let l:containedin = ",yamlFlowString"
+      endif
 
-        execute 'syntax clear ' . join(filter(filter(filter(map(filter(split(
-          \ execute('syntax list'), '\n'), 'match(v:val, "cluster") < 0'),
+      " syntax list must not be cleared if the it is already empty
+      if !empty(l:buf_syntax)
+        execute 'syntax clear ' . join(filter(filter(filter(map(filter(
+          \ l:buf_syntax, 'match(v:val, "cluster") < 0'),
           \ 'matchstr(v:val, "^[[:alnum:]_]*")'), '!empty(v:val)'),
           \ 'match(v:val, "_Rainbow") < 0'),
           \ 'match(v:val, ' . l:stringsyn . ') < 0'))
+      endif
 
-        for l:parenthesis in l:parentheses
-          for l:each in range(0, l:max - 1)
-            let l:fg = s:rainbow.colors[l:each % l:max]
-            execute 'syntax match ' . &filetype . '_Rainbow' . l:each
-              \ . '_Operator' . l:index . ' _,_ containedin=' . &filetype
-              \ . '_Rainbow' . l:each . '_Region' . l:index . ' contained'
-            execute 'syntax region ' . &filetype . '_Rainbow' . l:each
-              \ . '_Region' . l:index . ' matchgroup=' . &filetype
-              \ . '_Rainbow' . l:each . '_Parenthesis' . l:index
-              \ . ((l:each > 0) ? ' contained' : '') . ' ' . l:parenthesis
-              \ . ' containedin=@' . &filetype . '_RainbowRegions'
-              \ . ((l:each + l:max - 1) % l:max)
-              \ . ((l:each == 0) ? l:containedin : '') . ' contains=TOP fold'
-            execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each
-              \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Region'
-              \ . l:index
-            execute 'syntax cluster ' . &filetype . '_RainbowParentheses'
-              \ . l:each . ' add=' . &filetype . '_Rainbow' . l:each
-              \ . '_Parenthesis' . l:index
-            execute 'syntax cluster ' . &filetype . '_RainbowOperators'
-              \ . l:each . ' add=' . &filetype . '_Rainbow' . l:each
-              \ . '_Operator' . l:index
-            execute 'highlight ' . &filetype . '_Rainbow' . l:each
-              \ . '_Operator' . l:index . ' cterm=bold ctermfg=' . l:fg
-            execute 'highlight ' . &filetype . '_Rainbow' . l:each
-              \ . '_Parenthesis' . l:index . ' cterm=bold ctermfg=' . l:fg
-          endfor
-          let l:index += 1
-        endfor
-
+      for l:parenthesis in l:parentheses
         for l:each in range(0, l:max - 1)
-          execute 'syntax cluster ' . &filetype . '_RainbowRegions add=@'
-            \ . &filetype . '_RainbowRegions' . l:each
-          execute 'syntax cluster ' . &filetype . '_RainbowParentheses add=@'
-            \ . &filetype . '_RainbowParentheses' . l:each
-          execute 'syntax cluster ' . &filetype . '_RainbowOperators add=@'
-            \ . &filetype . '_RainbowOperators' . l:each
+          let l:fg = s:rainbow.colors[l:each % l:max]
+          execute 'syntax match ' . &filetype . '_Rainbow' . l:each
+            \ . '_Operator' . l:index . ' _,_ containedin=' . &filetype
+            \ . '_Rainbow' . l:each . '_Region' . l:index . ' contained'
+          execute 'syntax region ' . &filetype . '_Rainbow' . l:each
+            \ . '_Region' . l:index . ' matchgroup=' . &filetype . '_Rainbow'
+            \ . l:each . '_Parenthesis' . l:index
+            \ . ((l:each > 0) ? ' contained' : '') . ' ' . l:parenthesis
+            \ . ' containedin=@' . &filetype . '_RainbowRegions'
+            \ . ((l:each + l:max - 1) % l:max)
+            \ . ((l:each == 0) ? l:containedin : '') . ' contains=TOP fold'
+          execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each
+            \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
+          execute 'syntax cluster ' . &filetype . '_RainbowParentheses'
+            \ . l:each . ' add=' . &filetype . '_Rainbow' . l:each
+            \ . '_Parenthesis' . l:index
+          execute 'syntax cluster ' . &filetype . '_RainbowOperators' . l:each
+            \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Operator'
+            \ . l:index
+          execute 'highlight ' . &filetype . '_Rainbow' . l:each
+            \ . '_Operator' . l:index . ' cterm=bold ctermfg=' . l:fg
+          execute 'highlight ' . &filetype . '_Rainbow' . l:each
+            \ . '_Parenthesis' . l:index . ' cterm=bold ctermfg=' . l:fg
         endfor
+        let l:index += 1
+      endfor
 
-        syntax sync fromstart
+      for l:each in range(0, l:max - 1)
+        execute 'syntax cluster ' . &filetype . '_RainbowRegions add=@'
+          \ . &filetype . '_RainbowRegions' . l:each
+        execute 'syntax cluster ' . &filetype . '_RainbowParentheses add=@'
+          \ . &filetype . '_RainbowParentheses' . l:each
+        execute 'syntax cluster ' . &filetype . '_RainbowOperators add=@'
+          \ . &filetype . '_RainbowOperators' . l:each
+      endfor
+
+      syntax sync fromstart
     endif
   endif
 endfunction
