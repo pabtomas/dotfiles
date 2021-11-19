@@ -1,13 +1,10 @@
 " Ideas {{{1
 
 " - replace system()/systemlist() calls with job_start() ?
-" - explorer: - hijack netrw ?
+" - explorer: hijack netrw ?
 
 " }}}
 " TODO {{{1
-
-" - plugins: taglist
-
 " }}}
 " Dependencies {{{1
 
@@ -131,17 +128,13 @@ const s:search = #{
 
 function! s:NextSearch()
   normal! n
-  if foldlevel('.') > 0
-    foldopen!
-  endif
+  if foldlevel('.') > 0 | foldopen! | endif
   normal! zz
 endfunction
 
 function! s:PreviousSearch()
   normal! N
-  if foldlevel('.') > 0
-    foldopen!
-  endif
+  if foldlevel('.') > 0 | foldopen! | endif
   normal! zz
 endfunction
 
@@ -358,6 +351,10 @@ function s:LoadColorscheme()
     \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
     \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
     \ . ' | highlight       Tag                 cterm=underline'
+    \ . ' | highlight       TagKind             cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       TagPunctuation      cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       TagDigit            cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       TagName             cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
     \ . ' | highlight       Error                                  ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
     \ . ' | highlight       ErrorMsg            cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
     \ . ' | highlight       Todo                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
@@ -450,6 +447,19 @@ if index(prop_type_list(), 'diffdelete') != -1 | call prop_type_delete('diffdele
 call prop_type_add('button',     #{ highlight: 'Button'     })
 call prop_type_add('diffadd',    #{ highlight: 'DiffAdd'    })
 call prop_type_add('diffdelete', #{ highlight: 'DiffDelete' })
+
+"     }}}
+"     TagList {{{3
+
+if index(prop_type_list(), 'kind')  != -1 | call prop_type_delete('kind')  | endif
+if index(prop_type_list(), 'punct') != -1 | call prop_type_delete('punct') | endif
+if index(prop_type_list(), 'digit') != -1 | call prop_type_delete('digit') | endif
+if index(prop_type_list(), 'name')  != -1 | call prop_type_delete('name')  | endif
+
+call prop_type_add('kind',  #{ highlight: 'TagKind' })
+call prop_type_add('punct', #{ highlight: 'TagPunctuation' })
+call prop_type_add('digit', #{ highlight: 'TagDigit' })
+call prop_type_add('name',  #{ highlight: 'TagName' })
 
 "     }}}
 "   }}}
@@ -749,6 +759,7 @@ function! s:HelpBuffersMenu()
 endfunction
 
 "     }}}
+"     Functions {{{3
 
 function! s:ReplaceCursorOnCurrentBuffer(winid)
   call win_execute(a:winid,
@@ -881,6 +892,7 @@ function! s:BuffersMenu()
   endif
 endfunction
 
+"     }}}
 "   }}}
 "   Explorer {{{2
 "     Keys {{{3
@@ -998,6 +1010,7 @@ function! s:HelpExplorer()
 endfunction
 
 "     }}}
+"     Functions {{{3
 
 function! s:PathCompare(file1, file2)
   if isdirectory(a:file1) && !isdirectory(a:file2)
@@ -1285,7 +1298,7 @@ function! s:Explorer()
       \ minheight: winheight(0),
       \ maxheight: winheight(0),
       \ drag: v:true,
-      \ wrap: v:true,
+      \ wrap: v:false,
       \ filter: expand('<SID>') . 'ExplorerFilter',
       \ mapping: v:false,
       \ scrollbar: v:true,
@@ -1296,6 +1309,7 @@ function! s:Explorer()
   endif
 endfunction
 
+"     }}}
 "   }}}
 "   Obsession {{{2
 "     Keys {{{3
@@ -1361,7 +1375,7 @@ endfunction
 
 "     }}}
 "   }}}
-"   Undo tree {{{2
+"   Undotree {{{2
 "     Keys {{{3
 
 if exists('s:undokey') | unlet s:undokey | endif
@@ -1427,6 +1441,7 @@ function! s:HelpUndotree()
 endfunction
 
 "     }}}
+"     Functions {{{3
 
 function! s:DiffHandler(job, status)
   let l:eventignore_backup = &eventignore
@@ -1446,10 +1461,10 @@ function! s:DiffHandler(job, status)
   endif
 
   for l:each in range(len(l:text))
-    let l:properties = \ [ #{ type: 'diffadd', col: 1,
+    let l:properties = \ [#{ type: 'diffadd', col: 1,
       \ length: max([0, len(l:text[l:each]) - 1]) }]
     if l:text[l:each][0] == '-'
-      let l:properties = [ #{ type: 'diffdelete', col: 1,
+      let l:properties = [#{ type: 'diffdelete', col: 1,
         \ length: max([0, len(l:text[l:each]) - 1]) }]
     endif
     let l:text[l:each] = #{ text: l:text[l:each][1:], props: l:properties }
@@ -1744,7 +1759,7 @@ endfunction
 function! s:Undotree()
   if !buflisted(bufnr()) || !bufloaded(bufnr())
     echoerr 'Personal Error Message: Unlisted or Unloaded current buffer.'
-      \ . ' Can not use undo tree.'
+      \ . ' Can not use Undotree.'
     return
   endif
 
@@ -1765,7 +1780,7 @@ function! s:Undotree()
     \ minheight: winheight(0),
     \ maxheight: winheight(0),
     \ drag: v:false,
-    \ wrap: v:true,
+    \ wrap: v:false,
     \ mapping: v:false,
     \ scrollbar: v:true,
     \ border: [0, 0, 0, 1],
@@ -1784,7 +1799,7 @@ function! s:Undotree()
     \ minheight: winheight(0),
     \ maxheight: winheight(0),
     \ drag: v:false,
-    \ wrap: v:true,
+    \ wrap: v:false,
     \ filter: expand('<SID>') . 'UndotreeFilter',
     \ mapping: v:false,
     \ scrollbar: v:false,
@@ -1797,6 +1812,7 @@ function! s:Undotree()
   call s:HelpUndotree()
 endfunction
 
+"     }}}
 "   }}}
 "   Gutentags {{{2
 
@@ -1853,9 +1869,7 @@ function! s:FollowTag()
   endif
   let l:cword = expand('<cword>')
   execute 'tag ' . l:cword
-  if foldlevel('.') > 0
-    foldopen!
-  endif
+  if foldlevel('.') > 0 | foldopen! | endif
   if len(taglist('^' . l:cword . '$')) == 1
     normal! zz
   endif
@@ -1866,17 +1880,13 @@ endfunction
 
 function! s:NextTag()
   tag
-  if foldlevel('.') > 0
-    foldopen!
-  endif
+  if foldlevel('.') > 0 | foldopen! | endif
   normal! zz
 endfunction
 
 function! s:PreviousTag()
   pop
-  if foldlevel('.') > 0
-    foldopen!
-  endif
+  if foldlevel('.') > 0 | foldopen! | endif
   normal! zz
 endfunction
 
@@ -1906,19 +1916,19 @@ function! s:ActivateRainbow()
       let l:max = len(s:rainbow.colors)
       let l:index = 0
 
-      let l:containedin = ''
+      let l:contained_in = ''
       let l:parentheses = ['start=/(/ end=/)/ fold',
         \ 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold']
-      let l:stringsyn = '"^[^[:space:]]*String[^[:space:]]*"'
+      let l:string_syntax = '"^[^[:space:]]*String[^[:space:]]*"'
 
       if &filetype == 'vim'
         let l:parentheses = ['start=/(/ end=/)/', 'start=/\[/ end=/\]/',
           \ 'start=/{/ end=/}/ fold']
       elseif (&filetype == 'sh') || (&filetype == 'conf')
-        let l:stringsyn = '"shDoubleQuote"'
-        let l:containedin = ",shDoubleQuote"
+        let l:string_syntax = '"shDoubleQuote"'
+        let l:contained_in = ",shDoubleQuote"
       elseif &filetype == 'yaml'
-        let l:containedin = ",yamlFlowString"
+        let l:contained_in = ",yamlFlowString"
       endif
 
       " syntax list must not be cleared if the it is already empty
@@ -1927,7 +1937,7 @@ function! s:ActivateRainbow()
           \ l:buf_syntax, 'match(v:val, "cluster") < 0'),
           \ 'matchstr(v:val, "^[[:alnum:]_]*")'), '!empty(v:val)'),
           \ 'match(v:val, "_Rainbow") < 0'),
-          \ 'match(v:val, ' . l:stringsyn . ') < 0'))
+          \ 'match(v:val, ' . l:string_syntax . ') < 0'))
       endif
 
       for l:parenthesis in l:parentheses
@@ -1942,7 +1952,7 @@ function! s:ActivateRainbow()
             \ . ((l:each > 0) ? ' contained' : '') . ' ' . l:parenthesis
             \ . ' containedin=@' . &filetype . '_RainbowRegions'
             \ . ((l:each + l:max - 1) % l:max)
-            \ . ((l:each == 0) ? l:containedin : '') . ' contains=TOP fold'
+            \ . ((l:each == 0) ? l:contained_in : '') . ' contains=TOP fold'
           execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each
             \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
           execute 'syntax cluster ' . &filetype . '_RainbowParentheses'
@@ -2023,7 +2033,144 @@ endfunction
 
 "     }}}
 "   }}}
-"   Tag list {{{2
+"   Taglist {{{2
+"     Keys {{{3
+
+if exists('s:listkey') | unlet s:listkey | endif
+const s:listkey = #{
+\   next:         "\<Down>",
+\   previous:       "\<Up>",
+\   select:      "\<Enter>",
+\   exit:          "\<Esc>",
+\ }
+
+"     }}}
+"     Functions {{{3
+
+function! LineLessThan(left, right)
+  if a:left.line == a:right.line
+    return 0
+  elseif a:left.line < a:right.line
+    return -1
+  else
+    return 1
+  endif
+endfunction
+
+function! s:TagListFilter(winid, key)
+  if a:key == s:listkey.exit
+    call popup_clear()
+    unlet s:list
+  elseif a:key == s:listkey.next
+    call win_execute(a:winid, 'if line(".") < line("$") - 1'
+      \ . ' | call cursor(line(".") + 1, 0)'
+      \ . ' | while match(getline("."), "^  ") < 0'
+      \ . ' && (line(".") < line("$") - 1)'
+      \ . ' | call cursor(line(".") + 1, 0) | endwhile | endif'
+      \ . ' | if (line(".") == line("$") - 1) && (line("$") > line("w$"))'
+      \ . ' | execute "normal! \<C-e>" | endif')
+  elseif a:key == s:listkey.previous
+    call win_execute(a:winid, 'if line(".") > 3'
+      \ . ' | call cursor(line(".") - 1, 0)'
+      \ . ' | while (match(getline("."), "^  ") < 0) && (line(".") > 3)'
+      \ . ' | call cursor(line(".") - 1, 0) | endwhile'
+      \ . ' | else | execute "normal! \<C-y>"| endif')
+  elseif a:key == s:listkey.select
+    call win_execute(a:winid, 'let s:list.tmp = trim(getline("."))')
+    call popup_clear()
+    call cursor(str2nr(matchstr(s:list.tmp, "^[0-9][0-9]*")), 0)
+    if foldlevel('.') > 0 | foldopen! | endif
+    unlet s:list
+  endif
+  return v:true
+endfunction
+
+function! s:UpdateTagList()
+  let s:list.text = []
+  let l:filename = fnamemodify(expand("%"), ":p")
+  let l:filetype = trim(system('ctags --print-language ' . l:filename
+    \ . ' | awk "{printf \"%s\n\", \$2}"'))
+  if l:filetype == "NONE"
+    echoerr "Personal Error Message: Universal Ctags can not find the file"
+      \ . " language."
+  else
+    let l:kinds = {}
+    for l:each in systemlist('ctags --list-kinds-full=' . l:filetype
+      \ . ' | tail -n+2 | awk "{printf \"%s %s\n\", \$1, \$2}"')
+        let l:each = split(l:each, " ")
+        let l:kinds[l:each[0]] = l:each[1] . 's'
+    endfor
+    let l:tags = sort(map(filter(taglist('.*'),
+      \ 'v:val.filename == l:filename'), {_, tag -> #{
+      \ name: tag.name, kind: tag.kind,
+      \ line: str2nr(trim(execute('global' . tag.cmd . 'echo line(".")')))
+    \ }}), function("LineLessThan"))
+    let l:tags_letters = uniq(sort(mapnew(l:tags, 'v:val.kind')))
+    for [l:letter, l:name] in items(filter(l:kinds,
+    \ { letter -> index(l:tags_letters, letter) > -1}))
+      let l:header_start = '--- ' . toupper(l:name) . ' '
+      let l:line = l:header_start
+        \ . repeat('-', winwidth(0) - len(l:header_start))
+      let l:properties = [#{ type: 'punct', col: 1, length: 3 },
+        \ #{ type: 'kind', col: 5, length: len(l:header_start) - 5 },
+        \ #{ type: 'punct', col: len(l:header_start) + 1,
+        \    length: winwidth(0) - len(l:header_start) }]
+      call add(s:list.text, #{ text: l:line, props: l:properties })
+      call add(s:list.text, #{ text: '', props: []})
+      for l:each in l:tags
+        if l:each.kind == l:letter
+          let l:line = '  ' . l:each.line . ': ' . l:each.name
+          let l:properties = [#{ type: 'digit', col: 1,
+            \ length: len(l:each.line) + 2 }, #{ type: 'punct',
+            \ col: len(l:each.line) + 3, length: 1}, #{ type: 'name',
+            \ col: len(l:each.line) + 4, length: winwidth(0)
+            \   - len(l:each.line) - 4}]
+          call add(s:list.text, #{ text: l:line, props: l:properties })
+        endif
+      endfor
+      let l:tags = filter(l:tags, { _, val -> val.kind != l:letter })
+      call add(s:list.text, #{ text: '', props: []})
+    endfor
+  endif
+endfunction
+
+function! s:TagList()
+  if empty(getcmdwintype())
+    let l:savedview = winsaveview()
+    let l:line = line(".")
+    let s:list = {}
+    call s:UpdateTagList()
+    call winrestview(l:savedview)
+
+    if empty(s:list.text)
+      return
+    endif
+
+    let l:popup_id = popup_create(s:list.text,
+    \ #{
+      \ pos: 'topleft',
+      \ line: win_screenpos(0)[0],
+      \ col: win_screenpos(0)[1],
+      \ zindex: 2,
+      \ minwidth: winwidth(0),
+      \ maxwidth: winwidth(0),
+      \ minheight: winheight(0),
+      \ maxheight: winheight(0),
+      \ drag: v:true,
+      \ wrap: v:false,
+      \ filter: expand('<SID>') . 'TagListFilter',
+      \ mapping: v:false,
+      \ scrollbar: v:false,
+      \ cursorline: v:true,
+    \ })
+
+    call win_execute(l:popup_id, 'while match(getline("."), "^  ") < 0'
+      \ . '| call cursor(line(".") + 1, 0) | endwhile')
+    " call s:HelpTagList()
+  endif
+endfunction
+
+"     }}}
 "   }}}
 " }}}
 " Filetype specific {{{1
@@ -2196,13 +2343,15 @@ const s:mappings = #{
 \   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
   \ mode: 'n', description: 'Open Buffers Menu', order: 22 },
 \   explorer:                   #{ key: s:leaders.shift  .  s:leaders.shift,
-  \ mode: 'n', description: 'Open File Explorer', order: 23 },
+  \ mode: 'n', description: 'Open Explorer', order: 23 },
 \   obsession:                  #{ key: s:leaders.global .              'z',
   \ mode: 'n', description: 'Save session', order: 24 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
-  \ mode: 'n', description: 'Open Undo Tree', order: 25 },
+  \ mode: 'n', description: 'Open Undotree', order: 25 },
 \   rainbow:                    #{ key: s:leaders.global.               '(',
   \ mode: 'n', description: 'Toggle Rainbow', order: 26 },
+\   taglist:                    #{ key: s:leaders.shift.                'T',
+  \ mode: 'n', description: 'Open Taglist', order: 27 },
 \ }
 
 "   }}}
@@ -2266,6 +2415,10 @@ execute s:mappings.undotree.mode                   . 'noremap '
 execute s:mappings.rainbow.mode                    . 'noremap '
   \ . s:mappings.rainbow.key
   \ . ' <Cmd>call <SID>ToggleRainbow()<CR>'
+
+" taglist
+execute s:mappings.taglist.mode                    . 'noremap '
+  \ . s:mappings.taglist.key             . ' <Cmd>call <SID>TagList()<CR>'
 
 " windows navigation
 execute s:mappings.next_window.mode                . 'noremap '
@@ -2395,6 +2548,8 @@ augroup vimrc_autocomands
 "     Rainbow autocommands {{{3
 
   autocmd BufEnter * :silent call <SID>RefreshRainbow()
+  autocmd CmdwinEnter * :if !empty(getcmdwintype())
+    \ | silent call <SID>RefreshRainbow() | endif
 
 "     }}}
 "   }}}
