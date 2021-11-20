@@ -2087,15 +2087,17 @@ endfunction
 
 function! s:UpdateTagList()
   let s:list.text = []
+
   let l:filename = fnamemodify(expand("%"), ":p")
-  let l:filetype = trim(system('ctags --print-language ' . l:filename
+  let l:language = trim(system('ctags --print-language ' . l:filename
     \ . ' | awk "{printf \"%s\n\", \$2}"'))
-  if l:filetype == "NONE"
+  if l:language == "NONE"
     echoerr "Personal Error Message: Universal Ctags can not find the file"
       \ . " language."
+    return
   else
     let l:kinds = {}
-    for l:each in systemlist('ctags --list-kinds-full=' . l:filetype
+    for l:each in systemlist('ctags --list-kinds-full=' . l:language
       \ . ' | tail -n+2 | awk "{printf \"%s %s\n\", \$1, \$2}"')
         let l:each = split(l:each, " ")
         let l:kinds[l:each[0]] = l:each[1] . 's'
@@ -2105,7 +2107,15 @@ function! s:UpdateTagList()
       \ name: tag.name, kind: tag.kind,
       \ line: str2nr(trim(execute('global' . tag.cmd . 'echo line(".")')))
     \ }}), function("LineLessThan"))
+
+    if empty(l:tags)
+      echoerr "Personal Error Message: Universal Ctags does not find tags in"
+        \ . " this file."
+      return
+    endif
+
     let l:tags_letters = uniq(sort(mapnew(l:tags, 'v:val.kind')))
+
     for [l:letter, l:name] in items(filter(l:kinds,
     \ { letter -> index(l:tags_letters, letter) > -1}))
       let l:header_start = '--- ' . toupper(l:name) . ' '
@@ -2135,7 +2145,7 @@ function! s:UpdateTagList()
 endfunction
 
 function! s:TagList()
-  if empty(getcmdwintype())
+  if empty(getcmdwintype()) && !empty(systemlist('which ctags'))
     let l:savedview = winsaveview()
     let l:line = line(".")
     let s:list = {}
@@ -2547,9 +2557,7 @@ augroup vimrc_autocomands
 "     }}}
 "     Rainbow autocommands {{{3
 
-  autocmd BufEnter * :silent call <SID>RefreshRainbow()
-  autocmd CmdwinEnter * :if !empty(getcmdwintype())
-    \ | silent call <SID>RefreshRainbow() | endif
+  autocmd BufEnter,CmdwinEnter * :silent call <SID>RefreshRainbow()
 
 "     }}}
 "   }}}
