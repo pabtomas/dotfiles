@@ -430,6 +430,42 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  echo -n -e $(dashed "Checking libxt-dev installation")$' '
+  if [ $(dpkg -l | command grep -E "libxt-dev" | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing libxt-dev package")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y libxt-dev \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [ $? -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking libgtk-3-dev installation")$' '
+  if [ $(dpkg -l | command grep -E "libgtk-3-dev" | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing libgtk-3-dev package")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y libgtk-3-dev \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [ $? -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
   echo -n -e $(dashed "Checking xsel installation")$' '
   if [ $(which xsel | wc -l) -eq 0 ]; then
     echo -e ${RED}"Not OK"${RESET}
@@ -917,7 +953,7 @@ function main () {
   DASHED=$(dashed "Installing TMUX Plugins")
   dots "${DASHED}" &
   DOTS_PID=$!
-  ${HOME}/.tmux/plugins/tpm/bin/install_plugins &> /dev/null
+  ${TPM_DEST}/bin/install_plugins &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null

@@ -1089,9 +1089,21 @@ function! s:NormalModeExplorerFilter(winid, key)
       call s:UpdateExplorer()
       call popup_settext(a:winid, s:explorer.text)
     else
-      call popup_clear()
-      execute 'edit ' . l:path
-      unlet s:explorer
+      if !exists('s:explorer.server')
+        call popup_clear()
+        execute 'edit ' . l:path
+        unlet s:explorer
+      else
+        let l:open_cmd = "edit"
+        if !empty(filter(readdir(fnamemodify(l:path, ":h")),
+          \ '!empty(matchstr(v:val, '
+          \ . '"\.*" . fnamemodify(l:path, ":t") . "\.sw[a-z]"))'))
+            let l:open_cmd = "view"
+        endif
+
+        call remote_expr(s:explorer.server, 'execute("' . l:open_cmd . ' '
+          \ . l:path . ' | redraw!")')
+      endif
     endif
   elseif a:key == s:explorerkey.reset
     call s:InitExplorer()
@@ -1309,6 +1321,36 @@ function! s:Explorer()
   endif
 endfunction
 
+"     Server {{{3
+"       Functions {{{4
+
+function! s:ServerExplorer(server)
+  if has('clientserver')
+    call remote_startserver(a:server)
+  else
+    echoerr 'Personal Error Message: Vim needs to be compiled with'
+      \ . ' +clientserver feature to use clientserver-Explorer commands'
+  endif
+endfunction
+
+function! s:ClientExplorer(server)
+  if has('clientserver')
+    call s:Explorer()
+    call remote_expr(a:server, '1')
+    let s:explorer.server = a:server
+  else
+    echoerr 'Personal Error Message: Vim needs to be compiled with'
+      \ . ' +clientserver feature to use clientserver-Explorer commands'
+  endif
+endfunction
+
+"       }}}
+"       Commands {{{4
+
+command! -nargs=1 ClientExplorer call <SID>ClientExplorer(<args>)
+command! -nargs=1 ServerExplorer call <SID>ServerExplorer(<args>)
+
+"       }}}
 "     }}}
 "   }}}
 "   Obsession {{{2
