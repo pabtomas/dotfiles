@@ -1119,7 +1119,7 @@ function! s:NormalModeExplorerFilter(winid, key)
       \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
   elseif a:key == s:explorerkey.last
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif (a:key == s:explorerkey.exit) && !exists('s:server')
+  elseif (a:key == s:explorerkey.exit)
     call win_execute(a:winid, 'call clearmatches()')
     call popup_clear()
     unlet s:explorer
@@ -1324,18 +1324,18 @@ endfunction
 "     Server {{{3
 "       Functions {{{4
 
-function! s:StartServer(server)
+function! s:StartServer(id)
   if has('clientserver')
-    call remote_startserver(a:server)
+    call remote_startserver('EXPLORER-SERVER-' . a:id)
   else
     echoerr 'Personal Error Message: Vim needs to be compiled with'
       \ . ' +clientserver feature to use clientserver-Explorer commands'
   endif
 endfunction
 
-function! s:StartClientExplorer(server)
+function! s:StartClientExplorer(id)
   if has('clientserver')
-    let s:server = a:server
+    let s:server = 'EXPLORER-SERVER-' . a:id
     call s:Explorer()
   else
     echoerr 'Personal Error Message: Vim needs to be compiled with'
