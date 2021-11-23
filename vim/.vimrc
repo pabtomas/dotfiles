@@ -1089,7 +1089,7 @@ function! s:NormalModeExplorerFilter(winid, key)
       call s:UpdateExplorer()
       call popup_settext(a:winid, s:explorer.text)
     else
-      if !exists('s:explorer.server')
+      if !exists('s:server')
         call popup_clear()
         execute 'edit ' . l:path
         unlet s:explorer
@@ -1101,7 +1101,7 @@ function! s:NormalModeExplorerFilter(winid, key)
             let l:open_cmd = "view"
         endif
 
-        call remote_expr(s:explorer.server, 'execute("' . l:open_cmd . ' '
+        call remote_expr(s:server, 'execute("' . l:open_cmd . ' '
           \ . l:path . ' | redraw!")')
       endif
     endif
@@ -1119,7 +1119,7 @@ function! s:NormalModeExplorerFilter(winid, key)
       \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
   elseif a:key == s:explorerkey.last
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif a:key == s:explorerkey.exit
+  elseif (a:key == s:explorerkey.exit) && !exists('s:server')
     call win_execute(a:winid, 'call clearmatches()')
     call popup_clear()
     unlet s:explorer
@@ -1324,7 +1324,7 @@ endfunction
 "     Server {{{3
 "       Functions {{{4
 
-function! s:ServerExplorer(server)
+function! s:StartServer(server)
   if has('clientserver')
     call remote_startserver(a:server)
   else
@@ -1333,11 +1333,10 @@ function! s:ServerExplorer(server)
   endif
 endfunction
 
-function! s:ClientExplorer(server)
+function! s:StartClientExplorer(server)
   if has('clientserver')
+    let s:server = a:server
     call s:Explorer()
-    call remote_expr(a:server, '1')
-    let s:explorer.server = a:server
   else
     echoerr 'Personal Error Message: Vim needs to be compiled with'
       \ . ' +clientserver feature to use clientserver-Explorer commands'
@@ -1347,8 +1346,8 @@ endfunction
 "       }}}
 "       Commands {{{4
 
-command! -nargs=1 ClientExplorer call <SID>ClientExplorer(<args>)
-command! -nargs=1 ServerExplorer call <SID>ServerExplorer(<args>)
+command! -nargs=1 StartClientExplorer call <SID>StartClientExplorer(<args>)
+command! -nargs=1 StartServer call <SID>StartServer(<args>)
 
 "       }}}
 "     }}}
