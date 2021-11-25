@@ -20,7 +20,8 @@ function main () {
   local -r GREEN=$(tput setaf 2)
   local -r RED=$(tput setaf 9)
   local -r RESET=$(tput sgr0)
-  local -r SOURCES="${HOME}/.local/sources"
+  local -r LOCAL="${HOME}/.local"
+  local -r SOURCES="${LOCAL}/sources"
   local -r BACKUP="$(pwd)"
   local -r SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
   local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
@@ -35,7 +36,7 @@ function main () {
   local -r SCRIPTS="${SCRIPT_DIR}/scripts"
   local -r SCHEMA="${SCRIPT_DIR}/executor/schema/org.gnome.shell.extensions.executor.gschema.xml "
   local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
-  local -r EXECUTOR_DEST="${HOME}/.local/share/gnome-shell/extensions/executor@raujonas.github.io/"
+  local -r EXECUTOR_DEST="${LOCAL}/share/gnome-shell/extensions/executor@raujonas.github.io/"
   local -r EXECUTOR_REPO="https://github.com/raujonas/executor.git"
   local -r GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
   local GNOME=1
@@ -45,7 +46,7 @@ function main () {
   local GPU=""
   local VERSION=""
 
-  command mkdir -p ${HOME}/.local/bin ${HOME}/.local/share ${HOME}/.local/lib
+  command mkdir -p ${LOCAL}/bin ${LOCAL}/share ${LOCAL}/lib
 
   echo -n -e $(dashed "Checking apt installation")$' '
   if [ $(which apt | wc -l) -gt 0 ]; then
@@ -311,6 +312,24 @@ function main () {
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y autoconf | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [ $? -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking asciidoc installation")$' '
+  if [ $(which asciidoc | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing asciidoc package")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y asciidoc | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
     if [ $? -eq 0 ]; then
@@ -682,6 +701,84 @@ function main () {
   echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
     " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
 
+  echo -n -e $(dashed "Checking tig version")$' '
+  if [ $(which tig | wc -l) -eq 1 ]; then
+    echo -e ${GREEN}"OK"${RESET}
+    echo -e "\n    "$(tig --version | head -n1)"\n"
+  else
+    echo -e ${RED}"Not OK"${RESET}
+  fi
+
+  DASHED=${CLEAR}$(dashed "Cloning tig repository")
+  unbuffer git clone https://github.com/jonas/tig.git ${SOURCES}/tig \
+    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [ $? -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+  fi
+
+  command cd ${SOURCES}/tig
+
+  DASHED=$(dashed "Compiling tig")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  make prefix=${LOCAL} &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  DASHED=$(dashed "Installing tig")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  make install prefix=${LOCAL} &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  echo -e "\n    "$(tig --version | head -n1)"\n"
+
+  DASHED=$(dashed "Documenting tig")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  make install-doc &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
   echo -n -e $(dashed "Checking Universal Ctags version")$' '
   if [ $(which ctags | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
@@ -902,7 +999,7 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cd ${SOURCES}/flagbox \
-    && command cp flagbox.sh ${HOME}/.local/bin &> /dev/null
+    && command cp flagbox.sh ${LOCAL}/bin &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
