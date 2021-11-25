@@ -2,7 +2,7 @@
 
 alias ls='command ls --color'
 alias lh='command ls -d --color .??*'
-alias ll='command ls -lA --color "$@" | grep -v -E "^total [0-9]+"'
+alias ll='command ls -l -A --color "$@" | grep -v -E "^total [0-9]+"'
 
 alias grep='grep --color'
 
@@ -15,7 +15,7 @@ for I in $(seq 2 1 5); do
 done
 
 function mkdir () {
-  command mkdir -pv "$@"
+  command mkdir -p -v "$@"
   if [ $? -eq 0 ]; then
     for DIR in $(echo "$@"); do
       if [ "x${DIR}" != "x" ]; then
@@ -29,12 +29,12 @@ function mkdir () {
   fi
 }
 
-alias rm='rm -iv'
-alias cp='cp -iv'
-alias mv='mv -iv'
-alias hh='history | grep -iE'
+alias rm='rm -i -r -v'
+alias cp='cp -i -r -v'
+alias mv='mv -i -v'
+alias hh='history | grep -i -E'
 alias ff='find . | grep -E'
-alias pp='ps -ax | grep -E'
+alias pp='ps -a -x | grep -E'
 alias sudo='sudo '
 
 function extract () {
@@ -127,10 +127,10 @@ function git-ranking () {
   if [ \$# -eq 0 ]; then
     git ls-files \
       | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
-      | sort -f | uniq -ic | sort -nr
+      | sort -f | uniq -i -c | sort -n -r
   else
     git blame --line-porcelain \$* | sed -n 's/^author //p' | sort -f \
-      | uniq -ic | sort -nr
+      | uniq -i -c | sort -n -r
   fi
 }
 git-ranking\""

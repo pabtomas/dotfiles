@@ -278,6 +278,64 @@ if !exists("*s:SourceVimRC")
 endif
 
 "   }}}
+"   Server {{{2
+"     Variables & constants {{{3
+
+if exists('s:server_prefix') | unlet s:server_prefix | endif
+const s:server_prefix = 'VIM-'
+
+let s:servers = {}
+
+"     }}}
+"     Functions {{{3
+
+function! s:StartServer(id)
+  if has('clientserver')
+    call remote_startserver(s:server_prefix . a:id)
+  else
+    echoerr 'Personal Error Message: Vim needs to be compiled with'
+      \ . ' +clientserver feature to use this command'
+  endif
+  delcommand StartServer
+endfunction
+
+function! s:StartRemote(app, id)
+  let l:has_clientserver = has('clientserver')
+  if !l:has_clientserver
+    echoerr 'Personal Error Message: Vim needs to be compiled with'
+      \ . ' +clientserver feature to use this command'
+  else
+    if !has_key(s:servers, a:app)
+      let s:servers[a:app] = #{ names: [], reachable: v:false }
+    endif
+    let s:servers[a:app].names += [s:server_prefix . a:id]
+  endif
+  return l:has_clientserver
+endfunction
+
+function! s:LockServer(app)
+  if exists('s:servers["' . a:app . '"]')
+    let s:servers[a:app].reachable = v:false
+  endif
+endfunction
+
+function! s:UnlockServer(app)
+  if exists('s:servers["' . a:app . '"]')
+    let s:servers[a:app].reachable = v:true
+  endif
+endfunction
+
+function! IsServerLocked(app)
+  return s:servers[a:app].reachable
+endfunction
+
+"     }}}
+"     Commands {{{3
+
+command! -nargs=1 StartServer call <SID>StartServer(<args>)
+
+"     }}}
+"   }}}
 " }}}
 " Style {{{1
 "   Palette {{{2
@@ -467,7 +525,7 @@ call prop_type_add('name',  #{ highlight: 'TagName' })
 "     Functions {{{3
 
 function! s:Unfold()
-  normal za
+  normal! za
 endfunction
 
 function! FoldText()
@@ -777,6 +835,7 @@ function! s:BuffersMenuFilter(winid, key)
   elseif a:key == s:menukey.select
     call popup_clear()
     unlet s:menu
+    call s:UnlockServer('explorer')
   elseif a:key == s:menukey.delete
     let l:listed_buf = getbufinfo(#{ buflisted: 1 })
     if len(l:listed_buf) > 1
@@ -803,6 +862,7 @@ function! s:BuffersMenuFilter(winid, key)
     endif
     call popup_clear()
     unlet s:menu
+    call s:UnlockServer('explorer')
   elseif match(a:key, s:menukey.selectchars) > -1
     if (a:key != "0") || (len(s:menu.input) > 0)
       let s:menu.input = s:menu.input . a:key
@@ -866,6 +926,7 @@ endfunction
 
 function! s:BuffersMenu()
   if empty(getcmdwintype())
+    call s:LockServer('explorer')
     let s:menu = {}
     call s:UpdateBuffersMenu()
     let s:menu.buf_backup = bufnr()
@@ -1089,21 +1150,10 @@ function! s:NormalModeExplorerFilter(winid, key)
       call s:UpdateExplorer()
       call popup_settext(a:winid, s:explorer.text)
     else
-      if !exists('s:server')
-        call popup_clear()
-        execute 'edit ' . l:path
-        unlet s:explorer
-      else
-        let l:open_cmd = "edit"
-        if !empty(filter(readdir(fnamemodify(l:path, ":h")),
-          \ '!empty(matchstr(v:val, '
-          \ . '"\.*" . fnamemodify(l:path, ":t") . "\.sw[a-z]"))'))
-            let l:open_cmd = "view"
-        endif
-
-        call remote_expr(s:server, 'execute("' . l:open_cmd . ' '
-          \ . l:path . ' | redraw!")')
-      endif
+      call popup_clear()
+      execute 'edit ' . l:path
+      unlet s:explorer
+      call s:UnlockServer('explorer')
     endif
   elseif a:key == s:explorerkey.reset
     call s:InitExplorer()
@@ -1123,6 +1173,104 @@ function! s:NormalModeExplorerFilter(winid, key)
     call win_execute(a:winid, 'call clearmatches()')
     call popup_clear()
     unlet s:explorer
+    call s:UnlockServer('explorer')
+  elseif a:key == s:explorerkey.next
+    call win_execute(a:winid, 'if line(".") < line("$") |'
+      \ . ' call cursor(line(".") + 1, 0) | endif')
+  elseif a:key == s:explorerkey.previous
+    call win_execute(a:winid, 'if line(".") > 2 |'
+      \ . ' call cursor(line(".") - 1, 0) | else |'
+      \ . ' execute "normal! \<C-y>" | endif')
+  elseif a:key == s:explorerkey.help
+    call s:HelpExplorer()
+  elseif a:key == s:explorerkey.searchmode
+    let s:explorer.mode = s:explorer.SEARCH
+    let s:explorer.input = a:key
+    let s:explorer.input_cursor = 1
+    let s:explorer.history_cursor = 0
+    echo s:explorer.input
+    echohl Visual
+    echon ' '
+    echohl NONE
+  endif
+endfunction
+
+function! s:RemoteModeExplorerFilter(winid, key)
+  if a:key == s:explorerkey.dotfiles
+    let s:explorer.dotfiles = !s:explorer.dotfiles
+    call s:UpdateExplorer()
+    call popup_settext(a:winid, s:explorer.text)
+    call win_execute(a:winid, 'if line(".") > line("$") |'
+      \ . ' call cursor(line("$"), 0) | endif')
+  elseif a:key == s:explorerkey.yank
+    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
+    let l:path = s:explorer.paths[s:explorer.line]
+    unlet s:explorer.line
+    for l:each in s:servers.explorer.names
+      if !remote_expr(l:each, 'IsServerLocked("explorer")')
+        call remote_expr(l:each, 'execute("let @\" = \"' . l:path . '\"")')
+        call remote_send(l:each,
+          \ '<C-\><C-N>:echo "Unnamed register content is:"'
+          \ . ' | echohl OpenedDirPath | echon @" | echohl NONE<CR>')
+      endif
+    endfor
+  elseif a:key == s:explorerkey.badd
+    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
+    let l:path = s:explorer.paths[s:explorer.line]
+    unlet s:explorer.line
+    if !isdirectory(l:path)
+      for l:each in s:servers.explorer.names
+        if !remote_expr(l:each, 'IsServerLocked("explorer")')
+          call remote_expr(l:each, 'execute("badd '. l:path . '")')
+          call remote_send(l:each, '<C-\><C-N>:echohl OpenedDirPath'
+            \ . ' | echo "' . l:path . '" | echohl NONE'
+            \ . ' | echon " added to buffers list"<CR>')
+        endif
+      endfor
+    endif
+  elseif a:key == s:explorerkey.open
+    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
+    let l:path = s:explorer.paths[s:explorer.line]
+    unlet s:explorer.line
+    if isdirectory(l:path)
+      if has_key(s:explorer.tree, l:path)
+        unlet s:explorer.tree[l:path]
+      else
+        let s:explorer.tree[l:path] = sort(map(reverse(
+          \ readdir(l:path, '1', #{ sort: 'icase' })), { _, val ->
+            \s:FullPath(l:path, val) }), expand('<SID>') . 'PathCompare')
+      endif
+      call s:UpdateExplorer()
+      call popup_settext(a:winid, s:explorer.text)
+    else
+      let l:open_cmd = "edit"
+      if !empty(filter(readdir(fnamemodify(l:path, ":h")),
+        \ '!empty(matchstr(v:val, '
+        \ . '"\.*" . fnamemodify(l:path, ":t") . "\.sw[a-z]"))'))
+          let l:open_cmd = "view"
+      endif
+
+      for l:each in s:servers.explorer.names
+        if !remote_expr(l:each, 'IsServerLocked("explorer")')
+          call remote_expr(l:each, 'execute("' . l:open_cmd . ' ' . l:path
+            \ . ' | redraw!")')
+        endif
+      endfor
+    endif
+  elseif a:key == s:explorerkey.reset
+    call s:InitExplorer()
+    call s:UpdateExplorer()
+    call popup_settext(a:winid, s:explorer.text)
+    call win_execute(a:winid, 'call cursor(2, 0)')
+  elseif a:key == s:explorerkey.next_match
+    call win_execute(a:winid, 'call search(histget("/", -1), "")')
+  elseif a:key == s:explorerkey.previous_match
+    call win_execute(a:winid, 'call search(histget("/", -1), "b")')
+  elseif a:key == s:explorerkey.first
+    call win_execute(a:winid,
+      \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
+  elseif a:key == s:explorerkey.last
+    call win_execute(a:winid, 'call cursor(line("$"), 0)')
   elseif a:key == s:explorerkey.next
     call win_execute(a:winid, 'if line(".") < line("$") |'
       \ . ' call cursor(line(".") + 1, 0) | endif')
@@ -1222,7 +1370,11 @@ endfunction
 
 function! s:ExplorerFilter(winid, key)
   if s:explorer.mode == s:explorer.NORMAL
-    call s:NormalModeExplorerFilter(a:winid, a:key)
+    if exists('s:servers.explorer')
+      call s:RemoteModeExplorerFilter(a:winid, a:key)
+    else
+      call s:NormalModeExplorerFilter(a:winid, a:key)
+    endif
   else
     call s:SearchModeExplorerFilter(a:winid, a:key)
   endif
@@ -1294,6 +1446,7 @@ endfunction
 
 function! s:Explorer()
   if empty(getcmdwintype())
+    call s:LockServer('explorer')
     let s:explorer = {}
     call s:InitExplorer()
     let s:explorer.dotfiles = v:false
@@ -1321,35 +1474,18 @@ function! s:Explorer()
   endif
 endfunction
 
-"     Server {{{3
-"       Functions {{{4
-
-function! s:StartServer(id)
-  if has('clientserver')
-    call remote_startserver('EXPLORER-SERVER-' . a:id)
-  else
-    echoerr 'Personal Error Message: Vim needs to be compiled with'
-      \ . ' +clientserver feature to use clientserver-Explorer commands'
-  endif
-endfunction
-
-function! s:StartClientExplorer(id)
-  if has('clientserver')
-    let s:server = 'EXPLORER-SERVER-' . a:id
+function! s:StartRemoteExplorer(id)
+  if s:StartRemote('explorer', a:id)
     call s:Explorer()
-  else
-    echoerr 'Personal Error Message: Vim needs to be compiled with'
-      \ . ' +clientserver feature to use clientserver-Explorer commands'
   endif
+  delcommand StartRemoteExplorer
 endfunction
 
-"       }}}
-"       Commands {{{4
+"     }}}
+"     Commands {{{3
 
-command! -nargs=1 StartClientExplorer call <SID>StartClientExplorer(<args>)
-command! -nargs=1 StartServer call <SID>StartServer(<args>)
+command! -nargs=1 StartRemoteExplorer call <SID>StartRemoteExplorer(<args>)
 
-"       }}}
 "     }}}
 "   }}}
 "   Obsession {{{2
@@ -1558,6 +1694,7 @@ function! s:UndotreeFilter(winid, key)
       \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
     call popup_clear()
     unlet s:undo
+    call s:UnlockServer('explorer')
   elseif a:key == s:undokey.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1804,6 +1941,7 @@ function! s:Undotree()
     return
   endif
 
+  call s:LockServer('explorer')
   let s:undo = {}
   call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
@@ -2102,6 +2240,7 @@ function! s:TagListFilter(winid, key)
   if a:key == s:listkey.exit
     call popup_clear()
     unlet s:list
+    call s:UnlockServer('explorer')
   elseif a:key == s:listkey.next
     call win_execute(a:winid, 'if line(".") < line("$") - 1'
       \ . ' | call cursor(line(".") + 1, 0)'
@@ -2122,6 +2261,7 @@ function! s:TagListFilter(winid, key)
     call cursor(str2nr(matchstr(s:list.tmp, "^[0-9][0-9]*")), 0)
     if foldlevel('.') > 0 | foldopen! | endif
     unlet s:list
+    call s:UnlockServer('explorer')
   endif
   return v:true
 endfunction
@@ -2187,6 +2327,7 @@ endfunction
 
 function! s:TagList()
   if empty(getcmdwintype()) && !empty(systemlist('which ctags'))
+    call s:LockServer('explorer')
     let l:savedview = winsaveview()
     let l:line = line(".")
     let s:list = {}
@@ -2536,10 +2677,6 @@ cnoreabbrev <expr> tabe (getcmdtype() == ':' ? "silent tabonly" : "tabe")
 
 " allow vertical split designation with bufnr instead of full filename
 cnoreabbrev <expr> vb (getcmdtype() == ':' ? "vertical sbuffer" : "vb")
-
-" next-previous intuitive usage for multi file opening
-cnoreabbrev <expr> n (getcmdtype() == ':' ? "next" : "n")
-cnoreabbrev <expr> p (getcmdtype() == ':' ? "previous" : "p")
 
 " allow to ignore splitbelow option for help split
 cnoreabbrev <expr> h (getcmdtype() == ':' ? "top help" : "h")

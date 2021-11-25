@@ -608,7 +608,7 @@ function main () {
 
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [ -d ${SOURCES} ] && sudo \rm -rf ${SOURCES}
+  [ -d ${SOURCES} ] && sudo \rm -r -f ${SOURCES}
   command mkdir -p ${SOURCES}
 
   DASHED=${CLEAR}$(dashed "Cloning VIM repository")
@@ -875,7 +875,7 @@ function main () {
     DASHED=${CLEAR}$(dashed "Cloning EXECUTOR repository")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    [ -d ${EXECUTOR_DEST} ] && sudo \rm -rf ${EXECUTOR_DEST}
+    [ -d ${EXECUTOR_DEST} ] && sudo \rm -r -f ${EXECUTOR_DEST}
     sudo unbuffer git clone ${EXECUTOR_REPO} ${EXECUTOR_DEST} \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -1343,7 +1343,7 @@ function main () {
   command cd ${BACKUP}
 }
 
-(return 0 2>/dev/null)
+(return 0 2> /dev/null)
 [ $? -ne 0 ] && echo "This script has to be sourced." && exit 1
 main
 unset -f dots
