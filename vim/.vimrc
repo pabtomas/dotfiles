@@ -2148,9 +2148,10 @@ function! s:ToggleRainbow()
       let l:eventignore_backup = &eventignore
       set eventignore=all
 
-      for l:each in map(getbufinfo(), 'v:val.bufnr')
-        execute 'buffer ' . l:each
-        call s:ActivateRainbow()
+      for l:each in map(filter(getbufinfo(), 'v:val.listed || !v:val.hidden'),
+        \ 'v:val.bufnr')
+          execute 'buffer ' . l:each
+          call s:ActivateRainbow()
       endfor
 
       execute 'buffer ' . l:buf_backup
