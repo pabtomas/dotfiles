@@ -199,21 +199,25 @@ set noshowcmd
 "     Functions {{{3
 
 function! s:VisualUp()
-  if line('.') - v:count1 > 0
-    execute "'" . '<,' . "'" . '>move ' . "'" . '<-' . (v:count1 + 1)
-  else
-    '<,'>move 0
+  if &modifiable
+    if line('.') - v:count1 > 0
+      execute "'" . '<,' . "'" . '>move ' . "'" . '<-' . (v:count1 + 1)
+    else
+      '<,'>move 0
+    endif
+    normal! gv
   endif
-  normal! gv
 endfunction
 
 function! s:VisualDown()
-  if line('.') + line("'>") - line ("'<") + v:count1 > line('$')
-    '<,'>move $
-  else
-    execute "'" . '<,' . "'" . '>move ' . "'" . '>+' . v:count1
+  if &modifiable
+    if line('.') + line("'>") - line ("'<") + v:count1 > line('$')
+      '<,'>move $
+    else
+      execute "'" . '<,' . "'" . '>move ' . "'" . '>+' . v:count1
+    endif
+    normal! gv
   endif
-  normal! gv
 endfunction
 
 "     }}}
@@ -221,11 +225,15 @@ endfunction
 "   Blank {{{2
 
 function! s:BlankUp()
-  call append(line('.') - 1, repeat([''], v:count1))
+  if &modifiable
+    call append(line('.') - 1, repeat([''], v:count1))
+  endif
 endfunction
 
 function! s:BlankDown()
-  call append(line('.'), repeat([''], v:count1))
+  if &modifiable
+    call append(line('.'), repeat([''], v:count1))
+  endif
 endfunction
 
 "   }}}
@@ -264,6 +272,159 @@ endfunction
 
 "     }}}
 "   }}}
+"   Statusline {{{2
+"     Options {{{3
+
+" display status line
+set laststatus=2
+
+"     }}}
+"     Variables & constants {{{3
+
+let s:statusline = #{
+\   modes: {
+\     'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
+\     'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
+\     'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
+\     'r': 'PROMPT', '!': 'SHELL',
+\   },
+\   matches: {},
+\ }
+
+"     }}}
+"     Functions {{{3
+
+function! FileName(modified, is_current_win)
+  let l:check_current_win = (g:actual_curwin == win_getid())
+  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
+    return ''
+  endif
+  return fnamemodify(bufname('%'), ':.')
+endfunction
+
+function! StartLine()
+  if g:actual_curwin != win_getid()
+    return '───┤'
+  endif
+  return '━━━┫'
+endfunction
+
+function! ComputeStatusLineLength()
+  let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
+    \ + len('[') + len(winnr()) + len('] ')
+    \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
+    \ + len(' [') + len(&filetype) + len(']')
+    \ + len(' C') + len(virtcol('.'))
+    \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
+    \ + len(split('├', '\zs')))
+  if g:actual_curwin == win_getid()
+    let l:length -= len(StartMode()) + len(Mode()) + len(EndMode())
+    if v:hlsearch && !empty(s:statusline.matches) && (s:statusline.matches.total > 0)
+      let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
+    endif
+  endif
+  return l:length
+endfunction
+
+function! EndLine()
+  let l:length = ComputeStatusLineLength()
+  if g:actual_curwin != win_getid()
+    return '├' . repeat('─', l:length)
+  endif
+  return '┣' . repeat('━', l:length)
+endfunction
+
+function! Mode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return s:statusline.modes[mode()[0]]
+endfunction
+
+function! StartMode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return '['
+endfunction
+
+function! EndMode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return '] '
+endfunction
+
+function! IndexedMatch()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+    return ''
+  endif
+  let s:statusline.matches =
+    \ searchcount(#{ recompute: 1, maxcount: 0, timeout: 0 })
+  if empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+    return ''
+  endif
+  return s:statusline.matches.current
+endfunction
+
+function! Bar()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+  \ || empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+    return ''
+  endif
+  return '/'
+endfunction
+
+function! TotalMatch()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+  \ || empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+    return ''
+  endif
+  return s:statusline.matches.total . ' '
+endfunction
+
+" status line content:
+" [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
+function! s:StatusLineData()
+  set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
+                   \%2*%{FileName(v:false,v:true)}%0*
+                   \%2*%{FileName(v:false,v:false)}%0*
+                   \%4*%{FileName(v:true,v:false)}%0*
+                   \%1*%{FileName(v:true,v:true)}%0*
+  set statusline+=\ [%3*%{&filetype}%0*]
+  set statusline+=\ C%3*%{virtcol('.')}%0*
+  set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
+  set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
+  set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
+endfunction
+
+function! s:RestoreStatusLines(timer_id)
+  execute  'highlight StatusLine   term=bold cterm=bold ctermfg='
+    \ . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight StatusLineNC term=NONE cterm=NONE ctermfg='
+    \ . s:palette.blue_1   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight VertSplit    term=NONE cterm=NONE ctermfg='
+    \ . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+endfunction
+
+function! s:HighlightStatusLines()
+  execute  'highlight StatusLine   ctermfg=' . s:palette.green_1
+    \ . ' | highlight StatusLineNC ctermfg=' . s:palette.green_1
+    \ . ' | highlight VertSplit    ctermfg=' . s:palette.green_1
+  call timer_start(1000, function('s:RestoreStatusLines'))
+endfunction
+
+function! s:StaticLine()
+  set statusline=%{StartLine()}
+  call s:StatusLineData()
+  set statusline+=%{EndLine()}
+endfunction
+
+"     }}}
+
+call s:StaticLine()
+
+"   }}}
 "   VimRC {{{2
 
 function! s:OpenVimRC()
@@ -274,9 +435,68 @@ if !exists("*s:SourceVimRC")
   function! s:SourceVimRC()
     execute 'source ' . $MYVIMRC
     call s:HighlightStatusLines()
+    echomsg 'VimRC sourced !'
   endfunction
 endif
 
+"   }}}
+"   Server {{{2
+"     Variables & constants {{{3
+
+if exists('s:server_prefix') | unlet s:server_prefix | endif
+const s:server_prefix = 'VIM-'
+
+let s:servers = {}
+
+"     }}}
+"     Functions {{{3
+
+function! s:StartServer(id)
+  if has('clientserver')
+    call remote_startserver(s:server_prefix . a:id)
+  else
+    echoerr 'Personal Error Message: Vim needs to be compiled with'
+      \ . ' +clientserver feature to use this command'
+  endif
+  delcommand StartServer
+endfunction
+
+function! s:StartRemote(app, id)
+  let l:has_clientserver = has('clientserver')
+  if !l:has_clientserver
+    echoerr 'Personal Error Message: Vim needs to be compiled with'
+      \ . ' +clientserver feature to use this command'
+  else
+    if !has_key(s:servers, a:app)
+      let s:servers[a:app] = #{ names: [], reachable: v:false }
+    endif
+    let s:servers[a:app].names += [s:server_prefix . a:id]
+  endif
+  return l:has_clientserver
+endfunction
+
+function! s:LockServer(app)
+  if exists('s:servers["' . a:app . '"]')
+    let s:servers[a:app].reachable = v:false
+  endif
+endfunction
+
+function! s:UnlockServer(app)
+  if exists('s:servers["' . a:app . '"]')
+    let s:servers[a:app].reachable = v:true
+  endif
+endfunction
+
+function! IsServerLocked(app)
+  return s:servers[a:app].reachable
+endfunction
+
+"     }}}
+"     Commands {{{3
+
+command! -nargs=1 StartServer call <SID>StartServer(<args>)
+
+"     }}}
 "   }}}
 " }}}
 " Style {{{1
@@ -467,7 +687,7 @@ call prop_type_add('name',  #{ highlight: 'TagName' })
 "     Functions {{{3
 
 function! s:Unfold()
-  normal za
+  normal! za
 endfunction
 
 function! FoldText()
@@ -488,214 +708,6 @@ set foldopen+=jump
 "   }}}
 " }}}
 " Plugins {{{1
-"   Tinsel {{{2
-"     Options {{{3
-
-" display status line
-set laststatus=2
-
-"     }}}
-"     Variables & constants {{{3
-
-let s:tinsel = #{
-\   modes: {
-\     'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
-\     'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
-\     'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
-\     'r': 'PROMPT', '!': 'SHELL',
-\   },
-\   dots: [
-\    '˳', '.', '｡', '·', '•', '･', 'º', '°', '˚', '˙',
-\   ],
-\   spectrum: [
-\     51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
-\     202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50,
-\   ],
-\   color: 0.0,
-\   localtime: localtime(),
-\   start: localtime(),
-\   matches: {},
-\ }
-
-"     }}}
-"     Functions {{{3
-
-function! FileName(modified, is_current_win)
-  let l:check_current_win = (g:actual_curwin == win_getid())
-  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
-    return ''
-  endif
-  return fnamemodify(bufname('%'), ':.')
-endfunction
-
-function! StartLine()
-  if g:actual_curwin != win_getid()
-    return '───┤'
-  endif
-  return '━━━┫'
-endfunction
-
-function! ComputeStatusLineLength()
-  let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
-    \ + len('[') + len(winnr()) + len('] ')
-    \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
-    \ + len(' [') + len(&filetype) + len(']')
-    \ + len(' C') + len(virtcol('.'))
-    \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
-    \ + len(split('├', '\zs')))
-  if g:actual_curwin == win_getid()
-    let l:length -= len(StartMode()) + len(Mode()) + len(EndMode())
-    if v:hlsearch && !empty(s:tinsel.matches) && (s:tinsel.matches.total > 0)
-      let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
-    endif
-  endif
-  return l:length
-endfunction
-
-function! EndLine()
-  let l:length = ComputeStatusLineLength()
-  if g:actual_curwin != win_getid()
-    return '├' . repeat('─', l:length)
-  endif
-  return '┣' . repeat('━', l:length)
-endfunction
-
-function! Mode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return s:tinsel.modes[mode()[0]]
-endfunction
-
-function! StartMode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return '['
-endfunction
-
-function! EndMode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return '] '
-endfunction
-
-function! IndexedMatch()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-    return ''
-  endif
-  let s:tinsel.matches =
-    \ searchcount(#{ recompute: 1, maxcount: 0, timeout: 0 })
-  if empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
-    return ''
-  endif
-  return s:tinsel.matches.current
-endfunction
-
-function! Bar()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
-    return ''
-  endif
-  return '/'
-endfunction
-
-function! TotalMatch()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
-    return ''
-  endif
-  return s:tinsel.matches.total . ' '
-endfunction
-
-" status line content:
-" [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
-function! s:StatusLineData()
-  set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
-                   \%2*%{FileName(v:false,v:true)}%0*
-                   \%2*%{FileName(v:false,v:false)}%0*
-                   \%4*%{FileName(v:true,v:false)}%0*
-                   \%1*%{FileName(v:true,v:true)}%0*
-  set statusline+=\ [%3*%{&filetype}%0*]
-  set statusline+=\ C%3*%{virtcol('.')}%0*
-  set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
-  set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
-  set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
-endfunction
-
-function! s:StaticLine()
-  set statusline=%{StartLine()}
-  call s:StatusLineData()
-  set statusline+=%{EndLine()}
-endfunction
-
-function! s:ComputeWave(start, end)
-  let l:wave = ''
-  for l:each in range(a:start, a:end - 1)
-    let l:wave = l:wave . s:tinsel.dots[5 + float2nr(5.0 * sin(l:each *
-    \ (fmod(0.05 * (s:tinsel.localtime - s:tinsel.start) + 1.0, 2.0) - 1.0)))]
-  endfor
-  return l:wave
-endfunction
-
-function! StartWave()
-  return s:ComputeWave(0, 4)
-endfunction
-
-function! EndWave()
-  let l:win_width = winwidth(winnr())
-  return s:ComputeWave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
-endfunction
-
-function! s:Tinsel(timer_id)
-  let s:tinsel.color = fmod(s:tinsel.color + 0.75, 30.0)
-  execute 'highlight User5 term=bold cterm=bold ctermfg='
-    \ . s:tinsel.spectrum[float2nr(floor(s:tinsel.color))]
-    \ . ' ctermbg=' . s:palette.black
-
-  let s:tinsel.localtime = localtime()
-  set statusline=%5*%{StartWave()}%0*
-  call s:StatusLineData()
-  set statusline+=%5*%{EndWave()}%0*
-
-  if (s:tinsel.localtime - s:tinsel.start) > 40
-    call timer_pause(s:tinsel.timer, v:true)
-    call s:StaticLine()
-  endif
-endfunction
-
-function! s:InitTinsel()
-  let s:tinsel.color = 0.0
-  let s:tinsel.start = localtime()
-  call timer_pause(s:tinsel.timer, v:false)
-endfunction
-
-function! s:RestoreStatusLines(timer_id)
-  execute  'highlight StatusLine   term=bold cterm=bold ctermfg='
-    \ . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight StatusLineNC term=NONE cterm=NONE ctermfg='
-    \ . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight VertSplit    term=NONE cterm=NONE ctermfg='
-    \ . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-endfunction
-
-function! s:HighlightStatusLines()
-  execute  'highlight StatusLine   ctermfg=' . s:palette.green_1
-    \ . ' | highlight StatusLineNC ctermfg=' . s:palette.green_1
-    \ . ' | highlight VertSplit    ctermfg=' . s:palette.green_1
-  call timer_start(1000, function('s:RestoreStatusLines'))
-endfunction
-
-"     }}}
-
-if exists('s:tinsel.timer') | call timer_stop(s:tinsel.timer) | endif
-let s:tinsel.timer = timer_start(100, function('s:Tinsel'), #{ repeat: -1 })
-call timer_pause(s:tinsel.timer, v:true)
-
-call s:StaticLine()
-
-" }}}
 "   Buffers menu {{{2
 "     Keys {{{3
 
@@ -777,6 +789,7 @@ function! s:BuffersMenuFilter(winid, key)
   elseif a:key == s:menukey.select
     call popup_clear()
     unlet s:menu
+    call s:UnlockServer('explorer')
   elseif a:key == s:menukey.delete
     let l:listed_buf = getbufinfo(#{ buflisted: 1 })
     if len(l:listed_buf) > 1
@@ -803,6 +816,7 @@ function! s:BuffersMenuFilter(winid, key)
     endif
     call popup_clear()
     unlet s:menu
+    call s:UnlockServer('explorer')
   elseif match(a:key, s:menukey.selectchars) > -1
     if (a:key != "0") || (len(s:menu.input) > 0)
       let s:menu.input = s:menu.input . a:key
@@ -866,6 +880,7 @@ endfunction
 
 function! s:BuffersMenu()
   if empty(getcmdwintype())
+    call s:LockServer('explorer')
     let s:menu = {}
     call s:UpdateBuffersMenu()
     let s:menu.buf_backup = bufnr()
@@ -1092,6 +1107,7 @@ function! s:NormalModeExplorerFilter(winid, key)
       call popup_clear()
       execute 'edit ' . l:path
       unlet s:explorer
+      call s:UnlockServer('explorer')
     endif
   elseif a:key == s:explorerkey.reset
     call s:InitExplorer()
@@ -1107,10 +1123,108 @@ function! s:NormalModeExplorerFilter(winid, key)
       \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
   elseif a:key == s:explorerkey.last
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif a:key == s:explorerkey.exit
+  elseif (a:key == s:explorerkey.exit)
     call win_execute(a:winid, 'call clearmatches()')
     call popup_clear()
     unlet s:explorer
+    call s:UnlockServer('explorer')
+  elseif a:key == s:explorerkey.next
+    call win_execute(a:winid, 'if line(".") < line("$") |'
+      \ . ' call cursor(line(".") + 1, 0) | endif')
+  elseif a:key == s:explorerkey.previous
+    call win_execute(a:winid, 'if line(".") > 2 |'
+      \ . ' call cursor(line(".") - 1, 0) | else |'
+      \ . ' execute "normal! \<C-y>" | endif')
+  elseif a:key == s:explorerkey.help
+    call s:HelpExplorer()
+  elseif a:key == s:explorerkey.searchmode
+    let s:explorer.mode = s:explorer.SEARCH
+    let s:explorer.input = a:key
+    let s:explorer.input_cursor = 1
+    let s:explorer.history_cursor = 0
+    echo s:explorer.input
+    echohl Visual
+    echon ' '
+    echohl NONE
+  endif
+endfunction
+
+function! s:RemoteModeExplorerFilter(winid, key)
+  if a:key == s:explorerkey.dotfiles
+    let s:explorer.dotfiles = !s:explorer.dotfiles
+    call s:UpdateExplorer()
+    call popup_settext(a:winid, s:explorer.text)
+    call win_execute(a:winid, 'if line(".") > line("$") |'
+      \ . ' call cursor(line("$"), 0) | endif')
+  elseif a:key == s:explorerkey.yank
+    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
+    let l:path = s:explorer.paths[s:explorer.line]
+    unlet s:explorer.line
+    for l:each in s:servers.explorer.names
+      if !remote_expr(l:each, 'IsServerLocked("explorer")')
+        call remote_expr(l:each, 'execute("let @\" = \"' . l:path . '\"")')
+        call remote_send(l:each,
+          \ '<C-\><C-N>:echo "Unnamed register content is:"'
+          \ . ' | echohl OpenedDirPath | echon @" | echohl NONE<CR>')
+      endif
+    endfor
+  elseif a:key == s:explorerkey.badd
+    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
+    let l:path = s:explorer.paths[s:explorer.line]
+    unlet s:explorer.line
+    if !isdirectory(l:path)
+      for l:each in s:servers.explorer.names
+        if !remote_expr(l:each, 'IsServerLocked("explorer")')
+          call remote_expr(l:each, 'execute("badd '. l:path . '")')
+          call remote_send(l:each, '<C-\><C-N>:echohl OpenedDirPath'
+            \ . ' | echo "' . l:path . '" | echohl NONE'
+            \ . ' | echon " added to buffers list"<CR>')
+        endif
+      endfor
+    endif
+  elseif a:key == s:explorerkey.open
+    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
+    let l:path = s:explorer.paths[s:explorer.line]
+    unlet s:explorer.line
+    if isdirectory(l:path)
+      if has_key(s:explorer.tree, l:path)
+        unlet s:explorer.tree[l:path]
+      else
+        let s:explorer.tree[l:path] = sort(map(reverse(
+          \ readdir(l:path, '1', #{ sort: 'icase' })), { _, val ->
+            \s:FullPath(l:path, val) }), expand('<SID>') . 'PathCompare')
+      endif
+      call s:UpdateExplorer()
+      call popup_settext(a:winid, s:explorer.text)
+    else
+      let l:open_cmd = "edit"
+      if !empty(filter(readdir(fnamemodify(l:path, ":h")),
+        \ '!empty(matchstr(v:val, '
+        \ . '"\.*" . fnamemodify(l:path, ":t") . "\.sw[a-z]"))'))
+          let l:open_cmd = "view"
+      endif
+
+      for l:each in s:servers.explorer.names
+        if !remote_expr(l:each, 'IsServerLocked("explorer")')
+          call remote_expr(l:each, 'execute("' . l:open_cmd . ' ' . l:path
+            \ . ' | redraw!")')
+        endif
+      endfor
+    endif
+  elseif a:key == s:explorerkey.reset
+    call s:InitExplorer()
+    call s:UpdateExplorer()
+    call popup_settext(a:winid, s:explorer.text)
+    call win_execute(a:winid, 'call cursor(2, 0)')
+  elseif a:key == s:explorerkey.next_match
+    call win_execute(a:winid, 'call search(histget("/", -1), "")')
+  elseif a:key == s:explorerkey.previous_match
+    call win_execute(a:winid, 'call search(histget("/", -1), "b")')
+  elseif a:key == s:explorerkey.first
+    call win_execute(a:winid,
+      \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
+  elseif a:key == s:explorerkey.last
+    call win_execute(a:winid, 'call cursor(line("$"), 0)')
   elseif a:key == s:explorerkey.next
     call win_execute(a:winid, 'if line(".") < line("$") |'
       \ . ' call cursor(line(".") + 1, 0) | endif')
@@ -1210,7 +1324,11 @@ endfunction
 
 function! s:ExplorerFilter(winid, key)
   if s:explorer.mode == s:explorer.NORMAL
-    call s:NormalModeExplorerFilter(a:winid, a:key)
+    if exists('s:servers.explorer')
+      call s:RemoteModeExplorerFilter(a:winid, a:key)
+    else
+      call s:NormalModeExplorerFilter(a:winid, a:key)
+    endif
   else
     call s:SearchModeExplorerFilter(a:winid, a:key)
   endif
@@ -1282,6 +1400,7 @@ endfunction
 
 function! s:Explorer()
   if empty(getcmdwintype())
+    call s:LockServer('explorer')
     let s:explorer = {}
     call s:InitExplorer()
     let s:explorer.dotfiles = v:false
@@ -1309,6 +1428,18 @@ function! s:Explorer()
   endif
 endfunction
 
+function! s:StartRemoteExplorer(id)
+  if s:StartRemote('explorer', a:id)
+    call s:Explorer()
+  endif
+  delcommand StartRemoteExplorer
+endfunction
+
+"     }}}
+"     Commands {{{3
+
+command! -nargs=1 StartRemoteExplorer call <SID>StartRemoteExplorer(<args>)
+
 "     }}}
 "   }}}
 "   Obsession {{{2
@@ -1332,6 +1463,7 @@ set sessionoptions=buffers,sesdir,folds,help,winsize
 function! s:Obsession()
   mksession!
   call s:HighlightStatusLines()
+  echomsg 'Session saved !'
 endfunction
 
 function! s:SourceObsession()
@@ -1461,7 +1593,7 @@ function! s:DiffHandler(job, status)
   endif
 
   for l:each in range(len(l:text))
-    let l:properties = \ [#{ type: 'diffadd', col: 1,
+    let l:properties = [#{ type: 'diffadd', col: 1,
       \ length: max([0, len(l:text[l:each]) - 1]) }]
     if l:text[l:each][0] == '-'
       let l:properties = [#{ type: 'diffdelete', col: 1,
@@ -1517,6 +1649,7 @@ function! s:UndotreeFilter(winid, key)
       \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
     call popup_clear()
     unlet s:undo
+    call s:UnlockServer('explorer')
   elseif a:key == s:undokey.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1559,6 +1692,7 @@ function! s:UndotreeFilter(winid, key)
     unlet s:undo.line
     call s:UpdateUndotree()
     call popup_settext(a:winid, s:undo.text)
+    call s:Diff(a:winid)
   elseif a:key == s:undokey.help
     call s:HelpUndotree()
   endif
@@ -1597,7 +1731,7 @@ function! s:UpdateUndotree()
     for l:each in range(len(l:slots))
       if type(l:slots[l:each]) == v:t_string
         let l:foundstring = v:true
-        let l:eachndex = l:each
+        let l:index = l:each
         break
       endif
     endfor
@@ -1610,7 +1744,7 @@ function! s:UpdateUndotree()
         if type(l:slots[l:each]) == v:t_dict
           if l:slots[l:each].seq < l:minseq
             let l:minseq = l:slots[l:each].seq
-            let l:eachndex = l:each
+            let l:index = l:each
             let l:minnode = l:slots[l:each]
             continue
           endif
@@ -1619,7 +1753,7 @@ function! s:UpdateUndotree()
           for l:each2 in l:slots[l:each]
             if l:each2.seq < l:minseq
               let l:minseq = l:each2.seq
-              let l:eachndex = l:each
+              let l:index = l:each
               let l:minnode = l:each2
               continue
             endif
@@ -1635,10 +1769,10 @@ function! s:UpdateUndotree()
       let l:newmeta = -1
       if l:index + 1 != len(l:slots)
         for l:each in range(len(l:slots))
-          if l:each < l:eachndex
+          if l:each < l:index
             let l:newline = l:newline . '| '
           endif
-          if l:each > l:eachndex
+          if l:each > l:index
             let l:newline = l:newline . ' \'
           endif
         endfor
@@ -1649,7 +1783,7 @@ function! s:UpdateUndotree()
     if type(l:node) == v:t_dict
       let l:newmeta = l:node.seq
       for l:each in range(len(l:slots))
-        if l:eachndex == l:each
+        if l:index == l:each
           if l:node.seq == changenr()
             let l:newline = l:newline . '◊ '
           else
@@ -1763,6 +1897,7 @@ function! s:Undotree()
     return
   endif
 
+  call s:LockServer('explorer')
   let s:undo = {}
   call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
@@ -1857,6 +1992,7 @@ function! s:GenerateGutentags()
       call system(l:command)
       call s:HighlightGutentags()
       call s:HighlightStatusLines()
+      echomsg 'Tags generated !'
     endif
   endif
 endfunction
@@ -2061,6 +2197,7 @@ function! s:TagListFilter(winid, key)
   if a:key == s:listkey.exit
     call popup_clear()
     unlet s:list
+    call s:UnlockServer('explorer')
   elseif a:key == s:listkey.next
     call win_execute(a:winid, 'if line(".") < line("$") - 1'
       \ . ' | call cursor(line(".") + 1, 0)'
@@ -2081,6 +2218,7 @@ function! s:TagListFilter(winid, key)
     call cursor(str2nr(matchstr(s:list.tmp, "^[0-9][0-9]*")), 0)
     if foldlevel('.') > 0 | foldopen! | endif
     unlet s:list
+    call s:UnlockServer('explorer')
   endif
   return v:true
 endfunction
@@ -2146,6 +2284,7 @@ endfunction
 
 function! s:TagList()
   if empty(getcmdwintype()) && !empty(systemlist('which ctags'))
+    call s:LockServer('explorer')
     let l:savedview = winsaveview()
     let l:line = line(".")
     let s:list = {}
@@ -2346,22 +2485,20 @@ const s:mappings = #{
   \ mode: 'n', description: 'Blank line under current line', order: 18 },
 \   blankdown:                  #{ key:                              '<CR>',
   \ mode: 'n', description: 'Blank line above current line', order: 19 },
-\   tinsel:                     #{ key: s:leaders.global .              's',
-  \ mode: 'n', description: 'Start Tinsel', order: 20 },
 \   redhighlight:               #{ key: s:leaders.global .              '"',
-  \ mode: 'n', description: 'Toggle Redhighlight', order: 21 },
+  \ mode: 'n', description: 'Toggle Redhighlight', order: 20 },
 \   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
-  \ mode: 'n', description: 'Open Buffers Menu', order: 22 },
+  \ mode: 'n', description: 'Open Buffers Menu', order: 21 },
 \   explorer:                   #{ key: s:leaders.shift  .  s:leaders.shift,
-  \ mode: 'n', description: 'Open Explorer', order: 23 },
+  \ mode: 'n', description: 'Open Explorer', order: 22 },
 \   obsession:                  #{ key: s:leaders.global .              'z',
-  \ mode: 'n', description: 'Save session', order: 24 },
+  \ mode: 'n', description: 'Save session', order: 23 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
-  \ mode: 'n', description: 'Open Undotree', order: 25 },
+  \ mode: 'n', description: 'Open Undotree', order: 24 },
 \   rainbow:                    #{ key: s:leaders.global.               '(',
-  \ mode: 'n', description: 'Toggle Rainbow', order: 26 },
+  \ mode: 'n', description: 'Toggle Rainbow', order: 25 },
 \   taglist:                    #{ key: s:leaders.shift.                'T',
-  \ mode: 'n', description: 'Open Taglist', order: 27 },
+  \ mode: 'n', description: 'Open Taglist', order: 26 },
 \ }
 
 "   }}}
@@ -2404,10 +2541,6 @@ execute s:mappings.redhighlight.mode               . 'noremap '
 " create session
 execute s:mappings.obsession.mode                  . 'noremap '
   \ . s:mappings.obsession.key           . ' <Cmd>call <SID>Obsession()<CR>'
-
-" statusline become a tinsel
-execute s:mappings.tinsel.mode                     . 'noremap '
-  \ . s:mappings.tinsel.key              . ' <Cmd>call <SID>InitTinsel()<CR>'
 
 " buffers menu
 execute s:mappings.buffers_menu.mode               . 'noremap '
@@ -2495,10 +2628,6 @@ cnoreabbrev <expr> tabe (getcmdtype() == ':' ? "silent tabonly" : "tabe")
 
 " allow vertical split designation with bufnr instead of full filename
 cnoreabbrev <expr> vb (getcmdtype() == ':' ? "vertical sbuffer" : "vb")
-
-" next-previous intuitive usage for multi file opening
-cnoreabbrev <expr> n (getcmdtype() == ':' ? "next" : "n")
-cnoreabbrev <expr> p (getcmdtype() == ':' ? "previous" : "p")
 
 " allow to ignore splitbelow option for help split
 cnoreabbrev <expr> h (getcmdtype() == ':' ? "top help" : "h")

@@ -1,0 +1,9 @@
+set mouse = true
+
+bind generic g  none
+bind generic gg move-first-line
+bind main    G  move-last-line
+bind generic G  move-last-line
+
+set main-view-date = relative-compact
+set blame-view-date = relative-compact

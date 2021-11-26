@@ -2,7 +2,7 @@
 
 alias ls='command ls --color'
 alias lh='command ls -d --color .??*'
-alias ll='command ls -lA --color "$@" | grep -v -E "^total [0-9]+"'
+alias ll='command ls -l -A --color "$@" | grep -v -E "^total [0-9]+"'
 
 alias grep='grep --color'
 
@@ -15,7 +15,7 @@ for I in $(seq 2 1 5); do
 done
 
 function mkdir () {
-  command mkdir -pv "$@"
+  command mkdir -p -v "$@"
   if [ $? -eq 0 ]; then
     for DIR in $(echo "$@"); do
       if [ "x${DIR}" != "x" ]; then
@@ -29,12 +29,12 @@ function mkdir () {
   fi
 }
 
-alias rm='rm -iv'
-alias cp='cp -iv'
-alias mv='mv -iv'
-alias hh='history | grep -iE'
+alias rm='rm -i -r -v'
+alias cp='cp -i -r -v'
+alias mv='mv -i -v'
+alias hh='history | grep -i -E'
 alias ff='find . | grep -E'
-alias pp='ps -ax | grep -E'
+alias pp='ps -a -x | grep -E'
 alias sudo='sudo '
 
 function extract () {
@@ -127,32 +127,15 @@ function git-ranking () {
   if [ \$# -eq 0 ]; then
     git ls-files \
       | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
-      | sort -f | uniq -ic | sort -nr
+      | sort -f | uniq -i -c | sort -n -r
   else
     git blame --line-porcelain \$* | sed -n 's/^author //p' | sort -f \
-      | uniq -ic | sort -nr
+      | uniq -i -c | sort -n -r
   fi
 }
 git-ranking\""
 
 git config --global --replace-all alias.root 'rev-parse --show-toplevel'
-
-git config --global --replace-all alias.tree "!bash -c \"
-function git-tree () {
-  git log --graph --color --abbrev-commit --date=relative \
-    --pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s\
-%C(yellow)%d%Creset (%cr)' \$* | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
-    | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
-    | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
-    | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
-    | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
-    | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
-    | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
-    | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
-    | sed 's/(il y a \(.\+\))$/$(tput setaf 2)(\1)$(tput sgr0)/' \
-    | less -R -S +g
-}
-git-tree\""
 
 git config --global --replace-all alias.undo "!bash -c \"
 function git-undo () {
@@ -182,7 +165,6 @@ alias gr='git root'
 alias gs='git status -s'
 alias gsp='git stash pop'
 alias gst='git stash push'
-alias gt='git tree'
 alias gu='git undo'
 
 function gc () {
@@ -203,3 +185,6 @@ function gd () {
 function gamp () {
   git add -A && git commit -m "$@" && git pull && git push
 }
+
+alias tg='tig'
+alias tb='tig blame'
