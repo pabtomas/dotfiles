@@ -765,7 +765,7 @@ function main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  make install-doc &> /dev/null
+  sudo make install-doc-man prefix=/usr &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
