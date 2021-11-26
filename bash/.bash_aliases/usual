@@ -142,23 +142,6 @@ git-ranking\""
 
 git config --global --replace-all alias.root 'rev-parse --show-toplevel'
 
-git config --global --replace-all alias.tree "!bash -c \"
-function git-tree () {
-  git log --graph --color --abbrev-commit --date=relative \
-    --pretty=format:'%Cred%h%Creset %C(cyan)%an%Creset: %s\
-%C(yellow)%d%Creset (%cr)' \$* | sed 's/\((.\+\) et\(.\+)\)$/\1,\2/g' \
-    | sed 's/\((.\+\) ans\?\(.*)\)$/\1Y\2/g' \
-    | sed 's/\((.\+\) mois\(.*)\)$/\1M\2/g' \
-    | sed 's/\((.\+\) semaines\?\(.*)\)$/\1W\2/g' \
-    | sed 's/\((.\+\) jours\?\(.*)\)$/\1d\2/g' \
-    | sed 's/\((.\+\) heures\?\(.*)\)$/\1h\2/g' \
-    | sed 's/\((.\+\) minutes\?\(.*)\)$/\1m\2/g' \
-    | sed 's/\((.\+\) secondes\?\(.*)\)$/\1s\2/g' \
-    | sed 's/(il y a \(.\+\))$/$(tput setaf 2)(\1)$(tput sgr0)/' \
-    | less -R -S +g
-}
-git-tree\""
-
 git config --global --replace-all alias.undo "!bash -c \"
 function git-undo () {
   if [ \$(git diff --cached --name-only | wc -l) -gt 0 ]; then
@@ -187,7 +170,6 @@ alias gr='git root'
 alias gs='git status -s'
 alias gsp='git stash pop'
 alias gst='git stash push'
-alias gt='git tree'
 alias gu='git undo'
 
 function gc () {
@@ -210,3 +192,6 @@ function gd () {
 function gamp () {
   git add -A && git commit -m "$@" && git pull && git push
 }
+
+alias tg='tig'
+alias tb='tig blame'
