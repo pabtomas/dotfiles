@@ -199,21 +199,25 @@ set noshowcmd
 "     Functions {{{3
 
 function! s:VisualUp()
-  if line('.') - v:count1 > 0
-    execute "'" . '<,' . "'" . '>move ' . "'" . '<-' . (v:count1 + 1)
-  else
-    '<,'>move 0
+  if &modifiable
+    if line('.') - v:count1 > 0
+      execute "'" . '<,' . "'" . '>move ' . "'" . '<-' . (v:count1 + 1)
+    else
+      '<,'>move 0
+    endif
+    normal! gv
   endif
-  normal! gv
 endfunction
 
 function! s:VisualDown()
-  if line('.') + line("'>") - line ("'<") + v:count1 > line('$')
-    '<,'>move $
-  else
-    execute "'" . '<,' . "'" . '>move ' . "'" . '>+' . v:count1
+  if &modifiable
+    if line('.') + line("'>") - line ("'<") + v:count1 > line('$')
+      '<,'>move $
+    else
+      execute "'" . '<,' . "'" . '>move ' . "'" . '>+' . v:count1
+    endif
+    normal! gv
   endif
-  normal! gv
 endfunction
 
 "     }}}
@@ -221,11 +225,15 @@ endfunction
 "   Blank {{{2
 
 function! s:BlankUp()
-  call append(line('.') - 1, repeat([''], v:count1))
+  if &modifiable
+    call append(line('.') - 1, repeat([''], v:count1))
+  endif
 endfunction
 
 function! s:BlankDown()
-  call append(line('.'), repeat([''], v:count1))
+  if &modifiable
+    call append(line('.'), repeat([''], v:count1))
+  endif
 endfunction
 
 "   }}}
@@ -264,6 +272,159 @@ endfunction
 
 "     }}}
 "   }}}
+"   Statusline {{{2
+"     Options {{{3
+
+" display status line
+set laststatus=2
+
+"     }}}
+"     Variables & constants {{{3
+
+let s:statusline = #{
+\   modes: {
+\     'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
+\     'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
+\     'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
+\     'r': 'PROMPT', '!': 'SHELL',
+\   },
+\   matches: {},
+\ }
+
+"     }}}
+"     Functions {{{3
+
+function! FileName(modified, is_current_win)
+  let l:check_current_win = (g:actual_curwin == win_getid())
+  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
+    return ''
+  endif
+  return fnamemodify(bufname('%'), ':.')
+endfunction
+
+function! StartLine()
+  if g:actual_curwin != win_getid()
+    return '───┤'
+  endif
+  return '━━━┫'
+endfunction
+
+function! ComputeStatusLineLength()
+  let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
+    \ + len('[') + len(winnr()) + len('] ')
+    \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
+    \ + len(' [') + len(&filetype) + len(']')
+    \ + len(' C') + len(virtcol('.'))
+    \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
+    \ + len(split('├', '\zs')))
+  if g:actual_curwin == win_getid()
+    let l:length -= len(StartMode()) + len(Mode()) + len(EndMode())
+    if v:hlsearch && !empty(s:statusline.matches) && (s:statusline.matches.total > 0)
+      let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
+    endif
+  endif
+  return l:length
+endfunction
+
+function! EndLine()
+  let l:length = ComputeStatusLineLength()
+  if g:actual_curwin != win_getid()
+    return '├' . repeat('─', l:length)
+  endif
+  return '┣' . repeat('━', l:length)
+endfunction
+
+function! Mode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return s:statusline.modes[mode()[0]]
+endfunction
+
+function! StartMode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return '['
+endfunction
+
+function! EndMode()
+  if g:actual_curwin != win_getid()
+    return ''
+  endif
+  return '] '
+endfunction
+
+function! IndexedMatch()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+    return ''
+  endif
+  let s:statusline.matches =
+    \ searchcount(#{ recompute: 1, maxcount: 0, timeout: 0 })
+  if empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+    return ''
+  endif
+  return s:statusline.matches.current
+endfunction
+
+function! Bar()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+  \ || empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+    return ''
+  endif
+  return '/'
+endfunction
+
+function! TotalMatch()
+  if (g:actual_curwin != win_getid()) || !v:hlsearch
+  \ || empty(s:statusline.matches) || (s:statusline.matches.total == 0)
+    return ''
+  endif
+  return s:statusline.matches.total . ' '
+endfunction
+
+" status line content:
+" [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
+function! s:StatusLineData()
+  set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
+                   \%2*%{FileName(v:false,v:true)}%0*
+                   \%2*%{FileName(v:false,v:false)}%0*
+                   \%4*%{FileName(v:true,v:false)}%0*
+                   \%1*%{FileName(v:true,v:true)}%0*
+  set statusline+=\ [%3*%{&filetype}%0*]
+  set statusline+=\ C%3*%{virtcol('.')}%0*
+  set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
+  set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
+  set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
+endfunction
+
+function! s:RestoreStatusLines(timer_id)
+  execute  'highlight StatusLine   term=bold cterm=bold ctermfg='
+    \ . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight StatusLineNC term=NONE cterm=NONE ctermfg='
+    \ . s:palette.blue_1   . ' ctermbg=' . s:palette.black
+    \ . ' | highlight VertSplit    term=NONE cterm=NONE ctermfg='
+    \ . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+endfunction
+
+function! s:HighlightStatusLines()
+  execute  'highlight StatusLine   ctermfg=' . s:palette.green_1
+    \ . ' | highlight StatusLineNC ctermfg=' . s:palette.green_1
+    \ . ' | highlight VertSplit    ctermfg=' . s:palette.green_1
+  call timer_start(1000, function('s:RestoreStatusLines'))
+endfunction
+
+function! s:StaticLine()
+  set statusline=%{StartLine()}
+  call s:StatusLineData()
+  set statusline+=%{EndLine()}
+endfunction
+
+"     }}}
+
+call s:StaticLine()
+
+"   }}}
 "   VimRC {{{2
 
 function! s:OpenVimRC()
@@ -274,6 +435,7 @@ if !exists("*s:SourceVimRC")
   function! s:SourceVimRC()
     execute 'source ' . $MYVIMRC
     call s:HighlightStatusLines()
+    echomsg 'VimRC sourced !'
   endfunction
 endif
 
@@ -546,214 +708,6 @@ set foldopen+=jump
 "   }}}
 " }}}
 " Plugins {{{1
-"   Tinsel {{{2
-"     Options {{{3
-
-" display status line
-set laststatus=2
-
-"     }}}
-"     Variables & constants {{{3
-
-let s:tinsel = #{
-\   modes: {
-\     'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
-\     'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
-\     'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
-\     'r': 'PROMPT', '!': 'SHELL',
-\   },
-\   dots: [
-\    '˳', '.', '｡', '·', '•', '･', 'º', '°', '˚', '˙',
-\   ],
-\   spectrum: [
-\     51, 45, 39, 33, 27, 21, 57, 93, 129, 165, 201, 200, 199, 198, 197, 196,
-\     202, 208, 214, 220, 226, 190, 154, 118, 82, 46, 47, 48, 49, 50,
-\   ],
-\   color: 0.0,
-\   localtime: localtime(),
-\   start: localtime(),
-\   matches: {},
-\ }
-
-"     }}}
-"     Functions {{{3
-
-function! FileName(modified, is_current_win)
-  let l:check_current_win = (g:actual_curwin == win_getid())
-  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
-    return ''
-  endif
-  return fnamemodify(bufname('%'), ':.')
-endfunction
-
-function! StartLine()
-  if g:actual_curwin != win_getid()
-    return '───┤'
-  endif
-  return '━━━┫'
-endfunction
-
-function! ComputeStatusLineLength()
-  let l:length = winwidth(winnr()) - (len(split('───┤ ', '\zs'))
-    \ + len('[') + len(winnr()) + len('] ')
-    \ + len(bufnr()) + len (':') + len(fnamemodify(bufname('%'), ':.'))
-    \ + len(' [') + len(&filetype) + len(']')
-    \ + len(' C') + len(virtcol('.'))
-    \ + len(' L') + len(line('.')) + len('/') + len(line('$')) + len(' ')
-    \ + len(split('├', '\zs')))
-  if g:actual_curwin == win_getid()
-    let l:length -= len(StartMode()) + len(Mode()) + len(EndMode())
-    if v:hlsearch && !empty(s:tinsel.matches) && (s:tinsel.matches.total > 0)
-      let l:length -= len(IndexedMatch()) + len(Bar()) + len(TotalMatch())
-    endif
-  endif
-  return l:length
-endfunction
-
-function! EndLine()
-  let l:length = ComputeStatusLineLength()
-  if g:actual_curwin != win_getid()
-    return '├' . repeat('─', l:length)
-  endif
-  return '┣' . repeat('━', l:length)
-endfunction
-
-function! Mode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return s:tinsel.modes[mode()[0]]
-endfunction
-
-function! StartMode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return '['
-endfunction
-
-function! EndMode()
-  if g:actual_curwin != win_getid()
-    return ''
-  endif
-  return '] '
-endfunction
-
-function! IndexedMatch()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-    return ''
-  endif
-  let s:tinsel.matches =
-    \ searchcount(#{ recompute: 1, maxcount: 0, timeout: 0 })
-  if empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
-    return ''
-  endif
-  return s:tinsel.matches.current
-endfunction
-
-function! Bar()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
-    return ''
-  endif
-  return '/'
-endfunction
-
-function! TotalMatch()
-  if (g:actual_curwin != win_getid()) || !v:hlsearch
-  \ || empty(s:tinsel.matches) || (s:tinsel.matches.total == 0)
-    return ''
-  endif
-  return s:tinsel.matches.total . ' '
-endfunction
-
-" status line content:
-" [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
-function! s:StatusLineData()
-  set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
-                   \%2*%{FileName(v:false,v:true)}%0*
-                   \%2*%{FileName(v:false,v:false)}%0*
-                   \%4*%{FileName(v:true,v:false)}%0*
-                   \%1*%{FileName(v:true,v:true)}%0*
-  set statusline+=\ [%3*%{&filetype}%0*]
-  set statusline+=\ C%3*%{virtcol('.')}%0*
-  set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
-  set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
-  set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
-endfunction
-
-function! s:StaticLine()
-  set statusline=%{StartLine()}
-  call s:StatusLineData()
-  set statusline+=%{EndLine()}
-endfunction
-
-function! s:ComputeWave(start, end)
-  let l:wave = ''
-  for l:each in range(a:start, a:end - 1)
-    let l:wave = l:wave . s:tinsel.dots[5 + float2nr(5.0 * sin(l:each *
-    \ (fmod(0.05 * (s:tinsel.localtime - s:tinsel.start) + 1.0, 2.0) - 1.0)))]
-  endfor
-  return l:wave
-endfunction
-
-function! StartWave()
-  return s:ComputeWave(0, 4)
-endfunction
-
-function! EndWave()
-  let l:win_width = winwidth(winnr())
-  return s:ComputeWave(l:win_width - ComputeStatusLineLength() - 1, l:win_width)
-endfunction
-
-function! s:Tinsel(timer_id)
-  let s:tinsel.color = fmod(s:tinsel.color + 0.75, 30.0)
-  execute 'highlight User5 term=bold cterm=bold ctermfg='
-    \ . s:tinsel.spectrum[float2nr(floor(s:tinsel.color))]
-    \ . ' ctermbg=' . s:palette.black
-
-  let s:tinsel.localtime = localtime()
-  set statusline=%5*%{StartWave()}%0*
-  call s:StatusLineData()
-  set statusline+=%5*%{EndWave()}%0*
-
-  if (s:tinsel.localtime - s:tinsel.start) > 40
-    call timer_pause(s:tinsel.timer, v:true)
-    call s:StaticLine()
-  endif
-endfunction
-
-function! s:InitTinsel()
-  let s:tinsel.color = 0.0
-  let s:tinsel.start = localtime()
-  call timer_pause(s:tinsel.timer, v:false)
-endfunction
-
-function! s:RestoreStatusLines(timer_id)
-  execute  'highlight StatusLine   term=bold cterm=bold ctermfg='
-    \ . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight StatusLineNC term=NONE cterm=NONE ctermfg='
-    \ . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight VertSplit    term=NONE cterm=NONE ctermfg='
-    \ . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-endfunction
-
-function! s:HighlightStatusLines()
-  execute  'highlight StatusLine   ctermfg=' . s:palette.green_1
-    \ . ' | highlight StatusLineNC ctermfg=' . s:palette.green_1
-    \ . ' | highlight VertSplit    ctermfg=' . s:palette.green_1
-  call timer_start(1000, function('s:RestoreStatusLines'))
-endfunction
-
-"     }}}
-
-if exists('s:tinsel.timer') | call timer_stop(s:tinsel.timer) | endif
-let s:tinsel.timer = timer_start(100, function('s:Tinsel'), #{ repeat: -1 })
-call timer_pause(s:tinsel.timer, v:true)
-
-call s:StaticLine()
-
-" }}}
 "   Buffers menu {{{2
 "     Keys {{{3
 
@@ -1509,6 +1463,7 @@ set sessionoptions=buffers,sesdir,folds,help,winsize
 function! s:Obsession()
   mksession!
   call s:HighlightStatusLines()
+  echomsg 'Session saved !'
 endfunction
 
 function! s:SourceObsession()
@@ -2037,6 +1992,7 @@ function! s:GenerateGutentags()
       call system(l:command)
       call s:HighlightGutentags()
       call s:HighlightStatusLines()
+      echomsg 'Tags generated !'
     endif
   endif
 endfunction
@@ -2529,22 +2485,20 @@ const s:mappings = #{
   \ mode: 'n', description: 'Blank line under current line', order: 18 },
 \   blankdown:                  #{ key:                              '<CR>',
   \ mode: 'n', description: 'Blank line above current line', order: 19 },
-\   tinsel:                     #{ key: s:leaders.global .              's',
-  \ mode: 'n', description: 'Start Tinsel', order: 20 },
 \   redhighlight:               #{ key: s:leaders.global .              '"',
-  \ mode: 'n', description: 'Toggle Redhighlight', order: 21 },
+  \ mode: 'n', description: 'Toggle Redhighlight', order: 20 },
 \   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
-  \ mode: 'n', description: 'Open Buffers Menu', order: 22 },
+  \ mode: 'n', description: 'Open Buffers Menu', order: 21 },
 \   explorer:                   #{ key: s:leaders.shift  .  s:leaders.shift,
-  \ mode: 'n', description: 'Open Explorer', order: 23 },
+  \ mode: 'n', description: 'Open Explorer', order: 22 },
 \   obsession:                  #{ key: s:leaders.global .              'z',
-  \ mode: 'n', description: 'Save session', order: 24 },
+  \ mode: 'n', description: 'Save session', order: 23 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
-  \ mode: 'n', description: 'Open Undotree', order: 25 },
+  \ mode: 'n', description: 'Open Undotree', order: 24 },
 \   rainbow:                    #{ key: s:leaders.global.               '(',
-  \ mode: 'n', description: 'Toggle Rainbow', order: 26 },
+  \ mode: 'n', description: 'Toggle Rainbow', order: 25 },
 \   taglist:                    #{ key: s:leaders.shift.                'T',
-  \ mode: 'n', description: 'Open Taglist', order: 27 },
+  \ mode: 'n', description: 'Open Taglist', order: 26 },
 \ }
 
 "   }}}
@@ -2587,10 +2541,6 @@ execute s:mappings.redhighlight.mode               . 'noremap '
 " create session
 execute s:mappings.obsession.mode                  . 'noremap '
   \ . s:mappings.obsession.key           . ' <Cmd>call <SID>Obsession()<CR>'
-
-" statusline become a tinsel
-execute s:mappings.tinsel.mode                     . 'noremap '
-  \ . s:mappings.tinsel.key              . ' <Cmd>call <SID>InitTinsel()<CR>'
 
 " buffers menu
 execute s:mappings.buffers_menu.mode               . 'noremap '
