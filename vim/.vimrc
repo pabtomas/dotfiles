@@ -1638,7 +1638,7 @@ function! s:DiffHandler(job, status)
   endif
 
   for l:each in range(len(l:text))
-    let l:properties = \ [#{ type: 'diffadd', col: 1,
+    let l:properties = [#{ type: 'diffadd', col: 1,
       \ length: max([0, len(l:text[l:each]) - 1]) }]
     if l:text[l:each][0] == '-'
       let l:properties = [#{ type: 'diffdelete', col: 1,
@@ -1737,6 +1737,7 @@ function! s:UndotreeFilter(winid, key)
     unlet s:undo.line
     call s:UpdateUndotree()
     call popup_settext(a:winid, s:undo.text)
+    call s:Diff(a:winid)
   elseif a:key == s:undokey.help
     call s:HelpUndotree()
   endif
@@ -1775,7 +1776,7 @@ function! s:UpdateUndotree()
     for l:each in range(len(l:slots))
       if type(l:slots[l:each]) == v:t_string
         let l:foundstring = v:true
-        let l:eachndex = l:each
+        let l:index = l:each
         break
       endif
     endfor
@@ -1788,7 +1789,7 @@ function! s:UpdateUndotree()
         if type(l:slots[l:each]) == v:t_dict
           if l:slots[l:each].seq < l:minseq
             let l:minseq = l:slots[l:each].seq
-            let l:eachndex = l:each
+            let l:index = l:each
             let l:minnode = l:slots[l:each]
             continue
           endif
@@ -1797,7 +1798,7 @@ function! s:UpdateUndotree()
           for l:each2 in l:slots[l:each]
             if l:each2.seq < l:minseq
               let l:minseq = l:each2.seq
-              let l:eachndex = l:each
+              let l:index = l:each
               let l:minnode = l:each2
               continue
             endif
@@ -1813,10 +1814,10 @@ function! s:UpdateUndotree()
       let l:newmeta = -1
       if l:index + 1 != len(l:slots)
         for l:each in range(len(l:slots))
-          if l:each < l:eachndex
+          if l:each < l:index
             let l:newline = l:newline . '| '
           endif
-          if l:each > l:eachndex
+          if l:each > l:index
             let l:newline = l:newline . ' \'
           endif
         endfor
@@ -1827,7 +1828,7 @@ function! s:UpdateUndotree()
     if type(l:node) == v:t_dict
       let l:newmeta = l:node.seq
       for l:each in range(len(l:slots))
-        if l:eachndex == l:each
+        if l:index == l:each
           if l:node.seq == changenr()
             let l:newline = l:newline . '◊ '
           else
