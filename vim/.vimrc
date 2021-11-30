@@ -533,7 +533,6 @@ const s:palette = #{
 \   green_3: 2,
 \   white_1: 147,
 \   white_2: 153,
-\   white_3: 255,
 \   grey_1: 236,
 \   grey_2: 244,
 \   grey_3: 248,
@@ -2510,10 +2509,12 @@ const s:mappings = #{
   \ mode: 'n', description: 'Save session', order: 23 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
   \ mode: 'n', description: 'Open Undotree', order: 24 },
-\   rainbow:                    #{ key: s:leaders.global.               '(',
+\   rainbow:                    #{ key: s:leaders.global .              '(',
   \ mode: 'n', description: 'Toggle Rainbow', order: 25 },
-\   taglist:                    #{ key: s:leaders.shift.                'T',
+\   taglist:                    #{ key: s:leaders.shift  .              'T',
   \ mode: 'n', description: 'Open Taglist', order: 26 },
+\   equal_splits:               #{ key: s:leaders.global .              '=',
+  \ mode: 'i', description: 'Eqaulize splits', order: 27 },
 \ }
 
 "   }}}
@@ -2626,6 +2627,10 @@ execute s:mappings.next_search.mode                . 'noremap '
   \ . s:mappings.next_search.key         . ' <Cmd>call <SID>NextSearch()<CR>'
 execute s:mappings.previous_search.mode            . 'noremap '
   \ . s:mappings.previous_search.key     . ' <Cmd>call <SID>PreviousSearch()<CR>'
+
+" equal splits
+execute s:mappings.equal_splits.mode               . 'noremap '
+  \ . s:mappings.equal_splits.key        . ' <C-w>='
 
 " }}}
 " Abbreviations {{{1

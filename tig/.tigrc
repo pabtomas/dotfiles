@@ -2,7 +2,7 @@
 color diff-stat     95     default
 color date          172    default
 color "Merge: "     cyan   default
-color graph-commit  red    default
+color graph-commit  42    default
 color id            167    default
 color "author "     95     default
 color "Commit: "    90     default
