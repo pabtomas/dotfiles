@@ -766,12 +766,12 @@ function! s:HelpBuffersMenu()
     endwhile
     call add(l:text, #{ text: l:each, props: l:properties })
   endfor
-  call popup_create(l:text, #{
-                           \   pos: 'topleft',
+  call popup_create(l:text, #{ pos: 'topleft',
                            \   line: win_screenpos(0)[0] + winheight(0)
                            \     - len(l:text) - &cmdheight,
                            \   col: win_screenpos(0)[1],
                            \   zindex: 1,
+                           \   wrap: v:false,
                            \   minwidth: winwidth(0),
                            \   time: 10000,
                            \   border: [1, 0, 0, 0],
@@ -1008,6 +1008,7 @@ function! s:HelpExplorer()
                            \   col: win_screenpos(0)[1],
                            \   zindex: 3,
                            \   minwidth: winwidth(0),
+                           \   wrap: v:false,
                            \   border: [1, 0, 0, 0],
                            \   borderchars: ['━'],
                            \   borderhighlight: ['StatusLine'],
@@ -1553,6 +1554,7 @@ function! s:HelpUndotree()
                            \   col: win_screenpos(0)[1] + s:undo.max_length
                            \     + 1,
                            \   zindex: 4,
+                           \   wrap: v:false,
                            \   minwidth: winwidth(0) - s:undo.max_length - 1,
                            \   maxwidth: winwidth(0) - s:undo.max_length - 1,
                            \   time: 10000,
@@ -2329,7 +2331,6 @@ function! s:TagList()
 
     call win_execute(l:popup_id, 'while match(getline("."), "^  ") < 0'
       \ . '| call cursor(line(".") + 1, 0) | endwhile')
-    " call s:HelpTagList()
   endif
 endfunction
 

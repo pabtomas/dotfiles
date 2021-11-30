@@ -577,6 +577,63 @@ function main () {
           echo -e ${GREEN}"OK"${RESET}
         fi
 
+        echo -n -e $(dashed "Checking libpng installation")$' '
+        if [ $(dpkg -l | command grep -E "libpng-dev" | wc -l) -eq 0 ]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Installing libpng-dev package")
+          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          sudo unbuffer apt install -y libpng-dev \
+            | unbuffer -p grep -E -o "[0-9]+%" \
+            | xargs -I {} echo -n -e ${DASHED} {}
+
+          if [ $? -eq 0 ]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+
+        echo -n -e $(dashed "Checking GLEW installation")$' '
+        if [ $(dpkg -l | command grep -E "libglew-dev" | wc -l) -eq 0 ]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Installing libglew-dev package")
+          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          sudo unbuffer apt install -y libglew-dev \
+            | unbuffer -p grep -E -o "[0-9]+%" \
+            | xargs -I {} echo -n -e ${DASHED} {}
+
+          if [ $? -eq 0 ]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+
+        echo -n -e $(dashed "Checking libX11 installation")$' '
+        if [ $(dpkg -l | command grep -E "libx11-dev" | wc -l) -eq 0 ]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Installing libX11-dev package")
+          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          sudo unbuffer apt install -y libx11-dev \
+            | unbuffer -p grep -E -o "[0-9]+%" \
+            | xargs -I {} echo -n -e ${DASHED} {}
+
+          if [ $? -eq 0 ]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+
         echo -n -e $(dashed "Checking redshift installation")$' '
         if [ $(which redshift | wc -l) -eq 0 ]; then
           echo -e ${RED}"Not OK"${RESET}
