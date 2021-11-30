@@ -2514,7 +2514,7 @@ const s:mappings = #{
 \   taglist:                    #{ key: s:leaders.shift  .              'T',
   \ mode: 'n', description: 'Open Taglist', order: 26 },
 \   equal_splits:               #{ key: s:leaders.global .              '=',
-  \ mode: 'i', description: 'Eqaulize splits', order: 27 },
+  \ mode: 'n', description: 'Eqaulize splits', order: 27 },
 \ }
 
 "   }}}
