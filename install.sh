@@ -211,8 +211,15 @@ function main () {
   fi
 
   DASHED=${CLEAR}$(dashed "Installing direnv")
+  dots "${DASHED}" &
+  DOTS_PID=$!
   curl -s -f -L https://direnv.net/install.sh | bash &> /dev/null \
     && chmod +x $(which direnv)
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
 
   if [ $? -eq 0 ]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
@@ -250,6 +257,7 @@ function main () {
       echo -e ${RED}"Not OK"${RESET}
     else
       echo -e ${GREEN}"OK"${RESET}
+      echo -n -e $(dashed "")$' '
       DASHED=${CLEAR}$(dashed "Installing KVM packages")
       [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
@@ -260,11 +268,11 @@ function main () {
 
       if [ $? -eq 0 ]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
-        echo -n -e $(dashed "Adding ${SUDO_USER:-${USER}} to libvirt group")$' '
+        DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to libvirt group")
         [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
           && sudo echo &> /dev/null && SUDO_START=$(date +%s)
         [ $(groups | tr ' ' '\n' | grep -E "libvirt" | wc -l) -eq 0 ] \
-          && sudo adduser ${SUDO_USER:-${USER}} libvirt
+          && sudo adduser ${SUDO_USER:-${USER}} libvirt &> /dev/null
 
         if [ $? -eq 0 ]; then
           echo -e ${DASHED} ${GREEN}"OK"${RESET}
@@ -272,11 +280,11 @@ function main () {
           echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
         fi
 
-        echo -n -e $(dashed "Adding ${SUDO_USER:-${USER}} to kvm group")$' '
+        DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to kvm group")
         [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
           && sudo echo &> /dev/null && SUDO_START=$(date +%s)
         [ $(groups | tr ' ' '\n' | grep -E "kvm" | wc -l) -eq 0 ] \
-          && sudo adduser ${SUDO_USER:-${USER}} kvm
+          && sudo adduser ${SUDO_USER:-${USER}} kvm &> /dev/null
 
         if [ $? -eq 0 ]; then
           echo -e ${DASHED} ${GREEN}"OK"${RESET}
