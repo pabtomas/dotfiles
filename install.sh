@@ -202,8 +202,13 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  [ $(which direnv | wc -l) -gt 0 ] \
-    && echo -e "\n   direnv $(direnv --version)\n"
+  echo -n -e $(dashed "Checking direnv version")$' '
+  if [ $(which direnv | wc -l) -eq 1 ]; then
+    echo -e ${GREEN}"OK"${RESET}
+    echo -e "\n   direnv $(direnv --version)\n"
+  else
+    echo -e ${RED}"Not OK"${RESET}
+  fi
 
   DASHED=${CLEAR}$(dashed "Installing direnv")
   curl -s -f -L https://direnv.net/install.sh | bash &> /dev/null \
