@@ -202,6 +202,9 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  [ $(which direnv | wc -l) -gt 0 ] \
+    && echo -e "\n   direnv $(direnv --version)\n"
+
   DASHED=${CLEAR}$(dashed "Installing direnv")
   curl -s -f -L https://direnv.net/install.sh | bash &> /dev/null \
     && chmod +x $(which direnv)
@@ -211,6 +214,9 @@ function main () {
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
+
+  [ $(which direnv | wc -l) -gt 0 ] \
+    && echo -e "\n   direnv $(direnv --version)\n"
 
   echo -n -e $(dashed "Checking Silver Searcher installation")$' '
   if [ $(which ag | wc -l) -eq 0 ]; then
