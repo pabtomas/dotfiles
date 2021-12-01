@@ -1,6 +1,5 @@
 " Ideas {{{1
 
-" - replace system()/systemlist() calls with job_start() ?
 " - explorer: hijack netrw ?
 
 " }}}
@@ -127,15 +126,27 @@ const s:search = #{
 "     Functions {{{3
 
 function! s:NextSearch()
-  normal! n
-  if foldlevel('.') > 0 | foldopen! | endif
-  normal! zz
+  try
+    normal! n
+    if foldlevel('.') > 0 | foldopen! | endif
+    normal! zz
+  catch
+    echohl ErrorMsg
+    echomsg v:errmsg
+    echohl NONE
+  endtry
 endfunction
 
 function! s:PreviousSearch()
-  normal! N
-  if foldlevel('.') > 0 | foldopen! | endif
-  normal! zz
+  try
+    normal! N
+    if foldlevel('.') > 0 | foldopen! | endif
+    normal! zz
+  catch
+    echohl ErrorMsg
+    echomsg v:errmsg
+    echohl NONE
+  endtry
 endfunction
 
 "     }}}
@@ -522,7 +533,6 @@ const s:palette = #{
 \   green_3: 2,
 \   white_1: 147,
 \   white_2: 153,
-\   white_3: 255,
 \   grey_1: 236,
 \   grey_2: 244,
 \   grey_3: 248,
@@ -740,7 +750,7 @@ function! s:HelpBuffersMenu()
   let l:text = []
   for l:each in l:lines
     let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
-    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1}]
+    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1 }]
     let l:properties = l:properties + [#{ type: 'statusline',
       \ col: l:start - 2, length: 1 }]
     let l:start = 0
@@ -755,12 +765,12 @@ function! s:HelpBuffersMenu()
     endwhile
     call add(l:text, #{ text: l:each, props: l:properties })
   endfor
-  call popup_create(l:text, #{
-                           \   pos: 'topleft',
+  call popup_create(l:text, #{ pos: 'topleft',
                            \   line: win_screenpos(0)[0] + winheight(0)
                            \     - len(l:text) - &cmdheight,
                            \   col: win_screenpos(0)[1],
                            \   zindex: 1,
+                           \   wrap: v:false,
                            \   minwidth: winwidth(0),
                            \   time: 10000,
                            \   border: [1, 0, 0, 0],
@@ -860,7 +870,7 @@ function! s:UpdateBuffersMenu()
 
   let s:menu.text = []
   let l:width = max(mapnew(l:listed_buf,
-    \ {_, val -> len(val.bufnr . ': ""' . fnamemodify(val.name, ':.'))}))
+    \ { _, val -> len(val.bufnr . ': ""' . fnamemodify(val.name, ':.')) }))
 
   for l:each in l:listed_buf
     let l:line = l:each.bufnr . ': "' . fnamemodify(l:each.name, ':.') . '"'
@@ -943,69 +953,47 @@ const s:explorerkey = #{
 "     Help {{{3
 
 function! s:HelpExplorer()
-  let l:lines = [ repeat('━', 41) . '┳' . repeat('━', winwidth(0) - 42),
-    \ '      NORMAL Mode                        ┃        '
-      \ . s:Key([s:explorerkey.reset]) . '        - Reset explorer',
-    \ '   ' . s:Key([s:explorerkey.help]) . '   - Show this help            '
-      \ . '  ┃      ' . s:Key([s:explorerkey.searchmode])
-      \ . '      - Enter SEARCH Mode',
-    \ '  ' . s:Key([s:explorerkey.exit]) . '  - Exit explorer               '
-      \ . '┃      ' . s:Key([s:explorerkey.next_match,
-      \ s:explorerkey.previous_match]). '      - Next/Previous SEARCH match',
-    \ ' ' . s:Key([s:explorerkey.next, s:explorerkey.previous])
-      \ . ' - Next/Previous file          ┃                SEARCH Mode',
-    \ ' ' . s:Key([s:explorerkey.first, s:explorerkey.last])
-      \ . ' - First/Last file             ┃       '
-      \ . s:Key([s:explorerkey.SM_exit]) . '       - Exit SEARCH Mode',
-    \ '   ' . s:Key([s:explorerkey.open]) . '   - Open/Close dir & Open files'
-      \ . ' ┃      ' . s:Key([s:explorerkey.SM_evaluate])
-      \ . '      - Evaluate SEARCH',
-    \ '   ' . s:Key([s:explorerkey.badd]) . '   - Add to buffers list        '
-      \ . ' ┃    ' . s:Key([s:explorerkey.SM_erase]) . '    - Erase SEARCH',
-    \ '   ' . s:Key([s:explorerkey.yank]) . '   - Yank path                  '
-      \ . ' ┃      '
-      \ . s:Key([s:explorerkey.SM_next, s:explorerkey.SM_previous])
-      \ . '      - Next/Previous SEARCH',
-    \ '   ' . s:Key([s:explorerkey.dotfiles]) . '   - Show/Hide dot files    '
-      \ . '     ┃ ' . s:Key([s:explorerkey.SM_wide_left,
+  let l:lines = ['         NORMAL Mode',
+    \ '     ' . s:Key([s:explorerkey.help]) . '     - Show this help',
+    \ '    ' . s:Key([s:explorerkey.exit]) . '    - Exit explorer',
+    \ '   ' . s:Key([s:explorerkey.next, s:explorerkey.previous])
+      \ . '   - Next/Previous file',
+    \ '   ' . s:Key([s:explorerkey.first, s:explorerkey.last])
+      \ . '   - First/Last file',
+    \ '     ' . s:Key([s:explorerkey.open]) . '     - Open dirs & files',
+    \ '     ' . s:Key([s:explorerkey.badd]) . '     - Add to buffers list',
+    \ '     ' . s:Key([s:explorerkey.yank]) . '     - Yank path',
+    \ '     ' . s:Key([s:explorerkey.dotfiles]) . '     - Show/Hide dot files',
+    \ '     ' . s:Key([s:explorerkey.reset]) . '     - Reset explorer',
+    \ '   ' . s:Key([s:explorerkey.searchmode]) . '   - Enter SEARCH Mode',
+    \ '   ' . s:Key([s:explorerkey.next_match, s:explorerkey.previous_match])
+      \ . '   - Next/Previous SEARCH match', '         SEARCH Mode',
+    \ '    ' . s:Key([s:explorerkey.SM_exit]) . '    - Exit SEARCH Mode',
+    \ '   ' . s:Key([s:explorerkey.SM_evaluate]) . '   - Evaluate SEARCH',
+    \ ' ' . s:Key([s:explorerkey.SM_erase]) . ' - Erase SEARCH',
+    \ '   ' . s:Key([s:explorerkey.SM_next, s:explorerkey.SM_previous])
+      \ . '   - Next/Previous SEARCH',
+    \ ' ' . s:Key([s:explorerkey.SM_wide_left,
       \ s:explorerkey.SM_wide_right]) . ' - Navigation',
   \ ]
-  let l:text = [#{ text: l:lines[0], props: [#{ type: 'statusline',
-    \ col: 1, length: len(l:lines[0]) }] }]
-  for l:each in l:lines[1:]
+  let l:text = []
+  for l:each in l:lines
 
-    let l:start = match(l:each, ' ┃ \s*<\zs .\+ >\s* - \u')
-    let l:end = matchend(l:each, ' ┃ \s*< .\+ \ze>\s* - \u')
-    let l:properties =
-      \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
-
-    let l:start = match(l:each, ' ┃ \s*< .\+ >\s* \zs- \u')
+    let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
+    let l:properties = (l:start > -1) ?
+      \ [#{ type: 'key', col: 1, length: l:start - 1 }] : []
     let l:properties = l:properties + [#{ type: 'statusline',
-      \ col: l:start + 1, length: 1 }]
-
-    let l:start = match(l:each, '^\s*<\zs .\+ >\s* - \u.* ┃')
-    let l:end = matchend(l:each, '^\s*< .\+ \ze>\s* - \u.* ┃')
-    let l:properties = l:properties +
-      \ [#{ type: 'key', col: l:start + 1, length: l:end - l:start }]
-
-    let l:start = match(l:each, '^\s*< .\+ >\s* \zs- \u.* ┃')
-    let l:properties = l:properties + [#{ type: 'statusline',
-      \ col: l:start + 1, length: 1 }]
-
+      \ col: l:start - 2, length: 1 }]
     let l:start = 0
     while l:start > -1
-      let l:start = match(l:each, ' ┃ \s*\zs< \|^\s*\zs< \| \zs> \s*- \u\'
-        \ . '| \zs| \|/\| .\zs-. \|[^<|] \zs& [^>|]', l:start)
+      let l:start = match(l:each,
+        \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-.\|\a \zs& \a', l:start)
       if l:start > -1
         let l:start += 1
         let l:properties = l:properties + [#{ type: 'statusline',
           \ col: l:start, length: 1 }]
       endif
     endwhile
-
-    let l:properties = l:properties + [#{ type: 'statusline',
-      \ col: match(l:each, ' \zs┃ '), length: len('┃')}]
-
     let l:start = match(l:each, '\u\{2,}')
     let l:end = matchend(l:each, '\u\{2,} Mode\|\u\{2,}')
     let l:properties = l:properties + [#{ type: 'mode',
@@ -1015,10 +1003,14 @@ function! s:HelpExplorer()
   endfor
   call popup_create(l:text, #{ pos: 'topleft',
                            \   line: win_screenpos(0)[0] + winheight(0)
-                           \     - len(l:text),
+                           \     - len(l:text) - &cmdheight,
                            \   col: win_screenpos(0)[1],
                            \   zindex: 3,
                            \   minwidth: winwidth(0),
+                           \   wrap: v:false,
+                           \   border: [1, 0, 0, 0],
+                           \   borderchars: ['━'],
+                           \   borderhighlight: ['StatusLine'],
                            \   time: 10000,
                            \   highlight: 'Help',
                            \ })
@@ -1373,14 +1365,14 @@ function! s:UpdateExplorer()
       let l:line = l:indent . l:arrow . l:name . l:id
 
       " construct properties
-      let l:properties = [#{ type: 'file', col: 0, length: winwidth(0) + 1}]
+      let l:properties = [#{ type: 'file', col: 0, length: winwidth(0) + 1 }]
       if isdirectory(l:current)
         if has_key(s:explorer.tree, l:current)
           let l:properties =
-            \ [#{ type: 'opened', col: 0, length: winwidth(0) + 1}]
+            \ [#{ type: 'opened', col: 0, length: winwidth(0) + 1 }]
         else
           let l:properties =
-            \ [#{ type: 'closed', col: 0, length: winwidth(0) + 1}]
+            \ [#{ type: 'closed', col: 0, length: winwidth(0) + 1 }]
         endif
       endif
 
@@ -1540,7 +1532,7 @@ function! s:HelpUndotree()
   let l:text = []
   for l:each in l:lines
     let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
-    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1}]
+    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1 }]
     let l:properties = l:properties + [#{ type: 'statusline',
       \ col: l:start - 2, length: 1 }]
     let l:start = 0
@@ -1555,13 +1547,13 @@ function! s:HelpUndotree()
     endwhile
     call add(l:text, #{ text: l:each, props: l:properties })
   endfor
-  call popup_create(l:text, #{
-                           \   pos: 'topleft',
+  call popup_create(l:text, #{ pos: 'topleft',
                            \   line: win_screenpos(0)[0] + winheight(0)
                            \     - len(l:text) - &cmdheight,
                            \   col: win_screenpos(0)[1] + s:undo.max_length
                            \     + 1,
                            \   zindex: 4,
+                           \   wrap: v:false,
                            \   minwidth: winwidth(0) - s:undo.max_length - 1,
                            \   maxwidth: winwidth(0) - s:undo.max_length - 1,
                            \   time: 10000,
@@ -1964,6 +1956,12 @@ function! s:HighlightGutentags()
   endif
 endfunction
 
+function! s:GutentagsHandler(job, status)
+  call s:HighlightGutentags()
+  call s:HighlightStatusLines()
+  echomsg 'Tags generated !'
+endfunction
+
 function! s:GenerateGutentags()
   if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
     let l:bufdir = fnamemodify(expand('%'), ':p:h')
@@ -1989,41 +1987,57 @@ function! s:GenerateGutentags()
       let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
         \ . ' do echo -n "--exclude=' . l:root . '"/${FILE}" "; done) -o '
         \ . l:tags_path . ' ' . l:root
-      call system(l:command)
-      call s:HighlightGutentags()
-      call s:HighlightStatusLines()
-      echomsg 'Tags generated !'
+      call job_start(['/bin/sh', '-c', l:command],
+        \ #{ exit_cb: expand('<SID>') . 'GutentagsHandler' })
     endif
   endif
 endfunction
 
 function! s:FollowTag()
-  let l:iskeyword_backup = ''
-  if &filetype == 'vim'
-    let l:iskeyword_backup = &iskeyword
-    setlocal iskeyword+=:
-  endif
-  let l:cword = expand('<cword>')
-  execute 'tag ' . l:cword
-  if foldlevel('.') > 0 | foldopen! | endif
-  if len(taglist('^' . l:cword . '$')) == 1
-    normal! zz
-  endif
-  if !empty(l:iskeyword_backup)
-    let &iskeyword = l:iskeyword_backup
-  endif
+  try
+    let l:iskeyword_backup = ''
+    if &filetype == 'vim'
+      let l:iskeyword_backup = &iskeyword
+      setlocal iskeyword+=:
+    endif
+    let l:cword = expand('<cword>')
+    execute 'tag ' . l:cword
+    if foldlevel('.') > 0 | foldopen! | endif
+    if len(taglist('^' . l:cword . '$')) == 1
+      normal! zz
+    endif
+    if !empty(l:iskeyword_backup)
+      let &iskeyword = l:iskeyword_backup
+    endif
+  catch
+    echohl ErrorMsg
+    echomsg v:errmsg
+    echohl NONE
+  endtry
 endfunction
 
 function! s:NextTag()
-  tag
-  if foldlevel('.') > 0 | foldopen! | endif
-  normal! zz
+  try
+    tag
+    if foldlevel('.') > 0 | foldopen! | endif
+    normal! zz
+  catch
+    echohl ErrorMsg
+    echomsg v:errmsg
+    echohl NONE
+  endtry
 endfunction
 
 function! s:PreviousTag()
-  pop
-  if foldlevel('.') > 0 | foldopen! | endif
-  normal! zz
+  try
+    pop
+    if foldlevel('.') > 0 | foldopen! | endif
+    normal! zz
+  catch
+    echohl ErrorMsg
+    echomsg v:errmsg
+    echohl NONE
+  endtry
 endfunction
 
 "   }}}
@@ -2256,7 +2270,7 @@ function! s:UpdateTagList()
     let l:tags_letters = uniq(sort(mapnew(l:tags, 'v:val.kind')))
 
     for [l:letter, l:name] in items(filter(l:kinds,
-    \ { letter -> index(l:tags_letters, letter) > -1}))
+    \ { letter -> index(l:tags_letters, letter) > -1 }))
       let l:header_start = '--- ' . toupper(l:name) . ' '
       let l:line = l:header_start
         \ . repeat('-', winwidth(0) - len(l:header_start))
@@ -2271,9 +2285,9 @@ function! s:UpdateTagList()
           let l:line = '  ' . l:each.line . ': ' . l:each.name
           let l:properties = [#{ type: 'digit', col: 1,
             \ length: len(l:each.line) + 2 }, #{ type: 'punct',
-            \ col: len(l:each.line) + 3, length: 1}, #{ type: 'name',
+            \ col: len(l:each.line) + 3, length: 1 }, #{ type: 'name',
             \ col: len(l:each.line) + 4, length: winwidth(0)
-            \   - len(l:each.line) - 4}]
+            \   - len(l:each.line) - 4 }]
           call add(s:list.text, #{ text: l:line, props: l:properties })
         endif
       endfor
@@ -2316,7 +2330,6 @@ function! s:TagList()
 
     call win_execute(l:popup_id, 'while match(getline("."), "^  ") < 0'
       \ . '| call cursor(line(".") + 1, 0) | endwhile')
-    " call s:HelpTagList()
   endif
 endfunction
 
@@ -2362,21 +2375,21 @@ function! s:Key(keys)
     elseif l:each == "\<Left>"
       let l:text = l:text . '←'
     elseif l:each == "\<S-Down>"
-      let l:text = l:text . 'Shift ↓'
+      let l:text = l:text . 'S ↓'
     elseif l:each == "\<S-Up>"
-      let l:text = l:text . 'Shift ↑'
+      let l:text = l:text . 'S ↑'
     elseif l:each == "\<S-Right>"
-      let l:text = l:text . 'Shift →'
+      let l:text = l:text . 'S →'
     elseif l:each == "\<S-Left>"
-      let l:text = l:text . 'Shift ←'
+      let l:text = l:text . 'S ←'
     elseif l:each == "\<C-Down>"
-      let l:text = l:text . 'Ctrl ↓'
+      let l:text = l:text . 'C ↓'
     elseif l:each == "\<C-Up>"
-      let l:text = l:text . 'Ctrl ↑'
+      let l:text = l:text . 'C ↑'
     elseif l:each == "\<C-Right>"
-      let l:text = l:text . 'Ctrl →'
+      let l:text = l:text . 'C →'
     elseif l:each == "\<C-Left>"
-      let l:text = l:text . 'Ctrl ←'
+      let l:text = l:text . 'C ←'
     elseif l:each == "\<Enter>"
       let l:text = l:text . 'Enter'
     elseif l:each == "\<Esc>"
@@ -2496,10 +2509,12 @@ const s:mappings = #{
   \ mode: 'n', description: 'Save session', order: 23 },
 \   undotree:                   #{ key: s:leaders.shift  .              'U',
   \ mode: 'n', description: 'Open Undotree', order: 24 },
-\   rainbow:                    #{ key: s:leaders.global.               '(',
+\   rainbow:                    #{ key: s:leaders.global .              '(',
   \ mode: 'n', description: 'Toggle Rainbow', order: 25 },
-\   taglist:                    #{ key: s:leaders.shift.                'T',
+\   taglist:                    #{ key: s:leaders.shift  .              'T',
   \ mode: 'n', description: 'Open Taglist', order: 26 },
+\   equal_splits:               #{ key: s:leaders.global .              '=',
+  \ mode: 'n', description: 'Eqaulize splits', order: 27 },
 \ }
 
 "   }}}
@@ -2612,6 +2627,10 @@ execute s:mappings.next_search.mode                . 'noremap '
   \ . s:mappings.next_search.key         . ' <Cmd>call <SID>NextSearch()<CR>'
 execute s:mappings.previous_search.mode            . 'noremap '
   \ . s:mappings.previous_search.key     . ' <Cmd>call <SID>PreviousSearch()<CR>'
+
+" equal splits
+execute s:mappings.equal_splits.mode               . 'noremap '
+  \ . s:mappings.equal_splits.key        . ' <C-w>='
 
 " }}}
 " Abbreviations {{{1

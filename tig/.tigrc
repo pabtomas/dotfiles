@@ -1,4 +1,27 @@
+# chocolate theme:
+color diff-stat     95     default
+color date          172    default
+color "Merge: "     cyan   default
+color graph-commit  42     default
+color id            167    default
+color "author "     95     default
+color "Commit: "    90     default
+color cursor        white  101      bold
+color title-focus   black  244      bold
+color status        172    default
+
+color palette-0     93     default
+color palette-1     95     default
+color palette-2     124    default
+color palette-7     90     default  bold
+
+color delimiter     90     default
+color main-tracked  red    default  bold
+
 set mouse = true
+
+bind generic j move-down
+bind generic k move-up
 
 bind generic g  none
 bind generic gg move-first-line
@@ -6,4 +29,5 @@ bind main    G  move-last-line
 bind generic G  move-last-line
 
 set main-view-date = relative-compact
+set main-view-id = yes
 set blame-view-date = relative-compact
