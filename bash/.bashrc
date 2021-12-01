@@ -6,3 +6,5 @@ export GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
 git config --global core.editor vim
 
 source ${HOME}/.local/bin/flagbox.sh
+
+eval "$(direnv hook bash)"

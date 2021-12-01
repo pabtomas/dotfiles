@@ -47,6 +47,11 @@ function main () {
   local GPU=""
   local VERSION=""
 
+  if [ $(echo ${PATH} | tr ':' '\n' | grep -E "${HOME}/.local/bin" \
+    | wc -l) -eq 0 ]; then
+      export PATH=${HOME}/.local/bin:${PATH}
+  fi
+
   command mkdir -p ${LOCAL}/bin ${LOCAL}/share ${LOCAL}/lib
 
   echo -n -e $(dashed "Checking apt installation")$' '
@@ -179,6 +184,34 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  echo -n -e $(dashed "Checking curl installation")$' '
+  if [ $(which curl | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing curl package")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y curl | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [ $? -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  DASHED=${CLEAR}$(dashed "Installing direnv")
+  curl -s -f -L https://direnv.net/install.sh | bash &> /dev/null \
+    && chmod +x $(which direnv)
+
+  if [ $? -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+  fi
+
   echo -n -e $(dashed "Checking Silver Searcher installation")$' '
   if [ $(which ag | wc -l) -eq 0 ]; then
     echo -e ${RED}"Not OK"${RESET}
@@ -186,6 +219,75 @@ function main () {
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y silversearcher-ag \
+      | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [ $? -eq 0 ]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking KVM installation")$' '
+  if [ $(which kvm | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    echo -n -e $(dashed "Checking virtualization support")$' '
+    if [ $(grep -E -c '(vmx|svm)' /proc/cpuinfo) -eq 0 ]; then
+      echo -e ${RED}"Not OK"${RESET}
+    else
+      echo -e ${GREEN}"OK"${RESET}
+      DASHED=${CLEAR}$(dashed "Installing KVM packages")
+      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      sudo unbuffer apt install -y cpu-checker qemu-kvm \
+        libvirt-daemon-system libvirt-clients bridge-utils \
+        | unbuffer -p grep -E -o "[0-9]+%" \
+        | xargs -I {} echo -n -e ${DASHED} {}
+
+      if [ $? -eq 0 ]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+        echo -n -e $(dashed "Adding ${SUDO_USER:-${USER}} to libvirt group")$' '
+        [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        [ $(groups | tr ' ' '\n' | grep -E "libvirt" | wc -l) -eq 0 ] \
+          && sudo adduser ${SUDO_USER:-${USER}} libvirt
+
+        if [ $? -eq 0 ]; then
+          echo -e ${DASHED} ${GREEN}"OK"${RESET}
+        else
+          echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        fi
+
+        echo -n -e $(dashed "Adding ${SUDO_USER:-${USER}} to kvm group")$' '
+        [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        [ $(groups | tr ' ' '\n' | grep -E "kvm" | wc -l) -eq 0 ] \
+          && sudo adduser ${SUDO_USER:-${USER}} kvm
+
+        if [ $? -eq 0 ]; then
+          echo -e ${DASHED} ${GREEN}"OK"${RESET}
+        else
+          echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        fi
+
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      fi
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking Virtual Manager installation")$' '
+  if [ $(which virt-manager | wc -l) -eq 0 ]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing Virtual Manager package")
+    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y virt-manager \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
