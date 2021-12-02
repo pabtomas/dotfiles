@@ -194,5 +194,6 @@ function gamp () {
   git add -A && git commit -m "$@" && git pull && git push
 }
 
-alias tg='tig'
+alias ti='tig'
 alias tb='tig blame'
+alias tg='tig grep'
