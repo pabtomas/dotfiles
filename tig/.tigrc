@@ -22,10 +22,10 @@ color palette-6          196       default   bold
 color palette-7          120       default   bold
 color palette-8          216       default   bold
 color palette-9          45        default   bold
-color palette-10          205       default   bold
-color palette-11          140       default   bold
-color palette-12          223       default   bold
-color palette-13          196       default   bold
+color palette-10         205       default   bold
+color palette-11         140       default   bold
+color palette-12         223       default   bold
+color palette-13         196       default   bold
 
 color grep.file          69        default
 color grep.line-number   42        default
