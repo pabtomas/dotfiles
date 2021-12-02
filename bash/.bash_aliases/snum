@@ -2,7 +2,7 @@
 
 alias ls='command ls --color'
 alias lh='command ls -d --color .??*'
-alias ll='command ls -l -A --color "$@" | grep -v -E "^total [0-9]+"'
+alias ll='command ls -l -A --color "$@"'
 
 alias grep='grep --color'
 

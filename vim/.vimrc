@@ -462,50 +462,49 @@ let s:servers = {}
 "     }}}
 "     Functions {{{3
 
-function! s:StartServer(id)
+function! s:StartServer(app, id)
   if has('clientserver')
     call remote_startserver(s:server_prefix . a:id)
+    let s:servers[a:app] = #{ reachable: v:true }
   else
     echoerr 'Personal Error Message: Vim needs to be compiled with'
       \ . ' +clientserver feature to use this command'
   endif
-  delcommand StartServer
 endfunction
 
 function! s:StartRemote(app, id)
   let l:has_clientserver = has('clientserver')
-  if !l:has_clientserver
-    echoerr 'Personal Error Message: Vim needs to be compiled with'
-      \ . ' +clientserver feature to use this command'
-  else
+  if l:has_clientserver
     if !has_key(s:servers, a:app)
-      let s:servers[a:app] = #{ names: [], reachable: v:false }
+      let s:servers[a:app] = #{ names: [] }
     endif
     let s:servers[a:app].names += [s:server_prefix . a:id]
+  else
+    echoerr 'Personal Error Message: Vim needs to be compiled with'
+      \ . ' +clientserver feature to use this command'
   endif
   return l:has_clientserver
 endfunction
 
 function! s:LockServer(app)
-  if exists('s:servers["' . a:app . '"]')
+  if exists('s:servers["' . a:app . '"].reachable')
     let s:servers[a:app].reachable = v:false
   endif
 endfunction
 
 function! s:UnlockServer(app)
-  if exists('s:servers["' . a:app . '"]')
+  if exists('s:servers["' . a:app . '"].reachable')
     let s:servers[a:app].reachable = v:true
   endif
 endfunction
 
-function! IsServerLocked(app)
-  return s:servers[a:app].reachable
+function! IsServerReachable(app)
+  if exists('s:servers["' . a:app . '"].reachable')
+    return s:servers[a:app].reachable == v:true
+  else
+    return 0
+  endif
 endfunction
-
-"     }}}
-"     Commands {{{3
-
-command! -nargs=1 StartServer call <SID>StartServer(<args>)
 
 "     }}}
 "   }}}
@@ -1153,7 +1152,7 @@ function! s:RemoteModeExplorerFilter(winid, key)
     let l:path = s:explorer.paths[s:explorer.line]
     unlet s:explorer.line
     for l:each in s:servers.explorer.names
-      if !remote_expr(l:each, 'IsServerLocked("explorer")')
+      if str2nr(remote_expr(l:each, 'IsServerReachable("explorer")'))
         call remote_expr(l:each, 'execute("let @\" = \"' . l:path . '\"")')
         call remote_send(l:each,
           \ '<C-\><C-N>:echo "Unnamed register content is:"'
@@ -1166,7 +1165,7 @@ function! s:RemoteModeExplorerFilter(winid, key)
     unlet s:explorer.line
     if !isdirectory(l:path)
       for l:each in s:servers.explorer.names
-        if !remote_expr(l:each, 'IsServerLocked("explorer")')
+        if str2nr(remote_expr(l:each, 'IsServerReachable("explorer")'))
           call remote_expr(l:each, 'execute("badd '. l:path . '")')
           call remote_send(l:each, '<C-\><C-N>:echohl OpenedDirPath'
             \ . ' | echo "' . l:path . '" | echohl NONE'
@@ -1197,7 +1196,7 @@ function! s:RemoteModeExplorerFilter(winid, key)
       endif
 
       for l:each in s:servers.explorer.names
-        if !remote_expr(l:each, 'IsServerLocked("explorer")')
+        if str2nr(remote_expr(l:each, 'IsServerReachable("explorer")'))
           call remote_expr(l:each, 'execute("' . l:open_cmd . ' ' . l:path
             \ . ' | redraw!")')
         endif
@@ -1420,8 +1419,14 @@ function! s:Explorer()
   endif
 endfunction
 
+function! s:StartServerExplorer(id)
+  call s:StartServer('explorer', a:id)
+  delcommand StartServerExplorer
+endfunction
+
 function! s:StartRemoteExplorer(id)
   if s:StartRemote('explorer', a:id)
+    set laststatus=0
     call s:Explorer()
   endif
   delcommand StartRemoteExplorer
@@ -1430,6 +1435,7 @@ endfunction
 "     }}}
 "     Commands {{{3
 
+command! -nargs=1 StartServerExplorer call <SID>StartServerExplorer(<args>)
 command! -nargs=1 StartRemoteExplorer call <SID>StartRemoteExplorer(<args>)
 
 "     }}}

@@ -11,6 +11,27 @@ color status             140       default
 color main-tracked       205       default   bold
 color main-head          120       default   bold
 color main-remote        216       default   bold
+color line-number        42        default
+color file               69        default
+
+color "commit "          111       default
+color "Refs: "           default   default
+color "Author: "         105       default
+color "AuthorDate: "     69        default
+color "Commit: "         105       default
+color "CommitDate: "     69        default
+color "Merge: "          default   default
+color "---"              45        default
+color "+++ "             42        default
+color "--- "             203       default
+color diff-index         216       default
+color diff-add           120       default
+color diff-add-highlight 42        default
+color diff-del           205       default
+color diff-del-highlight 203       default
+color diff-stat          223       default
+color diff-header        223       default
+color diff-chunk         105       default
 
 color palette-0          120       default   bold
 color palette-1          216       default   bold
@@ -18,17 +39,14 @@ color palette-2          45        default   bold
 color palette-3          205       default   bold
 color palette-4          140       default   bold
 color palette-5          223       default   bold
-color palette-6          196       default   bold
+color palette-6          203       default   bold
 color palette-7          120       default   bold
 color palette-8          216       default   bold
 color palette-9          45        default   bold
 color palette-10         205       default   bold
 color palette-11         140       default   bold
 color palette-12         223       default   bold
-color palette-13         196       default   bold
-
-color grep.file          69        default
-color grep.line-number   42        default
+color palette-13         203       default   bold
 
 set mouse = true
 
