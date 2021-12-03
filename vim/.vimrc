@@ -9,14 +9,18 @@
 
 function! s:CheckDependencies()
   if !has('unix')
-    echoerr 'Personal Error Message: your VimRC needs UNIX OS to be'
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: your VimRC needs UNIX OS to be'
       \ . ' functionnal'
+    echohl NONE
   endif
   if v:version < 802
     let l:major_version = v:version / 100
-    echoerr 'Personal Error Message: your VimRC needs Vim 8.2 to be'
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: your VimRC needs Vim 8.2 to be'
       \ . ' functionnal. Your Vim version is ' l:major_version . '.'
       \ . (v:version - l:major_version * 100)
+    echohl NONE
     quit
   endif
 endfunction
@@ -132,7 +136,7 @@ function! s:NextSearch()
     normal! zz
   catch
     echohl ErrorMsg
-    echomsg v:errmsg
+    echomsg matchstr(v:exception, 'E[0-9]*: .*')
     echohl NONE
   endtry
 endfunction
@@ -144,7 +148,7 @@ function! s:PreviousSearch()
     normal! zz
   catch
     echohl ErrorMsg
-    echomsg v:errmsg
+    echomsg matchstr(v:exception, 'E[0-9]*: .*')
     echohl NONE
   endtry
 endfunction
@@ -457,18 +461,22 @@ endif
 if exists('s:server_prefix') | unlet s:server_prefix | endif
 const s:server_prefix = 'VIM-'
 
-let s:servers = {}
+if !exists('s:servers') | let s:servers = {} | endif
 
 "     }}}
 "     Functions {{{3
 
 function! s:StartServer(app, id)
   if has('clientserver')
-    call remote_startserver(s:server_prefix . a:id)
+    if empty(v:servername)
+      call remote_startserver(s:server_prefix . a:id)
+    endif
     let s:servers[a:app] = #{ reachable: v:true }
   else
-    echoerr 'Personal Error Message: Vim needs to be compiled with'
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Vim needs to be compiled with'
       \ . ' +clientserver feature to use this command'
+    echohl NONE
   endif
 endfunction
 
@@ -480,8 +488,10 @@ function! s:StartRemote(app, id)
     endif
     let s:servers[a:app].names += [s:server_prefix . a:id]
   else
-    echoerr 'Personal Error Message: Vim needs to be compiled with'
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Vim needs to be compiled with'
       \ . ' +clientserver feature to use this command'
+    echohl NONE
   endif
   return l:has_clientserver
 endfunction
@@ -626,6 +636,8 @@ function s:LoadColorscheme()
   highlight  link SpecialComment     Special
   highlight  link SpecialKey         Special
   highlight  link Debug              Special
+  highlight! link StatusLineTerm     StatusLine
+  highlight! link StatusLineTermNC   StatusLineNC
 
   if s:redhighlight.activated | execute s:redhighlight.command | endif
 endfunction
@@ -1582,12 +1594,16 @@ function! s:DiffHandler(job, status)
 
   execute 'silent bdelete ' . l:diffbuf
   if delete(s:undo.tmp[0]) != 0
-    echoerr 'Personal Error Message: Can not delete temp file: '
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Can not delete temp file: '
       \ . s:undo.tmp[0]
+    echohl NONE
   endif
   if delete(s:undo.tmp[1]) != 0
-    echoerr 'Personal Error Message: Can not delete temp file: '
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Can not delete temp file: '
       \ . s:undo.tmp[1]
+    echohl NONE
   endif
 
   for l:each in range(len(l:text))
@@ -1627,12 +1643,16 @@ function! s:Diff(treepopup_id)
   endwhile
   let s:undo.tmp = [tempname(), tempname()]
   if writefile(l:old, s:undo.tmp[0]) == -1
-    echoerr 'Personal Error Message: Can not write to temp file: '
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Can not write to temp file: '
       \ . s:undo.tmp[0]
+    echohl NONE
   endif
   if writefile(l:new, s:undo.tmp[1]) == -1
-    echoerr 'Personal Error Message: Can not write to temp file: '
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Can not write to temp file: '
       \ . s:undo.tmp[1]
+    echohl NONE
   endif
   let s:undo.job = job_start(['/bin/sh', '-c', l:diffcommand . ' '
     \ . s:undo.tmp[0] . ' ' . s:undo.tmp[1]], #{ out_io: 'buffer',
@@ -1890,8 +1910,10 @@ endfunction
 
 function! s:Undotree()
   if !buflisted(bufnr()) || !bufloaded(bufnr())
-    echoerr 'Personal Error Message: Unlisted or Unloaded current buffer.'
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Unlisted or Unloaded current buffer.'
       \ . ' Can not use Undotree.'
+    echohl NONE
     return
   endif
 
@@ -1969,21 +1991,22 @@ function! s:GutentagsHandler(job, status)
 endfunction
 
 function! s:GenerateGutentags()
-  if !empty(systemlist('which ctags')) && !empty(systemlist('which git'))
+  if executable('ctags') && executable('git')
     let l:bufdir = fnamemodify(expand('%'), ':p:h')
-    let l:isingitdir = !empty(systemlist('command cd '
-      \ . l:bufdir . ' && git rev-parse --git-dir 2> /dev/null'))
+    let l:dir_backup = getcwd()
+    execute 'chdir! ' . l:bufdir
+    let l:isingitdir =
+      \ !empty(systemlist('git rev-parse --git-dir 2> /dev/null'))
     if l:isingitdir
-      let l:root = systemlist('command cd ' . l:bufdir
-        \ . ' && git rev-parse --show-toplevel')[0]
-      let l:tags_path = l:root . '/tags'
-      let l:tagsignore_path = l:root . '/tagsignore'
+      let l:git_root = trim(system('git rev-parse --show-toplevel'))
+      let l:tags_path = l:git_root . '/tags'
+      let l:tagsignore_path = l:git_root . '/tagsignore'
 
       " specify tags file path (semi-colon really important)
       let l:tags_setting = l:tags_path . ';'
       let &tags = l:tags_setting
 
-      let l:command = 'ctags -R'
+      let l:command = 'cd ' . l:git_root . ' && ctags -R'
       let l:ctags_flags = #{
       \   vim: ' --kinds-Vim=fvC',
       \ }
@@ -1991,11 +2014,17 @@ function! s:GenerateGutentags()
         let l:command .= l:ctags_flags[&filetype]
       endif
       let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
-        \ . ' do echo -n "--exclude=' . l:root . '"/${FILE}" "; done) -o '
-        \ . l:tags_path . ' ' . l:root
+        \ . ' do echo -n "--exclude=' . l:git_root . '"/${FILE}" "; done) -o '
+        \ . l:tags_path . ' ' . l:git_root
       call job_start(['/bin/sh', '-c', l:command],
         \ #{ exit_cb: expand('<SID>') . 'GutentagsHandler' })
     endif
+    execute 'chdir! ' . l:dir_backup
+  else
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Gutentags plugin needs git executable'
+      \ . ' and ctags executable.'
+    echohl NONE
   endif
 endfunction
 
@@ -2017,7 +2046,7 @@ function! s:FollowTag()
     endif
   catch
     echohl ErrorMsg
-    echomsg v:errmsg
+    echomsg matchstr(v:exception, 'E[0-9]*: .*')
     echohl NONE
   endtry
 endfunction
@@ -2029,7 +2058,7 @@ function! s:NextTag()
     normal! zz
   catch
     echohl ErrorMsg
-    echomsg v:errmsg
+    echomsg matchstr(v:exception, 'E[0-9]*: .*')
     echohl NONE
   endtry
 endfunction
@@ -2041,7 +2070,7 @@ function! s:PreviousTag()
     normal! zz
   catch
     echohl ErrorMsg
-    echomsg v:errmsg
+    echomsg matchstr(v:exception, 'E[0-9]*: .*')
     echohl NONE
   endtry
 endfunction
@@ -2251,8 +2280,10 @@ function! s:UpdateTagList()
   let l:language = trim(system('ctags --print-language ' . l:filename
     \ . ' | awk "{printf \"%s\n\", \$2}"'))
   if l:language == "NONE"
-    echoerr "Personal Error Message: Universal Ctags can not find the file"
+    echohl ErrorMsg
+    echomsg "Personal Error Message: Universal Ctags can not find the file"
       \ . " language."
+    echohl NONE
     return
   else
     let l:kinds = {}
@@ -2268,8 +2299,10 @@ function! s:UpdateTagList()
     \ }}), function("LineLessThan"))
 
     if empty(l:tags)
-      echoerr "Personal Error Message: Universal Ctags does not find tags in"
+      echohl ErrorMsg
+      echomsg "Personal Error Message: Universal Ctags does not find tags in"
         \ . " this file."
+      echohl NONE
       return
     endif
 
@@ -2304,42 +2337,125 @@ function! s:UpdateTagList()
 endfunction
 
 function! s:TagList()
-  if empty(getcmdwintype()) && !empty(systemlist('which ctags'))
-    call s:LockServer('explorer')
-    let l:savedview = winsaveview()
-    let l:line = line(".")
-    let s:list = {}
-    call s:UpdateTagList()
-    call winrestview(l:savedview)
+  if empty(getcmdwintype())
+    if executable('ctags')
+      call s:LockServer('explorer')
+      let l:savedview = winsaveview()
+      let l:line = line(".")
+      let s:list = {}
+      call s:UpdateTagList()
+      call winrestview(l:savedview)
 
-    if empty(s:list.text)
-      return
+      if empty(s:list.text)
+        return
+      endif
+
+      let l:popup_id = popup_create(s:list.text,
+      \ #{
+        \ pos: 'topleft',
+        \ line: win_screenpos(0)[0],
+        \ col: win_screenpos(0)[1],
+        \ zindex: 2,
+        \ minwidth: winwidth(0),
+        \ maxwidth: winwidth(0),
+        \ minheight: winheight(0),
+        \ maxheight: winheight(0),
+        \ drag: v:true,
+        \ wrap: v:false,
+        \ filter: expand('<SID>') . 'TagListFilter',
+        \ mapping: v:false,
+        \ scrollbar: v:false,
+        \ cursorline: v:true,
+      \ })
+
+      call win_execute(l:popup_id, 'while match(getline("."), "^  ") < 0'
+        \ . '| call cursor(line(".") + 1, 0) | endwhile')
+    else
+      echohl ErrorMsg
+      echomsg 'Personal Error Message: Gutentags plugin needs git executable'
+        \ . ' and ctags executable.'
+      echohl NONE
     endif
-
-    let l:popup_id = popup_create(s:list.text,
-    \ #{
-      \ pos: 'topleft',
-      \ line: win_screenpos(0)[0],
-      \ col: win_screenpos(0)[1],
-      \ zindex: 2,
-      \ minwidth: winwidth(0),
-      \ maxwidth: winwidth(0),
-      \ minheight: winheight(0),
-      \ maxheight: winheight(0),
-      \ drag: v:true,
-      \ wrap: v:false,
-      \ filter: expand('<SID>') . 'TagListFilter',
-      \ mapping: v:false,
-      \ scrollbar: v:false,
-      \ cursorline: v:true,
-    \ })
-
-    call win_execute(l:popup_id, 'while match(getline("."), "^  ") < 0'
-      \ . '| call cursor(line(".") + 1, 0) | endwhile')
   endif
 endfunction
 
 "     }}}
+"   }}}
+"   Tig {{{2
+
+function! s:Tig()
+  if empty(getcmdwintype())
+    if executable('git') && executable('tig') && has('terminal')
+      call s:LockServer('explorer')
+      if empty(v:servername)
+        let l:id = 1
+        if !empty(serverlist())
+          let l:id =
+            \ max(map(split(serverlist(), s:server_prefix), "trim(v:val)")) + 1
+        endif
+        call s:StartServer('tig', l:id)
+      else
+        call s:UnlockServer('tig')
+      endif
+
+      let l:dir_backup = getcwd()
+      execute 'chdir! ' . system("git rev-parse --show-toplevel")
+
+      let l:tmp_tigrc = tempname()
+      let l:tigrc = expand('$HOME') . '/.tigrc'
+      if !filereadable(l:tigrc)
+        echohl ErrorMsg
+        echomsg 'Personal Error Message: ' . expand("$HOME") . '/.tigrc'
+          \ . ' not readable.'
+        echohl NONE
+        return
+      endif
+      let l:tmp_tigrc_content = readfile(l:tigrc)
+      if empty(l:tmp_tigrc_content)
+        echohl ErrorMsg
+        echomsg 'Personal Error Message: Can not read ' . expand("$HOME")
+          \ . '/.tigrc'
+        echohl NONE
+        return
+      endif
+
+      call add(l:tmp_tigrc_content, 'bind generic e @vim --remote-expr '
+        \ . '"execute(\"edit %(file)\")" --servername ' . v:servername)
+      call add(l:tmp_tigrc_content, 'bind generic E @vim --remote-expr '
+        \ . '"execute(\"badd %(file)\")" --servername ' . v:servername)
+
+      if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
+        echohl ErrorMsg
+        echomsg 'Personal Error Message: Can not write to temp file: '
+          \ . s:undo.tmp[1]
+        echohl NONE
+        return
+      endif
+
+      call term_start('env TIGRC_USER=' . l:tmp_tigrc . ' tig ', #{
+        \ term_name: 'tig',
+        \ curwin: v:true,
+        \ term_rows: winheight(0),
+        \ term_cols: winwidth(0),
+        \ term_finish: 'close',
+        \ exit_cb: { status, code -> execute('silent! buffer #') },
+      \ })
+
+      execute 'chdir! ' . l:dir_backup
+
+      call s:LockServer('tig')
+      call s:UnlockServer('explorer')
+    else
+      echohl ErrorMsg
+      echomsg 'Personal Error Message: Tig plugin needs git executable, tig'
+        \ . ' executable and terminal Vim feature'
+      echohl NONE
+    endif
+  endif
+endfunction
+
+command! Tig call <SID>Tig()
+
 "   }}}
 " }}}
 " Filetype specific {{{1

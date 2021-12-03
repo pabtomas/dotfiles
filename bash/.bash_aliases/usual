@@ -38,7 +38,8 @@ alias hh='history | grep -i -E'
 alias ff='find . | grep -E'
 alias pp='ps -a -x | grep -E'
 alias sudo='sudo '
-alias update='sudo apt-get update && sudo apt-get upgrade '\
+alias api='sudo apt install'
+alias apu='sudo apt-get update && sudo apt-get upgrade '\
 \ '&& sudo apt-get autoremove && sudo apt-get autoclean'
 alias executor='gnome-extensions prefs executor@raujonas.github.io'
 
