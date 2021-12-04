@@ -373,6 +373,9 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  echo -e "\n    $(gcc --version | head -n 1)"
+  echo -e "    $(g++ --version | head -n 1)\n"
+
   echo -n -e $(dashed "Checking if gcc and g++ version are >= 10")$' '
   if [ $(gcc --version | head -n 1 | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' \
     | grep -E -o "[0-9]+$") -lt 10 ] || [ $(g++ --version | head -n 1 \
@@ -440,8 +443,8 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  echo -e "\n    $(gcc --version | head -n 1 | sed -e "s/(.*) //g")"
-  echo -e "    $(g++ --version | head -n 1 | sed -e "s/(.*) //g")\n"
+  echo -e "\n    $(gcc --version | head -n 1)"
+  echo -e "    $(g++ --version | head -n 1)\n"
 
   echo -n -e $(dashed "Checking yacc installation")$' '
   if [ $(which yacc | wc -l) -eq 0 ]; then
