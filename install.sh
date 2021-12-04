@@ -373,6 +373,76 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  echo -n -e $(dashed "Checking if gcc and g++ version are >= 10")$' '
+  if [ $(gcc --version | head -n 1 | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' \
+    | grep -E -o "[0-9]+$") -lt 10 ] || [ $(g++ --version | head -n 1 \
+    | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' | grep -E -o "[0-9]+$") -lt 10 ]; then
+      echo -e ${RED}"Not OK"${RESET}
+
+      DASHED=${CLEAR}$(dashed "Installing gcc 10 packages")
+      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      sudo unbuffer apt install -y gcc-10 gcc-10-base gcc-10-doc \
+        | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+      if [ $? -eq 0 ]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      fi
+
+      DASHED=${CLEAR}$(dashed "Installing g++ 10 package")
+      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      sudo unbuffer apt install -y g++-10 \
+        | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+      if [ $? -eq 0 ]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      fi
+
+      DASHED=${CLEAR}$(dashed "Installing libc++ packages")
+      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      sudo unbuffer apt install -y libstdc++-10-dev libstdc++-10-doc \
+        | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+      if [ $? -eq 0 ]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      fi
+
+      DASHED=${CLEAR}$(dashed "Adding symbolic link to gcc 10")
+      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      sudo ln -fs $(which gcc-10) $(which gcc)
+
+      if [ $? -eq 0 ]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      fi
+
+      DASHED=${CLEAR}$(dashed "Adding symbolic link to g++ 10")
+      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      sudo ln -fs $(which g++-10) $(which g++)
+
+      if [ $? -eq 0 ]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -e "\n    $(gcc --version | head -n 1 | sed -e "s/(.*) //g")"
+  echo -e "    $(g++ --version | head -n 1 | sed -e "s/(.*) //g")\n"
+
   echo -n -e $(dashed "Checking yacc installation")$' '
   if [ $(which yacc | wc -l) -eq 0 ]; then
     echo -e ${RED}"Not OK"${RESET}
@@ -409,13 +479,13 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  echo -n -e $(dashed "Checking automake installation")$' '
-  if [ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]; then
+  echo -n -e $(dashed "Checking autoconf installation")$' '
+  if [ $(dpkg -l | command grep -E "autoconf" | wc -l) -eq 0 ]; then
     echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing automake package")
+    DASHED=${CLEAR}$(dashed "Installing autoconf package")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y automake | unbuffer -p grep -E -o "[0-9]+%" \
+    sudo unbuffer apt install -y autoconf | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
     if [ $? -eq 0 ]; then
@@ -427,13 +497,13 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  echo -n -e $(dashed "Checking autoconf installation")$' '
-  if [ $(dpkg -l | command grep -E "autoconf" | wc -l) -eq 0 ]; then
+  echo -n -e $(dashed "Checking automake installation")$' '
+  if [ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]; then
     echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing autoconf package")
+    DASHED=${CLEAR}$(dashed "Installing automake package")
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y autoconf | unbuffer -p grep -E -o "[0-9]+%" \
+    sudo unbuffer apt install -y automake | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
     if [ $? -eq 0 ]; then
@@ -880,7 +950,85 @@ function main () {
   echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
     " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
 
-  echo -n -e $(dashed "Checking tig version")$' '
+  echo -n -e $(dashed "Checking Kakoune version")$' '
+  if [ $(which kak | wc -l) -eq 1 ]; then
+    echo -e ${GREEN}"OK"${RESET}
+    echo -e "\n    $(kak -version)\n"
+  else
+    echo -e ${RED}"Not OK"${RESET}
+  fi
+
+  DASHED=${CLEAR}$(dashed "Cloning Kakoune repository")
+  unbuffer git clone https://github.com/mawww/kakoune.git ${SOURCES}/kakoune \
+    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [ $? -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+  fi
+
+  command cd ${SOURCES}/kakoune/src
+
+  DASHED=$(dashed "Compiling Kakoune")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  make &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  DASHED=$(dashed "Installing Kakoune")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  PREFIX=${LOCAL} make install &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  echo -e "\n    $(kak -version)\n"
+
+  DASHED=$(dashed "Documenting Kakoune")
+  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  make man &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [ ${STATUS} -eq 0 ]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  echo -n -e $(dashed "Checking Tig version")$' '
   if [ $(which tig | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
     echo -e "\n    "$(tig --version | head -n1)"\n"
@@ -888,7 +1036,7 @@ function main () {
     echo -e ${RED}"Not OK"${RESET}
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning tig repository")
+  DASHED=${CLEAR}$(dashed "Cloning Tig repository")
   unbuffer git clone https://github.com/jonas/tig.git ${SOURCES}/tig \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
   if [ $? -eq 0 ]; then
@@ -899,7 +1047,7 @@ function main () {
 
   command cd ${SOURCES}/tig
 
-  DASHED=$(dashed "Compiling tig")
+  DASHED=$(dashed "Compiling Tig")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
@@ -939,7 +1087,7 @@ function main () {
 
   echo -e "\n    "$(tig --version | head -n1)"\n"
 
-  DASHED=$(dashed "Documenting tig")
+  DASHED=$(dashed "Documenting Tig")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &

@@ -1327,7 +1327,7 @@ endfunction
 
 function! s:ExplorerFilter(winid, key)
   if s:explorer.mode == s:explorer.NORMAL
-    if exists('s:servers.explorer')
+    if exists('s:servers.explorer.names')
       call s:RemoteModeExplorerFilter(a:winid, a:key)
     else
       call s:NormalModeExplorerFilter(a:winid, a:key)
@@ -2382,69 +2382,112 @@ endfunction
 "     }}}
 "   }}}
 "   Tig {{{2
+"     Variables & constants {{{3
+
+let s:tig = #{
+\   commands: [],
+\ }
+
+"     }}}
+"     Functions {{{3
+
+function! s:TigTimer(timer_id)
+  if empty(popup_list())
+    for l:each in s:tig.commands
+      execute l:each
+    endfor
+    call timer_stop(a:timer_id)
+  endif
+endfunction
+
+function! s:TigCallback()
+  call timer_start(1, function('s:TigTimer'), #{ repeat: -1 })
+endfunction
 
 function! s:Tig()
   if empty(getcmdwintype())
     if executable('git') && executable('tig') && has('terminal')
-      call s:LockServer('explorer')
-      if empty(v:servername)
-        let l:id = 1
-        if !empty(serverlist())
-          let l:id =
-            \ max(map(split(serverlist(), s:server_prefix), "trim(v:val)")) + 1
+      let l:isingitdir =
+        \ !empty(systemlist('git rev-parse --git-dir 2> /dev/null'))
+      if l:isingitdir
+        call s:LockServer('explorer')
+        if empty(v:servername)
+          let l:id = 1
+          if !empty(serverlist())
+            let l:id = max(map(split(serverlist(), s:server_prefix),
+              "trim(v:val)")) + 1
+          endif
+          call s:StartServer('tig', l:id)
+        else
+          call s:UnlockServer('tig')
         endif
-        call s:StartServer('tig', l:id)
+
+        let l:tmp_tigrc = tempname()
+        let l:tigrc = expand('$HOME') . '/.tigrc'
+        if !filereadable(l:tigrc)
+          echohl ErrorMsg
+          echomsg 'Personal Error Message: ' . expand("$HOME") . '/.tigrc'
+            \ . ' not readable.'
+          echohl NONE
+          return
+        endif
+        let l:tmp_tigrc_content = readfile(l:tigrc)
+        if empty(l:tmp_tigrc_content)
+          echohl ErrorMsg
+          echomsg 'Personal Error Message: Can not read ' . expand("$HOME")
+            \ . '/.tigrc'
+          echohl NONE
+          return
+        endif
+
+        call add(l:tmp_tigrc_content, "bind generic e <vim "
+          \ . "--remote-expr 'TigEdit(" . '"%(file)")' . "' --servername "
+          \ . v:servername)
+        call add(l:tmp_tigrc_content, "bind generic E @vim "
+          \ . "--remote-expr 'TigBadd(" . '"%(file)")' . "' --servername "
+          \ . v:servername)
+
+        if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
+          echohl ErrorMsg
+          echomsg 'Personal Error Message: Can not write to temp file: '
+            \ . l:tmp_tigrc
+          echohl NONE
+          return
+        endif
+
+        let s:tig.commands = []
+
+        let l:term_buf = term_start('tig ', #{
+          \ term_name: 'tig',
+          \ term_finish: 'close',
+          \ hidden: v:true,
+          \ cwd: trim(system("git rev-parse --show-toplevel")),
+          \ env: #{ TIGRC_USER: l:tmp_tigrc },
+        \ })
+
+        call popup_create(l:term_buf, #{
+          \ pos: 'topleft',
+          \ line: win_screenpos(0)[0],
+          \ col: win_screenpos(0)[1],
+          \ zindex: 2,
+          \ minwidth: winwidth(0),
+          \ maxwidth: winwidth(0),
+          \ minheight: winheight(0),
+          \ maxheight: winheight(0),
+          \ wrap: v:false,
+          \ mapping: v:false,
+          \ scrollbar: v:false,
+          \ callback: { id, result -> s:TigCallback() },
+        \ })
+
+        call s:LockServer('tig')
+        call s:UnlockServer('explorer')
       else
-        call s:UnlockServer('tig')
-      endif
-
-      let l:dir_backup = getcwd()
-      execute 'chdir! ' . system("git rev-parse --show-toplevel")
-
-      let l:tmp_tigrc = tempname()
-      let l:tigrc = expand('$HOME') . '/.tigrc'
-      if !filereadable(l:tigrc)
         echohl ErrorMsg
-        echomsg 'Personal Error Message: ' . expand("$HOME") . '/.tigrc'
-          \ . ' not readable.'
+        echomsg 'Personal Error Message: Tig plugin needs to be in a git'
+          \ . ' project.'
         echohl NONE
-        return
       endif
-      let l:tmp_tigrc_content = readfile(l:tigrc)
-      if empty(l:tmp_tigrc_content)
-        echohl ErrorMsg
-        echomsg 'Personal Error Message: Can not read ' . expand("$HOME")
-          \ . '/.tigrc'
-        echohl NONE
-        return
-      endif
-
-      call add(l:tmp_tigrc_content, 'bind generic e @vim --remote-expr '
-        \ . '"execute(\"edit %(file)\")" --servername ' . v:servername)
-      call add(l:tmp_tigrc_content, 'bind generic E @vim --remote-expr '
-        \ . '"execute(\"badd %(file)\")" --servername ' . v:servername)
-
-      if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
-        echohl ErrorMsg
-        echomsg 'Personal Error Message: Can not write to temp file: '
-          \ . s:undo.tmp[1]
-        echohl NONE
-        return
-      endif
-
-      call term_start('env TIGRC_USER=' . l:tmp_tigrc . ' tig ', #{
-        \ term_name: 'tig',
-        \ curwin: v:true,
-        \ term_rows: winheight(0),
-        \ term_cols: winwidth(0),
-        \ term_finish: 'close',
-        \ exit_cb: { status, code -> execute('silent! buffer #') },
-      \ })
-
-      execute 'chdir! ' . l:dir_backup
-
-      call s:LockServer('tig')
-      call s:UnlockServer('explorer')
     else
       echohl ErrorMsg
       echomsg 'Personal Error Message: Tig plugin needs git executable, tig'
@@ -2453,6 +2496,16 @@ function! s:Tig()
     endif
   endif
 endfunction
+
+function! TigEdit(file)
+  call add(s:tig.commands, 'edit ' . a:file)
+endfunction
+
+function! TigBadd(file)
+  call add(s:tig.commands, 'badd ' . a:file)
+endfunction
+
+"     }}}
 
 command! Tig call <SID>Tig()
 
