@@ -205,7 +205,7 @@ function main () {
   echo -n -e $(dashed "Checking direnv version")$' '
   if [ $(which direnv | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n   direnv $(direnv --version)\n"
+    echo -e "\n    direnv $(direnv --version)\n"
   else
     echo -e ${RED}"Not OK"${RESET}
   fi
@@ -228,7 +228,7 @@ function main () {
   fi
 
   [ $(which direnv | wc -l) -gt 0 ] \
-    && echo -e "\n   direnv $(direnv --version)\n"
+    && echo -e "\n    direnv $(direnv --version)\n"
 
   echo -n -e $(dashed "Checking Silver Searcher installation")$' '
   if [ $(which ag | wc -l) -eq 0 ]; then
