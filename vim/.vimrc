@@ -116,6 +116,17 @@ set ttyfast
 
 "     }}}
 "   }}}
+"   Variables & constants {{{2
+
+if exists('s:modes') | unlet s:modes | endif
+const s:modes = {
+\   'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
+\   'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
+\   'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
+\   'r': 'PROMPT', '!': 'SHELL',
+\ }
+
+"   }}}
 "   Search {{{2
 "     Variables & constants {{{3
 
@@ -297,12 +308,6 @@ set laststatus=2
 "     Variables & constants {{{3
 
 let s:statusline = #{
-\   modes: {
-\     'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
-\     'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
-\     'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
-\     'r': 'PROMPT', '!': 'SHELL',
-\   },
 \   matches: {},
 \ }
 
@@ -353,7 +358,7 @@ function! Mode()
   if g:actual_curwin != win_getid()
     return ''
   endif
-  return s:statusline.modes[mode()[0]]
+  return s:modes[mode()[0]]
 endfunction
 
 function! StartMode()
@@ -455,6 +460,35 @@ if !exists("*s:SourceVimRC")
 endif
 
 "   }}}
+"     Comments {{{3
+
+function! s:Comment()
+  for l:lineno in range(line("'<"), line("'>"))
+    let l:line = getline(l:lineno)
+    if !empty(l:line)
+      let l:delimiter = &commentstring[:match(&commentstring, " %s")]
+      if match(l:line, '^[[:space:]]*' . l:delimiter . ' ') == -1
+        call setline(l:lineno, l:delimiter . ' ' . l:line)
+      endif
+    endif
+  endfor
+endfunction
+
+function! s:Uncomment()
+  for l:lineno in range(line("'<"), line("'>"))
+    let l:line = getline(l:lineno)
+    if !empty(l:line)
+      let l:delimiter = &commentstring[:match(&commentstring, " %s")]
+      let [l:match, l:start, l:end] =
+        \ matchstrpos(l:line, '^[[:space:]]*' . l:delimiter . ' ')
+      if !empty(l:match) || (l:start > 0) || (l:end > 0)
+        call setline(l:lineno, l:line[l:end:])
+      endif
+    endif
+  endfor
+endfunction
+
+"     }}}
 "   Server {{{2
 "     Variables & constants {{{3
 
@@ -530,6 +564,7 @@ const s:palette = #{
 \   orange_1: 202,
 \   orange_2: 209,
 \   orange_3: 216,
+\   yellow: 223,
 \   purple_1: 62,
 \   purple_2: 140,
 \   purple_3: 176,
@@ -590,8 +625,8 @@ function s:LoadColorscheme()
     \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
     \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
     \ . ' | highlight       Tag                 cterm=underline'
-    \ . ' | highlight       TagKind             cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       TagPunctuation      cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
+    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:palette.yellow   . ' ctermbg=' . s:palette.black
     \ . ' | highlight       TagDigit            cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
     \ . ' | highlight       TagName             cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
     \ . ' | highlight       Error                                  ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
@@ -638,6 +673,10 @@ function s:LoadColorscheme()
   highlight  link Debug              Special
   highlight! link StatusLineTerm     StatusLine
   highlight! link StatusLineTermNC   StatusLineNC
+  highlight  link TagKind            Kind
+  highlight  link MappingKind        Kind
+  highlight  link TagPunctuation     Punctuation
+  highlight  link MappingPunctuation Punctuation
 
   if s:redhighlight.activated | execute s:redhighlight.command | endif
 endfunction
@@ -1518,6 +1557,16 @@ endfunction
 "     }}}
 "   }}}
 "   Undotree {{{2
+"     Options {{{3
+
+set undofile
+set undolevels=1000
+set undodir=~/.cache/vim/undo
+if !isdirectory(&undodir)
+  call mkdir(&undodir, "p", 0700)
+endif
+
+"     }}}
 "     Keys {{{3
 
 if exists('s:undokey') | unlet s:undokey | endif
@@ -1993,13 +2042,10 @@ endfunction
 function! s:GenerateGutentags()
   if executable('ctags') && executable('git')
     let l:bufdir = fnamemodify(expand('%'), ':p:h')
-    let l:dir_backup = getcwd()
-    execute 'chdir! ' . l:bufdir
-    let l:isingitdir =
-      \ !empty(systemlist('git rev-parse --git-dir 2> /dev/null'))
-    if l:isingitdir
-      let l:git_root = trim(system('git rev-parse --show-toplevel'))
-      let l:tags_path = l:git_root . '/tags'
+    let l:git_root = trim(system('cd ' . l:bufdir
+      \ . ' && git rev-parse --show-toplevel 2> /dev/null'))
+    if !empty(l:git_root)
+      let l:tags_path = tempname()
       let l:tagsignore_path = l:git_root . '/tagsignore'
 
       " specify tags file path (semi-colon really important)
@@ -2019,7 +2065,6 @@ function! s:GenerateGutentags()
       call job_start(['/bin/sh', '-c', l:command],
         \ #{ exit_cb: expand('<SID>') . 'GutentagsHandler' })
     endif
-    execute 'chdir! ' . l:dir_backup
   else
     echohl ErrorMsg
     echomsg 'Personal Error Message: Gutentags plugin needs git executable'
@@ -2386,6 +2431,7 @@ endfunction
 
 let s:tig = #{
 \   commands: [],
+\   git_root: '',
 \ }
 
 "     }}}
@@ -2404,12 +2450,20 @@ function! s:TigCallback()
   call timer_start(1, function('s:TigTimer'), #{ repeat: -1 })
 endfunction
 
-function! s:Tig()
+function! s:TigCursor()
+  if exists('b:tig_line')
+    call cursor(b:tig_line, 0)
+    normal! zz
+    unlet b:tig_line
+  endif
+endfunction
+
+function! s:Tig(command)
   if empty(getcmdwintype())
     if executable('git') && executable('tig') && has('terminal')
-      let l:isingitdir =
-        \ !empty(systemlist('git rev-parse --git-dir 2> /dev/null'))
-      if l:isingitdir
+      let s:tig.git_root =
+        \ trim(system('git rev-parse --show-toplevel 2> /dev/null'))
+      if !empty(s:tig.git_root)
         call s:LockServer('explorer')
         if empty(v:servername)
           let l:id = 1
@@ -2426,26 +2480,24 @@ function! s:Tig()
         let l:tigrc = expand('$HOME') . '/.tigrc'
         if !filereadable(l:tigrc)
           echohl ErrorMsg
-          echomsg 'Personal Error Message: ' . expand("$HOME") . '/.tigrc'
-            \ . ' not readable.'
+          echomsg 'Personal Error Message: ' . l:tigrc . ' not readable.'
           echohl NONE
           return
         endif
         let l:tmp_tigrc_content = readfile(l:tigrc)
         if empty(l:tmp_tigrc_content)
           echohl ErrorMsg
-          echomsg 'Personal Error Message: Can not read ' . expand("$HOME")
-            \ . '/.tigrc'
+          echomsg 'Personal Error Message: Can not read ' . l:tigrc
           echohl NONE
           return
         endif
 
-        call add(l:tmp_tigrc_content, "bind generic e <vim "
-          \ . "--remote-expr 'TigEdit(" . '"%(file)")' . "' --servername "
-          \ . v:servername)
-        call add(l:tmp_tigrc_content, "bind generic E @vim "
-          \ . "--remote-expr 'TigBadd(" . '"%(file)")' . "' --servername "
-          \ . v:servername)
+        call add(l:tmp_tigrc_content, "bind generic e <vim --remote-expr"
+          \ . " 'TigEdit(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
+          \ . "' --servername " . v:servername)
+        call add(l:tmp_tigrc_content, "bind generic E @vim --remote-expr"
+          \ . " 'TigBadd(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
+          \ . "' --servername " . v:servername)
 
         if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
           echohl ErrorMsg
@@ -2457,11 +2509,11 @@ function! s:Tig()
 
         let s:tig.commands = []
 
-        let l:term_buf = term_start('tig ', #{
+        let l:term_buf = term_start(a:command, #{
           \ term_name: 'tig',
           \ term_finish: 'close',
           \ hidden: v:true,
-          \ cwd: trim(system("git rev-parse --show-toplevel")),
+          \ cwd: s:tig.git_root,
           \ env: #{ TIGRC_USER: l:tmp_tigrc },
         \ })
 
@@ -2497,18 +2549,35 @@ function! s:Tig()
   endif
 endfunction
 
-function! TigEdit(file)
-  call add(s:tig.commands, 'edit ' . a:file)
+function! s:TigMain()
+  call s:Tig('tig')
 endfunction
 
-function! TigBadd(file)
-  call add(s:tig.commands, 'badd ' . a:file)
+function! TigEdit(file, lineno, lineno_old, text)
+  call add(s:tig.commands, 'edit ' . s:tig.git_root . '/' . a:file)
+  if ((a:text[0] == '+') && (a:lineno > 0))
+    \ || ((a:text[0] == '-') && (a:lineno_old > 0))
+      let l:buf = bufnr(s:tig.git_root . '/' . a:file)
+      call setbufvar(l:buf, 'tig_line',
+        \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
+  endif
+endfunction
+
+function! TigBadd(file, lineno, lineno_old, text)
+  call add(s:tig.commands, 'badd ' . s:tig.git_root . '/' . a:file)
+  echohl OpenedDirPath
+  echo s:tig.git_root . '/' . a:file
+  echohl NONE
+  echon ' added to buffers list'
+  if ((a:text[0] == '+') && (a:lineno > 0))
+    \ || ((a:text[0] == '-') && (a:lineno_old > 0))
+      let l:buf = bufnr(s:tig.git_root . '/' . a:file)
+      call setbufvar(l:buf, 'tig_line',
+        \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
+  endif
 endfunction
 
 "     }}}
-
-command! Tig call <SID>Tig()
-
 "   }}}
 " }}}
 " Filetype specific {{{1
@@ -2535,6 +2604,259 @@ endfunction
 "   }}}
 " }}}
 " Mappings and Keys {{{1
+"   Variables & constants {{{2
+
+if exists('s:leaders') | unlet s:leaders | endif
+const s:leaders = #{
+\   global: '²',
+\   shift:  '³',
+\   tig:    '&',
+\ }
+
+if exists('s:mappings') | unlet s:mappings | endif
+const s:mappings = {
+\   'SEARCH': [
+\     #{
+\       description: 'Next search',
+\       keys: 'n',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>NextSearch()<CR>',
+\       hidden: v:true,
+\     },
+\     #{
+\       description: 'Previous search',
+\       keys: 'N',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>PreviousSearch()<CR>',
+\       hidden: v:true,
+\     },
+\     #{
+\       description: 'Search and replace in visual area',
+\       keys: ':',
+\       mode: 'v',
+\       command: s:search.sensitive_replace,
+\       hidden: v:true,
+\     },
+\     #{
+\       description: 'Case-insensitive search and replace',
+\       keys: s:leaders.global . ':',
+\       mode: 'v',
+\       command: s:search.insensitive_replace,
+\     },
+\     #{
+\       description: 'Case-insensitive search',
+\       keys: s:leaders.global . '/',
+\       mode: 'n',
+\       command: s:search.insensitive,
+\     },
+\   ],
+\   'VIMRC': [
+\     #{
+\       description: 'Open .vimrc in vertical split',
+\       keys: s:leaders.global . '&',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>OpenVimRC()<CR>',
+\     },
+\     #{
+\       description: 'Source .vimrc',
+\       keys: s:leaders.shift . '1',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>SourceVimRC()<CR>',
+\     },
+\   ],
+\   'HIGHLIGHT & COLORS': [
+\     #{
+\       description: 'No highlight search',
+\       keys: s:leaders.global . 'é',
+\       mode: 'n',
+\       command: '<Cmd>nohlsearch<CR>',
+\     },
+\     #{
+\       description: 'Toggle Redhighlight',
+\       keys: s:leaders.global . '"',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>ToggleRedHighlight()<CR>',
+\     },
+\     #{
+\       description: 'Toggle Rainbow',
+\       keys: s:leaders.global . '(',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>ToggleRainbow()<CR>',
+\     },
+\   ],
+\   'WINDOWING': [
+\     #{
+\       description: 'Next window',
+\       keys: s:leaders.global . '<Right>',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>NextWindow()<CR>',
+\     },
+\     #{
+\       description: 'Previous window',
+\       keys: s:leaders.global . '<Left>',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>PreviousWindow()<CR>',
+\     },
+\     #{
+\       keys: s:leaders.global . '=',
+\       mode: 'n',
+\       command: '<C-w>=',
+\       description: 'Equalize splits',
+\     },
+\   ],
+\   'TAGS': [
+\     #{
+\       description: 'Follow tag under cursor',
+\       keys: s:leaders.global . 't',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>FollowTag()<CR>',
+\     },
+\     #{
+\       description: 'Next tag',
+\       keys: 'TT',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>NextTag()<CR>',
+\     },
+\     #{
+\       description: 'Previous tag',
+\       keys: 'tt',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>PreviousTag()<CR>',
+\     },
+\     #{
+\       description: 'Open Taglist',
+\       keys: s:leaders.shift . 'T',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TagList()<CR>',
+\     },
+\   ],
+\   'DEBUG': [
+\     #{
+\       description: 'Display log',
+\       keys: s:leaders.global . 'l',
+\       mode: 'n',
+\       command: '<Cmd>messages<CR>',
+\     },
+\     #{
+\       description: 'List mappings',
+\       keys: s:leaders.global . 'm',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>ListMappings()<CR>',
+\     },
+\   ],
+\   'POPUPS': [
+\     #{
+\       description: 'Open Buffers Menu',
+\       keys: s:leaders.global . s:leaders.global,
+\       mode: 'n',
+\       command: '<Cmd>call <SID>BuffersMenu()<CR>',
+\     },
+\     #{
+\       description: 'Open Explorer',
+\       keys: s:leaders.shift . s:leaders.shift,
+\       mode: 'n',
+\       command: '<Cmd>call <SID>Explorer()<CR>',
+\     },
+\     #{
+\       description: 'Open Undotree',
+\       keys: s:leaders.shift . 'U',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>Undotree()<CR>',
+\     },
+\   ],
+\   'VISUAL': [
+\     #{
+\       description: 'Select last visual block',
+\       keys: s:leaders.global . 'v',
+\       mode: 'n',
+\       command: 'gv',
+\     },
+\     #{
+\       description: 'Move up visual block',
+\       keys: '<S-Up>',
+\       mode: 'v',
+\       command: ':<C-u>silent call <SID>VisualUp()<CR>',
+\     },
+\     #{
+\       description: 'Move down visual block',
+\       keys: '<S-Down>',
+\       mode: 'v',
+\       command: ':<C-u>silent call <SID>VisualDown()<CR>',
+\     },
+\     #{
+\       description: 'Comment visual area',
+\       keys: s:leaders.global . 'c',
+\       mode: 'v',
+\       command: ':<C-u>silent call <SID>Comment()<CR>',
+\     },
+\     #{
+\       description: 'Uncomment visual area',
+\       keys: s:leaders.global . 'C',
+\       mode: 'v',
+\       command: ':<C-u>silent call <SID>Uncomment()<CR>',
+\     },
+\   ],
+\   'TIG': [
+\     #{
+\       description: 'Tig main view',
+\       keys: s:leaders.tig . 'm',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TigMain()<CR>',
+\     },
+\   ],
+\   'UNCLASSIFIED': [
+\     #{
+\       description: 'Unfold',
+\       keys: '<Space>',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>Unfold()<CR>',
+\     },
+\     #{
+\       description: 'Deep unfold in visual area',
+\       keys: '<Space>:',
+\       mode: 'v',
+\       command: ':foldopen!<CR>',
+\     },
+\     #{
+\       description: 'Blank line under current line',
+\       keys: '<CR>',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>BlankDown()<CR>',
+\     },
+\     #{
+\       description: 'Blank line above current line',
+\       keys: s:leaders.global . '<CR>',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>BlankUp()<CR>',
+\     },
+\     #{
+\       description: 'Paste unnamed register in command-line',
+\       keys: s:leaders.global . 'p',
+\       mode: 'c',
+\       command: '<C-r><C-o>"',
+\     },
+\     #{
+\       description: 'Insert anti-slash character easier in command-line',
+\       keys: s:leaders.global . s:leaders.global,
+\       mode: 'c',
+\       command: '\',
+\     },
+\     #{
+\       description: 'Auto-completion',
+\       keys: '<S-Tab>',
+\       mode: 'i',
+\       command: '<C-n>',
+\     },
+\     #{
+\       description: 'Save session',
+\       keys: s:leaders.global . 'z',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>Obsession()<CR>',
+\     },
+\   ],
+\ }
+
+"   }}}
 "   Functions {{{2
 
 function! s:Key(keys)
@@ -2593,219 +2915,57 @@ function! s:Key(keys)
   return l:text . ' >'
 endfunction
 
-function! s:Mappings()
-  let l:max = max(mapnew(s:mappings, { _, val -> len(split(val.key, '\zs')) }))
-  let test = values(s:mappings)
-  for l:each in sort(filter(values(s:mappings), 'v:val.order > 0'),
-  \ { val1, val2 -> val1.order - val2.order })
-    echon l:each.mode . ' '
-    let l:start = match(l:each.key, '<.*>')
-    if l:start > -1
-      if l:start > 0
-        echon l:each.key[0:l:start - 1]
+function! s:ListMappings()
+  const l:max_keys = max(mapnew(flatten(values(s:mappings)),
+    \ { key, val -> len(split(val.keys, '\zs')) }))
+  const l:max_modes = max(mapnew(values(s:modes), 'len(v:val)'))
+  for [l:type, l:submappings] in items(s:mappings)
+    echohl MappingPunctuation
+    echon '----- '
+    echohl NONE
+    echohl MappingKind
+    echon l:type
+    echohl NONE
+    echohl MappingPunctuation
+    echon ' ' . repeat('-', 80 - len(l:type) - 7) . "\n"
+    echohl NONE
+    for l:each in l:submappings
+      if !has_key(l:each, 'hidden')
+        echon tolower(s:modes[l:each.mode])
+          \ . repeat(' ', l:max_modes + 1 - len(s:modes[l:each.mode]))
+        let l:start = match(l:each.keys, '<.*>')
+        if l:start > -1
+          if l:start > 0
+            echon l:each.keys[0:l:start - 1]
+          endif
+          let l:end = matchend(l:each.keys, '<.*>')
+          echohl SpecialKey
+          echon l:each.keys[l:start:l:end - 1]
+          echohl NONE
+          if l:end < len(l:each.keys)
+            echon l:each.keys[l:end:]
+          endif
+        else
+          echon l:each.keys
+        endif
+        echon repeat(' ', l:max_keys - len(split(l:each.keys, '\zs')) + 1)
+          \ . l:each.description . "\n"
       endif
-      let l:end = matchend(l:each.key, '<.*>')
-      echohl SpecialKey
-      echon l:each.key[l:start:l:end - 1]
-      echohl NONE
-      if l:end < len(l:each.key)
-        echon l:each.key[l:end:]
-      endif
-    else
-      echon l:each.key
-    endif
-    echon repeat(' ', l:max - len(split(l:each.key, '\zs')) + 1)
-      \ . l:each.description . "\n"
+    endfor
+  endfor
+endfunction
+
+function! s:DefineMappings()
+  for l:submappings in values(s:mappings)
+    for l:each in l:submappings
+      execute l:each.mode . 'noremap ' . l:each.keys . ' ' . l:each.command
+    endfor
   endfor
 endfunction
 
 "   }}}
-"   Variables & constants {{{2
 
-if exists('s:leaders') | unlet s:leaders | endif
-const s:leaders = #{
-\   global: '²',
-\   shift:  '³',
-\ }
-
-if exists('s:mappings') | unlet s:mappings | endif
-const s:mappings = #{
-\   search_replace:             #{ key:                                 ':',
-  \ mode: 'v', description: 'Search and replace', order: 0 },
-\   insensitive_search_replace: #{ key: s:leaders.global .              ':',
-  \ mode: 'v', description: 'Case-insensitive search and replace', order: 1 },
-\   insensitive_search:         #{ key: s:leaders.global .              '/',
-  \ mode: 'n', description: 'Case-insensitive search', order: 2 },
-\   paste_unnamed_reg:          #{ key: s:leaders.global .              'p',
-  \ mode: 'c', description: 'Paste unnamed register in command-line', order: 3 },
-\   vsplit_vimrc:               #{ key: s:leaders.global .              '&',
-  \ mode: 'n', description: 'Open .vimrc in vertical split', order: 4 },
-\   source_vimrc:               #{ key: s:leaders.shift  .              '1',
-  \ mode: 'n', description: 'Source .vimrc', order: 5 },
-\   nohighlight_search:         #{ key: s:leaders.global .              'é',
-  \ mode: 'n', description: 'No highlight search', order: 6 },
-\   next_window:                #{ key: s:leaders.global .        '<Right>',
-  \ mode: 'n', description: 'Next window', order: 7 },
-\   previous_window:            #{ key: s:leaders.global .         '<Left>',
-  \ mode: 'n', description: 'Previous window', order: 8 },
-\   next_search:                #{ key:                                 'n',
-  \ mode: 'n', description: 'Next search', order: -1 },
-\   previous_search:            #{ key:                                 'N',
-  \ mode: 'n', description: 'Previous search', order: -1 },
-\   unfold:                     #{ key:                           '<Space>',
-  \ mode: 'n', description: 'Unfold', order: 9 },
-\   follow_tag:                 #{ key: s:leaders.global .              't',
-  \ mode: 'n', description: 'Follow tag under cursor', order: 10 },
-\   next_tag:                   #{ key:                                'TT',
-  \ mode: 'n', description: 'Next tag', order: 11 },
-\   previous_tag:               #{ key:                                'tt',
-  \ mode: 'n', description: 'Previous tag', order: 12 },
-\   messages:                   #{ key: s:leaders.global .              'l',
-  \ mode: 'n', description: 'Messages', order: 13 },
-\   map:                        #{ key: s:leaders.global .              'm',
-  \ mode: 'n', description: 'Mappings', order: 14 },
-\   autocompletion:             #{ key:                           '<S-Tab>',
-  \ mode: 'i', description: 'Auto-completion', order: 15 },
-\   visualup:                   #{ key:                            '<S-Up>',
-  \ mode: 'v', description: 'Move up visual block', order: 16 },
-\   visualdown:                 #{ key:                          '<S-Down>',
-  \ mode: 'v', description: 'Move down visual block', order: 17 },
-\   blankup:                    #{ key: s:leaders.global .           '<CR>',
-  \ mode: 'n', description: 'Blank line under current line', order: 18 },
-\   blankdown:                  #{ key:                              '<CR>',
-  \ mode: 'n', description: 'Blank line above current line', order: 19 },
-\   redhighlight:               #{ key: s:leaders.global .              '"',
-  \ mode: 'n', description: 'Toggle Redhighlight', order: 20 },
-\   buffers_menu:               #{ key: s:leaders.global . s:leaders.global,
-  \ mode: 'n', description: 'Open Buffers Menu', order: 21 },
-\   explorer:                   #{ key: s:leaders.shift  .  s:leaders.shift,
-  \ mode: 'n', description: 'Open Explorer', order: 22 },
-\   obsession:                  #{ key: s:leaders.global .              'z',
-  \ mode: 'n', description: 'Save session', order: 23 },
-\   undotree:                   #{ key: s:leaders.shift  .              'U',
-  \ mode: 'n', description: 'Open Undotree', order: 24 },
-\   rainbow:                    #{ key: s:leaders.global .              '(',
-  \ mode: 'n', description: 'Toggle Rainbow', order: 25 },
-\   taglist:                    #{ key: s:leaders.shift  .              'T',
-  \ mode: 'n', description: 'Open Taglist', order: 26 },
-\   equal_splits:               #{ key: s:leaders.global .              '=',
-  \ mode: 'n', description: 'Eqaulize splits', order: 27 },
-\ }
-
-"   }}}
-
-" search and replace
-execute s:mappings.search_replace.mode             . 'noremap '
-  \ . s:mappings.search_replace.key      . ' ' . s:search.sensitive_replace
-
-" search and replace (case-insensitive)
-execute s:mappings.insensitive_search_replace.mode . 'noremap '
-  \ . s:mappings.insensitive_search_replace.key
-  \ . ' ' . s:search.insensitive_replace
-
-" search (case-insensitive)
-execute s:mappings.insensitive_search.mode         . 'noremap '
-  \ . s:mappings.insensitive_search.key  . ' ' . s:search.insensitive
-
-" copy the unnamed register's content in the command line
-" unnamed register = any text deleted or yank (with y)
-execute s:mappings.paste_unnamed_reg.mode           . 'noremap '
-  \ . s:mappings.paste_unnamed_reg.key    . ' <C-r><C-o>"'
-
-" open .vimrc in a vertical split window
-execute s:mappings.vsplit_vimrc.mode               . 'noremap '
-  \ . s:mappings.vsplit_vimrc.key        . ' <Cmd>call <SID>OpenVimRC()<CR>'
-
-" source .vimrc
-execute s:mappings.source_vimrc.mode               . 'noremap '
-  \ . s:mappings.source_vimrc.key        . ' <Cmd>call <SID>SourceVimRC()<CR>'
-
-" stop highlighting from the last search
-execute s:mappings.nohighlight_search.mode         . 'noremap '
-  \ . s:mappings.nohighlight_search.key  . ' <Cmd>nohlsearch<CR>'
-
-" toggle redhighlight
-execute s:mappings.redhighlight.mode               . 'noremap '
-  \ . s:mappings.redhighlight.key
-  \ . ' <Cmd>call <SID>ToggleRedHighlight()<CR>'
-
-" create session
-execute s:mappings.obsession.mode                  . 'noremap '
-  \ . s:mappings.obsession.key           . ' <Cmd>call <SID>Obsession()<CR>'
-
-" buffers menu
-execute s:mappings.buffers_menu.mode               . 'noremap '
-  \ . s:mappings.buffers_menu.key        . ' <Cmd>call <SID>BuffersMenu()<CR>'
-
-" explorer
-execute s:mappings.explorer.mode                   . 'noremap '
-  \ . s:mappings.explorer.key            . ' <Cmd>call <SID>Explorer()<CR>'
-
-" undotree
-execute s:mappings.undotree.mode                   . 'noremap '
-  \ . s:mappings.undotree.key            . ' <Cmd>call <SID>Undotree()<CR>'
-
-" toggle rainbow
-execute s:mappings.rainbow.mode                    . 'noremap '
-  \ . s:mappings.rainbow.key
-  \ . ' <Cmd>call <SID>ToggleRainbow()<CR>'
-
-" taglist
-execute s:mappings.taglist.mode                    . 'noremap '
-  \ . s:mappings.taglist.key             . ' <Cmd>call <SID>TagList()<CR>'
-
-" windows navigation
-execute s:mappings.next_window.mode                . 'noremap '
-  \ . s:mappings.next_window.key         . ' <Cmd>call <SID>NextWindow()<CR>'
-execute s:mappings.previous_window.mode            . 'noremap '
-  \ . s:mappings.previous_window.key
-  \ . ' <Cmd>call <SID>PreviousWindow()<CR>'
-
-" unfold vimscipt's folds
-execute s:mappings.unfold.mode                     . 'noremap '
-  \ . s:mappings.unfold.key              . ' <Cmd>call <SID>Unfold()<CR>'
-
-" navigate between tags
-execute s:mappings.follow_tag.mode                 . 'noremap '
-  \ . s:mappings.follow_tag.key          . ' <Cmd>call <SID>FollowTag()<CR>'
-execute s:mappings.next_tag.mode                   . 'noremap '
-  \ . s:mappings.next_tag.key            . ' <Cmd>call <SID>NextTag()<CR>'
-execute s:mappings.previous_tag.mode               . 'noremap '
-  \ . s:mappings.previous_tag.key        . ' <Cmd>call <SID>PreviousTag()<CR>'
-
-" for debug purposes
-execute s:mappings.messages.mode                   . 'noremap '
-  \ . s:mappings.messages.key            . ' <Cmd>messages<CR>'
-execute s:mappings.map.mode                        . 'noremap '
-  \ . s:mappings.map.key                 . ' <Cmd>call <SID>Mappings()<CR>'
-
-" autocompletion
-execute s:mappings.autocompletion.mode             . 'noremap '
-  \ . s:mappings.autocompletion.key      . ' <C-n>'
-
-" move visual block
-execute s:mappings.visualup.mode                   . 'noremap <silent> '
-  \ . s:mappings.visualup.key
-  \ . ' :<C-u>silent call <SID>VisualUp()<CR>'
-execute s:mappings.visualdown.mode                 . 'noremap <silent> '
-  \ . s:mappings.visualdown.key
-  \ . ' :<C-u>silent call <SID>VisualDown()<CR>'
-
-" add blank lines
-execute s:mappings.blankup.mode                    . 'noremap '
-  \ . s:mappings.blankup.key             . ' <Cmd>call <SID>BlankUp()<CR>'
-execute s:mappings.blankdown.mode                  . 'noremap '
-  \ . s:mappings.blankdown.key           . ' <Cmd>call <SID>BlankDown()<CR>'
-
-" centered search
-execute s:mappings.next_search.mode                . 'noremap '
-  \ . s:mappings.next_search.key         . ' <Cmd>call <SID>NextSearch()<CR>'
-execute s:mappings.previous_search.mode            . 'noremap '
-  \ . s:mappings.previous_search.key     . ' <Cmd>call <SID>PreviousSearch()<CR>'
-
-" equal splits
-execute s:mappings.equal_splits.mode               . 'noremap '
-  \ . s:mappings.equal_splits.key        . ' <C-w>='
+call s:DefineMappings()
 
 " }}}
 " Abbreviations {{{1
@@ -2884,6 +3044,11 @@ augroup vimrc_autocomands
   autocmd BufEnter,CmdwinEnter * :silent call <SID>RefreshRainbow()
 
 "     }}}
+"     Tig autocommands {{{3
+
+  autocmd BufEnter * :silent call <SID>TigCursor()
+
+"     }}}
 "   }}}
 "   Filetype specific autocommands {{{2
 "     Bash autocommands {{{3
@@ -2896,6 +3061,13 @@ augroup vimrc_autocomands
   autocmd BufNewFile *.yml,*.yaml :call <SID>PrefillYamlFile()
 
 "     }}}
+"   }}}
+"   Comments autocommands {{{2
+
+  autocmd FileType c,cpp,glsl,rust    setlocal commentstring=//\ %s
+  autocmd FileType conf,make,sh,yaml  setlocal commentstring=#\ %s
+  autocmd FileType vim                setlocal commentstring=\"\ %s'
+
 "   }}}
 "   Folds autocommands {{{2
 
