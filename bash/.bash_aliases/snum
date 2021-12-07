@@ -5,6 +5,7 @@ alias lh='command ls -d --color .??*'
 alias ll='command ls -l -A --color "$@"'
 
 alias grep='grep --color'
+alias ag='ag -a --hidden'
 
 for I in $(seq 2 1 5); do
   ALIAS=$(printf %${I}s | tr ' ' '.')

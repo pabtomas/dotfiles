@@ -2430,25 +2430,12 @@ endfunction
 "     Variables & constants {{{3
 
 let s:tig = #{
-\   commands: [],
 \   git_root: '',
+\   popup_id: -1,
 \ }
 
 "     }}}
 "     Functions {{{3
-
-function! s:TigTimer(timer_id)
-  if empty(popup_list())
-    for l:each in s:tig.commands
-      execute l:each
-    endfor
-    call timer_stop(a:timer_id)
-  endif
-endfunction
-
-function! s:TigCallback()
-  call timer_start(1, function('s:TigTimer'), #{ repeat: -1 })
-endfunction
 
 function! s:TigCursor()
   if exists('b:tig_line')
@@ -2458,7 +2445,7 @@ function! s:TigCursor()
   endif
 endfunction
 
-function! s:Tig(command)
+function! s:Tig(command, env)
   if empty(getcmdwintype())
     if executable('git') && executable('tig') && has('terminal')
       let s:tig.git_root =
@@ -2492,7 +2479,7 @@ function! s:Tig(command)
           return
         endif
 
-        call add(l:tmp_tigrc_content, "bind generic e <vim --remote-expr"
+        call add(l:tmp_tigrc_content, "bind generic e @vim --remote-expr"
           \ . " 'TigEdit(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
           \ . "' --servername " . v:servername)
         call add(l:tmp_tigrc_content, "bind generic E @vim --remote-expr"
@@ -2501,23 +2488,21 @@ function! s:Tig(command)
 
         if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
           echohl ErrorMsg
-          echomsg 'Personal Error Message: Can not write to temp file: '
+          echomsg 'Personal Error Message: Can not write to temp tigrc file: '
             \ . l:tmp_tigrc
           echohl NONE
           return
         endif
-
-        let s:tig.commands = []
 
         let l:term_buf = term_start(a:command, #{
           \ term_name: 'tig',
           \ term_finish: 'close',
           \ hidden: v:true,
           \ cwd: s:tig.git_root,
-          \ env: #{ TIGRC_USER: l:tmp_tigrc },
+          \ env: extend(#{ TIGRC_USER: l:tmp_tigrc }, a:env),
         \ })
 
-        call popup_create(l:term_buf, #{
+        let s:tig.popup_id = popup_create(l:term_buf, #{
           \ pos: 'topleft',
           \ line: win_screenpos(0)[0],
           \ col: win_screenpos(0)[1],
@@ -2529,7 +2514,6 @@ function! s:Tig(command)
           \ wrap: v:false,
           \ mapping: v:false,
           \ scrollbar: v:false,
-          \ callback: { id, result -> s:TigCallback() },
         \ })
 
         call s:LockServer('tig')
@@ -2550,32 +2534,88 @@ function! s:Tig(command)
 endfunction
 
 function! s:TigMain()
-  call s:Tig('tig')
+  call s:Tig('tig', #{})
+endfunction
+
+function! s:TigMainCurrentFile()
+  call s:Tig('tig ' . expand('%:p'), #{})
+endfunction
+
+function! s:TigStatus()
+  call s:Tig('tig status', #{})
+endfunction
+
+function! s:TigBlame()
+  let l:startup_tig = tempname()
+  if writefile([':' . line('.')], l:startup_tig) == -1
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Can not write to startup tig temp file: '
+      \ . l:startup_tig
+    echohl NONE
+    return
+  endif
+  call s:Tig('tig blame ' . expand('%:p'), #{ TIG_SCRIPT: l:startup_tig })
+endfunction
+
+function! s:TigGrep(pattern)
+  call s:Tig('tig grep ' . a:pattern, #{})
 endfunction
 
 function! TigEdit(file, lineno, lineno_old, text)
-  call add(s:tig.commands, 'edit ' . s:tig.git_root . '/' . a:file)
-  if ((a:text[0] == '+') && (a:lineno > 0))
-    \ || ((a:text[0] == '-') && (a:lineno_old > 0))
-      let l:buf = bufnr(s:tig.git_root . '/' . a:file)
-      call setbufvar(l:buf, 'tig_line',
-        \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
+  let l:filename = s:tig.git_root . '/' . a:file
+  if filereadable(l:filename)
+
+    call popup_close(s:tig.popup_id)
+
+    let l:command = 'view'
+    if filewritable(l:filename)
+      let l:command = 'edit'
+    endif
+
+    execute l:command . ' ' . l:filename
+
+    if ((a:text[0] == '+') && (a:lineno > 0))
+      \ || ((a:text[0] == '-') && (a:lineno_old > 0))
+        let l:buf = bufnr(l:filename)
+        call setbufvar(l:buf, 'tig_line',
+          \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
+    endif
+  else
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: ' . l:filename . ' is not a file or is'
+      \ . ' not readable.'
+    echohl NONE
   endif
 endfunction
 
 function! TigBadd(file, lineno, lineno_old, text)
-  call add(s:tig.commands, 'badd ' . s:tig.git_root . '/' . a:file)
-  echohl OpenedDirPath
-  echo s:tig.git_root . '/' . a:file
-  echohl NONE
-  echon ' added to buffers list'
-  if ((a:text[0] == '+') && (a:lineno > 0))
-    \ || ((a:text[0] == '-') && (a:lineno_old > 0))
-      let l:buf = bufnr(s:tig.git_root . '/' . a:file)
-      call setbufvar(l:buf, 'tig_line',
-        \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
+  let l:filename = s:tig.git_root . '/' . a:file
+  if !empty(glob(l:file_name)) && !isdirectory(l:file_name)
+
+    execute 'badd ' . l:filename
+
+    echohl OpenedDirPath
+    echo l:filename
+    echohl NONE
+    echon ' added to buffers list'
+
+    if ((a:text[0] == '+') && (a:lineno > 0))
+      \ || ((a:text[0] == '-') && (a:lineno_old > 0))
+        let l:buf = bufnr(l:filename)
+        call setbufvar(l:buf, 'tig_line',
+          \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
+    endif
+  else
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: ' . l:filename . ' is not a file.'
+    echohl NONE
   endif
 endfunction
+
+"     }}}
+"     Commands {{{3
+
+command! -nargs=1 TigGrep call <SID>TigGrep(<args>)
 
 "     }}}
 "   }}}
@@ -2612,6 +2652,12 @@ const s:leaders = #{
 \   shift:  '³',
 \   tig:    '&',
 \ }
+"  \     #{
+"  \       description: 'Tig stage view',
+"  \     },
+"  \     #{
+"  \       description: 'Tig stage file view',
+"  \     },
 
 if exists('s:mappings') | unlet s:mappings | endif
 const s:mappings = {
@@ -2738,6 +2784,12 @@ const s:mappings = {
 \       command: '<Cmd>messages<CR>',
 \     },
 \     #{
+\       description: 'Clear log',
+\       keys: s:leaders.shift . 'L',
+\       mode: 'n',
+\       command: '<Cmd>messages clear <Bar> messages<CR>',
+\     },
+\     #{
 \       description: 'List mappings',
 \       keys: s:leaders.global . 'm',
 \       mode: 'n',
@@ -2802,6 +2854,30 @@ const s:mappings = {
 \       keys: s:leaders.tig . 'm',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>TigMain()<CR>',
+\     },
+\     #{
+\       description: 'Tig blame view',
+\       keys: s:leaders.tig . 'b',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TigBlame()<CR>',
+\     },
+\     #{
+\       description: 'Tig status view',
+\       keys: s:leaders.tig . 's',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TigStatus()<CR>',
+\     },
+\     #{
+\       description: 'Tig main view for current file',
+\       keys: s:leaders.tig . 'M',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TigMainCurrentFile()<CR>',
+\     },
+\     #{
+\       description: 'Tig grep',
+\       keys: s:leaders.tig . 'g',
+\       mode: 'n',
+\       command: ':TigGrep ""<Left>',
 \     },
 \   ],
 \   'UNCLASSIFIED': [
