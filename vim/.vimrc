@@ -2586,6 +2586,11 @@ function! s:TigDiff()
       endif
       call s:Tig('tig', #{ TIG_SCRIPT: l:startup_tig },
         \ ['bind generic q quit'], #{})
+    else
+      echohl ErrorMsg
+      echomsg 'Personal Error Message: No change detected'
+      echohl NONE
+      return
     endif
   endif
 endfunction
@@ -2608,6 +2613,11 @@ function! s:TigDiffCurrentFile()
           \ . ' && git diff ' . l:file], #{ out_io: "buffer",
           \ out_msg: v:false,
           \ exit_cb: expand('<SID>') . 'TigDiffCurrentFileHandler' })
+    else
+      echohl ErrorMsg
+      echomsg 'Personal Error Message: No change detected for ' . l:file
+      echohl NONE
+      return
     endif
   endif
 endfunction
