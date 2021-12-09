@@ -37,13 +37,13 @@ color diff-add              120       default
 color diff-add-highlight    42        default
 color diff-del              205       default
 color diff-del-highlight    203       default
-color diff-stat             223       default
+color diff-stat             default   default
 color diff-header           223       default
 color diff-chunk            105       default
 
 color status.header         69        default   bold
 color status.section        105       default
-color status.filename       default   default
+color status.file           default   default
 color stat-staged           42        default   bold
 color stat-unstaged         205       default   bold
 color stat-untracked        205       default   bold

@@ -460,7 +460,7 @@ if !exists("*s:SourceVimRC")
 endif
 
 "   }}}
-"     Comments {{{3
+"   Comments {{{2
 
 function! s:Comment(visual)
   const l:DELIMITER = &commentstring[:match(&commentstring, " %s") - 1]
@@ -500,7 +500,7 @@ function! s:Uncomment(visual)
   endfor
 endfunction
 
-"     }}}
+"   }}}
 "   Server {{{2
 "     Variables & constants {{{3
 
@@ -2507,6 +2507,10 @@ function! s:Tig(command, env, conf_tigrc, term_options)
     \ . " 'TigEdit(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
     \ . "' --servername " . v:servername, "bind generic E @vim --remote-expr"
     \ . " 'TigBadd(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
+    \ . "' --servername " . v:servername, "bind blob e @vim --remote-expr"
+    \ . " 'TigEdit(" . '"%(file)", %(lineno), 0, "+")'
+    \ . "' --servername " . v:servername, "bind blob E @vim --remote-expr"
+    \ . " 'TigBadd(" . '"%(file)", %(lineno), 0, "+")'
     \ . "' --servername " . v:servername ], a:conf_tigrc)
   call extend(l:tmp_tigrc_content, l:conf_tigrc)
 
@@ -2648,6 +2652,22 @@ function! s:TigGrep(pattern)
   endif
 endfunction
 
+function! s:TigFinder()
+  if s:IsTigUsable()
+    let l:startup_tig = tempname()
+    let l:startup_script = [':view-blob']
+
+    if writefile(l:startup_script, l:startup_tig) == -1
+      echohl ErrorMsg
+      echomsg 'Personal Error Message: Can not write to startup tig temp file: '
+        \ . l:startup_tig
+      echohl NONE
+      return
+    endif
+    call s:Tig('tig', #{ TIG_SCRIPT: l:startup_tig }, [], #{})
+  endif
+endfunction
+
 function! s:TigBaddSyncCursors()
   if exists('b:tig_line')
     call cursor(b:tig_line, 0)
@@ -2685,9 +2705,7 @@ function! TigEdit(file, lineno, lineno_old, text)
 
     if ((a:text[0] == '+') && (a:lineno > 0))
       \ || ((a:text[0] == '-') && (a:lineno_old > 0))
-        let l:buf = bufnr(l:filename)
-        call setbufvar(l:buf, 'tig_line',
-          \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
+        call cursor((a:text[0] == '+') ? a:lineno : a:lineno_old, 0)
     endif
   else
     echohl ErrorMsg
@@ -2964,6 +2982,12 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.tig . 'b',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>TigBlame()<CR>',
+\     },
+\     #{
+\       description: 'Tig blob view',
+\       keys: s:LEADERS.tig . 'f',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TigFinder()<CR>',
 \     },
 \     #{
 \       description: 'Tig status view',
