@@ -118,8 +118,8 @@ set ttyfast
 "   }}}
 "   Variables & constants {{{2
 
-if exists('s:modes') | unlet s:modes | endif
-const s:modes = {
+if exists('s:MODES') | unlet s:MODES | endif
+const s:MODES = {
 \   'n': 'NORMAL', 'i': 'INSERT', 'R': 'REPLACE', 'v': 'VISUAL',
 \   'V': 'VISUAL', "\<C-v>": 'VISUAL-BLOCK', 'c': 'COMMAND', 's': 'SELECT',
 \   'S': 'SELECT-LINE', "\<C-s>": 'SELECT-BLOCK', 't': 'TERMINAL',
@@ -130,8 +130,8 @@ const s:modes = {
 "   Search {{{2
 "     Variables & constants {{{3
 
-if exists('s:search') | unlet s:search | endif
-const s:search = #{
+if exists('s:SEARCH') | unlet s:SEARCH | endif
+const s:SEARCH = #{
 \   sensitive_replace: ':s/\%V//g<Left><Left><Left>',
 \   insensitive_replace: ':s/\%V\c//g<Left><Left><Left>',
 \   insensitive: '/\c',
@@ -358,7 +358,7 @@ function! Mode()
   if g:actual_curwin != win_getid()
     return ''
   endif
-  return s:modes[mode()[0]]
+  return s:MODES[mode()[0]]
 endfunction
 
 function! StartMode()
@@ -420,17 +420,17 @@ endfunction
 
 function! s:RestoreStatusLines(timer_id)
   execute  'highlight StatusLine   term=bold cterm=bold ctermfg='
-    \ . s:palette.blue_4   . ' ctermbg=' . s:palette.black
+    \ . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight StatusLineNC term=NONE cterm=NONE ctermfg='
-    \ . s:palette.blue_1   . ' ctermbg=' . s:palette.black
+    \ . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight VertSplit    term=NONE cterm=NONE ctermfg='
-    \ . s:palette.purple_2 . ' ctermbg=' . s:palette.black
+    \ . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
 endfunction
 
 function! s:HighlightStatusLines()
-  execute  'highlight StatusLine   ctermfg=' . s:palette.green_1
-    \ . ' | highlight StatusLineNC ctermfg=' . s:palette.green_1
-    \ . ' | highlight VertSplit    ctermfg=' . s:palette.green_1
+  execute  'highlight StatusLine   ctermfg=' . s:PALETTE.green_1
+    \ . ' | highlight StatusLineNC ctermfg=' . s:PALETTE.green_1
+    \ . ' | highlight VertSplit    ctermfg=' . s:PALETTE.green_1
   call timer_start(1000, function('s:RestoreStatusLines'))
 endfunction
 
@@ -462,25 +462,37 @@ endif
 "   }}}
 "     Comments {{{3
 
-function! s:Comment()
-  for l:lineno in range(line("'<"), line("'>"))
+function! s:Comment(visual)
+  const l:DELIMITER = &commentstring[:match(&commentstring, " %s") - 1]
+  let l:min_limit = line('.')
+  let l:max_limit = line('.')
+  if a:visual
+    let l:min_limit = line("'<")
+    let l:max_limit = line("'>")
+  endif
+  for l:lineno in range(l:min_limit, l:max_limit)
     let l:line = getline(l:lineno)
     if !empty(l:line)
-      let l:delimiter = &commentstring[:match(&commentstring, " %s")]
-      if match(l:line, '^[[:space:]]*' . l:delimiter . ' ') == -1
-        call setline(l:lineno, l:delimiter . ' ' . l:line)
+      if match(l:line, '^[[:space:]]*' . l:DELIMITER . ' ') == -1
+        call setline(l:lineno, l:DELIMITER . ' ' . l:line)
       endif
     endif
   endfor
 endfunction
 
-function! s:Uncomment()
-  for l:lineno in range(line("'<"), line("'>"))
+function! s:Uncomment(visual)
+  const l:DELIMITER = &commentstring[:match(&commentstring, " %s") - 1]
+  let l:min_limit = line('.')
+  let l:max_limit = line('.')
+  if a:visual
+    let l:min_limit = line("'<")
+    let l:max_limit = line("'>")
+  endif
+  for l:lineno in range(l:min_limit, l:max_limit)
     let l:line = getline(l:lineno)
     if !empty(l:line)
-      let l:delimiter = &commentstring[:match(&commentstring, " %s")]
       let [l:match, l:start, l:end] =
-        \ matchstrpos(l:line, '^[[:space:]]*' . l:delimiter . ' ')
+        \ matchstrpos(l:line, '^[[:space:]]*' . l:DELIMITER . ' ')
       if !empty(l:match) || (l:start > 0) || (l:end > 0)
         call setline(l:lineno, l:line[l:end:])
       endif
@@ -492,8 +504,8 @@ endfunction
 "   Server {{{2
 "     Variables & constants {{{3
 
-if exists('s:server_prefix') | unlet s:server_prefix | endif
-const s:server_prefix = 'VIM-'
+if exists('s:SERVER_PREFIX') | unlet s:SERVER_PREFIX | endif
+const s:SERVER_PREFIX = 'VIM-'
 
 if !exists('s:servers') | let s:servers = {} | endif
 
@@ -503,7 +515,7 @@ if !exists('s:servers') | let s:servers = {} | endif
 function! s:StartServer(app, id)
   if has('clientserver')
     if empty(v:servername)
-      call remote_startserver(s:server_prefix . a:id)
+      call remote_startserver(s:SERVER_PREFIX . a:id)
     endif
     let s:servers[a:app] = #{ reachable: v:true }
   else
@@ -520,7 +532,7 @@ function! s:StartRemote(app, id)
     if !has_key(s:servers, a:app)
       let s:servers[a:app] = #{ names: [] }
     endif
-    let s:servers[a:app].names += [s:server_prefix . a:id]
+    let s:servers[a:app].names += [s:SERVER_PREFIX . a:id]
   else
     echohl ErrorMsg
     echomsg 'Personal Error Message: Vim needs to be compiled with'
@@ -556,8 +568,8 @@ endfunction
 " Style {{{1
 "   Palette {{{2
 
-if exists('s:palette') | unlet s:palette | endif
-const s:palette = #{
+if exists('s:PALETTE') | unlet s:PALETTE | endif
+const s:PALETTE = #{
 \   red_1: 196,
 \   red_2: 1,
 \   pink: 205,
@@ -594,58 +606,58 @@ function s:LoadColorscheme()
   set wincolor=NormalAlt
 
   highlight clear
-  execute  'highlight       Buffer              cterm=bold         ctermfg=' . s:palette.grey_2   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       ModifiedBuf         cterm=bold         ctermfg=' . s:palette.red_1
-    \ . ' | highlight       BuffersMenuBorders  cterm=bold         ctermfg=' . s:palette.blue_4
-    \ . ' | highlight       RootPath            cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       ClosedDirPath       cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       FilePath            cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       DiffAdd             cterm=NONE         ctermfg=' . s:palette.green_3  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       DiffDelete          cterm=NONE         ctermfg=' . s:palette.red_2    . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Normal              cterm=bold         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:palette.white_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       ModeMsg             cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       MoreMsg             cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Question            cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       NonText             cterm=NONE         ctermfg=' . s:palette.orange_1 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Comment             cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Constant            cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Special             cterm=NONE         ctermfg=' . s:palette.blue_2   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Identifier          cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Statement           cterm=NONE         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       PreProc             cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Type                cterm=NONE         ctermfg=' . s:palette.blue_3   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Visual              cterm=reverse      ctermbg=' . s:palette.black
-    \ . ' | highlight       LineNr              cterm=NONE         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
+  execute  'highlight       Buffer              cterm=bold         ctermfg=' . s:PALETTE.grey_2   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       ModifiedBuf         cterm=bold         ctermfg=' . s:PALETTE.red_1
+    \ . ' | highlight       BuffersMenuBorders  cterm=bold         ctermfg=' . s:PALETTE.blue_4
+    \ . ' | highlight       RootPath            cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       ClosedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       FilePath            cterm=NONE         ctermfg=' . s:PALETTE.white_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       DiffAdd             cterm=NONE         ctermfg=' . s:PALETTE.green_3  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       DiffDelete          cterm=NONE         ctermfg=' . s:PALETTE.red_2    . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Normal              cterm=bold         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:PALETTE.white_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       ModeMsg             cterm=NONE         ctermfg=' . s:PALETTE.blue_2   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       MoreMsg             cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Question            cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       NonText             cterm=NONE         ctermfg=' . s:PALETTE.orange_1 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Comment             cterm=NONE         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Constant            cterm=NONE         ctermfg=' . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Special             cterm=NONE         ctermfg=' . s:PALETTE.blue_2   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Identifier          cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Statement           cterm=NONE         ctermfg=' . s:PALETTE.red_1    . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       PreProc             cterm=NONE         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Type                cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Visual              cterm=reverse      ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       LineNr              cterm=NONE         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight       Tag                 cterm=underline'
-    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:palette.yellow   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       TagDigit            cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       TagName             cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Error                                  ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.red_1
-    \ . ' | highlight       ErrorMsg            cterm=bold         ctermfg=' . s:palette.red_1    . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Todo                                   ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
-    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:palette.blue_1   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       Folded              cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.orange_2
-    \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:palette.purple_2 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       CursorLine          cterm=bold,reverse ctermfg=' . s:palette.blue_4   . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       MatchParen          cterm=bold         ctermfg=' . s:palette.purple_1 . ' ctermbg=' . s:palette.white_1
-    \ . ' | highlight       Pmenu               cterm=bold         ctermfg=' . s:palette.green_1  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       PopupSelected       cterm=bold         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.purple_2
-    \ . ' | highlight       PmenuSbar           cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_3
-    \ . ' | highlight       PmenuThumb          cterm=NONE         ctermfg=' . s:palette.black    . ' ctermbg=' . s:palette.blue_1
-    \ . ' | highlight       User1               cterm=bold         ctermfg=' . s:palette.pink     . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:palette.green_2  . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:palette.orange_3 . ' ctermbg=' . s:palette.black
-    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:palette.red_2
+    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.yellow   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       TagDigit            cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       TagName             cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Error                                  ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.red_1
+    \ . ' | highlight       ErrorMsg            cterm=bold         ctermfg=' . s:PALETTE.red_1    . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Todo                                   ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
+    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Folded              cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.orange_2
+    \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       CursorLine          cterm=bold,reverse ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       MatchParen          cterm=bold         ctermfg=' . s:PALETTE.purple_1 . ' ctermbg=' . s:PALETTE.white_1
+    \ . ' | highlight       Pmenu               cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       PopupSelected       cterm=bold         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.purple_2
+    \ . ' | highlight       PmenuSbar           cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_3
+    \ . ' | highlight       PmenuThumb          cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
+    \ . ' | highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:PALETTE.red_2
   highlight! link WarningMsg         ErrorMsg
   highlight  link String             Constant
   highlight  link Character          Constant
@@ -771,8 +783,8 @@ set foldopen+=jump
 "   Buffers menu {{{2
 "     Keys {{{3
 
-if exists('s:menukey') | unlet s:menukey | endif
-const s:menukey = #{
+if exists('s:MENUKEY') | unlet s:MENUKEY | endif
+const s:MENU_KEY = #{
 \   next:         "\<Down>",
 \   previous:       "\<Up>",
 \   select:      "\<Enter>",
@@ -787,15 +799,15 @@ const s:menukey = #{
 "     Help {{{3
 
 function! s:HelpBuffersMenu()
-  let l:lines = [ '     ' . s:Key([s:menukey.help]) . '     - Show this help',
-   \ '    ' . s:Key([s:menukey.exit]) . '    - Exit buffers menu',
-   \ '   ' . s:Key([s:menukey.next, s:menukey.previous])
+  let l:lines = [ '     ' . s:Key([s:MENU_KEY.help]) . '     - Show this help',
+   \ '    ' . s:Key([s:MENU_KEY.exit]) . '    - Exit buffers menu',
+   \ '   ' . s:Key([s:MENU_KEY.next, s:MENU_KEY.previous])
      \ . '   - Next/Previous buffer',
-   \ '   ' . s:Key([s:menukey.select]) . '   - Select buffer',
-   \ '     ' . s:Key([s:menukey.delete]) . '     - Delete buffer',
+   \ '   ' . s:Key([s:MENU_KEY.select]) . '   - Select buffer',
+   \ '     ' . s:Key([s:MENU_KEY.delete]) . '     - Delete buffer',
    \ '    < 0-9 >    - Buffer-id characters',
    \ '     < $ >     - End-of-string buffer-id character',
-   \ ' ' . s:Key([s:menukey.erase]) . ' - Erase last buffer-id character',
+   \ ' ' . s:Key([s:MENU_KEY.erase]) . ' - Erase last buffer-id character',
   \ ]
   let l:text = []
   for l:each in l:lines
@@ -840,17 +852,17 @@ function! s:ReplaceCursorOnCurrentBuffer(winid)
 endfunction
 
 function! s:BuffersMenuFilter(winid, key)
-  if a:key == s:menukey.next
+  if a:key == s:MENU_KEY.next
     bnext
     call s:ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == s:menukey.previous
+  elseif a:key == s:MENU_KEY.previous
     bprevious
     call s:ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == s:menukey.select
+  elseif a:key == s:MENU_KEY.select
     call popup_clear()
     unlet s:menu
     call s:UnlockServer('explorer')
-  elseif a:key == s:menukey.delete
+  elseif a:key == s:MENU_KEY.delete
     let l:listed_buf = getbufinfo(#{ buflisted: 1 })
     if len(l:listed_buf) > 1
       let l:buf = bufnr()
@@ -870,14 +882,14 @@ function! s:BuffersMenuFilter(winid, key)
         call s:ReplaceCursorOnCurrentBuffer(a:winid)
       endif
     endif
-  elseif a:key == s:menukey.exit
+  elseif a:key == s:MENU_KEY.exit
     if !empty(win_findbuf(s:menu.buf_backup))
       execute 'buffer ' . s:menu.buf_backup
     endif
     call popup_clear()
     unlet s:menu
     call s:UnlockServer('explorer')
-  elseif match(a:key, s:menukey.selectchars) > -1
+  elseif match(a:key, s:MENU_KEY.selectchars) > -1
     if (a:key != "0") || (len(s:menu.input) > 0)
       let s:menu.input = s:menu.input . a:key
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
@@ -893,7 +905,7 @@ function! s:BuffersMenuFilter(winid, key)
           \ . string(l:matches) . ')'
       endif
     endif
-  elseif a:key == s:menukey.erase
+  elseif a:key == s:MENU_KEY.erase
     let s:menu.input = s:menu.input[:-2]
     if len(s:menu.input) > 0
       let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
@@ -904,7 +916,7 @@ function! s:BuffersMenuFilter(winid, key)
     else
       echo s:menu.input
     endif
-  elseif a:key == s:menukey.help
+  elseif a:key == s:MENU_KEY.help
     call s:HelpBuffersMenu()
   endif
   return v:true
@@ -972,8 +984,8 @@ endfunction
 "   Explorer {{{2
 "     Keys {{{3
 
-if exists('s:explorerkey') | unlet s:explorerkey | endif
-const s:explorerkey = #{
+if exists('s:EXPLORER_KEY') | unlet s:EXPLORER_KEY | endif
+const s:EXPLORER_KEY = #{
 \   next:              "\<Down>",
 \   previous:            "\<Up>",
 \   first:                   "g",
@@ -1004,27 +1016,27 @@ const s:explorerkey = #{
 
 function! s:HelpExplorer()
   let l:lines = ['         NORMAL Mode',
-    \ '     ' . s:Key([s:explorerkey.help]) . '     - Show this help',
-    \ '    ' . s:Key([s:explorerkey.exit]) . '    - Exit explorer',
-    \ '   ' . s:Key([s:explorerkey.next, s:explorerkey.previous])
+    \ '     ' . s:Key([s:EXPLORER_KEY.help]) . '     - Show this help',
+    \ '    ' . s:Key([s:EXPLORER_KEY.exit]) . '    - Exit explorer',
+    \ '   ' . s:Key([s:EXPLORER_KEY.next, s:EXPLORER_KEY.previous])
       \ . '   - Next/Previous file',
-    \ '   ' . s:Key([s:explorerkey.first, s:explorerkey.last])
+    \ '   ' . s:Key([s:EXPLORER_KEY.first, s:EXPLORER_KEY.last])
       \ . '   - First/Last file',
-    \ '     ' . s:Key([s:explorerkey.open]) . '     - Open dirs & files',
-    \ '     ' . s:Key([s:explorerkey.badd]) . '     - Add to buffers list',
-    \ '     ' . s:Key([s:explorerkey.yank]) . '     - Yank path',
-    \ '     ' . s:Key([s:explorerkey.dotfiles]) . '     - Show/Hide dot files',
-    \ '     ' . s:Key([s:explorerkey.reset]) . '     - Reset explorer',
-    \ '   ' . s:Key([s:explorerkey.searchmode]) . '   - Enter SEARCH Mode',
-    \ '   ' . s:Key([s:explorerkey.next_match, s:explorerkey.previous_match])
+    \ '     ' . s:Key([s:EXPLORER_KEY.open]) . '     - Open dirs & files',
+    \ '     ' . s:Key([s:EXPLORER_KEY.badd]) . '     - Add to buffers list',
+    \ '     ' . s:Key([s:EXPLORER_KEY.yank]) . '     - Yank path',
+    \ '     ' . s:Key([s:EXPLORER_KEY.dotfiles]) . '     - Show/Hide dot files',
+    \ '     ' . s:Key([s:EXPLORER_KEY.reset]) . '     - Reset explorer',
+    \ '   ' . s:Key([s:EXPLORER_KEY.searchmode]) . '   - Enter SEARCH Mode',
+    \ '   ' . s:Key([s:EXPLORER_KEY.next_match, s:EXPLORER_KEY.previous_match])
       \ . '   - Next/Previous SEARCH match', '         SEARCH Mode',
-    \ '    ' . s:Key([s:explorerkey.SM_exit]) . '    - Exit SEARCH Mode',
-    \ '   ' . s:Key([s:explorerkey.SM_evaluate]) . '   - Evaluate SEARCH',
-    \ ' ' . s:Key([s:explorerkey.SM_erase]) . ' - Erase SEARCH',
-    \ '   ' . s:Key([s:explorerkey.SM_next, s:explorerkey.SM_previous])
+    \ '    ' . s:Key([s:EXPLORER_KEY.SM_exit]) . '    - Exit SEARCH Mode',
+    \ '   ' . s:Key([s:EXPLORER_KEY.SM_evaluate]) . '   - Evaluate SEARCH',
+    \ ' ' . s:Key([s:EXPLORER_KEY.SM_erase]) . ' - Erase SEARCH',
+    \ '   ' . s:Key([s:EXPLORER_KEY.SM_next, s:EXPLORER_KEY.SM_previous])
       \ . '   - Next/Previous SEARCH',
-    \ ' ' . s:Key([s:explorerkey.SM_wide_left,
-      \ s:explorerkey.SM_wide_right]) . ' - Navigation',
+    \ ' ' . s:Key([s:EXPLORER_KEY.SM_wide_left,
+      \ s:EXPLORER_KEY.SM_wide_right]) . ' - Navigation',
   \ ]
   let l:text = []
   for l:each in l:lines
@@ -1105,13 +1117,13 @@ function! s:Depth(path)
 endfunction
 
 function! s:NormalModeExplorerFilter(winid, key)
-  if a:key == s:explorerkey.dotfiles
+  if a:key == s:EXPLORER_KEY.dotfiles
     let s:explorer.dotfiles = !s:explorer.dotfiles
     call s:UpdateExplorer()
     call popup_settext(a:winid, s:explorer.text)
     call win_execute(a:winid, 'if line(".") > line("$") |'
       \ . ' call cursor(line("$"), 0) | endif')
-  elseif a:key == s:explorerkey.yank
+  elseif a:key == s:EXPLORER_KEY.yank
     call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
     let l:path = s:explorer.paths[s:explorer.line]
     unlet s:explorer.line
@@ -1120,7 +1132,7 @@ function! s:NormalModeExplorerFilter(winid, key)
     echohl OpenedDirPath
     echon @"
     echohl NONE
-  elseif a:key == s:explorerkey.badd
+  elseif a:key == s:EXPLORER_KEY.badd
     call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
     let l:path = s:explorer.paths[s:explorer.line]
     unlet s:explorer.line
@@ -1131,7 +1143,7 @@ function! s:NormalModeExplorerFilter(winid, key)
       echohl NONE
       echon ' added to buffers list'
     endif
-  elseif a:key == s:explorerkey.open
+  elseif a:key == s:EXPLORER_KEY.open
     call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
     let l:path = s:explorer.paths[s:explorer.line]
     unlet s:explorer.line
@@ -1151,35 +1163,35 @@ function! s:NormalModeExplorerFilter(winid, key)
       unlet s:explorer
       call s:UnlockServer('explorer')
     endif
-  elseif a:key == s:explorerkey.reset
+  elseif a:key == s:EXPLORER_KEY.reset
     call s:InitExplorer()
     call s:UpdateExplorer()
     call popup_settext(a:winid, s:explorer.text)
     call win_execute(a:winid, 'call cursor(2, 0)')
-  elseif a:key == s:explorerkey.next_match
+  elseif a:key == s:EXPLORER_KEY.next_match
     call win_execute(a:winid, 'call search(histget("/", -1), "")')
-  elseif a:key == s:explorerkey.previous_match
+  elseif a:key == s:EXPLORER_KEY.previous_match
     call win_execute(a:winid, 'call search(histget("/", -1), "b")')
-  elseif a:key == s:explorerkey.first
+  elseif a:key == s:EXPLORER_KEY.first
     call win_execute(a:winid,
       \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
-  elseif a:key == s:explorerkey.last
+  elseif a:key == s:EXPLORER_KEY.last
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif (a:key == s:explorerkey.exit)
+  elseif (a:key == s:EXPLORER_KEY.exit)
     call win_execute(a:winid, 'call clearmatches()')
     call popup_clear()
     unlet s:explorer
     call s:UnlockServer('explorer')
-  elseif a:key == s:explorerkey.next
+  elseif a:key == s:EXPLORER_KEY.next
     call win_execute(a:winid, 'if line(".") < line("$") |'
       \ . ' call cursor(line(".") + 1, 0) | endif')
-  elseif a:key == s:explorerkey.previous
+  elseif a:key == s:EXPLORER_KEY.previous
     call win_execute(a:winid, 'if line(".") > 2 |'
       \ . ' call cursor(line(".") - 1, 0) | else |'
       \ . ' execute "normal! \<C-y>" | endif')
-  elseif a:key == s:explorerkey.help
+  elseif a:key == s:EXPLORER_KEY.help
     call s:HelpExplorer()
-  elseif a:key == s:explorerkey.searchmode
+  elseif a:key == s:EXPLORER_KEY.searchmode
     let s:explorer.mode = s:explorer.SEARCH
     let s:explorer.input = a:key
     let s:explorer.input_cursor = 1
@@ -1192,13 +1204,13 @@ function! s:NormalModeExplorerFilter(winid, key)
 endfunction
 
 function! s:RemoteModeExplorerFilter(winid, key)
-  if a:key == s:explorerkey.dotfiles
+  if a:key == s:EXPLORER_KEY.dotfiles
     let s:explorer.dotfiles = !s:explorer.dotfiles
     call s:UpdateExplorer()
     call popup_settext(a:winid, s:explorer.text)
     call win_execute(a:winid, 'if line(".") > line("$") |'
       \ . ' call cursor(line("$"), 0) | endif')
-  elseif a:key == s:explorerkey.yank
+  elseif a:key == s:EXPLORER_KEY.yank
     call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
     let l:path = s:explorer.paths[s:explorer.line]
     unlet s:explorer.line
@@ -1210,7 +1222,7 @@ function! s:RemoteModeExplorerFilter(winid, key)
           \ . ' | echohl OpenedDirPath | echon @" | echohl NONE<CR>')
       endif
     endfor
-  elseif a:key == s:explorerkey.badd
+  elseif a:key == s:EXPLORER_KEY.badd
     call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
     let l:path = s:explorer.paths[s:explorer.line]
     unlet s:explorer.line
@@ -1224,7 +1236,7 @@ function! s:RemoteModeExplorerFilter(winid, key)
         endif
       endfor
     endif
-  elseif a:key == s:explorerkey.open
+  elseif a:key == s:EXPLORER_KEY.open
     call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
     let l:path = s:explorer.paths[s:explorer.line]
     unlet s:explorer.line
@@ -1253,30 +1265,30 @@ function! s:RemoteModeExplorerFilter(winid, key)
         endif
       endfor
     endif
-  elseif a:key == s:explorerkey.reset
+  elseif a:key == s:EXPLORER_KEY.reset
     call s:InitExplorer()
     call s:UpdateExplorer()
     call popup_settext(a:winid, s:explorer.text)
     call win_execute(a:winid, 'call cursor(2, 0)')
-  elseif a:key == s:explorerkey.next_match
+  elseif a:key == s:EXPLORER_KEY.next_match
     call win_execute(a:winid, 'call search(histget("/", -1), "")')
-  elseif a:key == s:explorerkey.previous_match
+  elseif a:key == s:EXPLORER_KEY.previous_match
     call win_execute(a:winid, 'call search(histget("/", -1), "b")')
-  elseif a:key == s:explorerkey.first
+  elseif a:key == s:EXPLORER_KEY.first
     call win_execute(a:winid,
       \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
-  elseif a:key == s:explorerkey.last
+  elseif a:key == s:EXPLORER_KEY.last
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif a:key == s:explorerkey.next
+  elseif a:key == s:EXPLORER_KEY.next
     call win_execute(a:winid, 'if line(".") < line("$") |'
       \ . ' call cursor(line(".") + 1, 0) | endif')
-  elseif a:key == s:explorerkey.previous
+  elseif a:key == s:EXPLORER_KEY.previous
     call win_execute(a:winid, 'if line(".") > 2 |'
       \ . ' call cursor(line(".") - 1, 0) | else |'
       \ . ' execute "normal! \<C-y>" | endif')
-  elseif a:key == s:explorerkey.help
+  elseif a:key == s:EXPLORER_KEY.help
     call s:HelpExplorer()
-  elseif a:key == s:explorerkey.searchmode
+  elseif a:key == s:EXPLORER_KEY.searchmode
     let s:explorer.mode = s:explorer.SEARCH
     let s:explorer.input = a:key
     let s:explorer.input_cursor = 1
@@ -1289,23 +1301,23 @@ function! s:RemoteModeExplorerFilter(winid, key)
 endfunction
 
 function! s:SearchModeExplorerFilter(winid, key)
-  if a:key == s:explorerkey.SM_evaluate
+  if a:key == s:EXPLORER_KEY.SM_evaluate
     let @/ = '\%>1l' . s:explorer.input[1:]
     call win_execute(a:winid,
       \ 'if s:explorer.input[0] == "/" | call search(@/, "c") | '
       \ . 'elseif s:explorer.input[0] == "?" | call search(@/, "bc") | endif')
     call histadd('/', @/)
     let s:explorer.input = ''
-  elseif a:key == s:explorerkey.SM_erase
+  elseif a:key == s:EXPLORER_KEY.SM_erase
     if s:explorer.input_cursor > 1
       let s:explorer.input =
         \ slice(s:explorer.input, 0, s:explorer.input_cursor - 1)
         \ . slice(s:explorer.input, s:explorer.input_cursor)
       let s:explorer.input_cursor -= 1
     endif
-  elseif a:key == s:explorerkey.SM_exit
+  elseif a:key == s:EXPLORER_KEY.SM_exit
     let s:explorer.input = ''
-  elseif a:key == s:explorerkey.SM_next
+  elseif a:key == s:EXPLORER_KEY.SM_next
     if s:explorer.history_cursor < 0
       let s:explorer.history_cursor += 1
       let s:explorer.input = '/' . histget('search', s:explorer.history_cursor)
@@ -1313,28 +1325,28 @@ function! s:SearchModeExplorerFilter(winid, key)
       let s:explorer.input = '/'
     endif
     let s:explorer.input_cursor = len(s:explorer.input)
-  elseif a:key == s:explorerkey.SM_previous
+  elseif a:key == s:EXPLORER_KEY.SM_previous
     if abs(s:explorer.history_cursor) < &history
       let s:explorer.history_cursor -= 1
       let s:explorer.input = '/' . histget('search', s:explorer.history_cursor)
       let s:explorer.input_cursor = len(s:explorer.input)
     endif
-  elseif a:key == s:explorerkey.SM_left
+  elseif a:key == s:EXPLORER_KEY.SM_left
     if s:explorer.input_cursor > 1
       let s:explorer.input_cursor -= 1
     endif
-  elseif a:key == s:explorerkey.SM_right
+  elseif a:key == s:EXPLORER_KEY.SM_right
     if s:explorer.input_cursor < len(s:explorer.input)
       let s:explorer.input_cursor += 1
     endif
-  elseif a:key == s:explorerkey.SM_wide_left
+  elseif a:key == s:EXPLORER_KEY.SM_wide_left
     for l:each in range(s:explorer.input_cursor - 2, 0, -1)
       if match(s:explorer.input[l:each], '[[:punct:][:space:]]') > -1
         let s:explorer.input_cursor = l:each + 1
         break
       endif
     endfor
-  elseif a:key == s:explorerkey.SM_wide_right
+  elseif a:key == s:EXPLORER_KEY.SM_wide_right
     let s:explorer.input_cursor = match(s:explorer.input[1:],
       \ '[[:punct:][:space:]]', s:explorer.input_cursor + 1)
     if s:explorer.input_cursor == -1
@@ -1494,8 +1506,8 @@ command! -nargs=1 StartRemoteExplorer call <SID>StartRemoteExplorer(<args>)
 "   Obsession {{{2
 "     Keys {{{3
 
-if exists('s:obsessionkey') | unlet s:obsessionkey | endif
-const s:obsessionkey = #{
+if exists('s:OBESSION_KEY') | unlet s:OBESSION_KEY | endif
+const s:OBESSION_KEY = #{
 \   yes: "y",
 \   no:  "n",
 \ }
@@ -1542,10 +1554,10 @@ function! s:PromptObsession()
       echon ']o ? '
       let l:mkses = input('')
       let l:mkses = tolower(l:mkses)
-      if l:mkses == s:obsessionkey.yes
+      if l:mkses == s:OBESSION_KEY.yes
         mksession!
         break
-      elseif l:mkses == s:obsessionkey.no
+      elseif l:mkses == s:OBESSION_KEY.no
         break
       endif
       echohl NONE
@@ -1569,8 +1581,8 @@ endif
 "     }}}
 "     Keys {{{3
 
-if exists('s:undokey') | unlet s:undokey | endif
-const s:undokey = #{
+if exists('s:UNDO_KEY') | unlet s:UNDO_KEY | endif
+const s:UNDO_KEY = #{
 \   next:          "\<Up>",
 \   previous:    "\<Down>",
 \   first:             "g",
@@ -1586,14 +1598,14 @@ const s:undokey = #{
 "     Help {{{3
 
 function! s:HelpUndotree()
-  let l:lines = [ '     ' . s:Key([s:undokey.help]) . '   - Show this help',
-   \ '    ' . s:Key([s:undokey.exit]) . '  - Exit undotree',
-   \ '   ' . s:Key([s:undokey.next, s:undokey.previous])
+  let l:lines = [ '     ' . s:Key([s:UNDO_KEY.help]) . '   - Show this help',
+   \ '    ' . s:Key([s:UNDO_KEY.exit]) . '  - Exit undotree',
+   \ '   ' . s:Key([s:UNDO_KEY.next, s:UNDO_KEY.previous])
      \ . ' - Next/Previous change',
-   \ '   ' . s:Key([s:undokey.select]) . ' - Select change',
-   \ '   ' . s:Key([s:undokey.first, s:undokey.last])
+   \ '   ' . s:Key([s:UNDO_KEY.select]) . ' - Select change',
+   \ '   ' . s:Key([s:UNDO_KEY.first, s:UNDO_KEY.last])
      \ . ' - First/Last change',
-   \ '   ' . s:Key([s:undokey.scrollup, s:undokey.scrolldown])
+   \ '   ' . s:Key([s:UNDO_KEY.scrollup, s:UNDO_KEY.scrolldown])
      \ . ' - Scroll diff window',
   \ ]
   let l:text = []
@@ -1641,7 +1653,7 @@ function! s:DiffHandler(job, status)
   let l:diffbuf = ch_getbufnr(a:job, 'out')
   let l:text = getbufline(l:diffbuf, 1, '$')
 
-  execute 'silent bdelete ' . l:diffbuf
+  execute 'silent bdelete! ' . l:diffbuf
   if delete(s:undo.tmp[0]) != 0
     echohl ErrorMsg
     echomsg 'Personal Error Message: Can not delete temp file: '
@@ -1703,7 +1715,7 @@ function! s:Diff(treepopup_id)
       \ . s:undo.tmp[1]
     echohl NONE
   endif
-  let s:undo.job = job_start(['/bin/sh', '-c', l:diffcommand . ' '
+  let s:undo.job = job_start(['/bin/bash', '-c', l:diffcommand . ' '
     \ . s:undo.tmp[0] . ' ' . s:undo.tmp[1]], #{ out_io: 'buffer',
     \ out_msg: v:false, exit_cb: expand('<SID>') . 'DiffHandler' })
 
@@ -1711,13 +1723,13 @@ function! s:Diff(treepopup_id)
 endfunction
 
 function! s:UndotreeFilter(winid, key)
-  if a:key == s:undokey.exit
+  if a:key == s:UNDO_KEY.exit
     execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-      \ . s:palette.black . ' ctermbg=' . s:palette.purple_2
+      \ . s:PALETTE.black . ' ctermbg=' . s:PALETTE.purple_2
     call popup_clear()
     unlet s:undo
     call s:UnlockServer('explorer')
-  elseif a:key == s:undokey.next
+  elseif a:key == s:UNDO_KEY.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
       \ . ' | call cursor(line(".") - 1, 0)'
@@ -1727,7 +1739,7 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-  elseif a:key == s:undokey.previous
+  elseif a:key == s:UNDO_KEY.previous
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") < line("$")'
       \ . ' | call cursor(line(".") + 1, 0)'
@@ -1737,30 +1749,30 @@ function! s:UndotreeFilter(winid, key)
       \ . ' | endwhile')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-  elseif a:key == s:undokey.first
+  elseif a:key == s:UNDO_KEY.first
     call s:UpdateUndotree()
     call win_execute(a:winid, 'call cursor(1, 0)')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-  elseif a:key == s:undokey.last
+  elseif a:key == s:UNDO_KEY.last
     call s:UpdateUndotree()
     call win_execute(a:winid, 'call cursor(line("$"), 0)')
     call s:Diff(a:winid)
     call s:UndotreeButtons(a:winid)
-  elseif a:key == s:undokey.scrollup
+  elseif a:key == s:UNDO_KEY.scrollup
     call win_execute(s:undo.diff_id,
       \ 'call cursor(line("w0") - 1, 0) | redraw')
-  elseif a:key == s:undokey.scrolldown
+  elseif a:key == s:UNDO_KEY.scrolldown
     call win_execute(s:undo.diff_id,
       \ 'call cursor(line("w$") + 1, 0) | redraw')
-  elseif a:key == s:undokey.select
+  elseif a:key == s:UNDO_KEY.select
     call win_execute(a:winid, 'let s:undo.line = line(".")')
     execute 'silent undo ' . s:undo.meta[s:undo.line - 1]
     unlet s:undo.line
     call s:UpdateUndotree()
     call popup_settext(a:winid, s:undo.text)
     call s:Diff(a:winid)
-  elseif a:key == s:undokey.help
+  elseif a:key == s:UNDO_KEY.help
     call s:HelpUndotree()
   endif
   return v:true
@@ -1971,7 +1983,7 @@ function! s:Undotree()
   call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
   execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-    \ . s:palette.pink . ' ctermbg=' . s:palette.black
+    \modes . s:PALETTE.pink . ' ctermbg=' . s:PALETTE.black
 
   let s:undo.diff_id = popup_create('',
   \ #{
@@ -2041,7 +2053,7 @@ endfunction
 
 function! s:GenerateGutentags()
   if executable('ctags') && executable('git')
-    let l:bufdir = fnamemodify(expand('%'), ':p:h')
+    let l:bufdir = expand('%:p:h')
     let l:git_root = trim(system('cd ' . l:bufdir
       \ . ' && git rev-parse --show-toplevel 2> /dev/null'))
     if !empty(l:git_root)
@@ -2062,7 +2074,7 @@ function! s:GenerateGutentags()
       let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
         \ . ' do echo -n "--exclude=' . l:git_root . '"/${FILE}" "; done) -o '
         \ . l:tags_path . ' ' . l:git_root
-      call job_start(['/bin/sh', '-c', l:command],
+      call job_start(['/bin/bash', '-c', l:command],
         \ #{ exit_cb: expand('<SID>') . 'GutentagsHandler' })
     endif
   else
@@ -2267,8 +2279,8 @@ endfunction
 "   Taglist {{{2
 "     Keys {{{3
 
-if exists('s:listkey') | unlet s:listkey | endif
-const s:listkey = #{
+if exists('s:TAGLIST_KEY') | unlet s:TAGLIST_KEY | endif
+const s:TAGLIST_KEY = #{
 \   next:         "\<Down>",
 \   previous:       "\<Up>",
 \   select:      "\<Enter>",
@@ -2289,11 +2301,11 @@ function! LineLessThan(left, right)
 endfunction
 
 function! s:TagListFilter(winid, key)
-  if a:key == s:listkey.exit
+  if a:key == s:TAGLIST_KEY.exit
     call popup_clear()
-    unlet s:list
+    unlet s:taglist
     call s:UnlockServer('explorer')
-  elseif a:key == s:listkey.next
+  elseif a:key == s:TAGLIST_KEY.next
     call win_execute(a:winid, 'if line(".") < line("$") - 1'
       \ . ' | call cursor(line(".") + 1, 0)'
       \ . ' | while match(getline("."), "^  ") < 0'
@@ -2301,27 +2313,27 @@ function! s:TagListFilter(winid, key)
       \ . ' | call cursor(line(".") + 1, 0) | endwhile | endif'
       \ . ' | if (line(".") == line("$") - 1) && (line("$") > line("w$"))'
       \ . ' | execute "normal! \<C-e>" | endif')
-  elseif a:key == s:listkey.previous
+  elseif a:key == s:TAGLIST_KEY.previous
     call win_execute(a:winid, 'if line(".") > 3'
       \ . ' | call cursor(line(".") - 1, 0)'
       \ . ' | while (match(getline("."), "^  ") < 0) && (line(".") > 3)'
       \ . ' | call cursor(line(".") - 1, 0) | endwhile'
       \ . ' | else | execute "normal! \<C-y>"| endif')
-  elseif a:key == s:listkey.select
-    call win_execute(a:winid, 'let s:list.tmp = trim(getline("."))')
+  elseif a:key == s:TAGLIST_KEY.select
+    call win_execute(a:winid, 'let s:taglist.tmp = trim(getline("."))')
     call popup_clear()
-    call cursor(str2nr(matchstr(s:list.tmp, "^[0-9][0-9]*")), 0)
+    call cursor(str2nr(matchstr(s:taglist.tmp, "^[0-9][0-9]*")), 0)
     if foldlevel('.') > 0 | foldopen! | endif
-    unlet s:list
+    unlet s:taglist
     call s:UnlockServer('explorer')
   endif
   return v:true
 endfunction
 
 function! s:UpdateTagList()
-  let s:list.text = []
+  let s:taglist.text = []
 
-  let l:filename = fnamemodify(expand("%"), ":p")
+  let l:filename = expand("%:p")
   let l:language = trim(system('ctags --print-language ' . l:filename
     \ . ' | awk "{printf \"%s\n\", \$2}"'))
   if l:language == "NONE"
@@ -2362,8 +2374,8 @@ function! s:UpdateTagList()
         \ #{ type: 'kind', col: 5, length: len(l:header_start) - 5 },
         \ #{ type: 'punct', col: len(l:header_start) + 1,
         \    length: winwidth(0) - len(l:header_start) }]
-      call add(s:list.text, #{ text: l:line, props: l:properties })
-      call add(s:list.text, #{ text: '', props: []})
+      call add(s:taglist.text, #{ text: l:line, props: l:properties })
+      call add(s:taglist.text, #{ text: '', props: []})
       for l:each in l:tags
         if l:each.kind == l:letter
           let l:line = '  ' . l:each.line . ': ' . l:each.name
@@ -2372,11 +2384,11 @@ function! s:UpdateTagList()
             \ col: len(l:each.line) + 3, length: 1 }, #{ type: 'name',
             \ col: len(l:each.line) + 4, length: winwidth(0)
             \   - len(l:each.line) - 4 }]
-          call add(s:list.text, #{ text: l:line, props: l:properties })
+          call add(s:taglist.text, #{ text: l:line, props: l:properties })
         endif
       endfor
       let l:tags = filter(l:tags, { _, val -> val.kind != l:letter })
-      call add(s:list.text, #{ text: '', props: []})
+      call add(s:taglist.text, #{ text: '', props: []})
     endfor
   endif
 endfunction
@@ -2387,11 +2399,11 @@ function! s:TagList()
       call s:LockServer('explorer')
       let l:savedview = winsaveview()
       let l:line = line(".")
-      let s:list = {}
+      let s:taglist = {}
       call s:UpdateTagList()
       call winrestview(l:savedview)
 
-      if empty(s:list.text)
+      if empty(s:taglist.text)
         return
       endif
 
@@ -2432,92 +2444,20 @@ endfunction
 let s:tig = #{
 \   git_root: '',
 \   popup_id: -1,
+\   term_buf: -1,
+\   diff_file_buf: -1,
 \ }
 
 "     }}}
 "     Functions {{{3
 
-function! s:TigCursor()
-  if exists('b:tig_line')
-    call cursor(b:tig_line, 0)
-    normal! zz
-    unlet b:tig_line
-  endif
-endfunction
-
-function! s:Tig(command, env)
+function! s:IsTigUsable()
   if empty(getcmdwintype())
     if executable('git') && executable('tig') && has('terminal')
-      let s:tig.git_root =
-        \ trim(system('git rev-parse --show-toplevel 2> /dev/null'))
+      let s:tig.git_root = trim(system('cd ' . expand('%:p:h')
+        \ . ' && git rev-parse --show-toplevel 2> /dev/null'))
       if !empty(s:tig.git_root)
-        call s:LockServer('explorer')
-        if empty(v:servername)
-          let l:id = 1
-          if !empty(serverlist())
-            let l:id = max(map(split(serverlist(), s:server_prefix),
-              "trim(v:val)")) + 1
-          endif
-          call s:StartServer('tig', l:id)
-        else
-          call s:UnlockServer('tig')
-        endif
-
-        let l:tmp_tigrc = tempname()
-        let l:tigrc = expand('$HOME') . '/.tigrc'
-        if !filereadable(l:tigrc)
-          echohl ErrorMsg
-          echomsg 'Personal Error Message: ' . l:tigrc . ' not readable.'
-          echohl NONE
-          return
-        endif
-        let l:tmp_tigrc_content = readfile(l:tigrc)
-        if empty(l:tmp_tigrc_content)
-          echohl ErrorMsg
-          echomsg 'Personal Error Message: Can not read ' . l:tigrc
-          echohl NONE
-          return
-        endif
-
-        call add(l:tmp_tigrc_content, "bind generic e @vim --remote-expr"
-          \ . " 'TigEdit(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
-          \ . "' --servername " . v:servername)
-        call add(l:tmp_tigrc_content, "bind generic E @vim --remote-expr"
-          \ . " 'TigBadd(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
-          \ . "' --servername " . v:servername)
-
-        if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
-          echohl ErrorMsg
-          echomsg 'Personal Error Message: Can not write to temp tigrc file: '
-            \ . l:tmp_tigrc
-          echohl NONE
-          return
-        endif
-
-        let l:term_buf = term_start(a:command, #{
-          \ term_name: 'tig',
-          \ term_finish: 'close',
-          \ hidden: v:true,
-          \ cwd: s:tig.git_root,
-          \ env: extend(#{ TIGRC_USER: l:tmp_tigrc }, a:env),
-        \ })
-
-        let s:tig.popup_id = popup_create(l:term_buf, #{
-          \ pos: 'topleft',
-          \ line: win_screenpos(0)[0],
-          \ col: win_screenpos(0)[1],
-          \ zindex: 2,
-          \ minwidth: winwidth(0),
-          \ maxwidth: winwidth(0),
-          \ minheight: winheight(0),
-          \ maxheight: winheight(0),
-          \ wrap: v:false,
-          \ mapping: v:false,
-          \ scrollbar: v:false,
-        \ })
-
-        call s:LockServer('tig')
-        call s:UnlockServer('explorer')
+        return v:true
       else
         echohl ErrorMsg
         echomsg 'Personal Error Message: Tig plugin needs to be in a git'
@@ -2531,34 +2471,203 @@ function! s:Tig(command, env)
       echohl NONE
     endif
   endif
+  return v:false
 endfunction
 
-function! s:TigMain()
-  call s:Tig('tig', #{})
-endfunction
+function! s:Tig(command, env, conf_tigrc, term_options)
+  call s:LockServer('explorer')
+  if empty(v:servername)
+    let l:id = 1
+    if !empty(serverlist())
+      let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
+        \ "trim(v:val)")) + 1
+    endif
+    call s:StartServer('tig', l:id)
+  else
+    call s:UnlockServer('tig')
+  endif
 
-function! s:TigMainCurrentFile()
-  call s:Tig('tig ' . expand('%:p'), #{})
-endfunction
-
-function! s:TigStatus()
-  call s:Tig('tig status', #{})
-endfunction
-
-function! s:TigBlame()
-  let l:startup_tig = tempname()
-  if writefile([':' . line('.')], l:startup_tig) == -1
+  let l:tmp_tigrc = tempname()
+  let l:tigrc = expand('$HOME') . '/.tigrc'
+  if !filereadable(l:tigrc)
     echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not write to startup tig temp file: '
-      \ . l:startup_tig
+    echomsg 'Personal Error Message: ' . l:tigrc . ' not readable.'
     echohl NONE
     return
   endif
-  call s:Tig('tig blame ' . expand('%:p'), #{ TIG_SCRIPT: l:startup_tig })
+  let l:tmp_tigrc_content = readfile(l:tigrc)
+  if empty(l:tmp_tigrc_content)
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Can not read ' . l:tigrc
+    echohl NONE
+    return
+  endif
+
+  let l:conf_tigrc = extend([ "bind generic e @vim --remote-expr"
+    \ . " 'TigEdit(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
+    \ . "' --servername " . v:servername, "bind generic E @vim --remote-expr"
+    \ . " 'TigBadd(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
+    \ . "' --servername " . v:servername ], a:conf_tigrc)
+  call extend(l:tmp_tigrc_content, l:conf_tigrc)
+
+  if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
+    echohl ErrorMsg
+    echomsg 'Personal Error Message: Can not write to temp tigrc file: '
+      \ . l:tmp_tigrc
+    echohl NONE
+    return
+  endif
+
+  let s:tig.term_buf = term_start(a:command, extend(#{
+    \ term_name: 'tig',
+    \ term_finish: 'close',
+    \ hidden: v:true,
+    \ cwd: s:tig.git_root,
+    \ env: extend(#{ TIGRC_USER: l:tmp_tigrc }, a:env),
+  \ }, a:term_options))
+
+  let s:tig.popup_id = popup_create(s:tig.term_buf, #{
+    \ pos: 'topleft',
+    \ line: win_screenpos(0)[0],
+    \ col: win_screenpos(0)[1],
+    \ zindex: 2,
+    \ minwidth: winwidth(0),
+    \ maxwidth: winwidth(0),
+    \ minheight: winheight(0),
+    \ maxheight: winheight(0),
+    \ wrap: v:false,
+    \ mapping: v:false,
+    \ scrollbar: v:false,
+  \ })
+
+  call s:LockServer('tig')
+  call s:UnlockServer('explorer')
+endfunction
+
+function! s:TigLog()
+  if s:IsTigUsable()
+    call s:Tig('tig', #{}, [], #{})
+  endif
+endfunction
+
+function! s:TigLogCurrentFile()
+  if s:IsTigUsable()
+    call s:Tig('tig ' . expand('%:p'), #{}, [], #{})
+  endif
+endfunction
+
+function! s:TigStatus()
+  if s:IsTigUsable()
+    call s:Tig('tig status', #{}, [], #{})
+  endif
+endfunction
+
+function! s:TigDiff()
+  if s:IsTigUsable()
+    if !empty(system('cd ' . s:tig.git_root . ' && git diff --name-only'))
+      let l:startup_tig = tempname()
+      let l:startup_script = ['<Enter>', ':maximize']
+
+      if !empty(system('cd ' . s:tig.git_root
+        \ . ' && git ls-files --others --exclude-standard'))
+          let l:startup_script = [':move-down'] + l:startup_script
+      endif
+
+      if writefile(l:startup_script, l:startup_tig) == -1
+        echohl ErrorMsg
+        echomsg 'Personal Error Message: Can not write to startup tig temp'
+          \ . ' file: ' . l:startup_tig
+        echohl NONE
+        return
+      endif
+      call s:Tig('tig', #{ TIG_SCRIPT: l:startup_tig },
+        \ ['bind generic q quit'], #{})
+    endif
+  endif
+endfunction
+
+function! s:TigDiffCurrentFileHandler(diff_job, status)
+  let s:tig.diff_file_buf = ch_getbufnr(job_getchannel(a:diff_job), 'out')
+  call s:Tig('tig', #{},
+    \ ["bind pager q @vim --remote-expr 'TigDiffCurrentFileClose()'"
+      \ . " --servername " . v:servername, "bind pager Q @vim --remote-expr"
+      \ . " 'TigDiffCurrentFileClose()' --servername " . v:servername],
+    \ #{ in_io: 'buffer', in_buf: s:tig.diff_file_buf })
+endfunction
+
+function! s:TigDiffCurrentFile()
+  if s:IsTigUsable()
+    let l:file = expand('%:p')
+    if !empty(system('cd ' . s:tig.git_root . ' && git diff --name-only '
+      \ . l:file))
+        call job_start(['/bin/bash', '-c', 'cd ' . s:tig.git_root
+          \ . ' && git diff ' . l:file], #{ out_io: "buffer",
+          \ out_msg: v:false,
+          \ exit_cb: expand('<SID>') . 'TigDiffCurrentFileHandler' })
+    endif
+  endif
+endfunction
+
+function! s:TigBlame()
+  if s:IsTigUsable()
+    let l:startup_tig = tempname()
+    let l:startup_script = [':' . line('w0')]
+
+    for l:each in range(1, line('w$') - line('w0') - 2)
+      call add(l:startup_script, ':move-down')
+    endfor
+
+    if line('.') < line('w$') - 1
+      for l:each in range(1, line('w$') - 2 - line('.'))
+        call add(l:startup_script, ':move-up')
+      endfor
+    else
+      for l:each in range(1, abs(line('w$') - 2 - line('.')))
+        call add(l:startup_script, ':move-down')
+      endfor
+    endif
+
+    if writefile(l:startup_script, l:startup_tig) == -1
+      echohl ErrorMsg
+      echomsg 'Personal Error Message: Can not write to startup tig temp file: '
+        \ . l:startup_tig
+      echohl NONE
+      return
+    endif
+    call s:Tig('tig blame ' . expand('%:p'), #{ TIG_SCRIPT: l:startup_tig },
+      \ ["bind blame q @vim --remote-expr 'TigBlameSyncCursors(%(lineno))'"
+        \ . " --servername " . v:servername, "bind blame Q @vim --remote-expr"
+        \ . " 'TigBlameSyncCursors(%(lineno))' --servername " . v:servername],
+        \ #{})
+  endif
 endfunction
 
 function! s:TigGrep(pattern)
-  call s:Tig('tig grep ' . a:pattern, #{})
+  if s:IsTigUsable()
+    call s:Tig('tig grep ' . a:pattern, #{}, [], #{})
+  endif
+endfunction
+
+function! s:TigBaddSyncCursors()
+  if exists('b:tig_line')
+    call cursor(b:tig_line, 0)
+    normal! zz
+    unlet b:tig_line
+  endif
+endfunction
+
+function! TigDiffCurrentFileClose()
+  call popup_close(s:tig.popup_id)
+  execute 'silent bdelete! ' . s:tig.diff_file_buf
+endfunction
+
+function! TigBlameSyncCursors(lineno)
+  let l:first_line = matchstr(matchstr(
+    \ term_getline(s:tig.term_buf, '1'), '[0-9]\+│'), '[0-9]\+')
+  call popup_close(s:tig.popup_id)
+  call cursor(l:first_line, 0)
+  normal! zt
+  call cursor(a:lineno, 0)
 endfunction
 
 function! TigEdit(file, lineno, lineno_old, text)
@@ -2647,20 +2756,15 @@ endfunction
 "   Variables & constants {{{2
 
 if exists('s:leaders') | unlet s:leaders | endif
-const s:leaders = #{
-\   global: '²',
-\   shift:  '³',
-\   tig:    '&',
+const s:LEADERS = #{
+\   global:    '²',
+\   shift:     '³',
+\   tig:       '&',
+\   tig_shift: '1',
 \ }
-"  \     #{
-"  \       description: 'Tig stage view',
-"  \     },
-"  \     #{
-"  \       description: 'Tig stage file view',
-"  \     },
 
-if exists('s:mappings') | unlet s:mappings | endif
-const s:mappings = {
+if exists('s:MAPPINGS') | unlet s:MAPPINGS | endif
+const s:MAPPINGS = {
 \   'SEARCH': [
 \     #{
 \       description: 'Next search',
@@ -2680,32 +2784,32 @@ const s:mappings = {
 \       description: 'Search and replace in visual area',
 \       keys: ':',
 \       mode: 'v',
-\       command: s:search.sensitive_replace,
+\       command: s:SEARCH.sensitive_replace,
 \       hidden: v:true,
 \     },
 \     #{
 \       description: 'Case-insensitive search and replace',
-\       keys: s:leaders.global . ':',
+\       keys: s:LEADERS.global . ':',
 \       mode: 'v',
-\       command: s:search.insensitive_replace,
+\       command: s:SEARCH.insensitive_replace,
 \     },
 \     #{
 \       description: 'Case-insensitive search',
-\       keys: s:leaders.global . '/',
+\       keys: s:LEADERS.global . '/',
 \       mode: 'n',
-\       command: s:search.insensitive,
+\       command: s:SEARCH.insensitive,
 \     },
 \   ],
 \   'VIMRC': [
 \     #{
 \       description: 'Open .vimrc in vertical split',
-\       keys: s:leaders.global . '&',
+\       keys: s:LEADERS.global . '&',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>OpenVimRC()<CR>',
 \     },
 \     #{
 \       description: 'Source .vimrc',
-\       keys: s:leaders.shift . '1',
+\       keys: s:LEADERS.shift . '1',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>SourceVimRC()<CR>',
 \     },
@@ -2713,19 +2817,19 @@ const s:mappings = {
 \   'HIGHLIGHT & COLORS': [
 \     #{
 \       description: 'No highlight search',
-\       keys: s:leaders.global . 'é',
+\       keys: s:LEADERS.global . 'é',
 \       mode: 'n',
 \       command: '<Cmd>nohlsearch<CR>',
 \     },
 \     #{
 \       description: 'Toggle Redhighlight',
-\       keys: s:leaders.global . '"',
+\       keys: s:LEADERS.global . '"',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>ToggleRedHighlight()<CR>',
 \     },
 \     #{
 \       description: 'Toggle Rainbow',
-\       keys: s:leaders.global . '(',
+\       keys: s:LEADERS.global . '(',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>ToggleRainbow()<CR>',
 \     },
@@ -2733,18 +2837,18 @@ const s:mappings = {
 \   'WINDOWING': [
 \     #{
 \       description: 'Next window',
-\       keys: s:leaders.global . '<Right>',
+\       keys: s:LEADERS.global . '<Right>',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>NextWindow()<CR>',
 \     },
 \     #{
 \       description: 'Previous window',
-\       keys: s:leaders.global . '<Left>',
+\       keys: s:LEADERS.global . '<Left>',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>PreviousWindow()<CR>',
 \     },
 \     #{
-\       keys: s:leaders.global . '=',
+\       keys: s:LEADERS.global . '=',
 \       mode: 'n',
 \       command: '<C-w>=',
 \       description: 'Equalize splits',
@@ -2753,7 +2857,7 @@ const s:mappings = {
 \   'TAGS': [
 \     #{
 \       description: 'Follow tag under cursor',
-\       keys: s:leaders.global . 't',
+\       keys: s:LEADERS.global . 't',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>FollowTag()<CR>',
 \     },
@@ -2771,7 +2875,7 @@ const s:mappings = {
 \     },
 \     #{
 \       description: 'Open Taglist',
-\       keys: s:leaders.shift . 'T',
+\       keys: s:LEADERS.shift . 'T',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>TagList()<CR>',
 \     },
@@ -2779,19 +2883,19 @@ const s:mappings = {
 \   'DEBUG': [
 \     #{
 \       description: 'Display log',
-\       keys: s:leaders.global . 'l',
+\       keys: s:LEADERS.global . 'l',
 \       mode: 'n',
 \       command: '<Cmd>messages<CR>',
 \     },
 \     #{
 \       description: 'Clear log',
-\       keys: s:leaders.shift . 'L',
+\       keys: s:LEADERS.shift . 'L',
 \       mode: 'n',
 \       command: '<Cmd>messages clear <Bar> messages<CR>',
 \     },
 \     #{
 \       description: 'List mappings',
-\       keys: s:leaders.global . 'm',
+\       keys: s:LEADERS.global . 'm',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>ListMappings()<CR>',
 \     },
@@ -2799,19 +2903,19 @@ const s:mappings = {
 \   'POPUPS': [
 \     #{
 \       description: 'Open Buffers Menu',
-\       keys: s:leaders.global . s:leaders.global,
+\       keys: s:LEADERS.global . s:LEADERS.global,
 \       mode: 'n',
 \       command: '<Cmd>call <SID>BuffersMenu()<CR>',
 \     },
 \     #{
 \       description: 'Open Explorer',
-\       keys: s:leaders.shift . s:leaders.shift,
+\       keys: s:LEADERS.shift . s:LEADERS.shift,
 \       mode: 'n',
 \       command: '<Cmd>call <SID>Explorer()<CR>',
 \     },
 \     #{
 \       description: 'Open Undotree',
-\       keys: s:leaders.shift . 'U',
+\       keys: s:LEADERS.shift . 'U',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>Undotree()<CR>',
 \     },
@@ -2819,7 +2923,7 @@ const s:mappings = {
 \   'VISUAL': [
 \     #{
 \       description: 'Select last visual block',
-\       keys: s:leaders.global . 'v',
+\       keys: s:LEADERS.global . 'v',
 \       mode: 'n',
 \       command: 'gv',
 \     },
@@ -2837,47 +2941,59 @@ const s:mappings = {
 \     },
 \     #{
 \       description: 'Comment visual area',
-\       keys: s:leaders.global . 'c',
+\       keys: s:LEADERS.global . 'c',
 \       mode: 'v',
-\       command: ':<C-u>silent call <SID>Comment()<CR>',
+\       command: ':<C-u>silent call <SID>Comment(v:true)<CR>',
 \     },
 \     #{
 \       description: 'Uncomment visual area',
-\       keys: s:leaders.global . 'C',
+\       keys: s:LEADERS.shift . 'C',
 \       mode: 'v',
-\       command: ':<C-u>silent call <SID>Uncomment()<CR>',
+\       command: ':<C-u>silent call <SID>Uncomment(v:true)<CR>',
 \     },
 \   ],
 \   'TIG': [
 \     #{
 \       description: 'Tig main view',
-\       keys: s:leaders.tig . 'm',
+\       keys: s:LEADERS.tig . 'l',
 \       mode: 'n',
-\       command: '<Cmd>call <SID>TigMain()<CR>',
+\       command: '<Cmd>call <SID>TigLog()<CR>',
 \     },
 \     #{
 \       description: 'Tig blame view',
-\       keys: s:leaders.tig . 'b',
+\       keys: s:LEADERS.tig . 'b',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>TigBlame()<CR>',
 \     },
 \     #{
 \       description: 'Tig status view',
-\       keys: s:leaders.tig . 's',
+\       keys: s:LEADERS.tig . 's',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>TigStatus()<CR>',
 \     },
 \     #{
 \       description: 'Tig main view for current file',
-\       keys: s:leaders.tig . 'M',
+\       keys: s:LEADERS.tig_shift . 'L',
 \       mode: 'n',
-\       command: '<Cmd>call <SID>TigMainCurrentFile()<CR>',
+\       command: '<Cmd>call <SID>TigLogCurrentFile()<CR>',
 \     },
 \     #{
-\       description: 'Tig grep',
-\       keys: s:leaders.tig . 'g',
+\       description: 'Tig grep view',
+\       keys: s:LEADERS.tig . 'g',
 \       mode: 'n',
 \       command: ':TigGrep ""<Left>',
+\     },
+\     #{
+\       description: 'Tig stage view',
+\       keys: s:LEADERS.tig . 'd',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TigDiff()<CR>',
+\     },
+\     #{
+\       description: 'Tig stage view for current file',
+\       keys: s:LEADERS.tig_shift . 'D',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>TigDiffCurrentFile()<CR>',
 \     },
 \   ],
 \   'UNCLASSIFIED': [
@@ -2901,19 +3017,31 @@ const s:mappings = {
 \     },
 \     #{
 \       description: 'Blank line above current line',
-\       keys: s:leaders.global . '<CR>',
+\       keys: s:LEADERS.global . '<CR>',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>BlankUp()<CR>',
 \     },
 \     #{
+\       description: 'Comment current line',
+\       keys: s:LEADERS.global . 'c',
+\       mode: 'n',
+\       command: ':<C-u>silent call <SID>Comment(v:false)<CR>',
+\     },
+\     #{
+\       description: 'Uncomment current line',
+\       keys: s:LEADERS.shift . 'C',
+\       mode: 'n',
+\       command: ':<C-u>silent call <SID>Uncomment(v:false)<CR>',
+\     },
+\     #{
 \       description: 'Paste unnamed register in command-line',
-\       keys: s:leaders.global . 'p',
+\       keys: s:LEADERS.global . 'p',
 \       mode: 'c',
 \       command: '<C-r><C-o>"',
 \     },
 \     #{
 \       description: 'Insert anti-slash character easier in command-line',
-\       keys: s:leaders.global . s:leaders.global,
+\       keys: s:LEADERS.global . s:LEADERS.global,
 \       mode: 'c',
 \       command: '\',
 \     },
@@ -2925,7 +3053,7 @@ const s:mappings = {
 \     },
 \     #{
 \       description: 'Save session',
-\       keys: s:leaders.global . 'z',
+\       keys: s:LEADERS.global . 'z',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>Obsession()<CR>',
 \     },
@@ -2992,10 +3120,10 @@ function! s:Key(keys)
 endfunction
 
 function! s:ListMappings()
-  const l:max_keys = max(mapnew(flatten(values(s:mappings)),
+  const l:MAX_KEYS = max(mapnew(flatten(values(s:MAPPINGS)),
     \ { key, val -> len(split(val.keys, '\zs')) }))
-  const l:max_modes = max(mapnew(values(s:modes), 'len(v:val)'))
-  for [l:type, l:submappings] in items(s:mappings)
+  const l:MAX_MODES = max(mapnew(values(s:MODES), 'len(v:val)'))
+  for [l:type, l:submappings] in items(s:MAPPINGS)
     echohl MappingPunctuation
     echon '----- '
     echohl NONE
@@ -3007,8 +3135,8 @@ function! s:ListMappings()
     echohl NONE
     for l:each in l:submappings
       if !has_key(l:each, 'hidden')
-        echon tolower(s:modes[l:each.mode])
-          \ . repeat(' ', l:max_modes + 1 - len(s:modes[l:each.mode]))
+        echon tolower(s:MODES[l:each.mode])
+          \ . repeat(' ', l:MAX_MODES + 1 - len(s:MODES[l:each.mode]))
         let l:start = match(l:each.keys, '<.*>')
         if l:start > -1
           if l:start > 0
@@ -3024,7 +3152,7 @@ function! s:ListMappings()
         else
           echon l:each.keys
         endif
-        echon repeat(' ', l:max_keys - len(split(l:each.keys, '\zs')) + 1)
+        echon repeat(' ', l:MAX_KEYS - len(split(l:each.keys, '\zs')) + 1)
           \ . l:each.description . "\n"
       endif
     endfor
@@ -3032,7 +3160,7 @@ function! s:ListMappings()
 endfunction
 
 function! s:DefineMappings()
-  for l:submappings in values(s:mappings)
+  for l:submappings in values(s:MAPPINGS)
     for l:each in l:submappings
       execute l:each.mode . 'noremap ' . l:each.keys . ' ' . l:each.command
     endfor
@@ -3122,7 +3250,7 @@ augroup vimrc_autocomands
 "     }}}
 "     Tig autocommands {{{3
 
-  autocmd BufEnter * :silent call <SID>TigCursor()
+  autocmd BufEnter * :silent call <SID>TigBaddSyncCursors()
 
 "     }}}
 "   }}}
@@ -3142,7 +3270,7 @@ augroup vimrc_autocomands
 
   autocmd FileType c,cpp,glsl,rust    setlocal commentstring=//\ %s
   autocmd FileType conf,make,sh,yaml  setlocal commentstring=#\ %s
-  autocmd FileType vim                setlocal commentstring=\"\ %s'
+  autocmd FileType vim                setlocal commentstring=\"\ %s
 
 "   }}}
 "   Folds autocommands {{{2
