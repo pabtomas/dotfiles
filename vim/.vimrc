@@ -4,6 +4,9 @@
 
 " }}}
 " TODO {{{1
+
+" - Errors generated when Search with Remote Explorer
+
 " }}}
 " Dependencies {{{1
 
@@ -1983,7 +1986,7 @@ function! s:Undotree()
   call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
   execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-    \modes . s:PALETTE.pink . ' ctermbg=' . s:PALETTE.black
+    \ . s:PALETTE.pink . ' ctermbg=' . s:PALETTE.black
 
   let s:undo.diff_id = popup_create('',
   \ #{
@@ -2446,6 +2449,7 @@ let s:tig = #{
 \   popup_id: -1,
 \   term_buf: -1,
 \   diff_file_buf: -1,
+\   diff_linecount: 0,
 \ }
 
 "     }}}
@@ -2597,6 +2601,10 @@ endfunction
 
 function! s:TigDiffCurrentFileHandler(diff_job, status)
   let s:tig.diff_file_buf = ch_getbufnr(job_getchannel(a:diff_job), 'out')
+  while filter(getbufinfo(), 'v:val.bufnr=='
+    \ . s:tig.diff_file_buf)[0].linecount < s:tig.diff_linecount
+      sleep 1m
+  endwhile
   call s:Tig('tig', #{},
     \ ["bind pager q @vim --remote-expr 'TigDiffCurrentFileClose()'"
       \ . " --servername " . v:servername, "bind pager Q @vim --remote-expr"
@@ -2607,12 +2615,13 @@ endfunction
 function! s:TigDiffCurrentFile()
   if s:IsTigUsable()
     let l:file = expand('%:p')
-    if !empty(system('cd ' . s:tig.git_root . ' && git diff --name-only '
-      \ . l:file))
-        call job_start(['/bin/bash', '-c', 'cd ' . s:tig.git_root
-          \ . ' && git diff ' . l:file], #{ out_io: "buffer",
-          \ out_msg: v:false,
-          \ exit_cb: expand('<SID>') . 'TigDiffCurrentFileHandler' })
+    let s:tig.diff_linecount =
+      \ len(systemlist('cd ' . s:tig.git_root . ' && git diff ' . l:file))
+    if s:tig.diff_linecount > 0
+      call job_start(['/bin/bash', '-c', 'cd ' . s:tig.git_root
+        \ . ' && git diff ' . l:file], #{ out_io: "buffer",
+        \ out_msg: v:false,
+        \ exit_cb: expand('<SID>') . 'TigDiffCurrentFileHandler' })
     else
       echohl ErrorMsg
       echomsg 'Personal Error Message: No change detected for ' . l:file
