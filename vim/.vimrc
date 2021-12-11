@@ -1,12 +1,4 @@
-" Ideas {{{1
-
-" - explorer: hijack netrw ?
-
-" }}}
 " TODO {{{1
-
-" - Errors generated when Search with Remote Explorer
-
 " }}}
 " Dependencies {{{1
 
@@ -515,7 +507,7 @@ if !exists('s:servers') | let s:servers = {} | endif
 "     }}}
 "     Functions {{{3
 
-function! s:StartServer(app, id)
+function! StartServer(app, id)
   if has('clientserver')
     if empty(v:servername)
       call remote_startserver(s:SERVER_PREFIX . a:id)
@@ -720,19 +712,6 @@ call prop_type_add('buf',      #{ highlight: 'Buffer'      })
 call prop_type_add('modified', #{ highlight: 'ModifiedBuf' })
 
 "     }}}
-"     Explorer {{{3
-
-if index(prop_type_list(), 'root')   != -1 | call prop_type_delete('root')   | endif
-if index(prop_type_list(), 'file')   != -1 | call prop_type_delete('file')   | endif
-if index(prop_type_list(), 'closed') != -1 | call prop_type_delete('closed') | endif
-if index(prop_type_list(), 'opened') != -1 | call prop_type_delete('opened') | endif
-
-call prop_type_add('root',   #{ highlight: 'RootPath'      })
-call prop_type_add('file',   #{ highlight: 'FilePath'      })
-call prop_type_add('closed', #{ highlight: 'ClosedDirPath' })
-call prop_type_add('opened', #{ highlight: 'OpenedDirPath' })
-
-"     }}}
 "     Undotree {{{3
 
 if index(prop_type_list(), 'button')     != -1 | call prop_type_delete('button')     | endif
@@ -864,7 +843,7 @@ function! s:BuffersMenuFilter(winid, key)
   elseif a:key == s:MENU_KEY.select
     call popup_clear()
     unlet s:menu
-    call s:UnlockServer('explorer')
+    call s:UnlockServer('fff')
   elseif a:key == s:MENU_KEY.delete
     let l:listed_buf = getbufinfo(#{ buflisted: 1 })
     if len(l:listed_buf) > 1
@@ -891,7 +870,7 @@ function! s:BuffersMenuFilter(winid, key)
     endif
     call popup_clear()
     unlet s:menu
-    call s:UnlockServer('explorer')
+    call s:UnlockServer('fff')
   elseif match(a:key, s:MENU_KEY.selectchars) > -1
     if (a:key != "0") || (len(s:menu.input) > 0)
       let s:menu.input = s:menu.input . a:key
@@ -955,7 +934,7 @@ endfunction
 
 function! s:BuffersMenu()
   if empty(getcmdwintype())
-    call s:LockServer('explorer')
+    call s:LockServer('fff')
     let s:menu = {}
     call s:UpdateBuffersMenu()
     let s:menu.buf_backup = bufnr()
@@ -981,528 +960,6 @@ function! s:BuffersMenu()
     call s:HelpBuffersMenu()
   endif
 endfunction
-
-"     }}}
-"   }}}
-"   Explorer {{{2
-"     Keys {{{3
-
-if exists('s:EXPLORER_KEY') | unlet s:EXPLORER_KEY | endif
-const s:EXPLORER_KEY = #{
-\   next:              "\<Down>",
-\   previous:            "\<Up>",
-\   first:                   "g",
-\   last:                    "G",
-\   dotfiles:                ".",
-\   yank:                    "y",
-\   badd:                    "b",
-\   open:                    "o",
-\   reset:                   "c",
-\   exit:               "\<Esc>",
-\   help:                    "?",
-\   searchmode:              "/",
-\   next_match:              "n",
-\   previous_match:          "N",
-\   SM_right:         "\<Right>",
-\   SM_left:           "\<Left>",
-\   SM_wide_right:  "\<C-Right>",
-\   SM_wide_left:    "\<C-Left>",
-\   SM_next:           "\<Down>",
-\   SM_previous:         "\<Up>",
-\   SM_evaluate:      "\<Enter>",
-\   SM_erase:            "\<BS>",
-\   SM_exit:            "\<Esc>",
-\ }
-
-"     }}}
-"     Help {{{3
-
-function! s:HelpExplorer()
-  let l:lines = ['         NORMAL Mode',
-    \ '     ' . s:Key([s:EXPLORER_KEY.help]) . '     - Show this help',
-    \ '    ' . s:Key([s:EXPLORER_KEY.exit]) . '    - Exit explorer',
-    \ '   ' . s:Key([s:EXPLORER_KEY.next, s:EXPLORER_KEY.previous])
-      \ . '   - Next/Previous file',
-    \ '   ' . s:Key([s:EXPLORER_KEY.first, s:EXPLORER_KEY.last])
-      \ . '   - First/Last file',
-    \ '     ' . s:Key([s:EXPLORER_KEY.open]) . '     - Open dirs & files',
-    \ '     ' . s:Key([s:EXPLORER_KEY.badd]) . '     - Add to buffers list',
-    \ '     ' . s:Key([s:EXPLORER_KEY.yank]) . '     - Yank path',
-    \ '     ' . s:Key([s:EXPLORER_KEY.dotfiles]) . '     - Show/Hide dot files',
-    \ '     ' . s:Key([s:EXPLORER_KEY.reset]) . '     - Reset explorer',
-    \ '   ' . s:Key([s:EXPLORER_KEY.searchmode]) . '   - Enter SEARCH Mode',
-    \ '   ' . s:Key([s:EXPLORER_KEY.next_match, s:EXPLORER_KEY.previous_match])
-      \ . '   - Next/Previous SEARCH match', '         SEARCH Mode',
-    \ '    ' . s:Key([s:EXPLORER_KEY.SM_exit]) . '    - Exit SEARCH Mode',
-    \ '   ' . s:Key([s:EXPLORER_KEY.SM_evaluate]) . '   - Evaluate SEARCH',
-    \ ' ' . s:Key([s:EXPLORER_KEY.SM_erase]) . ' - Erase SEARCH',
-    \ '   ' . s:Key([s:EXPLORER_KEY.SM_next, s:EXPLORER_KEY.SM_previous])
-      \ . '   - Next/Previous SEARCH',
-    \ ' ' . s:Key([s:EXPLORER_KEY.SM_wide_left,
-      \ s:EXPLORER_KEY.SM_wide_right]) . ' - Navigation',
-  \ ]
-  let l:text = []
-  for l:each in l:lines
-
-    let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
-    let l:properties = (l:start > -1) ?
-      \ [#{ type: 'key', col: 1, length: l:start - 1 }] : []
-    let l:properties = l:properties + [#{ type: 'statusline',
-      \ col: l:start - 2, length: 1 }]
-    let l:start = 0
-    while l:start > -1
-      let l:start = match(l:each,
-        \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-.\|\a \zs& \a', l:start)
-      if l:start > -1
-        let l:start += 1
-        let l:properties = l:properties + [#{ type: 'statusline',
-          \ col: l:start, length: 1 }]
-      endif
-    endwhile
-    let l:start = match(l:each, '\u\{2,}')
-    let l:end = matchend(l:each, '\u\{2,} Mode\|\u\{2,}')
-    let l:properties = l:properties + [#{ type: 'mode',
-      \ col: l:start, length: l:end + 1 - l:start }]
-
-    call add(l:text, #{ text: l:each, props: l:properties })
-  endfor
-  call popup_create(l:text, #{ pos: 'topleft',
-                           \   line: win_screenpos(0)[0] + winheight(0)
-                           \     - len(l:text) - &cmdheight,
-                           \   col: win_screenpos(0)[1],
-                           \   zindex: 3,
-                           \   minwidth: winwidth(0),
-                           \   wrap: v:false,
-                           \   border: [1, 0, 0, 0],
-                           \   borderchars: ['━'],
-                           \   borderhighlight: ['StatusLine'],
-                           \   time: 10000,
-                           \   highlight: 'Help',
-                           \ })
-endfunction
-
-"     }}}
-"     Functions {{{3
-
-function! s:PathCompare(file1, file2)
-  if isdirectory(a:file1) && !isdirectory(a:file2)
-    return 1
-  elseif !isdirectory(a:file1) && isdirectory(a:file2)
-    return -1
-  endif
-endfunction
-
-function! s:FullPath(path, value)
-  let l:content = a:path . a:value
-  if isdirectory(l:content)
-    return l:content . '/'
-  endif
-  return l:content
-endfunction
-
-function! s:InitExplorer()
-  let s:explorer.tree = {}
-  let s:explorer.tree['.'] = fnamemodify('.', ':p')
-  let s:explorer.tree[fnamemodify('.', ':p')] = sort(map(reverse(
-    \ readdir('.', '1', #{ sort: 'icase' })), { _, val ->
-      \ s:FullPath(s:explorer.tree['.'], val) }), expand('<SID>')
-      \ . 'PathCompare')
-  let s:explorer.SEARCH = v:true
-  let s:explorer.NORMAL = v:false
-  let s:explorer.mode = s:explorer.NORMAL
-  let s:explorer.input = ''
-  let s:explorer.input_cursor = 0
-  let s:explorer.history_cursor = 0
-endfunction
-
-function! s:Depth(path)
-  return len(split(substitute(a:path, '/$', '', 'g'), '/'))
-endfunction
-
-function! s:NormalModeExplorerFilter(winid, key)
-  if a:key == s:EXPLORER_KEY.dotfiles
-    let s:explorer.dotfiles = !s:explorer.dotfiles
-    call s:UpdateExplorer()
-    call popup_settext(a:winid, s:explorer.text)
-    call win_execute(a:winid, 'if line(".") > line("$") |'
-      \ . ' call cursor(line("$"), 0) | endif')
-  elseif a:key == s:EXPLORER_KEY.yank
-    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
-    let l:path = s:explorer.paths[s:explorer.line]
-    unlet s:explorer.line
-    let @" = l:path
-    echo 'Unnamed register content is:'
-    echohl OpenedDirPath
-    echon @"
-    echohl NONE
-  elseif a:key == s:EXPLORER_KEY.badd
-    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
-    let l:path = s:explorer.paths[s:explorer.line]
-    unlet s:explorer.line
-    if !isdirectory(l:path)
-      execute 'badd ' . l:path
-      echohl OpenedDirPath
-      echo l:path
-      echohl NONE
-      echon ' added to buffers list'
-    endif
-  elseif a:key == s:EXPLORER_KEY.open
-    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
-    let l:path = s:explorer.paths[s:explorer.line]
-    unlet s:explorer.line
-    if isdirectory(l:path)
-      if has_key(s:explorer.tree, l:path)
-        unlet s:explorer.tree[l:path]
-      else
-        let s:explorer.tree[l:path] = sort(map(reverse(
-          \ readdir(l:path, '1', #{ sort: 'icase' })), { _, val ->
-            \s:FullPath(l:path, val) }), expand('<SID>') . 'PathCompare')
-      endif
-      call s:UpdateExplorer()
-      call popup_settext(a:winid, s:explorer.text)
-    else
-      call popup_clear()
-      execute 'edit ' . l:path
-      unlet s:explorer
-      call s:UnlockServer('explorer')
-    endif
-  elseif a:key == s:EXPLORER_KEY.reset
-    call s:InitExplorer()
-    call s:UpdateExplorer()
-    call popup_settext(a:winid, s:explorer.text)
-    call win_execute(a:winid, 'call cursor(2, 0)')
-  elseif a:key == s:EXPLORER_KEY.next_match
-    call win_execute(a:winid, 'call search(histget("/", -1), "")')
-  elseif a:key == s:EXPLORER_KEY.previous_match
-    call win_execute(a:winid, 'call search(histget("/", -1), "b")')
-  elseif a:key == s:EXPLORER_KEY.first
-    call win_execute(a:winid,
-      \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
-  elseif a:key == s:EXPLORER_KEY.last
-    call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif (a:key == s:EXPLORER_KEY.exit)
-    call win_execute(a:winid, 'call clearmatches()')
-    call popup_clear()
-    unlet s:explorer
-    call s:UnlockServer('explorer')
-  elseif a:key == s:EXPLORER_KEY.next
-    call win_execute(a:winid, 'if line(".") < line("$") |'
-      \ . ' call cursor(line(".") + 1, 0) | endif')
-  elseif a:key == s:EXPLORER_KEY.previous
-    call win_execute(a:winid, 'if line(".") > 2 |'
-      \ . ' call cursor(line(".") - 1, 0) | else |'
-      \ . ' execute "normal! \<C-y>" | endif')
-  elseif a:key == s:EXPLORER_KEY.help
-    call s:HelpExplorer()
-  elseif a:key == s:EXPLORER_KEY.searchmode
-    let s:explorer.mode = s:explorer.SEARCH
-    let s:explorer.input = a:key
-    let s:explorer.input_cursor = 1
-    let s:explorer.history_cursor = 0
-    echo s:explorer.input
-    echohl Visual
-    echon ' '
-    echohl NONE
-  endif
-endfunction
-
-function! s:RemoteModeExplorerFilter(winid, key)
-  if a:key == s:EXPLORER_KEY.dotfiles
-    let s:explorer.dotfiles = !s:explorer.dotfiles
-    call s:UpdateExplorer()
-    call popup_settext(a:winid, s:explorer.text)
-    call win_execute(a:winid, 'if line(".") > line("$") |'
-      \ . ' call cursor(line("$"), 0) | endif')
-  elseif a:key == s:EXPLORER_KEY.yank
-    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
-    let l:path = s:explorer.paths[s:explorer.line]
-    unlet s:explorer.line
-    for l:each in s:servers.explorer.names
-      if str2nr(remote_expr(l:each, 'IsServerReachable("explorer")'))
-        call remote_expr(l:each, 'execute("let @\" = \"' . l:path . '\"")')
-        call remote_send(l:each,
-          \ '<C-\><C-N>:echo "Unnamed register content is:"'
-          \ . ' | echohl OpenedDirPath | echon @" | echohl NONE<CR>')
-      endif
-    endfor
-  elseif a:key == s:EXPLORER_KEY.badd
-    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
-    let l:path = s:explorer.paths[s:explorer.line]
-    unlet s:explorer.line
-    if !isdirectory(l:path)
-      for l:each in s:servers.explorer.names
-        if str2nr(remote_expr(l:each, 'IsServerReachable("explorer")'))
-          call remote_expr(l:each, 'execute("badd '. l:path . '")')
-          call remote_send(l:each, '<C-\><C-N>:echohl OpenedDirPath'
-            \ . ' | echo "' . l:path . '" | echohl NONE'
-            \ . ' | echon " added to buffers list"<CR>')
-        endif
-      endfor
-    endif
-  elseif a:key == s:EXPLORER_KEY.open
-    call win_execute(a:winid, 'let s:explorer.line = line(".") - 2')
-    let l:path = s:explorer.paths[s:explorer.line]
-    unlet s:explorer.line
-    if isdirectory(l:path)
-      if has_key(s:explorer.tree, l:path)
-        unlet s:explorer.tree[l:path]
-      else
-        let s:explorer.tree[l:path] = sort(map(reverse(
-          \ readdir(l:path, '1', #{ sort: 'icase' })), { _, val ->
-            \s:FullPath(l:path, val) }), expand('<SID>') . 'PathCompare')
-      endif
-      call s:UpdateExplorer()
-      call popup_settext(a:winid, s:explorer.text)
-    else
-      let l:open_cmd = "edit"
-      if !empty(filter(readdir(fnamemodify(l:path, ":h")),
-        \ '!empty(matchstr(v:val, '
-        \ . '"\.*" . fnamemodify(l:path, ":t") . "\.sw[a-z]"))'))
-          let l:open_cmd = "view"
-      endif
-
-      for l:each in s:servers.explorer.names
-        if str2nr(remote_expr(l:each, 'IsServerReachable("explorer")'))
-          call remote_expr(l:each, 'execute("' . l:open_cmd . ' ' . l:path
-            \ . ' | redraw!")')
-        endif
-      endfor
-    endif
-  elseif a:key == s:EXPLORER_KEY.reset
-    call s:InitExplorer()
-    call s:UpdateExplorer()
-    call popup_settext(a:winid, s:explorer.text)
-    call win_execute(a:winid, 'call cursor(2, 0)')
-  elseif a:key == s:EXPLORER_KEY.next_match
-    call win_execute(a:winid, 'call search(histget("/", -1), "")')
-  elseif a:key == s:EXPLORER_KEY.previous_match
-    call win_execute(a:winid, 'call search(histget("/", -1), "b")')
-  elseif a:key == s:EXPLORER_KEY.first
-    call win_execute(a:winid,
-      \ 'call cursor(2, 0) | execute "normal! \<C-y>"')
-  elseif a:key == s:EXPLORER_KEY.last
-    call win_execute(a:winid, 'call cursor(line("$"), 0)')
-  elseif a:key == s:EXPLORER_KEY.next
-    call win_execute(a:winid, 'if line(".") < line("$") |'
-      \ . ' call cursor(line(".") + 1, 0) | endif')
-  elseif a:key == s:EXPLORER_KEY.previous
-    call win_execute(a:winid, 'if line(".") > 2 |'
-      \ . ' call cursor(line(".") - 1, 0) | else |'
-      \ . ' execute "normal! \<C-y>" | endif')
-  elseif a:key == s:EXPLORER_KEY.help
-    call s:HelpExplorer()
-  elseif a:key == s:EXPLORER_KEY.searchmode
-    let s:explorer.mode = s:explorer.SEARCH
-    let s:explorer.input = a:key
-    let s:explorer.input_cursor = 1
-    let s:explorer.history_cursor = 0
-    echo s:explorer.input
-    echohl Visual
-    echon ' '
-    echohl NONE
-  endif
-endfunction
-
-function! s:SearchModeExplorerFilter(winid, key)
-  if a:key == s:EXPLORER_KEY.SM_evaluate
-    let @/ = '\%>1l' . s:explorer.input[1:]
-    call win_execute(a:winid,
-      \ 'if s:explorer.input[0] == "/" | call search(@/, "c") | '
-      \ . 'elseif s:explorer.input[0] == "?" | call search(@/, "bc") | endif')
-    call histadd('/', @/)
-    let s:explorer.input = ''
-  elseif a:key == s:EXPLORER_KEY.SM_erase
-    if s:explorer.input_cursor > 1
-      let s:explorer.input =
-        \ slice(s:explorer.input, 0, s:explorer.input_cursor - 1)
-        \ . slice(s:explorer.input, s:explorer.input_cursor)
-      let s:explorer.input_cursor -= 1
-    endif
-  elseif a:key == s:EXPLORER_KEY.SM_exit
-    let s:explorer.input = ''
-  elseif a:key == s:EXPLORER_KEY.SM_next
-    if s:explorer.history_cursor < 0
-      let s:explorer.history_cursor += 1
-      let s:explorer.input = '/' . histget('search', s:explorer.history_cursor)
-    else
-      let s:explorer.input = '/'
-    endif
-    let s:explorer.input_cursor = len(s:explorer.input)
-  elseif a:key == s:EXPLORER_KEY.SM_previous
-    if abs(s:explorer.history_cursor) < &history
-      let s:explorer.history_cursor -= 1
-      let s:explorer.input = '/' . histget('search', s:explorer.history_cursor)
-      let s:explorer.input_cursor = len(s:explorer.input)
-    endif
-  elseif a:key == s:EXPLORER_KEY.SM_left
-    if s:explorer.input_cursor > 1
-      let s:explorer.input_cursor -= 1
-    endif
-  elseif a:key == s:EXPLORER_KEY.SM_right
-    if s:explorer.input_cursor < len(s:explorer.input)
-      let s:explorer.input_cursor += 1
-    endif
-  elseif a:key == s:EXPLORER_KEY.SM_wide_left
-    for l:each in range(s:explorer.input_cursor - 2, 0, -1)
-      if match(s:explorer.input[l:each], '[[:punct:][:space:]]') > -1
-        let s:explorer.input_cursor = l:each + 1
-        break
-      endif
-    endfor
-  elseif a:key == s:EXPLORER_KEY.SM_wide_right
-    let s:explorer.input_cursor = match(s:explorer.input[1:],
-      \ '[[:punct:][:space:]]', s:explorer.input_cursor + 1)
-    if s:explorer.input_cursor == -1
-      let s:explorer.input_cursor = len(s:explorer.input)
-    endif
-  else
-    let s:explorer.input =
-      \ slice(s:explorer.input, 0, s:explorer.input_cursor) . a:key
-      \ . slice(s:explorer.input, s:explorer.input_cursor)
-    let s:explorer.input_cursor += 1
-    call win_execute(a:winid, 'call clearmatches() | '
-      \ . 'try | call matchadd("Search", "\\%>1l" . s:explorer.input[1:]) | '
-      \ . 'catch | endtry ')
-  endif
-
-  if empty(s:explorer.input)
-    let s:explorer.mode = s:explorer.NORMAL
-  endif
-  echo slice(s:explorer.input, 0, s:explorer.input_cursor)
-  echohl Visual
-  echon slice(s:explorer.input, s:explorer.input_cursor,
-    s:explorer.input_cursor + 1)
-  if s:explorer.input_cursor == len(s:explorer.input)
-    echon ' '
-  endif
-  echohl NONE
-  echon slice(s:explorer.input, s:explorer.input_cursor + 1)
-endfunction
-
-function! s:ExplorerFilter(winid, key)
-  if s:explorer.mode == s:explorer.NORMAL
-    if exists('s:servers.explorer.names')
-      call s:RemoteModeExplorerFilter(a:winid, a:key)
-    else
-      call s:NormalModeExplorerFilter(a:winid, a:key)
-    endif
-  else
-    call s:SearchModeExplorerFilter(a:winid, a:key)
-  endif
-  return v:true
-endfunction
-
-function! s:UpdateExplorer()
-  let s:explorer.text = []
-  let s:explorer.paths = []
-
-  let l:line = s:explorer.tree['.']
-  let l:properties = [#{ type: 'root', col: 0, length: len(l:line) + 1 }]
-
-  call add(s:explorer.text, #{ text: l:line, props: l:properties })
-
-  let l:stack = s:explorer.tree[s:explorer.tree['.']]
-  let l:visited = {}
-  let l:visited[s:explorer.tree['.']] = v:true
-  while !empty(l:stack)
-    " pop
-    let l:current = l:stack[-1]
-    let l:stack = l:stack[:-2]
-
-    " construct text
-    let l:arrow = ''
-    let l:id = ''
-    let l:name = fnamemodify(l:current, ':t')
-    if isdirectory(l:current)
-      let l:name = fnamemodify(l:current, ':p:s?/$??:t')
-      let l:id = '/'
-      if has_key(s:explorer.tree, l:current)
-        let l:arrow = '▾ '
-      else
-        let l:arrow = '▸ '
-      endif
-    endif
-
-    if s:explorer.dotfiles || l:name[0] != '.'
-      let l:indent = repeat('  ',
-        \ s:Depth(l:current) - s:Depth(s:explorer.tree['.'])
-        \ - isdirectory(l:current))
-      let l:line = l:indent . l:arrow . l:name . l:id
-
-      " construct properties
-      let l:properties = [#{ type: 'file', col: 0, length: winwidth(0) + 1 }]
-      if isdirectory(l:current)
-        if has_key(s:explorer.tree, l:current)
-          let l:properties =
-            \ [#{ type: 'opened', col: 0, length: winwidth(0) + 1 }]
-        else
-          let l:properties =
-            \ [#{ type: 'closed', col: 0, length: winwidth(0) + 1 }]
-        endif
-      endif
-
-      call add(s:explorer.text, #{ text: l:line, props: l:properties })
-      call add(s:explorer.paths, l:current)
-    endif
-
-    " continue dfs
-    if !has_key(l:visited, l:current)
-      let l:visited[l:current] = v:true
-      if has_key(s:explorer.tree, l:current)
-        let l:stack += s:explorer.tree[l:current]
-      endif
-    endif
-  endwhile
-endfunction
-
-function! s:Explorer()
-  if empty(getcmdwintype())
-    call s:LockServer('explorer')
-    let s:explorer = {}
-    call s:InitExplorer()
-    let s:explorer.dotfiles = v:false
-
-    call s:UpdateExplorer()
-    let l:popup_id = popup_create(s:explorer.text,
-    \ #{
-      \ pos: 'topleft',
-      \ line: win_screenpos(0)[0],
-      \ col: win_screenpos(0)[1],
-      \ zindex: 2,
-      \ minwidth: winwidth(0),
-      \ maxwidth: winwidth(0),
-      \ minheight: winheight(0),
-      \ maxheight: winheight(0),
-      \ drag: v:true,
-      \ wrap: v:false,
-      \ filter: expand('<SID>') . 'ExplorerFilter',
-      \ mapping: v:false,
-      \ scrollbar: v:true,
-      \ cursorline: v:true,
-    \ })
-    call win_execute(l:popup_id, 'call cursor(2, 0)')
-    call s:HelpExplorer()
-  endif
-endfunction
-
-function! s:StartServerExplorer(id)
-  call s:StartServer('explorer', a:id)
-  delcommand StartServerExplorer
-endfunction
-
-function! s:StartRemoteExplorer(id)
-  if s:StartRemote('explorer', a:id)
-    set laststatus=0
-    call s:Explorer()
-  endif
-  delcommand StartRemoteExplorer
-endfunction
-
-"     }}}
-"     Commands {{{3
-
-command! -nargs=1 StartServerExplorer call <SID>StartServerExplorer(<args>)
-command! -nargs=1 StartRemoteExplorer call <SID>StartRemoteExplorer(<args>)
 
 "     }}}
 "   }}}
@@ -1731,7 +1188,7 @@ function! s:UndotreeFilter(winid, key)
       \ . s:PALETTE.black . ' ctermbg=' . s:PALETTE.purple_2
     call popup_clear()
     unlet s:undo
-    call s:UnlockServer('explorer')
+    call s:UnlockServer('fff')
   elseif a:key == s:UNDO_KEY.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1981,7 +1438,7 @@ function! s:Undotree()
     return
   endif
 
-  call s:LockServer('explorer')
+  call s:LockServer('fff')
   let s:undo = {}
   call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
@@ -2307,7 +1764,7 @@ function! s:TagListFilter(winid, key)
   if a:key == s:TAGLIST_KEY.exit
     call popup_clear()
     unlet s:taglist
-    call s:UnlockServer('explorer')
+    call s:UnlockServer('fff')
   elseif a:key == s:TAGLIST_KEY.next
     call win_execute(a:winid, 'if line(".") < line("$") - 1'
       \ . ' | call cursor(line(".") + 1, 0)'
@@ -2328,7 +1785,7 @@ function! s:TagListFilter(winid, key)
     call cursor(str2nr(matchstr(s:taglist.tmp, "^[0-9][0-9]*")), 0)
     if foldlevel('.') > 0 | foldopen! | endif
     unlet s:taglist
-    call s:UnlockServer('explorer')
+    call s:UnlockServer('fff')
   endif
   return v:true
 endfunction
@@ -2399,7 +1856,7 @@ endfunction
 function! s:TagList()
   if empty(getcmdwintype())
     if executable('ctags')
-      call s:LockServer('explorer')
+      call s:LockServer('fff')
       let l:savedview = winsaveview()
       let l:line = line(".")
       let s:taglist = {}
@@ -2479,14 +1936,14 @@ function! s:IsTigUsable()
 endfunction
 
 function! s:Tig(command, env, conf_tigrc, term_options)
-  call s:LockServer('explorer')
+  call s:LockServer('fff')
   if empty(v:servername)
     let l:id = 1
     if !empty(serverlist())
       let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
         \ "trim(v:val)")) + 1
     endif
-    call s:StartServer('tig', l:id)
+    call StartServer('tig', l:id)
   else
     call s:UnlockServer('tig')
   endif
@@ -2549,7 +2006,7 @@ function! s:Tig(command, env, conf_tigrc, term_options)
   \ })
 
   call s:LockServer('tig')
-  call s:UnlockServer('explorer')
+  call s:UnlockServer('fff')
 endfunction
 
 function! s:TigLog()
@@ -2943,12 +2400,6 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.global . s:LEADERS.global,
 \       mode: 'n',
 \       command: '<Cmd>call <SID>BuffersMenu()<CR>',
-\     },
-\     #{
-\       description: 'Open Explorer',
-\       keys: s:LEADERS.shift . s:LEADERS.shift,
-\       mode: 'n',
-\       command: '<Cmd>call <SID>Explorer()<CR>',
 \     },
 \     #{
 \       description: 'Open Undotree',

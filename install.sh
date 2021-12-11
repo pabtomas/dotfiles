@@ -355,24 +355,6 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  echo -n -e $(dashed "Checking libncursesw5-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libncursesw5-dev" | wc -l) -eq 0 ]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libncursesw5-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libncursesw5-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [ $? -eq 0 ]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
   echo -n -e $(dashed "Checking libevent-dev installation")$' '
   if [ $(dpkg -l | command grep -E "libevent-dev" | wc -l) -eq 0 ]; then
     echo -e ${RED}"Not OK"${RESET}
@@ -380,24 +362,6 @@ function main () {
     [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libevent-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [ $? -eq 0 ]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  echo -n -e $(dashed "Checking libreadline-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libreadline-dev" | wc -l) -eq 0 ]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libreadline-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libreadline-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
     if [ $? -eq 0 ]; then
@@ -1247,18 +1211,18 @@ function main () {
     | xargs -I {} echo "Universal Ctags {}")
   echo -e "\n    ${VERSION}\n"
 
-  echo -n -e $(dashed "Checking N³ version")$' '
-  if [ $(which nnn | wc -l) -eq 1 ]; then
+  echo -n -e $(dashed "Checking fff version")$' '
+  if [ $(which fff | wc -l) -eq 1 ]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    n³ $(nnn -V)\n"
+    echo -e "\n    $(fff -v)\n"
   else
     echo -e ${RED}"Not OK"${RESET}
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning N³ repository")
+  DASHED=${CLEAR}$(dashed "Cloning fff repository")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  unbuffer git clone https://github.com/jarun/nnn.git ${SOURCES}/nnn \
+  unbuffer git clone https://github.com/dylanaraps/fff ${SOURCES}/fff \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
   if [ $? -eq 0 ]; then
@@ -1268,15 +1232,14 @@ function main () {
       && return 1
   fi
 
-  command cd ${SOURCES}/nnn \
-    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+  command cd ${SOURCES}/fff &> /dev/null
 
-  DASHED=$(dashed "Installing N³")
+  DASHED=$(dashed "Installing fff")
   [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  sudo make strip install &> /dev/null
+  make PREFIX=${LOCAL} install &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -1290,7 +1253,7 @@ function main () {
       && return 1
   fi
 
-  echo -e "\n    n³ $(nnn -V)\n"
+  echo -e "\n    $(fff -v)\n"
 
   echo -n -e $(dashed "Checking TMUX version")$' '
   if [ $(which tmux | wc -l) -eq 1 ]; then

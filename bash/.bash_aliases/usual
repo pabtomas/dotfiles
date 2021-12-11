@@ -201,6 +201,7 @@ alias ti='tig'
 alias tb='tig blame'
 alias tg='tig grep'
 
-alias n='nnn'
-alias nn='nnn'
-alias nnn='nnn -e -U'
+function f () {
+  fff "$@"
+  cd "$(cat "${XDG_CACHE_HOME:=${HOME}/.cache}/fff/.fff_d")"
+}
