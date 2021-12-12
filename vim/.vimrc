@@ -2222,6 +2222,15 @@ command! -nargs=1 TigGrep call <SID>TigGrep(<args>)
 
 "     }}}
 "   }}}
+"   fff {{{2
+
+function! FFFedit(file)
+  if IsServerReachable('fff')
+    execute 'edit ' . a:file
+  endif
+endfunction
+
+"   }}}
 " }}}
 " Filetype specific {{{1
 "   Bash {{{2
@@ -2673,8 +2682,8 @@ cnoreabbrev <expr> w (getcmdtype() == ':' ? "update" : "w")
 cnoreabbrev <expr> wq (getcmdtype() == ':' ? "update \| quit" : "wq")
 
 " save buffer as sudo user
-cnoreabbrev <expr> sw (getcmdtype() == ':' ?
-  \ "silent write ! sudo tee % > /dev/null \| echo ''" : "sw")
+cnoreabbrev <expr> w!! (getcmdtype() == ':' ?
+  \ "silent write ! sudo tee % > /dev/null \| echo ''" : "w!!")
 
 " avoid intuitive tabpage usage
 cnoreabbrev <expr> tabe (getcmdtype() == ':' ? "silent tabonly" : "tabe")

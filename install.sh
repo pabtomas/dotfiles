@@ -1386,7 +1386,7 @@ function main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cd ${SOURCES}/flagbox \
-    && command cp flagbox.sh ${LOCAL}/bin &> /dev/null
+    && command cp flagbox ${LOCAL}/bin &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
