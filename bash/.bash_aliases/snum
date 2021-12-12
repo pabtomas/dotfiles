@@ -2,9 +2,10 @@
 
 alias ls='command ls --color'
 alias lh='command ls -d --color .??*'
-alias ll='command ls -l -A --color "$@" | grep -v -E "^total [0-9]+"'
+alias ll='command ls -l -A --color "$@"'
 
 alias grep='grep --color'
+alias ag='ag -a --hidden'
 
 for I in $(seq 2 1 5); do
   ALIAS=$(printf %${I}s | tr ' ' '.')
@@ -45,12 +46,12 @@ function extract () {
     return 1 #not enough args
   fi
 
-  if [[ ! -e "$1" ]]; then
+  if [[ ! -e "${1}" ]]; then
     echo -e "File does not exist!"
     return 2 # File not found
   fi
 
-  local DESTDIR="$1_extracted"
+  local DESTDIR="${1}_extracted"
   if [ -d "${DESTDIR}" ]; then
     echo -e "${DESTDIR} already exists. Can't extract in a safe destination."
     return 3 # extracted dest already exists
@@ -58,55 +59,55 @@ function extract () {
 
   command mkdir -p ${DESTDIR}
 
-  local FILE=$(basename "$1")
+  local FILE=$(basename "${1}")
 
   case "${FILE##*.}" in
     tar)
-      echo -e "Extracting $1 to ${DESTDIR}: (uncompressed tar)"
-      tar xvf "$1" -C "${DESTDIR}"
+      echo -e "Extracting ${1} to ${DESTDIR}: (uncompressed tar)"
+      tar xvf "${1}" -C "${DESTDIR}"
       ;;
     gz)
-      echo -e "Extracting $1 to ${DESTDIR}: (gip compressed tar)"
-      tar xvfz "$1" -C "${DESTDIR}"
+      echo -e "Extracting ${1} to ${DESTDIR}: (gip compressed tar)"
+      tar xvfz "${1}" -C "${DESTDIR}"
     ;;
     tgz)
-      echo -e "Extracting $1 to ${DESTDIR}: (gip compressed tar)"
-      tar xvfz "$1" -C "${DESTDIR}"
+      echo -e "Extracting ${1} to ${DESTDIR}: (gip compressed tar)"
+      tar xvfz "${1}" -C "${DESTDIR}"
       ;;
     xz)
-      echo -e "Extracting  $1 to ${DESTDIR}: (gip compressed tar)"
-      tar xvf -J "$1" -C "${DESTDIR}"
+      echo -e "Extracting  ${1} to ${DESTDIR}: (gip compressed tar)"
+      tar xvf -J "${1}" -C "${DESTDIR}"
       ;;
     bz2)
-      echo -e "Extracting $1 to ${DESTDIR}: (bzip compressed tar)"
-      tar xvfj "$1" -C "${DESTDIR}"
+      echo -e "Extracting ${1} to ${DESTDIR}: (bzip compressed tar)"
+      tar xvfj "${1}" -C "${DESTDIR}"
       ;;
     tbz2)
-      echo -e "Extracting $1 to ${DESTDIR}: (tbz2 compressed tar)"
-      tar xvjf "$1" -C "${DESTDIR}"
+      echo -e "Extracting ${1} to ${DESTDIR}: (tbz2 compressed tar)"
+      tar xvjf "${1}" -C "${DESTDIR}"
       ;;
     zip)
-      echo -e "Extracting $1 to ${DESTDIR}: (zip compressed file)"
-      unzip "$1" -d "${DESTDIR}"
+      echo -e "Extracting ${1} to ${DESTDIR}: (zip compressed file)"
+      unzip "${1}" -d "${DESTDIR}"
       ;;
     lzma)
-      echo -e "Extracting $1 : (lzma compressed file)"
-      unlzma "$1"
+      echo -e "Extracting ${1} : (lzma compressed file)"
+      unlzma "${1}"
       ;;
     rar)
-      echo -e "Extracting $1 to ${DESTDIR}: (rar compressed file)"
-      unrar x "$1" "${DESTDIR}"
+      echo -e "Extracting ${1} to ${DESTDIR}: (rar compressed file)"
+      unrar x "${1}" "${DESTDIR}"
       ;;
     7z)
-      echo -e  "Extracting $1 to ${DESTDIR}: (7zip compressed file)"
-      7za e "$1" -o "${DESTDIR}"
+      echo -e  "Extracting ${1} to ${DESTDIR}: (7zip compressed file)"
+      7za e "${1}" -o "${DESTDIR}"
       ;;
     xz)
-      echo -e  "Extracting $1 : (xz compressed file)"
-      unxz  "$1"
+      echo -e  "Extracting ${1} : (xz compressed file)"
+      unxz  "${1}"
       ;;
     exe)
-      cabextract "$1"
+      cabextract "${1}"
       ;;
     *)
       echo -e "Unknown format!"
@@ -162,7 +163,7 @@ alias gm='git commit -m'
 alias gm!='git commit --amend'
 alias gp='git push'
 alias gr='git root'
-alias gs='git status -s'
+alias gs='git status -s -uall'
 alias gsd='git stash drop'
 alias gsp='git stash pop'
 alias gst='git stash push'
@@ -187,5 +188,6 @@ function gamp () {
   git add -A && git commit -m "$@" && git pull && git push
 }
 
-alias tg='tig'
+alias ti='tig'
 alias tb='tig blame'
+alias tg='tig grep'
