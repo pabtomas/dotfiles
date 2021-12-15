@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-function dashed () {
+dashed () {
   echo -e "$1 $(printf "%$(( 68 - ${#1} ))s" | tr ' ' '-' )"
 }
 
-function dots () {
+dots () {
   local -r CLEAR="$(tput ed)"
   local START=$(($(date +%s) + 1))
   while true; do
@@ -13,7 +13,7 @@ function dots () {
   done
 }
 
-function main () {
+main () {
   sudo -k && sudo echo &> /dev/null && local SUDO_START=$(date +%s)
 
   local -r CLEAR="$(tput ed)"
@@ -30,7 +30,6 @@ function main () {
   local -r BASHRC="${SCRIPT_DIR}/bash/.bashrc"
   local -r PROFILE="${SCRIPT_DIR}/bash/.bash_profile"
   local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
-  local -r FLAGBOXCONF="${SCRIPT_DIR}/flagbox/.flagbox.conf"
   local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
   local -r HOOKS="${SCRIPT_DIR}/git/.hooks"
   local -r DESKTOP="${SCRIPT_DIR}/desktop"
@@ -47,32 +46,32 @@ function main () {
   local GPU=""
   local VERSION=""
 
-  if [ $(echo ${PATH} | tr ':' '\n' | grep -E "${HOME}/.local/bin" \
-    | wc -l) -eq 0 ]; then
+  if [[ $(echo ${PATH} | tr ':' '\n' | grep -E "${HOME}/.local/bin" \
+    | wc -l) -eq 0 ]]; then
       export PATH=${HOME}/.local/bin:${PATH}
   fi
 
   command mkdir -p ${LOCAL}/bin ${LOCAL}/share ${LOCAL}/lib
 
   echo -n -e $(dashed "Checking apt installation")$' '
-  if [ $(which apt | wc -l) -gt 0 ]; then
+  if [[ $(which apt | wc -l) -gt 0 ]]; then
     echo -e ${GREEN}"OK"${RESET}
   else
     echo -e ${RED}"Not OK"${RESET} && return 1
   fi
 
   echo -n -e $(dashed "Checking GNOME installation")$' '
-  if [ $(echo "${XDG_CURRENT_DESKTOP}" | grep -E -i "GNOME" | wc -l) -gt 0 ] \
-    && [ $(which gnome-shell | wc -l) -gt 0 ]; then
+  if [[ $(echo "${XDG_CURRENT_DESKTOP}" | grep -E -i "GNOME" | wc -l) -gt 0 \
+    && $(which gnome-shell | wc -l) -gt 0 ]]; then
       echo -e ${GREEN}"OK"${RESET}
   else
     echo -e ${RED}"Not OK"${RESET} && GNOME=0
   fi
 
-  if [ ${GNOME} -eq 1 ]; then
+  if [[ ${GNOME} -eq 1 ]]; then
     echo -n -e $(dashed "Checking GNOME version")$' '
-    if [ $(echo -e $(gnome-shell --version | sed "s/^[^0-9]\+//")"\n3.30.1" \
-      | sort -V | head -n1) == "3.30.1" ]; then
+    if [[ $(echo -e $(gnome-shell --version | sed "s/^[^0-9]\+//")"\n3.30.1" \
+      | sort -V | head -n1) == "3.30.1" ]]; then
         echo -e ${GREEN}"OK"${RESET}
     else
       echo -e ${RED}"Not OK"${RESET} \
@@ -81,10 +80,10 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking bluetooth service")$' '
-  if [ -f /etc/init.d/bluetooth ]; then
+  if [[ -f /etc/init.d/bluetooth ]]; then
     echo -e ${GREEN}"OK"${RESET}
     DASHED=$(dashed "Disabling bluetooth")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
@@ -95,7 +94,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -106,10 +105,10 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking unbuffer installation")$' '
-  if [ $(which unbuffer | wc -l) -eq 0 ]; then
+  if [[ $(which unbuffer | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=$(dashed "Installing expect-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
@@ -120,7 +119,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -131,51 +130,51 @@ function main () {
   fi
 
   DASHED=${CLEAR}$(dashed "Updating system")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   sudo unbuffer apt update -y | unbuffer -p grep -E -o "[0-9]+%" \
     | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
   DASHED=${CLEAR}$(dashed "Upgrading system")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   sudo unbuffer apt upgrade -y | unbuffer -p grep -E -o "[0-9]+%" \
     | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
   DASHED=${CLEAR}$(dashed "Removing unused packages")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   sudo unbuffer apt autoremove -y | unbuffer -p grep -E -o "[0-9]+%" \
     | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
   echo -n -e $(dashed "Checking GIT installation")$' '
-  if [ $(which git | wc -l) -eq 0 ]; then
+  if [[ $(which git | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing GIT package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y git | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -185,15 +184,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking curl installation")$' '
-  if [ $(which curl | wc -l) -eq 0 ]; then
+  if [[ $(which curl | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing curl package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y curl | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -203,15 +202,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking jq installation")$' '
-  if [ $(which jq | wc -l) -eq 0 ]; then
+  if [[ $(which jq | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing jq package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y jq | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -221,7 +220,7 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking direnv version")$' '
-  if [ $(which direnv | wc -l) -eq 1 ]; then
+  if [[ $(which direnv | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
     echo -e "\n    direnv $(direnv --version)\n"
   else
@@ -239,26 +238,26 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
-  [ $(which direnv | wc -l) -gt 0 ] \
+  [[ $(which direnv | wc -l) -gt 0 ]] \
     && echo -e "\n    direnv $(direnv --version)\n"
 
   echo -n -e $(dashed "Checking Silver Searcher installation")$' '
-  if [ $(which ag | wc -l) -eq 0 ]; then
+  if [[ $(which ag | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing silversearcher-ag package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y silversearcher-ag \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -268,43 +267,43 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking KVM installation")$' '
-  if [ $(which kvm | wc -l) -eq 0 ]; then
+  if [[ $(which kvm | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     echo -n -e $(dashed "Checking virtualization support")$' '
-    if [ $(grep -E -c '(vmx|svm)' /proc/cpuinfo) -eq 0 ]; then
+    if [[ $(grep -E -c '(vmx|svm)' /proc/cpuinfo) -eq 0 ]]; then
       echo -e ${RED}"Not OK"${RESET}
     else
       echo -e ${GREEN}"OK"${RESET}
       echo -n -e $(dashed "")$' '
       DASHED=${CLEAR}$(dashed "Installing KVM packages")
-      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y cpu-checker qemu-kvm \
         libvirt-daemon-system libvirt-clients bridge-utils \
         | unbuffer -p grep -E -o "[0-9]+%" \
         | xargs -I {} echo -n -e ${DASHED} {}
 
-      if [ $? -eq 0 ]; then
+      if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
         DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to libvirt group")
-        [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
           && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-        [ $(groups | tr ' ' '\n' | grep -E "libvirt" | wc -l) -eq 0 ] \
+        [[ $(groups | tr ' ' '\n' | grep -E "libvirt" | wc -l) -eq 0 ]] \
           && sudo adduser ${SUDO_USER:-${USER}} libvirt &> /dev/null
 
-        if [ $? -eq 0 ]; then
+        if [[ $? -eq 0 ]]; then
           echo -e ${DASHED} ${GREEN}"OK"${RESET}
         else
           echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
         fi
 
         DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to kvm group")
-        [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
           && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-        [ $(groups | tr ' ' '\n' | grep -E "kvm" | wc -l) -eq 0 ] \
+        [[ $(groups | tr ' ' '\n' | grep -E "kvm" | wc -l) -eq 0 ]] \
           && sudo adduser ${SUDO_USER:-${USER}} kvm &> /dev/null
 
-        if [ $? -eq 0 ]; then
+        if [[ $? -eq 0 ]]; then
           echo -e ${DASHED} ${GREEN}"OK"${RESET}
         else
           echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -319,16 +318,16 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking Virtual Manager installation")$' '
-  if [ $(which virt-manager | wc -l) -eq 0 ]; then
+  if [[ $(which virt-manager | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing Virtual Manager package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y virt-manager \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -338,15 +337,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libncurses-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libncurses-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libncurses-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libncurses-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libncurses-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -356,15 +355,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libevent-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libevent-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libevent-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libevent-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libevent-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -374,15 +373,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking gcc installation")$' '
-  if [ $(which gcc | wc -l) -eq 0 ]; then
+  if [[ $(which gcc | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing build-essential package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y build-essential \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -395,64 +394,68 @@ function main () {
   echo -e "    $(g++ --version | head -n 1)\n"
 
   echo -n -e $(dashed "Checking if gcc and g++ version are >= 10")$' '
-  if [ $(gcc --version | head -n 1 | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' \
-    | grep -E -o "[0-9]+$") -lt 10 ] || [ $(g++ --version | head -n 1 \
-    | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' | grep -E -o "[0-9]+$") -lt 10 ]; then
+  if [[ $(gcc --version | head -n 1 | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' \
+    | grep -E -o "[0-9]+$") -lt 10 || $(g++ --version | head -n 1 \
+    | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' \
+    | grep -E -o "[0-9]+$") -lt 10 ]]; then
       echo -e ${RED}"Not OK"${RESET}
 
       DASHED=${CLEAR}$(dashed "Installing gcc 10 packages")
-      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y gcc-10 gcc-10-base gcc-10-doc \
-        | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+        | unbuffer -p grep -E -o "[0-9]+%" \
+        | xargs -I {} echo -n -e ${DASHED} {}
 
-      if [ $? -eq 0 ]; then
+      if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
         echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Installing g++ 10 package")
-      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y g++-10 \
-        | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+        | unbuffer -p grep -E -o "[0-9]+%" \
+        | xargs -I {} echo -n -e ${DASHED} {}
 
-      if [ $? -eq 0 ]; then
+      if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
         echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Installing libc++ packages")
-      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y libstdc++-10-dev libstdc++-10-doc \
-        | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+        | unbuffer -p grep -E -o "[0-9]+%" \
+        | xargs -I {} echo -n -e ${DASHED} {}
 
-      if [ $? -eq 0 ]; then
+      if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
         echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Adding symbolic link to gcc 10")
-      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
       sudo ln -fs $(which gcc-10) $(which gcc)
 
-      if [ $? -eq 0 ]; then
+      if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
         echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Adding symbolic link to g++ 10")
-      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
       sudo ln -fs $(which g++-10) $(which g++)
 
-      if [ $? -eq 0 ]; then
+      if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
         echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -465,15 +468,15 @@ function main () {
   echo -e "    $(g++ --version | head -n 1)\n"
 
   echo -n -e $(dashed "Checking yacc installation")$' '
-  if [ $(which yacc | wc -l) -eq 0 ]; then
+  if [[ $(which yacc | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing bison package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y bison | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -483,15 +486,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking make installation")$' '
-  if [ $(which make | wc -l) -eq 0 ]; then
+  if [[ $(which make | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing make package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y make | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -501,15 +504,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking autoconf installation")$' '
-  if [ $(dpkg -l | command grep -E "autoconf" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "autoconf" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing autoconf package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y autoconf | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -519,15 +522,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking automake installation")$' '
-  if [ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing automake package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y automake | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -537,15 +540,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking asciidoc installation")$' '
-  if [ $(which asciidoc | wc -l) -eq 0 ]; then
+  if [[ $(which asciidoc | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing asciidoc package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y asciidoc | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -555,15 +558,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking pkg-config installation")$' '
-  if [ $(dpkg -l | command grep -E "pkg-config" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "pkg-config" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing pkg-config package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y pkg-config \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -573,15 +576,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking python3-docutils installation")$' '
-  if [ $(dpkg -l | command grep -E "python3-docutils" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "python3-docutils" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing python3-docutils package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y python3-docutils \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -591,15 +594,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libseccomp-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libseccomp-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libseccomp-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libseccomp-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libseccomp-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -609,15 +612,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libjansson-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libjansson-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libjansson-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libjansson-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libjansson-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -627,15 +630,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libyaml-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libyaml-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libyaml-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libyaml-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libyaml-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -645,15 +648,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libxml2-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libxml2-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libxml2-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libxml2-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libxml2-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -663,15 +666,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libxt-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libxt-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libxt-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libxt-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libxt-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -681,15 +684,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking libgtk-3-dev installation")$' '
-  if [ $(dpkg -l | command grep -E "libgtk-3-dev" | wc -l) -eq 0 ]; then
+  if [[ $(dpkg -l | command grep -E "libgtk-3-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libgtk-3-dev package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libgtk-3-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -699,15 +702,15 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking xsel installation")$' '
-  if [ $(which xsel | wc -l) -eq 0 ]; then
+  if [[ $(which xsel | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing xsel package")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y xsel | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -716,17 +719,17 @@ function main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  if [ ${GNOME} -eq 1 ]; then
+  if [[ ${GNOME} -eq 1 ]]; then
     echo -n -e $(dashed "Checking glxinfo installation")$' '
-    if [ $(which glxinfo | wc -l) -eq 0 ]; then
+    if [[ $(which glxinfo | wc -l) -eq 0 ]]; then
       echo -e ${RED}"Not OK"${RESET}
       DASHED=${CLEAR}$(dashed "Installing mesa-utils package")
-      [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo echo &> /dev/null && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y mesa-utils \
         | unbuffer -p grep -E -o "[0-9]+%" \
         | xargs -I {} echo -n -e ${DASHED} {}
-      if [ $? -eq 0 ]; then
+      if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
         echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -736,25 +739,25 @@ function main () {
     fi
 
     echo -n -e $(dashed "Checking X-server reachability")$' '
-    if [ $(glxinfo | grep -E -i "Device" | wc -l) -eq 0 ]; then
+    if [[ $(glxinfo | grep -E -i "Device" | wc -l) -eq 0 ]]; then
       echo -e ${RED}"Not OK"${RESET}
     else
       echo -e ${GREEN}"OK"${RESET}
       GPU=$(glxinfo | grep -E -i "Device")
       echo -e "\n${GPU}\n"
 
-      if [ $(echo ${GPU} | grep -E -i "Intel" | wc -l) -eq 1 ]; then
+      if [[ $(echo ${GPU} | grep -E -i "Intel" | wc -l) -eq 1 ]]; then
         echo -n -e $(dashed "Checking intel_gpu_top installation")$' '
-        if [ $(which intel_gpu_top | wc -l) -eq 0 ]; then
+        if [[ $(which intel_gpu_top | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing intel-gpu-tools package")
-          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
             && sudo echo &> /dev/null && SUDO_START=$(date +%s)
           sudo unbuffer apt install -y intel-gpu-tools \
             | unbuffer -p grep -E -o "[0-9]+%" \
             | xargs -I {} echo -n -e ${DASHED} {}
 
-          if [ $? -eq 0 ]; then
+          if [[ $? -eq 0 ]]; then
             echo -e ${DASHED} ${GREEN}"OK"${RESET}
           else
             echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -764,10 +767,10 @@ function main () {
         fi
 
         echo -n -e $(dashed "Checking intel_gpu_top usage")$' '
-        [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
           && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-        if [ $(sudo \cat /etc/sudoers \
-          | grep -E "intel_gpu_top" | wc -l) -eq 0 ]; then
+        if [[ $(sudo \cat /etc/sudoers \
+          | grep -E "intel_gpu_top" | wc -l) -eq 0 ]]; then
             echo -e ${RED}"Not OK"${RESET}
             DASHED=${CLEAR}$(dashed "Modifying intel_gpu_top usage")
             dots "${DASHED}" &
@@ -780,7 +783,7 @@ function main () {
             wait ${DOTS_PID} &> /dev/null
             DASHED=${CLEAR}${DASHED}
 
-            if [ ${STATUS} -eq 0 ]; then
+            if [[ ${STATUS} -eq 0 ]]; then
               echo -e ${DASHED} ${GREEN}"OK"${RESET}
             else
               echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -790,16 +793,16 @@ function main () {
         fi
 
         echo -n -e $(dashed "Checking libpng-dev installation")$' '
-        if [ $(dpkg -l | command grep -E "libpng-dev" | wc -l) -eq 0 ]; then
+        if [[ $(dpkg -l | command grep -E "libpng-dev" | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing libpng-dev package")
-          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
             && sudo echo &> /dev/null && SUDO_START=$(date +%s)
           sudo unbuffer apt install -y libpng-dev \
             | unbuffer -p grep -E -o "[0-9]+%" \
             | xargs -I {} echo -n -e ${DASHED} {}
 
-          if [ $? -eq 0 ]; then
+          if [[ $? -eq 0 ]]; then
             echo -e ${DASHED} ${GREEN}"OK"${RESET}
           else
             echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -809,16 +812,16 @@ function main () {
         fi
 
         echo -n -e $(dashed "Checking libglew-dev installation")$' '
-        if [ $(dpkg -l | command grep -E "libglew-dev" | wc -l) -eq 0 ]; then
+        if [[ $(dpkg -l | command grep -E "libglew-dev" | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing libglew-dev package")
-          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
             && sudo echo &> /dev/null && SUDO_START=$(date +%s)
           sudo unbuffer apt install -y libglew-dev \
             | unbuffer -p grep -E -o "[0-9]+%" \
             | xargs -I {} echo -n -e ${DASHED} {}
 
-          if [ $? -eq 0 ]; then
+          if [[ $? -eq 0 ]]; then
             echo -e ${DASHED} ${GREEN}"OK"${RESET}
           else
             echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -828,16 +831,16 @@ function main () {
         fi
 
         echo -n -e $(dashed "Checking libX11-dev installation")$' '
-        if [ $(dpkg -l | command grep -E "libx11-dev" | wc -l) -eq 0 ]; then
+        if [[ $(dpkg -l | command grep -E "libx11-dev" | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing libX11-dev package")
-          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
             && sudo echo &> /dev/null && SUDO_START=$(date +%s)
           sudo unbuffer apt install -y libx11-dev \
             | unbuffer -p grep -E -o "[0-9]+%" \
             | xargs -I {} echo -n -e ${DASHED} {}
 
-          if [ $? -eq 0 ]; then
+          if [[ $? -eq 0 ]]; then
             echo -e ${DASHED} ${GREEN}"OK"${RESET}
           else
             echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -847,16 +850,16 @@ function main () {
         fi
 
         echo -n -e $(dashed "Checking redshift installation")$' '
-        if [ $(which redshift | wc -l) -eq 0 ]; then
+        if [[ $(which redshift | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing redshift package")
-          [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
             && sudo echo &> /dev/null && SUDO_START=$(date +%s)
           sudo unbuffer apt install -y redshift \
             | unbuffer -p grep -E -o "[0-9]+%" \
             | xargs -I {} echo -n -e ${DASHED} {}
 
-          if [ $? -eq 0 ]; then
+          if [[ $? -eq 0 ]]; then
             echo -e ${DASHED} ${GREEN}"OK"${RESET}
           else
             echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -870,7 +873,7 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking VIM version")$' '
-  if [ $(which vim | wc -l) -eq 1 ]; then
+  if [[ $(which vim | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
     echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
       " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
@@ -878,15 +881,15 @@ function main () {
     echo -e ${RED}"Not OK"${RESET}
   fi
 
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [ -d ${SOURCES} ] && sudo \rm -r -f ${SOURCES}
+  [[ -d ${SOURCES} ]] && sudo \rm -r -f ${SOURCES}
   command mkdir -p ${SOURCES}
 
   DASHED=${CLEAR}$(dashed "Cloning VIM repository")
   unbuffer git clone https://github.com/vim/vim.git ${SOURCES}/vim \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -897,7 +900,7 @@ function main () {
     && command cd ${SOURCES}/vim/src
 
   DASHED=$(dashed "Configuring VIM")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -908,7 +911,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -916,7 +919,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Compiling VIM")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -927,7 +930,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -935,7 +938,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Installing VIM")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -946,7 +949,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -957,7 +960,7 @@ function main () {
     " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
 
   echo -n -e $(dashed "Checking Kakoune version")$' '
-  if [ $(which kak | wc -l) -eq 1 ]; then
+  if [[ $(which kak | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
     echo -e "\n    $(kak -version)\n"
   else
@@ -967,7 +970,7 @@ function main () {
   DASHED=${CLEAR}$(dashed "Cloning Kakoune repository")
   unbuffer git clone https://github.com/mawww/kakoune.git ${SOURCES}/kakoune \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -978,7 +981,7 @@ function main () {
     && command cd ${SOURCES}/kakoune/src
 
   DASHED=$(dashed "Compiling Kakoune")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -989,7 +992,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -997,7 +1000,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Installing Kakoune")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1008,7 +1011,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1018,7 +1021,7 @@ function main () {
   echo -e "\n    $(kak -version)\n"
 
   DASHED=$(dashed "Documenting Kakoune")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1029,7 +1032,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1037,7 +1040,7 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking Tig version")$' '
-  if [ $(which tig | wc -l) -eq 1 ]; then
+  if [[ $(which tig | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
     echo -e "\n    "$(tig --version | head -n1)"\n"
   else
@@ -1048,7 +1051,7 @@ function main () {
   unbuffer git clone https://github.com/jonas/tig.git ${SOURCES}/tig \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
@@ -1058,7 +1061,7 @@ function main () {
     && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
 
   DASHED=$(dashed "Compiling Tig")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1069,7 +1072,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1077,7 +1080,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Installing tig")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1088,7 +1091,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1098,7 +1101,7 @@ function main () {
   echo -e "\n    "$(tig --version | head -n1)"\n"
 
   DASHED=$(dashed "Documenting Tig")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1109,7 +1112,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1117,26 +1120,22 @@ function main () {
   fi
 
   echo -n -e $(dashed "Checking Universal Ctags version")$' '
-  if [ $(which ctags | wc -l) -eq 1 ]; then
+  if [[ $(which ctags | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    VERSION=$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-      | grep -E -o "[.0-9]+" | xargs -I {} echo -n "Universal Ctags {}")
-    [ "x${VERSION}" == "x" ] && VERSION=$(ctags --version \
-      | grep -m1 -E -o "\([.a-z0-9]+\)" | grep -E -o "[.0-9a-z]+" \
-      | xargs -I {} echo "Universal Ctags {}")
-    echo -e "\n    ${VERSION}\n"
+    echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+      | grep -E -o "[.0-9]+" | xargs -I {} echo -n "Universal Ctags {}")\n"
   else
     echo -e ${RED}"Not OK"${RESET}
   fi
 
   DASHED=${CLEAR}$(dashed "Cloning Universal Ctags repository")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   unbuffer git clone https://github.com/universal-ctags/ctags.git \
     ${SOURCES}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1147,7 +1146,7 @@ function main () {
     && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
 
   DASHED=$(dashed "Configuring Universal Ctags")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1159,7 +1158,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1167,7 +1166,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Compiling Universal Ctags")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1178,7 +1177,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1186,7 +1185,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Installing Universal Ctags")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1197,22 +1196,18 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
       && return 1
   fi
 
-  VERSION=$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-    | grep -E -o "[.0-9]+" | xargs -I {} echo -n "Universal Ctags {}")
-  [ "x${VERSION}" == "x" ] && VERSION=$(ctags --version \
-    | grep -m1 -E -o "\([.a-z0-9]+\)" | grep -E -o "[.0-9a-z]+" \
-    | xargs -I {} echo "Universal Ctags {}")
-  echo -e "\n    ${VERSION}\n"
+  echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+    | grep -E -o "[.0-9]+" | xargs -I {} echo -n "Universal Ctags {}")\n"
 
   echo -n -e $(dashed "Checking fff version")$' '
-  if [ $(which fff | wc -l) -eq 1 ]; then
+  if [[ $(which fff | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
     echo -e "\n    $(fff -v)\n"
   else
@@ -1220,12 +1215,12 @@ function main () {
   fi
 
   DASHED=${CLEAR}$(dashed "Cloning fff repository")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   unbuffer git clone https://github.com/dylanaraps/fff ${SOURCES}/fff \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1235,7 +1230,7 @@ function main () {
   command cd ${SOURCES}/fff &> /dev/null
 
   DASHED=$(dashed "Installing fff")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1246,7 +1241,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1256,7 +1251,7 @@ function main () {
   echo -e "\n    $(fff -v)\n"
 
   echo -n -e $(dashed "Checking TMUX version")$' '
-  if [ $(which tmux | wc -l) -eq 1 ]; then
+  if [[ $(which tmux | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
     echo -e "\n    $(tmux -V)\n"
   else
@@ -1264,12 +1259,12 @@ function main () {
   fi
 
   DASHED=${CLEAR}$(dashed "Cloning TMUX repository")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   unbuffer git clone https://github.com/tmux/tmux.git ${SOURCES}/tmux \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1280,7 +1275,7 @@ function main () {
     && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
 
   DASHED=$(dashed "Configuring TMUX")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1292,7 +1287,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1300,7 +1295,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Compiling TMUX")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1311,7 +1306,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1319,7 +1314,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Installing TMUX")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1330,7 +1325,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1342,28 +1337,28 @@ function main () {
   command cd ${SCRIPT_DIR}
 
   DASHED=${CLEAR}$(dashed "Cloning TMUX Plugin Manager repository")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [ -d ${TPM_DEST} ] && sudo \rm -rf ${TPM_DEST}
+  [[ -d ${TPM_DEST} ]] && sudo \rm -rf ${TPM_DEST}
   unbuffer git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
       && return 1
   fi
 
-  if [ ${GNOME} -eq 1 ]; then
+  if [[ ${GNOME} -eq 1 ]]; then
     DASHED=${CLEAR}$(dashed "Cloning EXECUTOR repository")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    [ -d ${EXECUTOR_DEST} ] && sudo \rm -r -f ${EXECUTOR_DEST}
+    [[ -d ${EXECUTOR_DEST} ]] && sudo \rm -r -f ${EXECUTOR_DEST}
     sudo unbuffer git clone ${EXECUTOR_REPO} ${EXECUTOR_DEST} \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1375,7 +1370,7 @@ function main () {
   unbuffer git clone https://github.com/pabtomas/flagbox ${SOURCES}/flagbox \
     | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1393,7 +1388,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1410,7 +1405,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1427,7 +1422,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1444,7 +1439,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1461,7 +1456,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1479,7 +1474,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1496,7 +1491,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1513,24 +1508,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  DASHED=$(dashed "Copying .flagbox.conf")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  command cp ${FLAGBOXCONF} ${HOME} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1538,7 +1516,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Copying .gitignore")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1549,7 +1527,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1557,7 +1535,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Copying GIT hooks")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1568,16 +1546,16 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
       && return 1
   fi
 
-  if [ ${GNOME} -eq 1 ]; then
+  if [[ ${GNOME} -eq 1 ]]; then
     DASHED=$(dashed "Copying EXECUTOR schema")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
@@ -1588,7 +1566,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1596,7 +1574,7 @@ function main () {
     fi
 
     DASHED=$(dashed "Create scripts directory")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
@@ -1607,7 +1585,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1615,7 +1593,7 @@ function main () {
     fi
 
     DASHED=$(dashed "Copying scripts")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
@@ -1628,7 +1606,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1636,11 +1614,11 @@ function main () {
     fi
 
     DASHED=$(dashed "Copying crons")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
-    [ $(which crontab | wc -l) -eq 1 ] && echo "* * * * * export DISPLAY=:0.0;\
+    [[ $(which crontab | wc -l) -eq 1 ]] && echo "* * * * * env DISPLAY=:0.0\
  sh /opt/scripts/redshift.sh > /dev/null 2>&1" | crontab - &> /dev/null
     STATUS=$?
 
@@ -1648,7 +1626,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1658,7 +1636,7 @@ function main () {
     DASHED=$(dashed "Copying desktop entries")
     dots "${DASHED}" &
     DOTS_PID=$!
-    [ $(command ls ${HOME}/.config/autostart/ | wc -l) -gt 0 ] \
+    [[ $(command ls ${HOME}/.config/autostart/ | wc -l) -gt 0 ]] \
       && command rm ${HOME}/.config/autostart/*
     for ENTRY in $(command ls ${DESKTOP}); do
       command cp ${DESKTOP}/${ENTRY} ${HOME}/.config/autostart &> /dev/null
@@ -1669,7 +1647,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1686,7 +1664,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1694,7 +1672,7 @@ function main () {
     fi
 
     DASHED=$(dashed "Compiling EXECUTOR schema")
-    [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     DOTS_PID=$!
     sudo glib-compile-schemas ${EXECUTOR_DEST}/schemas &> /dev/null \
@@ -1705,7 +1683,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1722,7 +1700,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
@@ -1741,13 +1719,13 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET}
     fi
 
-    if [ $(gnome-extensions list | grep -E "desktop-icons" | wc -l) -eq 1 ];
+    if [[ $(gnome-extensions list | grep -E "desktop-icons" | wc -l) -eq 1 ]];
       then
         DASHED=$(dashed "Disabling desktop-icons extension")
         dots "${DASHED}" &
@@ -1763,7 +1741,7 @@ function main () {
         wait ${DOTS_PID} &> /dev/null
         DASHED=${CLEAR}${DASHED}
 
-        if [ ${STATUS} -eq 0 ]; then
+        if [[ ${STATUS} -eq 0 ]]; then
           echo -e ${DASHED} ${GREEN}"OK"${RESET}
         else
           echo -e ${DASHED} ${RED}"Not OK"${RESET}
@@ -1774,9 +1752,9 @@ function main () {
     dots "${DASHED}" &
     DOTS_PID=$!
     gsettings set org.gnome.desktop.interface show-battery-percentage true \
-      &> /dev/null && [ -f /etc/X11/cursors/redglass.theme ] \
+      &> /dev/null && [[ -f /etc/X11/cursors/redglass.theme ]] \
       && gsettings set org.gnome.desktop.interface cursor-theme 'redglass' \
-        &> /dev/null && [ -d /usr/share/icons/HighContrast ] \
+        &> /dev/null && [[ -d /usr/share/icons/HighContrast ]] \
       && gsettings set org.gnome.desktop.interface gtk-theme \
         'HighContrastInverse' &> /dev/null
 
@@ -1786,7 +1764,7 @@ function main () {
     wait ${DOTS_PID} &> /dev/null
     DASHED=${CLEAR}${DASHED}
 
-    if [ ${STATUS} -eq 0 ]; then
+    if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET}
@@ -1796,7 +1774,7 @@ function main () {
     echo -n -e "${DASHED}"$' '
     killall -3 gnome-shell &> /dev/null
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       echo -n -e ${GREEN}"OK"${RESET}\
         "\n\n    Press Enter when GNOME service is functional again " \
           && read && echo
@@ -1815,7 +1793,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1823,7 +1801,7 @@ function main () {
   fi
 
   DASHED=$(dashed "Reloading CRON service")
-  [ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ] && sudo -k \
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
@@ -1834,7 +1812,7 @@ function main () {
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
 
-  if [ ${STATUS} -eq 0 ]; then
+  if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
@@ -1845,8 +1823,5 @@ function main () {
 }
 
 (return 0 2> /dev/null)
-[ $? -ne 0 ] && echo "This script has to be sourced." && exit 1
+[[ $? -ne 0 ]] && echo "This script has to be sourced." && exit 1
 main
-unset -f dots
-unset -f dashed
-unset -f main

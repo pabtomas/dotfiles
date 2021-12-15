@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-[ $(which glxinfo | wc -l) -eq 0 ] && exit 1
-[ $(glxinfo | grep -E -i "Device" | grep -E -i "Intel" | wc -l) -eq 0 ] \
+[[ $(which glxinfo | wc -l) -eq 0 ]] && exit 1
+[[ $(glxinfo | grep -E -i "Device" | grep -E -i "Intel" | wc -l) -eq 0 ]] \
   && exit 1
 DIR="${HOME}/.cache/intel_gpu_monitoring"
 command mkdir -p ${DIR}

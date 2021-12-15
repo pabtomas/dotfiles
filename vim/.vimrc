@@ -549,7 +549,7 @@ function! s:UnlockServer(app)
   endif
 endfunction
 
-function! IsServerReachable(app)
+function! s:IsServerReachable(app)
   if exists('s:servers["' . a:app . '"].reachable')
     return s:servers[a:app].reachable == v:true
   else
@@ -815,6 +815,7 @@ function! s:HelpBuffersMenu()
                            \   col: win_screenpos(0)[1],
                            \   zindex: 1,
                            \   wrap: v:false,
+                           \   fixed: v:true,
                            \   minwidth: winwidth(0),
                            \   time: 10000,
                            \   border: [1, 0, 0, 0],
@@ -949,6 +950,7 @@ function! s:BuffersMenu()
       \ zindex: 2,
       \ drag: v:true,
       \ wrap: v:false,
+      \ fixed: v:true,
       \ filter: expand('<SID>') . 'BuffersMenuFilter',
       \ mapping: v:false,
       \ border: [],
@@ -1093,6 +1095,7 @@ function! s:HelpUndotree()
                            \     + 1,
                            \   zindex: 4,
                            \   wrap: v:false,
+                           \   fixed: v:true,
                            \   minwidth: winwidth(0) - s:undo.max_length - 1,
                            \   maxwidth: winwidth(0) - s:undo.max_length - 1,
                            \   time: 10000,
@@ -1457,6 +1460,7 @@ function! s:Undotree()
     \ maxheight: winheight(0),
     \ drag: v:false,
     \ wrap: v:false,
+    \ fixed: v:true,
     \ mapping: v:false,
     \ scrollbar: v:true,
     \ border: [0, 0, 0, 1],
@@ -1476,6 +1480,7 @@ function! s:Undotree()
     \ maxheight: winheight(0),
     \ drag: v:false,
     \ wrap: v:false,
+    \ fixed: v:true,
     \ filter: expand('<SID>') . 'UndotreeFilter',
     \ mapping: v:false,
     \ scrollbar: v:false,
@@ -1879,6 +1884,7 @@ function! s:TagList()
         \ maxheight: winheight(0),
         \ drag: v:true,
         \ wrap: v:false,
+        \ fixed: v:true,
         \ filter: expand('<SID>') . 'TagListFilter',
         \ mapping: v:false,
         \ scrollbar: v:false,
@@ -2001,6 +2007,7 @@ function! s:Tig(command, env, conf_tigrc, term_options)
     \ minheight: winheight(0),
     \ maxheight: winheight(0),
     \ wrap: v:false,
+    \ fixed: v:true,
     \ mapping: v:false,
     \ scrollbar: v:false,
   \ })
@@ -2225,8 +2232,9 @@ command! -nargs=1 TigGrep call <SID>TigGrep(<args>)
 "   fff {{{2
 
 function! FFFedit(file)
-  if IsServerReachable('fff')
+  if s:IsServerReachable('fff')
     execute 'edit ' . a:file
+    redraw!
   endif
 endfunction
 
