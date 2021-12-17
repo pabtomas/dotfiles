@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ID=$(echo $(( $(echo -e "\
   $(vim --serverlist | tr -d "^VIM-")\n0" | sort -n -r | head -n 1) + 1)))

@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-if [ "x${1}" = "x" ]; then
+if [[ "x${1}" == "x" ]]; then
   echo "fff_vim_remote.sh script needs one argument" >&2
   exit 1
 else
