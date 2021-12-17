@@ -26,8 +26,6 @@ export FFF_KEY_PARENT4='off'
 export FFF_KEY_SCROLL_DOWN1='off'
 export FFF_KEY_SCROLL_UP1='off'
 
-export FFF_TRASH_CMD='rm -r'
-
 export FLAGBOX_SIZE=4
 
 export FLAGBOX_KEY1=","

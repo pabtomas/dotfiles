@@ -23,22 +23,23 @@ main () {
   local -r LOCAL="${HOME}/.local"
   local -r SOURCES="${LOCAL}/sources"
   local -r BACKUP="$(pwd)"
-  local -r SCRIPT_DIR="$(command cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-  local -r VIMRC="${SCRIPT_DIR}/vim/.vimrc"
-  local -r TMUXCONF="${SCRIPT_DIR}/tmux/.tmux.conf"
-  local -r TIGRC="${SCRIPT_DIR}/tig/.tigrc"
-  local -r BASHRC="${SCRIPT_DIR}/bash/.bashrc"
-  local -r PROFILE="${SCRIPT_DIR}/bash/.bash_profile"
-  local -r ALIASES="${SCRIPT_DIR}/bash/.bash_aliases/usual"
-  local -r GITIGNORE="${SCRIPT_DIR}/git/.gitignore"
-  local -r HOOKS="${SCRIPT_DIR}/git/.hooks"
-  local -r DESKTOP="${SCRIPT_DIR}/desktop"
-  local -r SCRIPTS="${SCRIPT_DIR}/scripts"
-  local -r SCHEMA="${SCRIPT_DIR}/executor/schema/org.gnome.shell.extensions.executor.gschema.xml "
+  local -r INSTALLSH_DIR="$(command cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+  local -r VIMRC="${INSTALLSH_DIR}/vim/.vimrc"
+  local -r TMUXCONF="${INSTALLSH_DIR}/tmux/.tmux.conf"
+  local -r TIGRC="${INSTALLSH_DIR}/tig/.tigrc"
+  local -r BASHRC="${INSTALLSH_DIR}/bash/.bashrc"
+  local -r PROFILE="${INSTALLSH_DIR}/bash/.bash_profile"
+  local -r ALIASES="${INSTALLSH_DIR}/bash/.bash_aliases/usual"
+  local -r GITIGNORE="${INSTALLSH_DIR}/git/.gitignore"
+  local -r HOOKS="${INSTALLSH_DIR}/git/.hooks"
+  local -r DESKTOP="${INSTALLSH_DIR}/desktop"
+  local -r SCRIPTS="${INSTALLSH_DIR}/scripts"
+  local -r SCHEMA="${INSTALLSH_DIR}/executor/schema/org.gnome.shell.extensions.executor.gschema.xml "
   local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
   local -r EXECUTOR_DEST="${LOCAL}/share/gnome-shell/extensions/executor@raujonas.github.io/"
   local -r EXECUTOR_REPO="https://github.com/raujonas/executor.git"
   local -r GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
+  local -r SCRIPTS_DEST="/opt/scripts"
   local GNOME=1
   local DASHED=""
   local DOTS_PID=0
@@ -504,7 +505,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking autoconf installation")$' '
-  if [[ $(dpkg -l | command grep -E "autoconf" | wc -l) -eq 0 ]]; then
+  if [[ $(which "autoconf" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing autoconf package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -522,7 +523,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking automake installation")$' '
-  if [[ $(dpkg -l | command grep -E "automake" | wc -l) -eq 0 ]]; then
+  if [[ $(which "automake" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing automake package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1334,7 +1335,37 @@ main () {
 
   echo -e "\n    $(tmux -V)\n"
 
-  command cd ${SCRIPT_DIR}
+  echo -e "\n$(pass version)\n"
+
+  DASHED=${CLEAR}$(dashed "Cloning password-store repository")
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  unbuffer git clone https://git.zx2c4.com/password-store ${SOURCES}/pass \
+    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+  if [[ $? -eq 0 ]]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  command cd ${SOURCES}/pass \
+    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+
+  DASHED=$(dashed "Installing password-store")
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  sudo make install &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  command cd ${INSTALLSH_DIR}
 
   DASHED=${CLEAR}$(dashed "Cloning TMUX Plugin Manager repository")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1377,11 +1408,30 @@ main () {
       && return 1
   fi
 
+  DASHED=$(dashed "Create scripts directory")
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  dots "${DASHED}" &
+  DOTS_PID=$!
+  sudo \mkdir -p ${SCRIPTS_DEST} &> /dev/null
+  STATUS=$?
+
+  kill ${DOTS_PID} &> /dev/null
+  wait ${DOTS_PID} &> /dev/null
+  DASHED=${CLEAR}${DASHED}
+
+  if [[ ${STATUS} -eq 0 ]]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+      && command cd ${BACKUP} && return 1
+  fi
+
   DASHED=$(dashed "Installing flagbox")
   dots "${DASHED}" &
   DOTS_PID=$!
   command cd ${SOURCES}/flagbox \
-    && command cp flagbox ${LOCAL}/bin &> /dev/null
+    && command cp sourceme.sh ${SCRIPTS_DEST} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -1573,32 +1623,13 @@ main () {
         && command cd ${BACKUP} && return 1
     fi
 
-    DASHED=$(dashed "Create scripts directory")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    sudo \mkdir -p /opt/scripts &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
-    fi
-
     DASHED=$(dashed "Copying scripts")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo echo &> /dev/null && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     for SCRIPT in $(command ls ${SCRIPTS}); do
-      sudo \cp ${SCRIPTS}/${SCRIPT} /opt/scripts &> /dev/null
+      sudo \cp ${SCRIPTS}/${SCRIPT} ${SCRIPTS_DEST} &> /dev/null
     done
     STATUS=$?
 
@@ -1619,7 +1650,7 @@ main () {
     dots "${DASHED}" &
     DOTS_PID=$!
     [[ $(which crontab | wc -l) -eq 1 ]] && echo "* * * * * env DISPLAY=:0.0\
- sh /opt/scripts/redshift.sh > /dev/null 2>&1" | crontab - &> /dev/null
+ sh ${SCRIPTS_DEST}/redshift.sh > /dev/null 2>&1" | crontab - &> /dev/null
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
@@ -1825,3 +1856,4 @@ main () {
 (return 0 2> /dev/null)
 [[ $? -ne 0 ]] && echo "This script has to be sourced." && exit 1
 main
+unset -f dots dashed main

@@ -741,7 +741,13 @@ call prop_type_add('name',  #{ highlight: 'TagName' })
 "     Functions {{{3
 
 function! s:Unfold()
-  normal! za
+  try
+    normal! za
+  catch
+    echohl ErrorMsg
+    echomsg matchstr(v:exception, 'E[0-9]*: .*')
+    echohl NONE
+  endtry
 endfunction
 
 function! FoldText()
@@ -2245,7 +2251,7 @@ endfunction
 
 function! s:PrefillShFile()
   call append(0, [
-  \                '#!/bin/bash',
+  \                '#!/usr/bin/env bash',
   \                '',
   \              ])
 endfunction
