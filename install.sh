@@ -1335,7 +1335,13 @@ main () {
 
   echo -e "\n    $(tmux -V)\n"
 
-  echo -e "\n$(pass version)\n"
+  echo -n -e $(dashed "Checking password-store version")$' '
+  if [[ $(which pass | wc -l) -eq 1 ]]; then
+    echo -e ${GREEN}"OK"${RESET}
+    echo -e "\n$(pass version)\n"
+  else
+    echo -e ${RED}"Not OK"${RESET}
+  fi
 
   DASHED=${CLEAR}$(dashed "Cloning password-store repository")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1364,6 +1370,15 @@ main () {
   kill ${DOTS_PID} &> /dev/null
   wait ${DOTS_PID} &> /dev/null
   DASHED=${CLEAR}${DASHED}
+
+  if [[ ${STATUS} -eq 0 ]]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+      && return 1
+  fi
+
+  echo -e "\n$(pass version)\n"
 
   command cd ${INSTALLSH_DIR}
 
@@ -1428,10 +1443,12 @@ main () {
   fi
 
   DASHED=$(dashed "Installing flagbox")
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
   command cd ${SOURCES}/flagbox \
-    && command cp sourceme.sh ${SCRIPTS_DEST} &> /dev/null
+    && sudo cp sourceme.sh ${SCRIPTS_DEST} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
