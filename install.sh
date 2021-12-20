@@ -1448,7 +1448,7 @@ main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cd ${SOURCES}/flagbox \
-    && sudo cp sourceme.sh ${SCRIPTS_DEST} &> /dev/null
+    && sudo cp ${SOURCES}/flagbox/sourceme.sh ${SCRIPTS_DEST} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
