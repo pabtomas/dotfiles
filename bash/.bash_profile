@@ -1,5 +1,3 @@
-export PATH="$PATH:/home/user/.local/bin"
-
 export EDITOR="vim"
 export VISUAL="vim"
 export PAGER="less"
@@ -41,6 +39,3 @@ export FLAGBOX_VRESET=false
 export FLAGBOX_VRESTORE=true
 
 export FLAGBOX_FOLDLISTING=true
-
-# Allow tmux to source .bashrc each time a pane or a window is created
-source ${HOME}/.bashrc

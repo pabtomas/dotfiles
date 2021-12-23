@@ -1551,7 +1551,8 @@ main () {
   DASHED=$(dashed "Copying .bash_profile")
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cp ${PROFILE} ${HOME} &> /dev/null
+  command cp /etc/skel/.profile ${HOME}/.bash_profile &> /dev/null \
+    && echo -e "\n$(cat ${PROFILE})" >> ${HOME}/.bash_profile
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null

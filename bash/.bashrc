@@ -2,6 +2,6 @@ force_color_prompt=yes
 
 git config --global core.editor vim
 
-source $(which flagbox)
+source /opt/scripts/sourceme.sh
 
 eval "$(direnv hook bash)"
