@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 TYPE="(fixing|feature|update|refactoring)"
 REGEX='(\['${TYPE}' - [^[:space:]].*\]|'
