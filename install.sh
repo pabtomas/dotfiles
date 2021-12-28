@@ -1479,6 +1479,17 @@ main () {
       && return 1
   fi
 
+  DASHED=${CLEAR}$(dashed "Cloning vim-polyglot repository")
+  rm -rf ${HOME}/.vim/pack && unbuffer git clone --depth 1 \
+    https://github.com/sheerun/vim-polyglot \
+    ${HOME}/.vim/pack/plugins/start/vim-polyglot \
+    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ $? -eq 0 ]]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+  fi
+
   DASHED=$(dashed "Copying .tmux.conf")
   dots "${DASHED}" &
   DOTS_PID=$!
