@@ -458,7 +458,7 @@ endif
 "   Comments {{{2
 
 function! s:Comment(visual)
-  const l:DELIMITER = &commentstring[:match(&commentstring, " %s") - 1]
+  const l:DELIMITER = &commentstring[:match(&commentstring, "%s") - 1]
   let l:min_limit = line('.')
   let l:max_limit = line('.')
   if a:visual
@@ -476,7 +476,7 @@ function! s:Comment(visual)
 endfunction
 
 function! s:Uncomment(visual)
-  const l:DELIMITER = &commentstring[:match(&commentstring, " %s") - 1]
+  const l:DELIMITER = &commentstring[:match(&commentstring, "%s") - 1]
   let l:min_limit = line('.')
   let l:max_limit = line('.')
   if a:visual
@@ -2316,6 +2316,18 @@ const s:MAPPINGS = {
 \       mode: 'n',
 \       command: s:SEARCH.insensitive,
 \     },
+\     #{
+\       description: 'Insert anti-slash character easier',
+\       keys: s:LEADERS.global . s:LEADERS.global,
+\       mode: 'c',
+\       command: '\',
+\     },
+\     #{
+\       description: 'Insert cursor sequence easier',
+\       keys: s:LEADERS.shift . s:LEADERS.shift,
+\       mode: 'c',
+\       command: '\zs',
+\     },
 \   ],
 \   'VIMRC': [
 \     #{
@@ -2462,6 +2474,12 @@ const s:MAPPINGS = {
 \       mode: 'v',
 \       command: ':<C-u>silent call <SID>Uncomment(v:true)<CR>',
 \     },
+\     #{
+\       description: 'Toggle start/end of visual area',
+\       keys: 'ù',
+\       mode: 'v',
+\       command: 'o',
+\     },
 \   ],
 \   'TIG': [
 \     #{
@@ -2522,7 +2540,7 @@ const s:MAPPINGS = {
 \     },
 \     #{
 \       description: 'Deep unfold in visual area',
-\       keys: '<Space>:',
+\       keys: '<Space>',
 \       mode: 'v',
 \       command: ':foldopen!<CR>',
 \     },
@@ -2557,12 +2575,6 @@ const s:MAPPINGS = {
 \       command: '<C-r><C-o>"',
 \     },
 \     #{
-\       description: 'Insert anti-slash character easier in command-line',
-\       keys: s:LEADERS.global . s:LEADERS.global,
-\       mode: 'c',
-\       command: '\',
-\     },
-\     #{
 \       description: 'Auto-completion',
 \       keys: '<S-Tab>',
 \       mode: 'i',
@@ -2573,6 +2585,12 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.global . 'z',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>Obsession()<CR>',
+\     },
+\     #{
+\       description: 'Matchit',
+\       keys: 'ù',
+\       mode: 'n',
+\       command: '%',
 \     },
 \   ],
 \ }
@@ -2785,9 +2803,9 @@ augroup vimrc_autocomands
 "   }}}
 "   Comments autocommands {{{2
 
-  autocmd FileType c,cpp,glsl,rust    setlocal commentstring=//\ %s
-  autocmd FileType conf,make,sh,yaml  setlocal commentstring=#\ %s
-  autocmd FileType vim                setlocal commentstring=\"\ %s
+  autocmd FileType c,cpp,glsl,rust    setlocal commentstring=//%s
+  autocmd FileType conf,make,sh,yaml  setlocal commentstring=#%s
+  autocmd FileType vim                setlocal commentstring="%s
 
 "   }}}
 "   Folds autocommands {{{2
