@@ -40,6 +40,7 @@ main () {
   local -r EXECUTOR_REPO="https://github.com/raujonas/executor.git"
   local -r GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
   local -r SCRIPTS_DEST="/opt/scripts"
+  local -r POLYGLOT_DEST="${HOME}/.vim/pack/plugins/start/vim-polyglot"
   local GNOME=1
   local DASHED=""
   local DOTS_PID=0
@@ -54,6 +55,7 @@ main () {
   fi
 
   command mkdir -p ${LOCAL}/bin ${LOCAL}/share ${LOCAL}/lib ${SOURCES}
+  sudo \mkdir -p ${SCRIPTS_DEST}
 
   echo -n -e $(dashed "Checking apt installation")$' '
   if [[ $(which apt | wc -l) -gt 0 ]]; then
@@ -1586,18 +1588,26 @@ main () {
 
   command cd ${INSTALLSH_DIR}
 
-  DASHED=${CLEAR}$(dashed "Cloning TMUX Plugin Manager repository")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [[ -d ${TPM_DEST} ]] && sudo \rm -rf ${TPM_DEST}
-  unbuffer git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ ! -d "${TPM_DEST}" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning TMUX Plugin Manager repository")
+    unbuffer git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+        && return 1
+    fi
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    DASHED=${CLEAR}$(dashed "Pulling TMUX Plugin Manager repository")
+    command cd ${TPM_DEST} && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
   if [[ ${GNOME} -eq 1 ]]; then
@@ -1638,25 +1648,6 @@ main () {
     fi
   fi
 
-  DASHED=$(dashed "Create scripts directory")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo \mkdir -p ${SCRIPTS_DEST} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-      && command cd ${BACKUP} && return 1
-  fi
-
   DASHED=$(dashed "Installing flagbox")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
@@ -1694,15 +1685,25 @@ main () {
       && return 1
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning vim-polyglot repository")
-  rm -rf ${HOME}/.vim/pack &> /dev/null && unbuffer git clone --depth 1 \
-    https://github.com/sheerun/vim-polyglot \
-    ${HOME}/.vim/pack/plugins/start/vim-polyglot \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  if [[ ! -d "${POLYGLOT_DEST}" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning vim-polyglot repository")
+    unbuffer git clone --depth 1 https://github.com/sheerun/vim-polyglot
+      ${POLYGLOT_DEST} | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    DASHED=${CLEAR}$(dashed "Pulling vim-polyglot repository")
+    command cd ${POLYGLOT_DEST} && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
   DASHED=$(dashed "Copying .tmux.conf")
