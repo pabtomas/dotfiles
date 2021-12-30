@@ -278,7 +278,7 @@ main () {
       fi
 
       VERSION="$(direnv --version | tr -d '\n')"
-      echo -e "\n    direnv ${VERSION}')\n"
+      echo -e "\n    direnv ${VERSION}\n"
   else
     echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
