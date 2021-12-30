@@ -145,23 +145,13 @@ git-ranking\""
 
 git config --global --replace-all alias.root 'rev-parse --show-toplevel'
 
-git config --global --replace-all alias.undo "!bash -c \"
-function git-undo () {
-  if [ \$(git diff --cached --name-only | wc -l) -gt 0 ]; then
-    git reset --mixed
-  elif [ \$(git log --pretty=oneline origin/master..master | wc -l) -gt 0 ] \
-    && [ \$(git status -s | wc -l) -eq 0 ]; then
-      git reset --soft HEAD^
-  fi
-}
-git-undo\""
-
 git config --global --replace-all alias.file "checkout HEAD -- "
 
 alias ga='git add'
 alias gaa='git add -A'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
+alias gd='tig status'
 alias gf='git file'
 alias gg='git ranking'
 alias gh='git checkout'
@@ -174,7 +164,6 @@ alias gs='git status -s -uall'
 alias gsd='git stash drop'
 alias gsp='git stash pop'
 alias gst='git stash push'
-alias gu='git undo'
 
 function gc () {
   git clone "$@" && cd $(command ls -t | head -n1)
@@ -187,10 +176,6 @@ function gc () {
         >> .gitignore
   [ ${RET} -eq 0 ] && [ -d "${GIT_TEMPLATE_DIR}/.hooks" ] \
     && command cp ${GIT_TEMPLATE_DIR}/.hooks/* .git/hooks
-}
-
-function gd () {
-  git diff --color "$@" | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -R -S +g
 }
 
 function gamp () {

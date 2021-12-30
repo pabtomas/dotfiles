@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+  #!/usr/bin/env bash
 
 dashed () {
   echo -e "$1 $(printf "%$(( 68 - ${#1} ))s" | tr ' ' '-' )"
@@ -46,13 +46,14 @@ main () {
   local STATUS=0
   local GPU=""
   local VERSION=""
+  local TAG=""
 
   if [[ $(echo ${PATH} | tr ':' '\n' | grep -E "${HOME}/.local/bin" \
     | wc -l) -eq 0 ]]; then
       export PATH=${HOME}/.local/bin:${PATH}
   fi
 
-  command mkdir -p ${LOCAL}/bin ${LOCAL}/share ${LOCAL}/lib
+  command mkdir -p ${LOCAL}/bin ${LOCAL}/share ${LOCAL}/lib ${SOURCES}
 
   echo -n -e $(dashed "Checking apt installation")$' '
   if [[ $(which apt | wc -l) -gt 0 ]]; then
@@ -223,30 +224,64 @@ main () {
   echo -n -e $(dashed "Checking direnv version")$' '
   if [[ $(which direnv | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    direnv $(direnv --version)\n"
+    VERSION="$(direnv --version | tr -d '\n')"
+    echo -e "\n    direnv ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  DASHED=${CLEAR}$(dashed "Installing direnv")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  curl -s -f -L https://direnv.net/install.sh | bash &> /dev/null \
-    && chmod +x $(which direnv)
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/direnv" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning direnv repository")
+    unbuffer git clone https://github.com/direnv/direnv.git ${SOURCES}/direnv \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    command cd ${SOURCES}/direnv
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    DASHED=${CLEAR}$(dashed "Pulling direnv repository")
+    command cd ${SOURCES}/direnv && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  [[ $(which direnv | wc -l) -gt 0 ]] \
-    && echo -e "\n    direnv $(direnv --version)\n"
+  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
+
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
+
+      DASHED=${CLEAR}$(dashed "Installing direnv")
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      curl -s -f -L https://direnv.net/install.sh | bash &> /dev/null \
+        && chmod +x $(which direnv)
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ $? -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      fi
+
+      VERSION="$(direnv --version | tr -d '\n')"
+      echo -e "\n    direnv ${VERSION}')\n"
+  else
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
+  fi
 
   echo -n -e $(dashed "Checking Silver Searcher installation")$' '
   if [[ $(which ag | wc -l) -eq 0 ]]; then
@@ -876,509 +911,678 @@ main () {
   echo -n -e $(dashed "Checking VIM version")$' '
   if [[ $(which vim | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
-      " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
+    VERSION="$(echo $(vim --version | head -n 2 | grep -E -o \
+      ' [0-9]+\.[0-9]+ |[0-9]+$') | tr ' ' '.')"
+    echo -e "\n    vim ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  [[ -d ${SOURCES} ]] && sudo \rm -r -f ${SOURCES}
-  command mkdir -p ${SOURCES}
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/vim" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning VIM repository")
+    unbuffer git clone https://github.com/vim/vim.git ${SOURCES}/vim \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
 
-  DASHED=${CLEAR}$(dashed "Cloning VIM repository")
-  unbuffer git clone https://github.com/vim/vim.git ${SOURCES}/vim \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    command cd ${SOURCES}/vim
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    DASHED=${CLEAR}$(dashed "Pulling VIM repository")
+    command cd ${SOURCES}/vim && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  command cd ${SOURCES}/vim \
-    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null \
-    && command cd ${SOURCES}/vim/src
+  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
 
-  DASHED=$(dashed "Configuring VIM")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  ${SOURCES}/vim/src/configure &> /dev/null
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null \
+        && command cd ${SOURCES}/vim/src
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      DASHED=$(dashed "Configuring VIM")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      ${SOURCES}/vim/src/configure &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Compiling VIM")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Installing VIM")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      sudo make install &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      VERSION="$(echo $(vim --version | head -n 2 | grep -E -o \
+        ' [0-9]+\.[0-9]+ |[0-9]+$') | tr ' ' '.')"
+      echo -e "\n    vim ${VERSION}\n"
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
-
-  DASHED=$(dashed "Compiling VIM")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  DASHED=$(dashed "Installing VIM")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo make install &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  echo -e "\n    vim "$(echo $(vim --version | head -n 2 | grep -E -o \
-    " [0-9]+\.[0-9]+ |[0-9]+$") | tr ' ' '.')"\n"
 
   echo -n -e $(dashed "Checking Kakoune version")$' '
   if [[ $(which kak | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    $(kak -version)\n"
+    VERSION="$(kak -version | grep -E -o '[0-9.]+')"
+    echo -e "\n    kak ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning Kakoune repository")
-  unbuffer git clone https://github.com/mawww/kakoune.git ${SOURCES}/kakoune \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/kak" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning Kakoune repository")
+    unbuffer git clone https://github.com/mawww/kakoune.git ${SOURCES}/kak \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+
+    command cd ${SOURCES}/kak
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    DASHED=${CLEAR}$(dashed "Pulling Kakoune repository")
+    command cd ${SOURCES}/kak && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  command cd ${SOURCES}/kakoune \
-    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null \
-    && command cd ${SOURCES}/kakoune/src
+  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
 
-  DASHED=$(dashed "Compiling Kakoune")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make &> /dev/null
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null \
+        && command cd ${SOURCES}/kak/src
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      DASHED=$(dashed "Compiling Kakoune")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Installing Kakoune")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      PREFIX=${LOCAL} make install &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      VERSION="$(kak -version | grep -E -o '[0-9.]+')"
+      echo -e "\n    kak ${VERSION}\n"
+
+      DASHED=$(dashed "Documenting Kakoune")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make man &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  DASHED=$(dashed "Installing Kakoune")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  PREFIX=${LOCAL} make install &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  echo -e "\n    $(kak -version)\n"
-
-  DASHED=$(dashed "Documenting Kakoune")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make man &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
 
   echo -n -e $(dashed "Checking Tig version")$' '
   if [[ $(which tig | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    "$(tig --version | head -n1)"\n"
+    VERSION="$(tig --version | head -n 1 | grep -E -o "[0-9.]+")"
+    echo -e "\n    tig ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning Tig repository")
-  unbuffer git clone https://github.com/jonas/tig.git ${SOURCES}/tig \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/tig" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning Tig repository")
+    unbuffer git clone https://github.com/jonas/tig.git ${SOURCES}/tig \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+
+    command cd ${SOURCES}/tig
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    DASHED=${CLEAR}$(dashed "Pulling Tig repository")
+    command cd ${SOURCES}/tig && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  command cd ${SOURCES}/tig \
-    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
 
-  DASHED=$(dashed "Compiling Tig")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make prefix=${LOCAL} &> /dev/null
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      DASHED=$(dashed "Compiling Tig")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make prefix=${LOCAL} &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Installing tig")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make install prefix=${LOCAL} &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      VERSION="$(tig --version | head -n 1 | grep -E -o "[0-9.]+")"
+      echo -e "\n    tig ${VERSION}\n"
+
+      DASHED=$(dashed "Documenting Tig")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      sudo make install-doc-man prefix=/usr &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  DASHED=$(dashed "Installing tig")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make install prefix=${LOCAL} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  echo -e "\n    "$(tig --version | head -n1)"\n"
-
-  DASHED=$(dashed "Documenting Tig")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo make install-doc-man prefix=/usr &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
 
   echo -n -e $(dashed "Checking Universal Ctags version")$' '
   if [[ $(which ctags | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-      | grep -E -o "[.0-9]+" | xargs -I {} echo -n "Universal Ctags {}")\n"
+    VERSION="$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+      | grep -E -o "[.0-9]+")"
+    echo -e "\n    ctags ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning Universal Ctags repository")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  unbuffer git clone https://github.com/universal-ctags/ctags.git \
-    ${SOURCES}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/ctags" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning Universal Ctags repository")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    unbuffer git clone https://github.com/universal-ctags/ctags.git \
+      ${SOURCES}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
+        | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+        && return 1
+    fi
+
+    command cd ${SOURCES}/ctags
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    DASHED=${CLEAR}$(dashed "Pulling Universal Ctags repository")
+    command cd ${SOURCES}/ctags && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  command cd ${SOURCES}/ctags \
-    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
 
-  DASHED=$(dashed "Configuring Universal Ctags")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sh ${SOURCES}/ctags/autogen.sh &> /dev/null \
-    && ${SOURCES}/ctags/configure &> /dev/null
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      DASHED=$(dashed "Configuring Universal Ctags")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      sh ${SOURCES}/ctags/autogen.sh &> /dev/null \
+        && ${SOURCES}/ctags/configure &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Compiling Universal Ctags")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Installing Universal Ctags")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      sudo make install &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      VERSION="$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
+        | grep -E -o "[.0-9]+")"
+      echo -e "\n    ctags ${VERSION}\n"
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
-
-  DASHED=$(dashed "Compiling Universal Ctags")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  DASHED=$(dashed "Installing Universal Ctags")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo make install &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  echo -e "\n    $(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-    | grep -E -o "[.0-9]+" | xargs -I {} echo -n "Universal Ctags {}")\n"
 
   echo -n -e $(dashed "Checking fff version")$' '
   if [[ $(which fff | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    $(fff -v)\n"
+    VERSION="$(fff -v | grep -E -o '[0-9.]+')"
+    echo -e "\n    fff ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning fff repository")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  unbuffer git clone https://github.com/dylanaraps/fff ${SOURCES}/fff \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/fff" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning fff repository")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    unbuffer git clone https://github.com/dylanaraps/fff ${SOURCES}/fff \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+        && return 1
+    fi
+
+    command cd ${SOURCES}/fff
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    DASHED=${CLEAR}$(dashed "Pulling fff repository")
+    command cd ${SOURCES}/fff && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  command cd ${SOURCES}/fff &> /dev/null
+  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
 
-  DASHED=$(dashed "Installing fff")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make PREFIX=${LOCAL} install &> /dev/null
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+      DASHED=$(dashed "Installing fff")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make PREFIX=${LOCAL} install &> /dev/null
+      STATUS=$?
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      VERSION="$(fff -v | grep -E -o '[0-9.]+')"
+      echo -e "\n    fff ${VERSION}\n"
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
-
-  echo -e "\n    $(fff -v)\n"
 
   echo -n -e $(dashed "Checking TMUX version")$' '
   if [[ $(which tmux | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n    $(tmux -V)\n"
+    VERSION="$(tmux -V | tr -d 'tmux ')"
+    echo -e "\n    tmux ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning TMUX repository")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  unbuffer git clone https://github.com/tmux/tmux.git ${SOURCES}/tmux \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/tmux" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning TMUX repository")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    unbuffer git clone https://github.com/tmux/tmux.git ${SOURCES}/tmux \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+        && return 1
+    fi
+
+    command cd ${SOURCES}/tmux
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    DASHED=${CLEAR}$(dashed "Pulling TMUX repository")
+    command cd ${SOURCES}/tmux && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  command cd ${SOURCES}/tmux \
-    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+  TAG=$(git describe --tags --abbrev=0)
 
-  DASHED=$(dashed "Configuring TMUX")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sh ${SOURCES}/tmux/autogen.sh &> /dev/null \
-    && ${SOURCES}/tmux/configure &> /dev/null
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      DASHED=$(dashed "Configuring TMUX")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      sh ${SOURCES}/tmux/autogen.sh &> /dev/null \
+        && ${SOURCES}/tmux/configure &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Compiling TMUX")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      make &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      DASHED=$(dashed "Installing TMUX")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      sudo make install &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      VERSION="$(tmux -V | tr -d 'tmux ')"
+      echo -e "\n    tmux ${VERSION}\n"
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
-
-  DASHED=$(dashed "Compiling TMUX")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  make &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  DASHED=$(dashed "Installing TMUX")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo make install &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
-  fi
-
-  echo -e "\n    $(tmux -V)\n"
 
   echo -n -e $(dashed "Checking password-store version")$' '
   if [[ $(which pass | wc -l) -eq 1 ]]; then
     echo -e ${GREEN}"OK"${RESET}
-    echo -e "\n$(pass version)\n"
+    VERSION="$(pass version | grep -E -o 'v[0-9.]*' | tr -d 'v')"
+    echo -e "\n    pass ${VERSION}\n"
   else
     echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning password-store repository")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  unbuffer git clone https://git.zx2c4.com/password-store ${SOURCES}/pass \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/pass" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning password-store repository")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    unbuffer git clone https://git.zx2c4.com/password-store ${SOURCES}/pass \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+        && return 1
+    fi
+
+    command cd ${SOURCES}/pass
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    DASHED=${CLEAR}$(dashed "Pulling password-store repository")
+    command cd ${SOURCES}/pass && git checkout master &> /dev/null \
+      && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
-  command cd ${SOURCES}/pass \
-    && git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+  TAG=$(git describe --tags --abbrev=0)
 
-  DASHED=$(dashed "Installing password-store")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo make install &> /dev/null
-  STATUS=$?
+  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
+    | wc -l) -eq 0 ]]; then
+      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      DASHED=$(dashed "Installing password-store")
+      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      dots "${DASHED}" &
+      DOTS_PID=$!
+      sudo make install &> /dev/null
+      STATUS=$?
+
+      kill ${DOTS_PID} &> /dev/null
+      wait ${DOTS_PID} &> /dev/null
+      DASHED=${CLEAR}${DASHED}
+
+      if [[ ${STATUS} -eq 0 ]]; then
+        echo -e ${DASHED} ${GREEN}"OK"${RESET}
+      else
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+          && return 1
+      fi
+
+      VERSION="$(pass version | grep -E -o 'v[0-9.]*' | tr -d 'v')"
+      echo -e "\n    pass ${VERSION}\n"
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
-
-  echo -e "\n$(pass version)\n"
 
   command cd ${INSTALLSH_DIR}
 
@@ -1412,15 +1616,26 @@ main () {
     fi
   fi
 
-  DASHED=${CLEAR}$(dashed "Cloning flagbox repository")
-  unbuffer git clone https://github.com/pabtomas/flagbox ${SOURCES}/flagbox \
-    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ ! -d "${SOURCES}/flagbox" ]]; then
+    DASHED=${CLEAR}$(dashed "Cloning flagbox repository")
+    unbuffer git clone https://github.com/pabtomas/flagbox ${SOURCES}/flagbox \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
+        && return 1
+    fi
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    DASHED=${CLEAR}$(dashed "Pulling flagbox repository")
+    command cd ${SOURCES}/flagbox && git pull &> /dev/null
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
   fi
 
   DASHED=$(dashed "Create scripts directory")
@@ -1448,7 +1663,7 @@ main () {
   dots "${DASHED}" &
   DOTS_PID=$!
   command cd ${SOURCES}/flagbox \
-    && sudo cp ${SOURCES}/flagbox/sourceme.sh ${SCRIPTS_DEST} &> /dev/null
+    && sudo \cp -f ${SOURCES}/flagbox/sourceme.sh ${SCRIPTS_DEST} &> /dev/null
   STATUS=$?
 
   kill ${DOTS_PID} &> /dev/null
@@ -1477,6 +1692,17 @@ main () {
   else
     echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
       && return 1
+  fi
+
+  DASHED=${CLEAR}$(dashed "Cloning vim-polyglot repository")
+  rm -rf ${HOME}/.vim/pack &> /dev/null && unbuffer git clone --depth 1 \
+    https://github.com/sheerun/vim-polyglot \
+    ${HOME}/.vim/pack/plugins/start/vim-polyglot \
+    | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  if [[ $? -eq 0 ]]; then
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+  else
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
   fi
 
   DASHED=$(dashed "Copying .tmux.conf")
