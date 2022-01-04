@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-TYPE="(fixing|feature|update|refactoring)"
+TYPE="(fixing|update|refactoring|merge)"
 REGEX='(\['${TYPE}' - [^[:space:]].*\]|'
 REGEX=${REGEX}'\['${TYPE}' - [^[:space:]].*\][[:space:]][^[:space:]].*|'
 REGEX=${REGEX}'\['${TYPE}'\][[:space:]][^[:space:]].*)'
