@@ -7,7 +7,7 @@ REGEX=${REGEX}'\['${TYPE}'\][[:space:]][^[:space:]].*)'
 
 if ! grep -ixqE "$REGEX" "$1"; then
   echo "Unexpected commit message: [<type> - <identifier>] <message>" >&2
-  echo "Expected types:$(echo ${TYPE} | sed 's/[()|]/ /g')"
+  echo "Expected types:$(echo -e ${TYPE//|/\\n- } | tr -d ')' | sed 's/(/- /g')"
   exit 1
 fi
 
