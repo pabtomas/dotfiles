@@ -455,7 +455,37 @@ if !exists("*s:SourceVimRC")
 endif
 
 "   }}}
+"   Tmux {{{2
+
+function! s:ToggleTmuxCopy()
+  if &number || &list
+    set nonumber nolist
+  else
+    set number list
+  endif
+endfunction
+
+"   }}}
 "   Comments {{{2
+
+function! s:SetCommentString()
+  if !exists('b:commentstringset')
+    if (&filetype == "c") || (&filetype == "cpp") || (&filetype == "glsl")
+      \ || (&filetype == "rust")
+        setlocal commentstring=//%s
+    elseif (&filetype == "conf") || (&filetype == "make")
+      \ || (&filetype == "tmux") || (&filetype == "sh")
+      \ || (&filetype == "yaml")
+        setlocal commentstring=#%s
+    elseif &filetype == "vim"
+      setlocal commentstring=\"%s
+    endif
+
+    if len(&filetype) > 0
+      let b:commentstringset = v:true
+    endif
+  endif
+endfunction
 
 function! s:Comment(visual)
   const l:DELIMITER = &commentstring[:match(&commentstring, "%s") - 1]
@@ -2592,6 +2622,12 @@ const s:MAPPINGS = {
 \       mode: 'n',
 \       command: '%',
 \     },
+\     #{
+\       description: 'Toggle number and list options',
+\       keys: s:LEADERS.global . 'n',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>ToggleTmuxCopy()<CR>',
+\     },
 \   ],
 \ }
 
@@ -2803,9 +2839,7 @@ augroup vimrc_autocomands
 "   }}}
 "   Comments autocommands {{{2
 
-  autocmd FileType c,cpp,glsl,rust    setlocal commentstring=//%s
-  autocmd FileType conf,make,sh,yaml  setlocal commentstring=#%s
-  autocmd FileType vim                setlocal commentstring="%s
+  autocmd BufEnter * :call <SID>SetCommentString()
 
 "   }}}
 "   Folds autocommands {{{2

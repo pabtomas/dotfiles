@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
-TYPE="(fixing|feature|update|refactoring)"
+TYPE="(fixing|update|refactoring|merge)"
 REGEX='(\['${TYPE}' - [^[:space:]].*\]|'
 REGEX=${REGEX}'\['${TYPE}' - [^[:space:]].*\][[:space:]][^[:space:]].*|'
 REGEX=${REGEX}'\['${TYPE}'\][[:space:]][^[:space:]].*)'
 
 if ! grep -ixqE "$REGEX" "$1"; then
-  echo "Unexpected commit message: [<type> - <identifier>] <message>" >&2
+  echo -e "Expected commit messages:\n"\
+    "- \"[<type> - <identifier>] <message>\"\n"\
+    "- \"[<type> - <identifier>]\"\n"\
+    "- \"[<type>] <message>\"\n\nExpected types:"\
+    "$(echo -e ${TYPE//[(|]/\\n - } | tr -d ')')"
   exit 1
 fi
-

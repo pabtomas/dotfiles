@@ -17,10 +17,10 @@ done
 
 function mkdir () {
   command mkdir -p -v "$@"
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     for DIR in $(echo "$@"); do
-      if [ "x${DIR}" != "x" ]; then
-        while [ ${DIR} != "." ]; do
+      if [[ "x${DIR}" != x ]]; then
+        while [[ ${DIR} != . ]]; do
           echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
             && read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
           DIR=$(dirname ${DIR});
@@ -52,7 +52,7 @@ function extract () {
   fi
 
   local DESTDIR="${1}_extracted"
-  if [ -d "${DESTDIR}" ]; then
+  if [[ -d "${DESTDIR}" ]]; then
     echo -e "${DESTDIR} already exists. Can't extract in a safe destination."
     return 3 # extracted dest already exists
   fi
@@ -125,7 +125,7 @@ alias tk='tmux kill-server'
 
 git config --global --replace-all alias.ranking "!bash -c \"
 function git-ranking () {
-  if [ \$# -eq 0 ]; then
+  if [[ \${#} -eq 0 ]]; then
     git ls-files \
       | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
       | sort -f | uniq -i -c | sort -n -r
@@ -163,7 +163,7 @@ function gc () {
   local RET=$?
   local A=".gitignore"
   local B="${HOME}/.gitignore"
-  [ ${RET} -eq 0 ] && [ -f "${HOME}/.gitignore" ] \
+  [[ ${RET} -eq 0 && -f "${HOME}/.gitignore" ]] \
     && echo -e "$(cat ${A} ${B} 2> /dev/null | sort)\n$(cat ${A} \
       2> /dev/null)" | sort | uniq -u | grep -v -E '^[[:space:]]*$' \
         >> .gitignore

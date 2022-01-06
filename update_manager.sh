@@ -1,4 +1,4 @@
-  #!/usr/bin/env bash
+#!/usr/bin/env bash
 
 dashed () {
   echo -e "$1 $(printf "%$(( 68 - ${#1} ))s" | tr ' ' '-' )"
