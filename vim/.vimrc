@@ -469,21 +469,15 @@ endfunction
 "   Comments {{{2
 
 function! s:SetCommentString()
-  if !exists('b:commentstringset')
-    if (&filetype == "c") || (&filetype == "cpp") || (&filetype == "glsl")
-      \ || (&filetype == "rust")
-        setlocal commentstring=//%s
-    elseif (&filetype == "conf") || (&filetype == "make")
-      \ || (&filetype == "tmux") || (&filetype == "sh")
-      \ || (&filetype == "yaml")
-        setlocal commentstring=#%s
-    elseif &filetype == "vim"
-      setlocal commentstring=\"%s
-    endif
-
-    if len(&filetype) > 0
-      let b:commentstringset = v:true
-    endif
+  if (&filetype == "c") || (&filetype == "cpp") || (&filetype == "glsl")
+    \ || (&filetype == "rust")
+      setlocal commentstring=//%s
+  elseif (&filetype == "conf") || (&filetype == "make")
+    \ || (&filetype == "tmux") || (&filetype == "sh")
+    \ || (&filetype == "yaml")
+      setlocal commentstring=#%s
+  elseif &filetype == "vim"
+    setlocal commentstring=\"%s
   endif
 endfunction
 
