@@ -14,6 +14,7 @@
 - Executor Gnome Extension
 - Kakoune
 - direnv
+- docker
 
 ### .tmux.conf
 

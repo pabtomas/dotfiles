@@ -187,6 +187,24 @@ main () {
     echo -e ${GREEN}"OK"${RESET}
   fi
 
+  echo -n -e $(dashed "Checking ca-certificates installation")$' '
+  if [[ $(dpkg -l | grep -E "ca-certificates" | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing ca-certificates package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y ca-certificates | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
   echo -n -e $(dashed "Checking curl installation")$' '
   if [[ $(which curl | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
@@ -204,6 +222,112 @@ main () {
   else
     echo -e ${GREEN}"OK"${RESET}
   fi
+
+  echo -n -e $(dashed "Checking gnupg installation")$' '
+  if [[ $(which gpg | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing gnupg package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y gnupg | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking lsb-release installation")$' '
+  if [[ $(dpkg -l | grep -E "lsb-release" | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing lsb-release package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y lsb-release \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking docker version")$' '
+  if [[ $(which docker | wc -l) -eq 1 ]]; then
+    echo -e ${GREEN}"OK"${RESET}
+    VERSION="$(docker --version | tr -d 'Docker version ' \
+      | grep -E -o "^.*," | tr -d ',')"
+    echo -e "\n    docker ${VERSION}\n"
+  else
+    echo -e ${RED}"Not OK"${RESET}
+    VERSION="0"
+  fi
+
+  if [[ "${VERSION}" == "0" ]]; then
+    DASHED=${CLEAR}$(dashed "Installing docker packages")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+      | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) \
+      signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+      | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo unbuffer apt install -y docker-ce docker-ce-cli containerd.io \
+      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+    fi
+
+    VERSION="$(docker --version | tr -d 'Docker version ' \
+      | grep -E -o "^.*," | tr -d ',')"
+    echo -e "\n    docker ${VERSION}\n"
+  else
+    TAG=$(apt-cache madison docker-ce | head -n 1 | grep -E -o ":[0-9.]*~" \
+      | tr -d ':' | tr -d '~')
+    DASHED=${CLEAR}$(dashed "Checking last docker release")
+    echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    if [[ ${TAG} != ${VERSION} ]]; then
+        echo -e "\n    tag ${TAG} != version ${VERSION}\n"
+
+        DASHED=${CLEAR}$(dashed "Updating docker packages")
+        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+          | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+          $(lsb_release -cs) stable" \
+          | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt purge docker-ce docker-ce-cli containerd.io &> /dev/null
+        sudo unbuffer apt install -y docker-ce docker-ce-cli \
+          containerd.io | unbuffer -p grep -E -o "[0-9]+%" \
+          | xargs -I {} echo -n -e ${DASHED} {}
+
+        if [[ $? -eq 0 ]]; then
+          echo -e ${DASHED} ${GREEN}"OK"${RESET}
+        else
+          echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        fi
+
+        VERSION="$(docker --version | tr -d 'Docker version ' \
+          | grep -E -o "^.*," | tr -d ',')"
+        echo -e "\n    docker ${VERSION}\n"
+
+    else
+        echo -e "\n    tag ${TAG} == version ${VERSION}\n"
+    fi
+  fi
+
 
   echo -n -e $(dashed "Checking jq installation")$' '
   if [[ $(which jq | wc -l) -eq 0 ]]; then
@@ -375,7 +499,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libncurses-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libncurses-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libncurses-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libncurses-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -393,7 +517,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libevent-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libevent-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libevent-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libevent-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -596,7 +720,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking pkg-config installation")$' '
-  if [[ $(dpkg -l | command grep -E "pkg-config" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "pkg-config" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing pkg-config package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -614,7 +738,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking python3-docutils installation")$' '
-  if [[ $(dpkg -l | command grep -E "python3-docutils" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "python3-docutils" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing python3-docutils package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -632,7 +756,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libseccomp-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libseccomp-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libseccomp-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libseccomp-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -650,7 +774,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libjansson-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libjansson-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libjansson-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libjansson-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -668,7 +792,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libyaml-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libyaml-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libyaml-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libyaml-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -686,7 +810,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libxml2-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libxml2-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libxml2-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libxml2-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -704,7 +828,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libxt-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libxt-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libxt-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libxt-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -722,7 +846,7 @@ main () {
   fi
 
   echo -n -e $(dashed "Checking libgtk-3-dev installation")$' '
-  if [[ $(dpkg -l | command grep -E "libgtk-3-dev" | wc -l) -eq 0 ]]; then
+  if [[ $(dpkg -l | grep -E "libgtk-3-dev" | wc -l) -eq 0 ]]; then
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libgtk-3-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -831,7 +955,7 @@ main () {
         fi
 
         echo -n -e $(dashed "Checking libpng-dev installation")$' '
-        if [[ $(dpkg -l | command grep -E "libpng-dev" | wc -l) -eq 0 ]]; then
+        if [[ $(dpkg -l | grep -E "libpng-dev" | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing libpng-dev package")
           [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -849,8 +973,27 @@ main () {
           echo -e ${GREEN}"OK"${RESET}
         fi
 
+        echo -n -e $(dashed "Checking libsystemd-dev installation")$' '
+        if [[ $(dpkg -l | grep -E "libsystemd-dev" | wc -l) -eq 0 ]]; then
+          echo -e ${RED}"Not OK"${RESET}
+          DASHED=${CLEAR}$(dashed "Installing libsystemd-dev package")
+          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          sudo unbuffer apt install -y libsystemd-dev \
+            | unbuffer -p grep -E -o "[0-9]+%" \
+            | xargs -I {} echo -n -e ${DASHED} {}
+
+          if [[ $? -eq 0 ]]; then
+            echo -e ${DASHED} ${GREEN}"OK"${RESET}
+          else
+            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          fi
+        else
+          echo -e ${GREEN}"OK"${RESET}
+        fi
+
         echo -n -e $(dashed "Checking libglew-dev installation")$' '
-        if [[ $(dpkg -l | command grep -E "libglew-dev" | wc -l) -eq 0 ]]; then
+        if [[ $(dpkg -l | grep -E "libglew-dev" | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing libglew-dev package")
           [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -869,7 +1012,7 @@ main () {
         fi
 
         echo -n -e $(dashed "Checking libX11-dev installation")$' '
-        if [[ $(dpkg -l | command grep -E "libx11-dev" | wc -l) -eq 0 ]]; then
+        if [[ $(dpkg -l | grep -E "libx11-dev" | wc -l) -eq 0 ]]; then
           echo -e ${RED}"Not OK"${RESET}
           DASHED=${CLEAR}$(dashed "Installing libX11-dev package")
           [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
