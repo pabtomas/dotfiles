@@ -140,6 +140,8 @@ git config --global --replace-all alias.root 'rev-parse --show-toplevel'
 
 git config --global --replace-all alias.file "checkout HEAD -- "
 
+git config --global --replace-all alias.uncommit "reset HEAD^"
+
 alias ga='git add'
 alias gaa='git add -A'
 alias gam='git add -A && git commit -m'
@@ -157,6 +159,7 @@ alias gs='git status -s -uall'
 alias gsd='git stash drop'
 alias gsp='git stash pop'
 alias gst='git stash push'
+alias gu='git uncommit'
 
 function gc () {
   git clone "$@" && cd $(command ls -t | head -n1)
