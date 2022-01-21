@@ -292,42 +292,7 @@ main () {
     VERSION="$(docker --version | tr -d 'Docker version ' \
       | grep -E -o "^.*," | tr -d ',')"
     echo -e "\n    docker ${VERSION}\n"
-  else
-    TAG=$(apt-cache madison docker-ce | head -n 1 | grep -E -o ":[0-9.]*~" \
-      | tr -d ':' | tr -d '~')
-    DASHED=${CLEAR}$(dashed "Checking last docker release")
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    if [[ ${TAG} != ${VERSION} ]]; then
-        echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-        DASHED=${CLEAR}$(dashed "Updating docker packages")
-        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-          | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-          $(lsb_release -cs) stable" \
-          | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-        sudo apt purge docker-ce docker-ce-cli containerd.io &> /dev/null
-        sudo unbuffer apt install -y docker-ce docker-ce-cli \
-          containerd.io | unbuffer -p grep -E -o "[0-9]+%" \
-          | xargs -I {} echo -n -e ${DASHED} {}
-
-        if [[ $? -eq 0 ]]; then
-          echo -e ${DASHED} ${GREEN}"OK"${RESET}
-        else
-          echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-        fi
-
-        VERSION="$(docker --version | tr -d 'Docker version ' \
-          | grep -E -o "^.*," | tr -d ',')"
-        echo -e "\n    docker ${VERSION}\n"
-
-    else
-        echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-    fi
   fi
-
 
   echo -n -e $(dashed "Checking jq installation")$' '
   if [[ $(which jq | wc -l) -eq 0 ]]; then
