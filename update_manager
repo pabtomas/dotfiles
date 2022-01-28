@@ -345,7 +345,8 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
+    | grep -E -o '[0-9.]+')
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
@@ -1160,14 +1161,16 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
+    | grep -E -o '[0-9.]+')
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
       echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null \
-        && command cd ${SOURCES}/vim/src
+      git checkout tags/$(git describe --tags \
+        $(git rev-list --tags --max-count=1)) &> /dev/null \
+          && command cd ${SOURCES}/vim/src
 
       DASHED=$(dashed "Configuring VIM")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1266,14 +1269,16 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
+    | grep -E -o '[0-9.]+')
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
       echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null \
-        && command cd ${SOURCES}/kak/src
+      git checkout tags/$(git describe --tags \
+        $(git rev-list --tags --max-count=1)) &> /dev/null \
+          && command cd ${SOURCES}/kak/src
 
       DASHED=$(dashed "Compiling Kakoune")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1372,13 +1377,15 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
+    | grep -E -o '[0-9.]+')
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
       echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+      git checkout tags/$(git describe --tags \
+        $(git rev-list --tags --max-count=1)) &> /dev/null
 
       DASHED=$(dashed "Compiling Tig")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1482,13 +1489,15 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
+    | grep -E -o '[0-9.]+')
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
       echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+      git checkout tags/$(git describe --tags \
+        $(git rev-list --tags --max-count=1)) &> /dev/null
 
       DASHED=$(dashed "Configuring Universal Ctags")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1592,7 +1601,8 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0 | grep -E -o '[0-9.]+')
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
+    | grep -E -o '[0-9.]+')
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
@@ -1660,13 +1670,14 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0)
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
       echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+      git checkout tags/$(git describe --tags \
+        $(git rev-list --tags --max-count=1)) &> /dev/null
 
       DASHED=$(dashed "Configuring TMUX")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1769,13 +1780,14 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0)
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
 
   if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
     | wc -l) -eq 0 ]]; then
       echo -e "\n    tag ${TAG} != version ${VERSION}\n"
 
-      git checkout tags/$(git describe --tags --abbrev=0) &> /dev/null
+      git checkout tags/$(git describe --tags \
+        $(git rev-list --tags --max-count=1)) &> /dev/null
 
       DASHED=$(dashed "Installing password-store")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1839,7 +1851,8 @@ main () {
     fi
   fi
 
-  TAG=$(git describe --tags --abbrev=0 | grep -E -o "[0-9.]*")
+  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
+    | grep -E -o "[0-9.]*")
 
   if [[ "${VERSION}" == "0" ]]; then
     echo -e "\n    tag ${TAG} != version ${VERSION}\n"
