@@ -7,6 +7,7 @@ alias lh='command ls -d --color .??*'
 alias ll='command ls -l -A --color "$@"'
 
 alias grep='grep --color'
+alias diff='diff -u --color'
 alias ag='ag -a --hidden'
 
 for I in $(seq 2 1 5); do
@@ -155,7 +156,7 @@ alias gam='git add -A && git commit -m'
 alias gb='git branch'
 alias gd='tig status'
 alias gf='git file'
-alias gg='git ranking'
+alias gg='git ranking && echo && github-linguist'
 alias gh='git checkout'
 alias gl='git pull'
 alias gm='git commit -m'

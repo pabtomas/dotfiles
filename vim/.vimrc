@@ -1925,7 +1925,7 @@ function! s:TagList()
         \ . '| call cursor(line(".") + 1, 0) | endwhile')
     else
       echohl ErrorMsg
-      echomsg 'Personal Error Message: Gutentags plugin needs git executable'
+      echomsg 'Personal Error Message: TagList plugin needs git executable'
         \ . ' and ctags executable.'
       echohl NONE
     endif
