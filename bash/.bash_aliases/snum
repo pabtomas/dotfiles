@@ -143,6 +143,8 @@ git config --global --replace-all alias.file "checkout HEAD -- "
 
 git config --global --replace-all alias.uncommit "reset HEAD^"
 
+git config --global --replace-all alias.unpushed "log --oneline origin/master..master"
+
 alias ga='git add'
 alias gaa='git add -A'
 alias gam='git add -A && git commit -m'
@@ -155,6 +157,7 @@ alias gl='git pull'
 alias gm='git commit -m'
 alias gm!='git commit --amend'
 alias gp='git push'
+alias gp!='git unpushed'
 alias gr='git root'
 alias gs='git status -s -uall'
 alias gsd='git stash drop'
