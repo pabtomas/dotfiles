@@ -15,6 +15,7 @@
 - Kakoune
 - direnv
 - docker
+- github-linguist
 
 ### .tmux.conf
 
