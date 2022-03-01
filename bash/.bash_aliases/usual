@@ -141,6 +141,8 @@ function git-ranking () {
     git blame --line-porcelain \$* | sed -n 's/^author //p' | sort -f \
       | uniq -i -c | sort -n -r
   fi
+  echo
+  github-linguist \$*
 }
 git-ranking\""
 
@@ -158,7 +160,7 @@ alias gam='git add -A && git commit -m'
 alias gb='git branch'
 alias gd='tig status'
 alias gf='git file'
-alias gg='git ranking && echo && github-linguist'
+alias gg='git ranking'
 alias gh='git checkout'
 alias gl='git pull'
 alias gm='git commit -m'
