@@ -18,26 +18,22 @@ main () {
 
   local -r CLEAR="$(tput ed)"
   local -r GREEN=$(tput setaf 2)
+  local -r YELLOW=$(tput setaf 11)
   local -r RED=$(tput setaf 9)
   local -r RESET=$(tput sgr0)
   local -r LOCAL="${HOME}/.local"
   local -r SOURCES="${LOCAL}/sources"
-  local -r BACKUP="$(pwd)"
-  local -r INSTALLSH_DIR="$(command cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-  local -r VIMRC="${INSTALLSH_DIR}/vim/.vimrc"
-  local -r TMUXCONF="${INSTALLSH_DIR}/tmux/.tmux.conf"
-  local -r TIGRC="${INSTALLSH_DIR}/tig/.tigrc"
-  local -r BASHRC="${INSTALLSH_DIR}/bash/.bashrc"
-  local -r PROFILE="${INSTALLSH_DIR}/bash/.bash_profile"
-  local -r ALIASES="${INSTALLSH_DIR}/bash/.bash_aliases/usual"
-  local -r GITIGNORE="${INSTALLSH_DIR}/git/.gitignore"
-  local -r HOOKS="${INSTALLSH_DIR}/git/.hooks"
-  local -r DESKTOP="${INSTALLSH_DIR}/desktop"
-  local -r SCRIPTS="${INSTALLSH_DIR}/scripts"
-  local -r SCHEMA="${INSTALLSH_DIR}/executor/schema/org.gnome.shell.extensions.executor.gschema.xml "
+  local -r MANAGER_DIR="$(command cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+  local -r VIMRC="${MANAGER_DIR}/vim/.vimrc"
+  local -r TMUXCONF="${MANAGER_DIR}/tmux/.tmux.conf"
+  local -r TIGRC="${MANAGER_DIR}/tig/.tigrc"
+  local -r BASHRC="${MANAGER_DIR}/bash/.bashrc"
+  local -r PROFILE="${MANAGER_DIR}/bash/.bash_profile"
+  local -r ALIASES="${MANAGER_DIR}/bash/.bash_aliases/usual"
+  local -r GITIGNORE="${MANAGER_DIR}/git/.gitignore"
+  local -r HOOKS="${MANAGER_DIR}/git/.hooks"
+  local -r SCRIPTS="${MANAGER_DIR}/scripts"
   local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
-  local -r EXECUTOR_DEST="${LOCAL}/share/gnome-shell/extensions/executor@raujonas.github.io/"
-  local -r EXECUTOR_REPO="https://github.com/raujonas/executor.git"
   local -r GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
   local -r SCRIPTS_DEST="/opt/scripts"
   local -r POLYGLOT_DEST="${HOME}/.vim/pack/plugins/start/vim-polyglot"
@@ -45,9 +41,9 @@ main () {
   local DASHED=""
   local DOTS_PID=0
   local STATUS=0
-  local GPU=""
   local VERSION=""
   local TAG=""
+  local REBOOT=0
 
   if [[ $(echo ${PATH} | tr ':' '\n' | grep -E "${HOME}/.local/bin" \
     | wc -l) -eq 0 ]]; then
@@ -101,8 +97,7 @@ main () {
     if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
     fi
   else
     echo -e ${RED}"Not OK"${RESET}
@@ -126,11 +121,21 @@ main () {
     if [[ ${STATUS} -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking kisak-mesa ppa")$' '
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  if [[ $(apt policy 2> /dev/null | grep -E "kisak-mesa" \
+    | wc -l) -gt 0 ]]; then
+      echo -e ${GREEN}"OK"${RESET}
+  else
+    echo -e ${RED}"Not OK"${RESET}
+    sudo add-apt-repository ppa:kisak/kisak-mesa
   fi
 
   DASHED=${CLEAR}$(dashed "Updating system")
@@ -332,16 +337,17 @@ main () {
       echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
     fi
 
-    command cd ${SOURCES}/direnv
+    pushd ${SOURCES}/direnv &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling direnv repository")
-    command cd ${SOURCES}/direnv && git checkout master &> /dev/null \
+    pushd ${SOURCES}/direnv &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -366,7 +372,8 @@ main () {
       if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(direnv --version | tr -d '\n')"
@@ -388,7 +395,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -422,7 +430,8 @@ main () {
         if [[ $? -eq 0 ]]; then
           echo -e ${DASHED} ${GREEN}"OK"${RESET}
         else
-          echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+            && dirs -c && return 1
         fi
 
         DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to kvm group")
@@ -434,11 +443,13 @@ main () {
         if [[ $? -eq 0 ]]; then
           echo -e ${DASHED} ${GREEN}"OK"${RESET}
         else
-          echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+          echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+            && dirs -c && return 1
         fi
 
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
     fi
   else
@@ -458,7 +469,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -476,7 +488,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -494,7 +507,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -512,7 +526,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -538,7 +553,8 @@ main () {
       if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Installing g++ 10 package")
@@ -551,7 +567,8 @@ main () {
       if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Installing libc++ packages")
@@ -564,7 +581,8 @@ main () {
       if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Adding symbolic link to gcc 10")
@@ -575,7 +593,8 @@ main () {
       if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=${CLEAR}$(dashed "Adding symbolic link to g++ 10")
@@ -586,7 +605,8 @@ main () {
       if [[ $? -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -607,7 +627,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -625,7 +646,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -643,7 +665,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -661,7 +684,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -679,7 +703,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -697,7 +722,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -715,7 +741,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -733,7 +760,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -751,7 +779,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -769,7 +798,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -787,7 +817,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -805,7 +836,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -823,7 +855,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -841,7 +874,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -859,7 +893,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -877,7 +912,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -895,7 +931,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -913,7 +950,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -931,7 +969,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
@@ -949,182 +988,111 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  if [[ ${GNOME} -eq 1 ]]; then
-    echo -n -e $(dashed "Checking glxinfo installation")$' '
-    if [[ $(which glxinfo | wc -l) -eq 0 ]]; then
-      echo -e ${RED}"Not OK"${RESET}
-      DASHED=${CLEAR}$(dashed "Installing mesa-utils package")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-      sudo unbuffer apt install -y mesa-utils \
-        | unbuffer -p grep -E -o "[0-9]+%" \
-        | xargs -I {} echo -n -e ${DASHED} {}
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-      fi
+  echo -n -e $(dashed "Checking libpng-dev installation")$' '
+  if [[ $(dpkg -l | grep -E "libpng-dev" | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing libpng-dev package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y libpng-dev \
+      | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${GREEN}"OK"${RESET}
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && pushd -0 &> /dev/null && dirs -c && return 1
     fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
 
-    echo -n -e $(dashed "Checking X-server reachability")$' '
-    if [[ $(glxinfo | grep -E -i "Device" | wc -l) -eq 0 ]]; then
-      echo -e ${RED}"Not OK"${RESET}
+  echo -n -e $(dashed "Checking libsystemd-dev installation")$' '
+  if [[ $(dpkg -l | grep -E "libsystemd-dev" | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing libsystemd-dev package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y libsystemd-dev \
+      | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${GREEN}"OK"${RESET}
-      GPU=$(glxinfo | grep -E -i "Device")
-      echo -e "\n${GPU}\n"
-
-      if [[ $(echo ${GPU} | grep -E -i "Intel" | wc -l) -eq 1 ]]; then
-        echo -n -e $(dashed "Checking intel_gpu_top installation")$' '
-        if [[ $(which intel_gpu_top | wc -l) -eq 0 ]]; then
-          echo -e ${RED}"Not OK"${RESET}
-          DASHED=${CLEAR}$(dashed "Installing intel-gpu-tools package")
-          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-          sudo unbuffer apt install -y intel-gpu-tools \
-            | unbuffer -p grep -E -o "[0-9]+%" \
-            | xargs -I {} echo -n -e ${DASHED} {}
-
-          if [[ $? -eq 0 ]]; then
-            echo -e ${DASHED} ${GREEN}"OK"${RESET}
-          else
-            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-          fi
-        else
-          echo -e ${GREEN}"OK"${RESET}
-        fi
-
-        echo -n -e $(dashed "Checking intel_gpu_top usage")$' '
-        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-        if [[ $(sudo \cat /etc/sudoers \
-          | grep -E "intel_gpu_top" | wc -l) -eq 0 ]]; then
-            echo -e ${RED}"Not OK"${RESET}
-            DASHED=${CLEAR}$(dashed "Modifying intel_gpu_top usage")
-            dots "${DASHED}" &
-            DOTS_PID=$!
-            echo "$(whoami) ALL = NOPASSWD: $(which intel_gpu_top)" \
-              | sudo EDITOR='tee -a' visudo &> /dev/null
-            STATUS=$?
-
-            kill ${DOTS_PID} &> /dev/null
-            wait ${DOTS_PID} &> /dev/null
-            DASHED=${CLEAR}${DASHED}
-
-            if [[ ${STATUS} -eq 0 ]]; then
-              echo -e ${DASHED} ${GREEN}"OK"${RESET}
-            else
-              echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-            fi
-        else
-          echo -e ${GREEN}"OK"${RESET}
-        fi
-
-        echo -n -e $(dashed "Checking libpng-dev installation")$' '
-        if [[ $(dpkg -l | grep -E "libpng-dev" | wc -l) -eq 0 ]]; then
-          echo -e ${RED}"Not OK"${RESET}
-          DASHED=${CLEAR}$(dashed "Installing libpng-dev package")
-          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-          sudo unbuffer apt install -y libpng-dev \
-            | unbuffer -p grep -E -o "[0-9]+%" \
-            | xargs -I {} echo -n -e ${DASHED} {}
-
-          if [[ $? -eq 0 ]]; then
-            echo -e ${DASHED} ${GREEN}"OK"${RESET}
-          else
-            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-          fi
-        else
-          echo -e ${GREEN}"OK"${RESET}
-        fi
-
-        echo -n -e $(dashed "Checking libsystemd-dev installation")$' '
-        if [[ $(dpkg -l | grep -E "libsystemd-dev" | wc -l) -eq 0 ]]; then
-          echo -e ${RED}"Not OK"${RESET}
-          DASHED=${CLEAR}$(dashed "Installing libsystemd-dev package")
-          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-          sudo unbuffer apt install -y libsystemd-dev \
-            | unbuffer -p grep -E -o "[0-9]+%" \
-            | xargs -I {} echo -n -e ${DASHED} {}
-
-          if [[ $? -eq 0 ]]; then
-            echo -e ${DASHED} ${GREEN}"OK"${RESET}
-          else
-            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-          fi
-        else
-          echo -e ${GREEN}"OK"${RESET}
-        fi
-
-        echo -n -e $(dashed "Checking libglew-dev installation")$' '
-        if [[ $(dpkg -l | grep -E "libglew-dev" | wc -l) -eq 0 ]]; then
-          echo -e ${RED}"Not OK"${RESET}
-          DASHED=${CLEAR}$(dashed "Installing libglew-dev package")
-          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-          sudo unbuffer apt install -y libglew-dev \
-            | unbuffer -p grep -E -o "[0-9]+%" \
-            | xargs -I {} echo -n -e ${DASHED} {}
-
-          if [[ $? -eq 0 ]]; then
-            echo -e ${DASHED} ${GREEN}"OK"${RESET}
-          else
-            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-          fi
-        else
-          echo -e ${GREEN}"OK"${RESET}
-        fi
-
-        echo -n -e $(dashed "Checking libX11-dev installation")$' '
-        if [[ $(dpkg -l | grep -E "libx11-dev" | wc -l) -eq 0 ]]; then
-          echo -e ${RED}"Not OK"${RESET}
-          DASHED=${CLEAR}$(dashed "Installing libX11-dev package")
-          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-          sudo unbuffer apt install -y libx11-dev \
-            | unbuffer -p grep -E -o "[0-9]+%" \
-            | xargs -I {} echo -n -e ${DASHED} {}
-
-          if [[ $? -eq 0 ]]; then
-            echo -e ${DASHED} ${GREEN}"OK"${RESET}
-          else
-            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-          fi
-        else
-          echo -e ${GREEN}"OK"${RESET}
-        fi
-
-        echo -n -e $(dashed "Checking redshift installation")$' '
-        if [[ $(which redshift | wc -l) -eq 0 ]]; then
-          echo -e ${RED}"Not OK"${RESET}
-          DASHED=${CLEAR}$(dashed "Installing redshift package")
-          [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-            && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-          sudo unbuffer apt install -y redshift \
-            | unbuffer -p grep -E -o "[0-9]+%" \
-            | xargs -I {} echo -n -e ${DASHED} {}
-
-          if [[ $? -eq 0 ]]; then
-            echo -e ${DASHED} ${GREEN}"OK"${RESET}
-          else
-            echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-          fi
-        else
-          echo -e ${GREEN}"OK"${RESET}
-        fi
-
-      fi
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && pushd -0 &> /dev/null && dirs -c && return 1
     fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking libglew-dev installation")$' '
+  if [[ $(dpkg -l | grep -E "libglew-dev" | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing libglew-dev package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y libglew-dev \
+      | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && pushd -0 &> /dev/null && dirs -c && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking libX11-dev installation")$' '
+  if [[ $(dpkg -l | grep -E "libx11-dev" | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing libX11-dev package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y libx11-dev \
+      | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && pushd -0 &> /dev/null && dirs -c && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
+  fi
+
+  echo -n -e $(dashed "Checking redshift installation")$' '
+  if [[ $(which redshift | wc -l) -eq 0 ]]; then
+    echo -e ${RED}"Not OK"${RESET}
+    DASHED=${CLEAR}$(dashed "Installing redshift package")
+    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    sudo unbuffer apt install -y redshift \
+      | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
+
+    if [[ $? -eq 0 ]]; then
+      echo -e ${DASHED} ${GREEN}"OK"${RESET}
+    else
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
+        && pushd -0 &> /dev/null && dirs -c && return 1
+    fi
+  else
+    echo -e ${GREEN}"OK"${RESET}
   fi
 
   echo -n -e $(dashed "Checking VIM version")$' '
@@ -1145,19 +1113,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/vim
+    pushd ${SOURCES}/vim &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling VIM repository")
-    command cd ${SOURCES}/vim && git checkout master &> /dev/null \
+    pushd ${SOURCES}/vim &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1170,7 +1140,7 @@ main () {
 
       git checkout tags/$(git describe --tags \
         $(git rev-list --tags --max-count=1)) &> /dev/null \
-          && command cd ${SOURCES}/vim/src
+          && pushd ${SOURCES}/vim/src &> /dev/null
 
       DASHED=$(dashed "Configuring VIM")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1187,8 +1157,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Compiling VIM")
@@ -1206,8 +1176,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Installing VIM")
@@ -1225,8 +1195,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(echo $(vim --version | head -n 2 | grep -E -o \
@@ -1253,19 +1223,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/kak
+    pushd ${SOURCES}/kak &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling Kakoune repository")
-    command cd ${SOURCES}/kak && git checkout master &> /dev/null \
+    pushd ${SOURCES}/kak &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1278,7 +1250,7 @@ main () {
 
       git checkout tags/$(git describe --tags \
         $(git rev-list --tags --max-count=1)) &> /dev/null \
-          && command cd ${SOURCES}/kak/src
+          && pushd ${SOURCES}/kak/src &> /dev/null
 
       DASHED=$(dashed "Compiling Kakoune")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -1295,8 +1267,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Installing Kakoune")
@@ -1314,8 +1286,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(kak -version | grep -E -o '[0-9.]+')"
@@ -1336,8 +1308,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
   else
     echo -e "\n    tag ${TAG} == version ${VERSION}\n"
@@ -1361,19 +1333,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/tig
+    pushd ${SOURCES}/tig &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling Tig repository")
-    command cd ${SOURCES}/tig && git checkout master &> /dev/null \
+    pushd ${SOURCES}/tig &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1402,8 +1376,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Installing tig")
@@ -1421,8 +1395,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(tig --version | head -n 1 | grep -E -o "[0-9.]+")"
@@ -1443,8 +1417,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
   else
     echo -e "\n    tag ${TAG} == version ${VERSION}\n"
@@ -1472,20 +1446,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/ctags
+    pushd ${SOURCES}/ctags &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling Universal Ctags repository")
-    command cd ${SOURCES}/ctags && git checkout master &> /dev/null \
+    pushd ${SOURCES}/ctags &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1515,8 +1490,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Compiling Universal Ctags")
@@ -1534,8 +1509,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Installing Universal Ctags")
@@ -1553,8 +1528,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
@@ -1584,20 +1559,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/fff
+    pushd ${SOURCES}/fff &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling fff repository")
-    command cd ${SOURCES}/fff && git checkout master &> /dev/null \
+    pushd ${SOURCES}/fff &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1623,8 +1599,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(fff -v | grep -E -o '[0-9.]+')"
@@ -1653,20 +1629,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/tmux
+    pushd ${SOURCES}/tmux &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling TMUX repository")
-    command cd ${SOURCES}/tmux && git checkout master &> /dev/null \
+    pushd ${SOURCES}/tmux &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1695,8 +1672,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Compiling TMUX")
@@ -1714,8 +1691,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       DASHED=$(dashed "Installing TMUX")
@@ -1733,8 +1710,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(tmux -V | tr -d 'tmux ')"
@@ -1763,20 +1740,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/pass
+    pushd ${SOURCES}/pass &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling password-store repository")
-    command cd ${SOURCES}/pass && git checkout master &> /dev/null \
+    pushd ${SOURCES}/pass &> /dev/null && git checkout master &> /dev/null \
       && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1804,8 +1782,8 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-          && return 1
+        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+          && dirs -c && return 1
       fi
 
       VERSION="$(pass version | grep -E -o 'v[0-9.]*' | tr -d 'v')"
@@ -1834,20 +1812,21 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
-    command cd ${SOURCES}/linguist
+    pushd ${SOURCES}/linguist &> /dev/null
   else
     DASHED=${CLEAR}$(dashed "Pulling linguist repository")
-    command cd ${SOURCES}/linguist && git checkout master &> /dev/null \
-      && git pull &> /dev/null
+    pushd ${SOURCES}/linguist &> /dev/null \
+      && git checkout master &> /dev/null && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1871,7 +1850,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
     VERSION="$(github-linguist --help | head -n 1 | grep -E -o "[0-9.]*")"
@@ -1895,7 +1875,8 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
 
     VERSION="$(github-linguist --help | head -n 1 | grep -E -o "[0-9.]*")"
@@ -1904,7 +1885,7 @@ main () {
     echo -e "\n    tag ${TAG} == version ${VERSION}\n"
   fi
 
-  command cd ${INSTALLSH_DIR}
+  pushd ${MANAGER_DIR} &> /dev/null
 
   if [[ ! -d "${TPM_DEST}" ]]; then
     DASHED=${CLEAR}$(dashed "Cloning TMUX Plugin Manager repository")
@@ -1914,33 +1895,18 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     DASHED=${CLEAR}$(dashed "Pulling TMUX Plugin Manager repository")
-    command cd ${TPM_DEST} && git pull &> /dev/null
+    pushd ${TPM_DEST} &> /dev/null && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  fi
-
-  if [[ ${GNOME} -eq 1 ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning EXECUTOR repository")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    [[ -d ${EXECUTOR_DEST} ]] && sudo \rm -r -f ${EXECUTOR_DEST}
-    sudo unbuffer git clone ${EXECUTOR_REPO} ${EXECUTOR_DEST} \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1952,17 +1918,18 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-        && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     DASHED=${CLEAR}$(dashed "Pulling flagbox repository")
-    command cd ${SOURCES}/flagbox && git pull &> /dev/null
+    pushd ${SOURCES}/flagbox &> /dev/null && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -1971,7 +1938,7 @@ main () {
     && sudo echo &> /dev/null && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
-  command cd ${SOURCES}/flagbox \
+  pushd ${SOURCES}/flagbox &> /dev/null \
     && sudo \cp -f ${SOURCES}/flagbox/sourceme.sh ${SCRIPTS_DEST} &> /dev/null
   STATUS=$?
 
@@ -1982,8 +1949,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Copying .vimrc")
@@ -1999,8 +1966,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   if [[ ! -d "${POLYGLOT_DEST}" ]]; then
@@ -2011,16 +1978,18 @@ main () {
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   else
     DASHED=${CLEAR}$(dashed "Pulling vim-polyglot repository")
-    command cd ${POLYGLOT_DEST} && git pull &> /dev/null
+    pushd ${POLYGLOT_DEST} &> /dev/null && git pull &> /dev/null
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
+      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+        && dirs -c && return 1
     fi
   fi
 
@@ -2037,8 +2006,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Installing TMUX Plugins")
@@ -2054,8 +2023,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Copying .tigrc")
@@ -2071,8 +2040,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Copying .bashrc")
@@ -2089,8 +2058,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Copying .bash_profile")
@@ -2107,8 +2076,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Copying .bash_aliases")
@@ -2124,8 +2093,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Copying .gitignore")
@@ -2143,8 +2112,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Copying GIT hooks")
@@ -2162,29 +2131,11 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   if [[ ${GNOME} -eq 1 ]]; then
-    DASHED=$(dashed "Copying EXECUTOR schema")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    sudo \cp ${SCHEMA} ${EXECUTOR_DEST}/schemas
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
-    fi
 
     DASHED=$(dashed "Copying scripts")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -2204,7 +2155,7 @@ main () {
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
+        && pushd -0 &> /dev/null && dirs -c && return 1
     fi
 
     DASHED=$(dashed "Copying crons")
@@ -2224,28 +2175,7 @@ main () {
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
-    fi
-
-    DASHED=$(dashed "Copying desktop entries")
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    [[ $(command ls ${HOME}/.config/autostart/ | wc -l) -gt 0 ]] \
-      && command rm ${HOME}/.config/autostart/*
-    for ENTRY in $(command ls ${DESKTOP}); do
-      command cp ${DESKTOP}/${ENTRY} ${HOME}/.config/autostart &> /dev/null
-    done
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
+        && pushd -0 &> /dev/null && dirs -c && return 1
     fi
 
     DASHED=$(dashed "Enabling GNOME extensions")
@@ -2262,43 +2192,7 @@ main () {
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
-    fi
-
-    DASHED=$(dashed "Compiling EXECUTOR schema")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
-    DOTS_PID=$!
-    sudo glib-compile-schemas ${EXECUTOR_DEST}/schemas &> /dev/null \
-      && dconf reset -f /org/gnome/shell/extensions/executor/ &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
-    fi
-
-    DASHED=$(dashed "Enabling EXECUTOR")
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    gnome-extensions enable executor@raujonas.github.io &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && command cd ${BACKUP} && return 1
+        && pushd -0 &> /dev/null && dirs -c && return 1
     fi
 
     DASHED=$(dashed "Hidding desktop icons")
@@ -2373,7 +2267,8 @@ main () {
         "\n\n    Press Enter when GNOME service is functional again " \
           && read && echo
     else
-      echo -e ${RED}"Not OK"${RESET} && command cd ${BACKUP} && return 1
+      echo -e ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null && dirs -c \
+        && return 1
     fi
   fi
 
@@ -2390,8 +2285,8 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Reloading CRON service")
@@ -2409,11 +2304,40 @@ main () {
   if [[ ${STATUS} -eq 0 ]]; then
     echo -e ${DASHED} ${GREEN}"OK"${RESET}
   else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && command cd ${BACKUP} \
-      && return 1
+    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
+      && dirs -c && return 1
   fi
 
-  command cd ${BACKUP}
+  echo -n -e $(dashed "Checking Crocus driver usage")$' '
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  if [[ $(sudo cat /etc/environment \
+    | grep -E "MESA_LOADER_DRIVER_OVERRIDE=crocus" | wc -l ) -eq 1 ]]; then
+      echo -e ${GREEN}"OK"${RESET}
+  else
+    echo -e ${RED}"Not OK"${RESET}
+    sudo bash -c "echo 'MESA_LOADER_DRIVER_OVERRIDE=crocus' >> /etc/environment"
+    REBOOT=1
+  fi
+
+  echo -n -e $(dashed "Checking DRI3 usage")$' '
+  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
+    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+  if [[ -f /etc/X11/xorg.conf.d/20-intel.conf && \
+    $(sudo cat /etc/X11/xorg.conf.d/20-intel.conf | grep -E "DRI" \
+    | grep -E "3" | wc -l ) -eq 1 ]]; then
+      echo -e ${GREEN}"OK"${RESET}
+  else
+    echo -e ${RED}"Not OK"${RESET}
+    sudo command mkdir -p /etc/X11/xorg.conf.d && sudo bash -c \
+      "echo -e 'Section \"Device\"\n   Identifier  \"Intel Graphics\"\n   Driver      \"intel\"\n   Option      \"DRI\"    \"3\"\nEndSection' >> /etc/X11/xorg.conf.d/20-intel.conf"
+    REBOOT=1
+  fi
+
+  [[ ${REBOOT} -gt 0 ]] \
+    && echo -e "${YELLOW}Some configuration files have been modified and need a reboot to be used${RESET}"
+
+  pushd -0 &> /dev/null && dirs -c
 }
 
 (return 0 2> /dev/null)
