@@ -14,7 +14,7 @@ dots () {
 }
 
 main () {
-  sudo -k && sudo echo &> /dev/null && local SUDO_START=$(date +%s)
+  sudo -k && sudo printf "" && local SUDO_START=$(date +%s)
 
   local -r CLEAR="$(tput ed)"
   local -r GREEN=$(tput setaf 2)
@@ -84,7 +84,7 @@ main () {
     echo -e ${GREEN}"OK"${RESET}
     DASHED=$(dashed "Disabling bluetooth")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     sudo systemctl disable bluetooth.service &> /dev/null
@@ -108,7 +108,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=$(dashed "Installing expect-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     sudo apt install -y expect-dev &> /dev/null
@@ -129,7 +129,7 @@ main () {
 
   echo -n -e $(dashed "Checking kisak-mesa ppa")$' '
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   if [[ $(apt policy 2> /dev/null | grep -E "kisak-mesa" \
     | wc -l) -gt 0 ]]; then
       echo -e ${GREEN}"OK"${RESET}
@@ -140,7 +140,7 @@ main () {
 
   DASHED=${CLEAR}$(dashed "Updating system")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   sudo unbuffer apt update -y | unbuffer -p grep -E -o "[0-9]+%" \
     | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -152,7 +152,7 @@ main () {
 
   DASHED=${CLEAR}$(dashed "Upgrading system")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   sudo unbuffer apt upgrade -y | unbuffer -p grep -E -o "[0-9]+%" \
     | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -164,7 +164,7 @@ main () {
 
   DASHED=${CLEAR}$(dashed "Removing unused packages")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   sudo unbuffer apt autoremove -y | unbuffer -p grep -E -o "[0-9]+%" \
     | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -179,7 +179,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing GIT package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y git | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -197,7 +197,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing ca-certificates package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y ca-certificates | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -215,7 +215,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing curl package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y curl | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -233,7 +233,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing gnupg package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y gnupg | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -251,7 +251,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing lsb-release package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y lsb-release \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -278,7 +278,7 @@ main () {
   if [[ "${VERSION}" == "0" ]]; then
     DASHED=${CLEAR}$(dashed "Installing docker packages")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
       | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) \
@@ -304,7 +304,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing jq package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y jq | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -387,7 +387,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing silversearcher-ag package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y silversearcher-ag \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
@@ -413,7 +413,7 @@ main () {
       echo -n -e $(dashed "")$' '
       DASHED=${CLEAR}$(dashed "Installing KVM packages")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y cpu-checker qemu-kvm \
         libvirt-daemon-system libvirt-clients bridge-utils \
         | unbuffer -p grep -E -o "[0-9]+%" \
@@ -423,7 +423,7 @@ main () {
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
         DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to libvirt group")
         [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          && sudo printf "" && SUDO_START=$(date +%s)
         [[ $(groups | tr ' ' '\n' | grep -E "libvirt" | wc -l) -eq 0 ]] \
           && sudo adduser ${SUDO_USER:-${USER}} libvirt &> /dev/null
 
@@ -436,7 +436,7 @@ main () {
 
         DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to kvm group")
         [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-          && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+          && sudo printf "" && SUDO_START=$(date +%s)
         [[ $(groups | tr ' ' '\n' | grep -E "kvm" | wc -l) -eq 0 ]] \
           && sudo adduser ${SUDO_USER:-${USER}} kvm &> /dev/null
 
@@ -461,7 +461,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing Virtual Manager package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y virt-manager \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
@@ -481,7 +481,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libncurses-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libncurses-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -500,7 +500,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libevent-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libevent-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -519,7 +519,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing build-essential package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y build-essential \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -545,7 +545,7 @@ main () {
 
       DASHED=${CLEAR}$(dashed "Installing gcc 10 packages")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y gcc-10 gcc-10-base gcc-10-doc \
         | unbuffer -p grep -E -o "[0-9]+%" \
         | xargs -I {} echo -n -e ${DASHED} {}
@@ -559,7 +559,7 @@ main () {
 
       DASHED=${CLEAR}$(dashed "Installing g++ 10 package")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y g++-10 \
         | unbuffer -p grep -E -o "[0-9]+%" \
         | xargs -I {} echo -n -e ${DASHED} {}
@@ -573,7 +573,7 @@ main () {
 
       DASHED=${CLEAR}$(dashed "Installing libc++ packages")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       sudo unbuffer apt install -y libstdc++-10-dev libstdc++-10-doc \
         | unbuffer -p grep -E -o "[0-9]+%" \
         | xargs -I {} echo -n -e ${DASHED} {}
@@ -587,7 +587,7 @@ main () {
 
       DASHED=${CLEAR}$(dashed "Adding symbolic link to gcc 10")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       sudo ln -fs $(which gcc-10) $(which gcc)
 
       if [[ $? -eq 0 ]]; then
@@ -599,7 +599,7 @@ main () {
 
       DASHED=${CLEAR}$(dashed "Adding symbolic link to g++ 10")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       sudo ln -fs $(which g++-10) $(which g++)
 
       if [[ $? -eq 0 ]]; then
@@ -620,7 +620,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing bison package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y bison | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -639,7 +639,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing make package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y make | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -658,7 +658,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing autoconf package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y autoconf | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -677,7 +677,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing automake package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y automake | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -696,7 +696,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing asciidoc package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y asciidoc | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -715,7 +715,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing pkg-config package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y pkg-config \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -734,7 +734,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing python3-docutils package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y python3-docutils \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -753,7 +753,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libseccomp-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libseccomp-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -772,7 +772,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libjansson-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libjansson-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -791,7 +791,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libyaml-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libyaml-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -810,7 +810,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libxml2-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libxml2-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -829,7 +829,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libxt-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libxt-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -848,7 +848,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libgtk-3-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libgtk-3-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -867,7 +867,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing xsel package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y xsel | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -886,7 +886,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing cmake package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y cmake \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -905,7 +905,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libicu-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libicu-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -924,7 +924,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing zlib1g-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y zlib1g-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -943,7 +943,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libcurl4-openssl-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libcurl4-openssl-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -962,7 +962,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libssl-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libssl-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -981,7 +981,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing ruby-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y ruby-dev \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -1000,7 +1000,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libpng-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libpng-dev \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
@@ -1020,7 +1020,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libsystemd-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libsystemd-dev \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
@@ -1040,7 +1040,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libglew-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libglew-dev \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
@@ -1060,7 +1060,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing libX11-dev package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y libx11-dev \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
@@ -1080,7 +1080,7 @@ main () {
     echo -e ${RED}"Not OK"${RESET}
     DASHED=${CLEAR}$(dashed "Installing redshift package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y redshift \
       | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
@@ -1144,7 +1144,7 @@ main () {
 
       DASHED=$(dashed "Configuring VIM")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       ${SOURCES}/vim/src/configure &> /dev/null
@@ -1163,7 +1163,7 @@ main () {
 
       DASHED=$(dashed "Compiling VIM")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make &> /dev/null
@@ -1182,7 +1182,7 @@ main () {
 
       DASHED=$(dashed "Installing VIM")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       sudo make install &> /dev/null
@@ -1254,7 +1254,7 @@ main () {
 
       DASHED=$(dashed "Compiling Kakoune")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make &> /dev/null
@@ -1273,7 +1273,7 @@ main () {
 
       DASHED=$(dashed "Installing Kakoune")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       PREFIX=${LOCAL} make install &> /dev/null
@@ -1295,7 +1295,7 @@ main () {
 
       DASHED=$(dashed "Documenting Kakoune")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make man &> /dev/null
@@ -1363,7 +1363,7 @@ main () {
 
       DASHED=$(dashed "Compiling Tig")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make prefix=${LOCAL} &> /dev/null
@@ -1382,7 +1382,7 @@ main () {
 
       DASHED=$(dashed "Installing tig")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make install prefix=${LOCAL} &> /dev/null
@@ -1404,7 +1404,7 @@ main () {
 
       DASHED=$(dashed "Documenting Tig")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       sudo make install-doc-man prefix=/usr &> /dev/null
@@ -1438,7 +1438,7 @@ main () {
   if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/ctags" ]]; then
     DASHED=${CLEAR}$(dashed "Cloning Universal Ctags repository")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     unbuffer git clone https://github.com/universal-ctags/ctags.git \
       ${SOURCES}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
         | xargs -I {} echo -n -e ${DASHED} {}
@@ -1476,7 +1476,7 @@ main () {
 
       DASHED=$(dashed "Configuring Universal Ctags")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       sh ${SOURCES}/ctags/autogen.sh &> /dev/null \
@@ -1496,7 +1496,7 @@ main () {
 
       DASHED=$(dashed "Compiling Universal Ctags")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make &> /dev/null
@@ -1515,7 +1515,7 @@ main () {
 
       DASHED=$(dashed "Installing Universal Ctags")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       sudo make install &> /dev/null
@@ -1552,7 +1552,7 @@ main () {
   if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/fff" ]]; then
     DASHED=${CLEAR}$(dashed "Cloning fff repository")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     unbuffer git clone https://github.com/dylanaraps/fff ${SOURCES}/fff \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -1586,7 +1586,7 @@ main () {
 
       DASHED=$(dashed "Installing fff")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make PREFIX=${LOCAL} install &> /dev/null
@@ -1622,7 +1622,7 @@ main () {
   if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/tmux" ]]; then
     DASHED=${CLEAR}$(dashed "Cloning TMUX repository")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     unbuffer git clone https://github.com/tmux/tmux.git ${SOURCES}/tmux \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -1658,7 +1658,7 @@ main () {
 
       DASHED=$(dashed "Configuring TMUX")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       sh ${SOURCES}/tmux/autogen.sh &> /dev/null \
@@ -1678,7 +1678,7 @@ main () {
 
       DASHED=$(dashed "Compiling TMUX")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       make &> /dev/null
@@ -1697,7 +1697,7 @@ main () {
 
       DASHED=$(dashed "Installing TMUX")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       sudo make install &> /dev/null
@@ -1733,7 +1733,7 @@ main () {
   if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/pass" ]]; then
     DASHED=${CLEAR}$(dashed "Cloning password-store repository")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     unbuffer git clone https://git.zx2c4.com/password-store ${SOURCES}/pass \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -1769,7 +1769,7 @@ main () {
 
       DASHED=$(dashed "Installing password-store")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+        && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
       sudo make install &> /dev/null
@@ -1805,7 +1805,7 @@ main () {
   if [[ ! -d "${SOURCES}/linguist" ]]; then
     DASHED=${CLEAR}$(dashed "Cloning linguist repository")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     unbuffer git clone https://github.com/github/linguist ${SOURCES}/linguist \
       | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
@@ -1837,7 +1837,7 @@ main () {
     echo -e "\n    tag ${TAG} != version ${VERSION}\n"
     DASHED=${CLEAR}$(dashed "Installing linguist GEM package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     sudo gem install github-linguist &> /dev/null
@@ -1862,7 +1862,7 @@ main () {
     echo -e "\n    tag ${TAG} != version ${VERSION}\n"
     DASHED=${CLEAR}$(dashed "Updating linguist GEM package")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     sudo gem update github-linguist &> /dev/null
@@ -1935,7 +1935,7 @@ main () {
 
   DASHED=$(dashed "Installing flagbox")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
   pushd ${SOURCES}/flagbox &> /dev/null \
@@ -2099,7 +2099,7 @@ main () {
 
   DASHED=$(dashed "Copying .gitignore")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
   sudo \cp ${GITIGNORE} ${GIT_TEMPLATE_DIR} &> /dev/null
@@ -2118,7 +2118,7 @@ main () {
 
   DASHED=$(dashed "Copying GIT hooks")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
   sudo \cp -r ${HOOKS} ${GIT_TEMPLATE_DIR} &> /dev/null
@@ -2139,7 +2139,7 @@ main () {
 
     DASHED=$(dashed "Copying scripts")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     for SCRIPT in $(command ls ${SCRIPTS}); do
@@ -2160,7 +2160,7 @@ main () {
 
     DASHED=$(dashed "Copying crons")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+      && sudo printf "" && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
     [[ $(which crontab | wc -l) -eq 1 ]] && echo "* * * * * env DISPLAY=:0.0\
@@ -2291,7 +2291,7 @@ main () {
 
   DASHED=$(dashed "Reloading CRON service")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   dots "${DASHED}" &
   DOTS_PID=$!
   sudo service cron reload &> /dev/null
@@ -2310,7 +2310,7 @@ main () {
 
   echo -n -e $(dashed "Checking Crocus driver usage")$' '
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   if [[ $(sudo cat /etc/environment \
     | grep -E "MESA_LOADER_DRIVER_OVERRIDE=crocus" | wc -l ) -eq 1 ]]; then
       echo -e ${GREEN}"OK"${RESET}
@@ -2322,7 +2322,7 @@ main () {
 
   echo -n -e $(dashed "Checking DRI3 usage")$' '
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo echo &> /dev/null && SUDO_START=$(date +%s)
+    && sudo printf "" && SUDO_START=$(date +%s)
   if [[ -f /etc/X11/xorg.conf.d/20-intel.conf && \
     $(sudo cat /etc/X11/xorg.conf.d/20-intel.conf | grep -E "DRI" \
     | grep -E "3" | wc -l ) -eq 1 ]]; then
