@@ -11,7 +11,6 @@
 - Universal Ctags
 - flagbox
 - password-store
-- Executor Gnome Extension
 - Kakoune
 - direnv
 - docker
