@@ -1,5 +1,9 @@
 #!/bin/bash
 
+mario() {
+  vim -u /etc/vim/vimrc -N -c "execute \"Mario\" | tabonly | set nowrap | normal! G | echo \"Poisson d'avril ! Quitter = Q, Jouer = Haut, Gauche, Droite et mettre la police du terminal à 6"
+}
+
 alias ls='command ls --color'
 alias lh='command ls -d --color .??*'
 alias ll='command ls -l -A --color "$@"'
