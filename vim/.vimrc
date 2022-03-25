@@ -1534,9 +1534,10 @@ function! s:HighlightGutentags()
     \ 'v:val == "Tag"'))
       call setmatches(filter(l:matches, { _, val -> val.group != 'Tag' }))
     endif
-    call matchadd('Tag', join(sort(map(taglist('.*'), { _, val -> val.name }),
+    call matchadd('Tag', substitute(substitute(join(sort(map(taglist('.*'),
+      \ { _, val -> val.name }),
       \ { val1, val2 -> len(split(val2, '\zs')) - len(split(val1, '\zs')) }),
-      \ '\|'), -1)
+      \ '\|'), '\[', '\\[', 'g'), '\]', '\\]', 'g'), -1)
   endif
 endfunction
 
