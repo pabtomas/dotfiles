@@ -206,3 +206,13 @@ function kg () {
 }
 
 alias ipaddr='hostname -I'
+
+alias da="sudo docker container attach"
+alias dcl="sudo docker container prune"
+alias di="sudo docker image ls"
+alias dirm="sudo docker image rm"
+alias dls="sudo docker container ls"
+alias dr="sudo docker container run"
+alias drd="sudo docker container run -d"
+alias drt="sudo docker container run -it"
+alias ds="sudo docker container start"

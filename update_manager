@@ -2329,7 +2329,7 @@ main () {
       echo -e ${GREEN}"OK"${RESET}
   else
     echo -e ${RED}"Not OK"${RESET}
-    sudo command mkdir -p /etc/X11/xorg.conf.d && sudo bash -c \
+    sudo mkdir -p /etc/X11/xorg.conf.d && sudo bash -c \
       "echo -e 'Section \"Device\"\n   Identifier  \"Intel Graphics\"\n   Driver      \"intel\"\n   Option      \"DRI\"    \"3\"\nEndSection' >> /etc/X11/xorg.conf.d/20-intel.conf"
     REBOOT=1
   fi
