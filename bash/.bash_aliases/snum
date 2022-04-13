@@ -3,7 +3,7 @@ function mario() {
 }
 
 function bus () {
-  watch -n 10 --color 'curl -L https://ws.infotbm.com/ws/1.0/get-realtime-pass/3049/03 2> /dev/null | jq -r "select(.destinations[][].destination_name == \"Quinconces\") | .destinations[][] | \"\(.destination_name) \(.arrival_theorique) \(.waittime_text)\"" | sort | uniq'
+  while [[ true ]]; do clear; printf "🚍 \e[48;5;4m\e[38;5;7m 3 \e[m Collège Hastignan\n$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/3049/03 2> /dev/null | jq -r 'select(.destinations[][].destination_name == "Quinconces") | .destinations[][] | "\(.destination_name) \(.arrival_theorique) \(.waittime_text)"' | sort | uniq)\n"; sleep 10; done
 }
 
 alias ls='command ls --color'
