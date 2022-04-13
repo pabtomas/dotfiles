@@ -1,7 +1,7 @@
 unalias -a
 
 function bus () {
-  watch -n 10 --color -t "printf \"🚍 \033[1;47;1;44m 3 \033[0m Collège Hastignan\n$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/3049/03 2> /dev/null | jq -r 'select(.destinations[][].destination_name == "Quinconces") | .destinations[][] | "\(.destination_name) \(.arrival_theorique) \(.waittime_text)"' | sort | uniq)\n\""
+  watch -n 10 --color -t "printf \"🚍 \033[1;47;1;44m 3 \033[0m Collège Hastignan\n$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/3049/03 2> /dev/null | jq -r 'select(.destinations[][].destination_name == "Quinconces") | .destinations[][] | "\(.destination_name) \(.arrival_theorique) \(.waittime_text)"' | sort | uniq)\n\n🚍 \033[1;47;1;42m 71 \033[0m Cerema\n$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/112/71 2> /dev/null | jq -r 'select(.destinations[][].destination_name == "Henri Barbusse") | .destinations[][] | "\(.destination_name) \(.arrival_theorique) \(.waittime_text)"' | sort | uniq)\""
 }
 
 alias ls='command ls --color'
