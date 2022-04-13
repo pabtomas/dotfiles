@@ -1,7 +1,11 @@
 #!/bin/bash
 
-mario() {
+function mario() {
   vim -u /etc/vim/vimrc -N -c "execute \"Mario\" | tabonly | set nowrap | normal! G | echo \"Poisson d'avril ! Quitter = Q, Jouer = Haut, Gauche, Droite et mettre la police du terminal à 6"
+}
+
+function bus () {
+  watch -n 10 --color 'curl -L https://ws.infotbm.com/ws/1.0/get-realtime-pass/3049/03 2> /dev/null | jq -r "select(.destinations[][].destination_name == \"Quinconces\") | .destinations[][] | \"\(.destination_name) \(.arrival_theorique) \(.waittime_text)\"" | sort | uniq'
 }
 
 alias ls='command ls --color'
