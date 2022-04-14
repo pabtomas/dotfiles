@@ -8,6 +8,10 @@ function colors () {
   curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash
 }
 
+function colorchooser () {
+  curl -s https://raw.githubusercontent.com/grawity/code/master/term/xterm-color-chooser | python3
+}
+
 alias ls='command ls --color'
 alias lh='command ls -d --color .??*'
 alias ll='command ls -l -A --color "$@"'
