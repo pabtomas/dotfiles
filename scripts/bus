@@ -9,6 +9,8 @@ declare -r RESET="\e[m"
 
 echo "check between ${1} and ${2} for ${3} TBM line"
 
+declare -a STOP=()
+
 for i in $(seq ${1} ${2}); do
   if [[ $(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/${i}/${3} 2> /dev/null) =~ \[\] ]]; then
     if [[ $(( ${i} % 100 )) -eq 0 ]]; then
@@ -17,7 +19,13 @@ for i in $(seq ${1} ${2}); do
     fi
   else
     OUTPUT="https://ws.infotbm.com/ws/1.0/get-realtime-pass/${i}/${3} ----------------------------- ${GREEN}YES${RESET}"
-    echo -e "${OUTPUT}" >> bus_output
     echo -e "${OUTPUT}"
+    STOP+=(${i})
   fi
+done
+
+echo -e "\n\n"
+
+for s in ${STOP[@]}; do
+  echo -e "${s} --------------------------------------------------------\n$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/${s}/${3} 2> /dev/null | jq -r ".destinations[][] | \"\(.destination_name) \(.arrival_theorique) \(.waittime_text)\"" | sort | uniq)"
 done
