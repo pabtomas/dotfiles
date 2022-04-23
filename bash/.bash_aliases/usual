@@ -1,6 +1,35 @@
-#!/bin/bash
-
 unalias -a
+
+function tbm () {
+  while :; do
+    D=$(date +"%A %d %B %Y %H:%M:%S")
+    B1="$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/3049/03 2> /dev/null | jq -r '.destinations[][] | "\(.waittime_text) \(.destination_name) \(.arrival_theorique)"')"
+    B1b="$(echo "${B1}" | grep -E "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    [[ ${#B1b} -gt 0 ]] && B1b="${B1b}\n"
+    B1="$(echo "${B1}" | grep -vE "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    B2="$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/112/71 2> /dev/null | jq -r '.destinations[][] | "\(.waittime_text) \(.destination_name) \(.arrival_theorique)"')"
+    B2b="$(echo "${B2}" | grep -E "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    [[ ${#B2b} -gt 0 ]] && B2b="${B2b}\n"
+    B2="$(echo "${B2}" | grep -vE "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    T1="$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/3696/A 2> /dev/null | jq -r '.destinations[][] | "\(.waittime_text) \(.destination_name) \(.arrival_theorique)"')"
+    T1b="$(echo "${T1}" | grep -E "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    [[ ${#T1b} -gt 0 ]] && T1b="${T1b}\n"
+    T1="$(echo "${T1}" | grep -vE "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    T2="$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/3715/A 2> /dev/null | jq -r '.destinations[][] | "\(.waittime_text) \(.destination_name) \(.arrival_theorique)"')"
+    T2b="$(echo "${T2}" | grep -E "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    [[ ${#T2b} -gt 0 ]] && T2b="${T2b}\n"
+    T2="$(echo "${T2}" | grep -vE "heure" | sort -n | uniq | sed -e "s/\([[:alpha:]]\)\([[:alpha:]]*\)/\1\L\2/g; s/:[[:digit:]]\{2\}$//; s/[[:digit:]]\{4,\}-[[:digit:]]\{2\}-[[:digit:]]\{2\} //")"
+    clear
+    printf "${D}\n\n🚍 \033[1;37;1;44m 3 \033[0m Collège Hastignan\n${B1}\n${B1b}\n🚍 \033[1;37;1;42m 71 \033[0m Cerema\n${B2}\n${B2b}\n🚇 \033[1;37m\033[1;48;5;198m A \033[0m Palmer\n${T1}\n${T1b}\n🚇 \033[1;37m\033[1;48;5;198m A \033[0m Place Du Palais\n${T2}\n${T2b}\nPress Q to quit"
+    read -s -n 1 -t 1 INPUT <&1
+    [[ ${INPUT} == "q" ]] && break
+  done
+  clear
+}
+
+function colors () {
+  curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash
+}
 
 alias ls='command ls --color'
 alias lh='command ls -d --color .??*'

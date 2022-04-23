@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+[[ ${#} -lt 3 || ${1} == "-h" ]] && echo "check between <arg1> TBM stop and <arg2> TBM stop for <arg3> TBM line and write YES TBM stop in 'bus_output' file" && exit 1
+[[ ${1} -gt ${2} ]] && echo "<arg2> must be greater than <arg1>" && exit 1
+
+declare -r RED="\e[38;5;9m"
+declare -r GREEN="\e[38;5;10m"
+declare -r RESET="\e[m"
+
+echo "check between ${1} and ${2} for ${3} TBM line"
+
+declare -a STOP=()
+
+for i in $(seq ${1} ${2}); do
+  if [[ $(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/${i}/${3} 2> /dev/null) =~ \[\] ]]; then
+    if [[ $(( ${i} % 100 )) -eq 0 ]]; then
+      OUTPUT="https://ws.infotbm.com/ws/1.0/get-realtime-pass/${i}/${3} ----------------------------- ${RED}NO${RESET}"
+      echo -e "${OUTPUT}"
+    fi
+  else
+    OUTPUT="https://ws.infotbm.com/ws/1.0/get-realtime-pass/${i}/${3} ----------------------------- ${GREEN}YES${RESET}"
+    echo -e "${OUTPUT}"
+    STOP+=(${i})
+  fi
+done
+
+echo -e "\n\n"
+
+for s in ${STOP[@]}; do
+  echo -e "${s} --------------------------------------------------------\n$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/${s}/${3} 2> /dev/null | jq -r ".destinations[][] | \"\(.destination_name) \(.arrival_theorique) \(.waittime_text)\"" | sort | uniq)"
+done
