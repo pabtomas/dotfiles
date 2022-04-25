@@ -245,3 +245,5 @@ alias dr="sudo docker container run"
 alias drd="sudo docker container run -d"
 alias drt="sudo docker container run -it"
 alias ds="sudo docker container start"
+
+alias cal='ncal -w -b -M'

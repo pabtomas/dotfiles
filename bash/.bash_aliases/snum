@@ -212,3 +212,5 @@ function gamp () {
 alias ti='tig'
 alias tb='tig blame'
 alias tg='tig grep'
+
+alias cal='ncal -w -b -M'
