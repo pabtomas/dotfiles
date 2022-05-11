@@ -4,6 +4,8 @@ export PAGER="less"
 
 export SHELL="/bin/bash"
 
+export PATH="${HOME}/.cabal/bin:${PATH}"
+
 if [ "x${TERM}" = "x" ]; then
   export TERM="xterm-256color"
 fi

@@ -15,6 +15,7 @@
 - direnv
 - docker
 - github-linguist
+- shellcheck
 
 ### .tmux.conf
 
