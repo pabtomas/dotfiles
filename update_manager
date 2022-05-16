@@ -327,7 +327,8 @@ main () {
       https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
       | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo unbuffer apt install -y docker-ce docker-ce-cli containerd.io \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+      docker-compose-plugin | unbuffer -p grep -E -o "[0-9]+%" \
+      | xargs -I {} echo -n -e ${DASHED} {}
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}
