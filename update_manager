@@ -2253,69 +2253,6 @@ main () {
     fi
   fi
 
-  if [[ ! -d "${SOURCES}/flagbox" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning flagbox repository")
-    unbuffer git clone https://github.com/pabtomas/flagbox ${SOURCES}/flagbox \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Adding flagbox repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Pulling flagbox repository")
-    pushd ${SOURCES}/flagbox &> /dev/null && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Adding flagbox repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  DASHED=$(dashed "Installing flagbox")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  pushd ${SOURCES}/flagbox &> /dev/null \
-    && sudo \cp -f ${SOURCES}/flagbox/sourceme.sh ${SCRIPTS_DEST} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
   DASHED=$(dashed "Copying .vimrc")
   dots "${DASHED}" &
   DOTS_PID=$!
