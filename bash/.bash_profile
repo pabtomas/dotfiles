@@ -25,19 +25,3 @@ export FFF_KEY_PARENT4='off'
 
 export FFF_KEY_SCROLL_DOWN1='off'
 export FFF_KEY_SCROLL_UP1='off'
-
-export FLAGBOX_SIZE=4
-
-export FLAGBOX_KEY1=","
-export FLAGBOX_KEY2="?"
-
-export FLAGBOX_ALIASES=true
-export FLAGBOX_DECIMAL_NAVMODE=true
-export FLAGBOX_BACKUPCONFIRM=true
-
-export FLAGBOX_VINSERT=false
-export FLAGBOX_VNAV=true
-export FLAGBOX_VRESET=false
-export FLAGBOX_VRESTORE=true
-
-export FLAGBOX_FOLDLISTING=true

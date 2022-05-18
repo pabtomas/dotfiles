@@ -9,7 +9,6 @@
 - Tig
 - fff
 - Universal Ctags
-- flagbox
 - password-store
 - Kakoune
 - direnv
