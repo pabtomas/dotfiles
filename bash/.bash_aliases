@@ -195,6 +195,9 @@ alias ta='tmux attach'
 alias tl='tmux list-sessions'
 alias tk='tmux kill-server'
 
+alias du="docker compose up -d"
+alias dub="docker compose up -d --build"
+alias dd="docker compose down"
 alias dls="docker ps -a"
 alias dlsi="docker image ls"
 alias drm="docker rm -f $(docker ps -a -q)"
