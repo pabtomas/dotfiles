@@ -35,7 +35,7 @@ function colors () {
   curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash
 }
 
-alias ls='command ls --color'
+alias ls='ls --color'
 alias grep='grep --color'
 alias diff='diff -u --color'
 alias ag='ag -t --hidden --color --multiline --numbers --pager less'
@@ -79,7 +79,7 @@ function extract () {
     return 3 # extracted dest already exists
   fi
 
-  command mkdir -p ${DESTDIR}
+  mkdir ${DESTDIR}
 
   local FILE=$(basename "${1}")
 
