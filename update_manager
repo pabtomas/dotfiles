@@ -29,7 +29,7 @@ main () {
   local -r TIGRC="${MANAGER_DIR}/tig/.tigrc"
   local -r BASHRC="${MANAGER_DIR}/bash/.bashrc"
   local -r PROFILE="${MANAGER_DIR}/bash/.bash_profile"
-  local -r ALIASES="${MANAGER_DIR}/bash/.bash_aliases/usual"
+  local -r ALIASES="${MANAGER_DIR}/bash/.bash_aliases"
   local -r GITIGNORE="${MANAGER_DIR}/git/.gitignore"
   local -r HOOKS="${MANAGER_DIR}/git/.hooks"
   local -r SCRIPTS="${MANAGER_DIR}/scripts"

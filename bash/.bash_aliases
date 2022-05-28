@@ -1,5 +1,9 @@
 unalias -a
 
+function mario() {
+  vim -u /etc/vim/vimrc -N -c "execute \"Mario\" | tabonly | set nowrap | normal! G | echo \"Poisson d'avril ! Quitter = Q, Jouer = Haut, Gauche, Droite et mettre la police du terminal à 6"
+}
+
 function tbm () {
   while :; do
     D=$(date +"%A %d %B %Y %H:%M:%S")
@@ -32,12 +36,21 @@ function colors () {
 }
 
 alias ls='command ls --color'
-alias lh='command ls -d --color .??*'
-alias ll='command ls -l -A --color "$@"'
-
 alias grep='grep --color'
 alias diff='diff -u --color'
-alias ag='ag -a --hidden'
+alias ag='ag -t --hidden --color --multiline --numbers --pager less'
+alias agi='ag --hidden --color --multiline --numbers --pager less --ignore'
+alias tree='tree -C'
+alias watch='watch -c -n 1'
+alias ps='ps -a -x'
+alias rm='rm -i -r -v'
+alias cp='cp -i -r -v'
+alias mv='mv -i -n -v'
+alias mkdir='mkdir -p -v'
+alias sudo='sudo '
+alias cal='ncal -w -b -M'
+alias vi='vim'
+alias ip='hostname -I'
 
 for I in $(seq 2 1 5); do
   ALIAS=$(printf %${I}s | tr ' ' '.')
@@ -46,33 +59,6 @@ for I in $(seq 2 1 5); do
   unset ALIAS
   unset DIR
 done
-
-function mkdir () {
-  command mkdir -p -v "$@"
-  if [[ $? -eq 0 ]]; then
-    for DIR in $(echo "$@"); do
-      if [[ "x${DIR}" != x ]]; then
-        while [[ ${DIR} != . ]]; do
-          echo -n "mkdir: change directory for '$(realpath ${DIR})' ? " \
-            && read Y && [[ ${Y,,} == 'y' ]] && cd ${DIR} && break
-          DIR=$(dirname ${DIR});
-        done
-      fi
-    done
-  fi
-}
-
-alias rm='rm -i -r -v'
-alias cp='cp -i -r -v'
-alias mv='mv -i -v'
-alias hh='history | grep -i -E'
-alias ff='find . | grep -E'
-alias pp='ps -a -x | grep -E'
-alias sudo='sudo '
-alias api='sudo apt install'
-alias app='sudo apt purge'
-alias apu='sudo apt-get update && sudo apt-get upgrade '\
-\ '&& sudo apt-get autoremove && sudo apt-get autoclean'
 
 function extract () {
 
@@ -152,13 +138,6 @@ function extract () {
   esac
 }
 
-alias vi='vim'
-alias vs='vim -S'
-alias tx='direnv exec / tmux'
-alias ta='tmux attach'
-alias tl='tmux list-sessions'
-alias tk='tmux kill-server'
-
 git config --global --replace-all alias.ranking "!bash -c \"
 function git-ranking () {
   if [[ \${#} -eq 0 ]]; then
@@ -186,6 +165,7 @@ alias ga='git add'
 alias gaa='git add -A'
 alias gam='git add -A && git commit -m'
 alias gb='git branch'
+alias gc='git clone'
 alias gd='tig status'
 alias gf='git file'
 alias gg='git ranking'
@@ -202,19 +182,6 @@ alias gsp='git stash pop'
 alias gst='git stash push'
 alias gu='git uncommit'
 
-function gc () {
-  git clone "$@" && cd $(command ls -t | head -n1)
-  local RET=$?
-  local A=".gitignore"
-  local B="${GIT_TEMPLATE_DIR}/.gitignore"
-  [[ ${RET} -eq 0 && -f "${GIT_TEMPLATE_DIR}/.gitignore" ]] \
-    && echo -e "$(cat ${A} ${B} 2> /dev/null | sort)\n$(cat ${A} \
-      2> /dev/null)" | sort | uniq -u | grep -v -E '^[[:space:]]*$' \
-        >> .gitignore
-  [[ ${RET} -eq 0 && -d "${GIT_TEMPLATE_DIR}/.hooks" ]] \
-    && command cp ${GIT_TEMPLATE_DIR}/.hooks/* .git/hooks
-}
-
 function gamp () {
   git add -A && git commit -m "$@" && git pull && git push
 }
@@ -223,27 +190,13 @@ alias ti='tig'
 alias tb='tig blame'
 alias tg='tig grep'
 
-function f () {
-  fff "$@"
-  cd "$(cat "${XDG_CACHE_HOME:=${HOME}/.cache}/fff/.fff_d")"
-}
+alias tx='direnv exec / tmux'
+alias ta='tmux attach'
+alias tl='tmux list-sessions'
+alias tk='tmux kill-server'
 
-alias kl='echo -e "PUBLIC KEYS\n------------------------" && gpg --list-keys && echo -e "------------------------\nSECRET KEYS\n------------------------" && gpg --list-secret-keys'
-
-function kg () {
-  gpg --quick-generate-key ${1} default default never
-}
-
-alias ipaddr='hostname -I'
-
-alias da="sudo docker container attach"
-alias dcl="sudo docker container prune"
-alias di="sudo docker image ls"
-alias dirm="sudo docker image rm"
-alias dls="sudo docker container ls"
-alias dr="sudo docker container run"
-alias drd="sudo docker container run -d"
-alias drt="sudo docker container run -it"
-alias ds="sudo docker container start"
-
-alias cal='ncal -w -b -M'
+alias dls="docker ps -a"
+alias dlsi="docker image ls"
+alias drm="docker rm -f $(docker ps -a -q)"
+alias drmi="docker rmi -f $(docker images -a -q)"
+alias dt="docker exec -it"
