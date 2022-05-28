@@ -51,6 +51,7 @@ alias sudo='sudo '
 alias cal='ncal -w -b -M'
 alias vi='vim'
 alias ip='hostname -I'
+alias less='less -R'
 
 for I in $(seq 2 1 5); do
   ALIAS=$(printf %${I}s | tr ' ' '.')
