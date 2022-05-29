@@ -55,12 +55,11 @@ alias vi='vim'
 alias ip='hostname -I'
 alias less='less -R'
 
-for I in $(seq 2 1 5); do
-  ALIAS=$(printf %${I}s | tr ' ' '.')
-  DIR=$(printf %$(( ${I} - 1 ))s | sed 's/ /..\//g')
-  alias "${ALIAS}"='cd '${DIR}
-  unset ALIAS
-  unset DIR
+set 1 2 3 4
+while [ "${*}" ]
+do
+  alias ."$(printf '.%0.s' "${@}")"='cd '"$(printf '../%0.s' "${@}")"
+  shift
 done
 
 function extract () {
