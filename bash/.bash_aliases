@@ -1,8 +1,8 @@
-mario () {
+function mario () {
   command vim -u /etc/vim/vimrc -N -c "execute \"Mario\" | tabonly | set nowrap | normal! G | echo \"Poisson d'avril ! Quitter = Q, Jouer = Haut, Gauche, Droite et mettre la police du terminal à 6"
 }
 
-tbm () {
+function tbm () {
   while :
   do
     local D B1 B1b B2 B2b T1 T1b T2 T2b IN
@@ -31,27 +31,27 @@ tbm () {
   clear
 }
 
-colors () { command curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash; }
+function colors () { command curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash; }
 
-ls () { command ls --color "${@}"; }
-grep () { command grep --color "${@}"; }
-diff () { command diff -u --color "${@}"; }
-ag () { command ag -t --hidden --color --multiline --numbers --pager "less -R" "${@}"; }
-agi () { command ag --hidden --color --multiline --numbers --pager "less -R" --ignore "${@}"; }
-tree () { command tree -C "${@}"; }
-watch () { command watch -c -n 1 "${@}"; }
-ps () { command ps -a -x "${@}"; }
-rm () { command rm -i -r -v "${@}"; }
-cp () { command cp -i -r -v "${@}"; }
-mv () { command mv -i -n -v "${@}"; }
-ln () { command ln -i -v "${@}"; }
-rl () { command readlink -m "${@}"; }
-mkdir () { command mkdir -p -v "${@}"; }
+function ls () { command ls --color "${@}"; }
+function grep () { command grep --color "${@}"; }
+function diff () { command diff -u --color "${@}"; }
+function ag () { command ag -t --hidden --color --multiline --numbers --pager "less -R" "${@}"; }
+function agi () { command ag --hidden --color --multiline --numbers --pager "less -R" --ignore "${@}"; }
+function tree () { command tree -C "${@}"; }
+function watch () { command watch -c -n 1 "${@}"; }
+function ps () { command ps -a -x "${@}"; }
+function rm () { command rm -i -r -v "${@}"; }
+function cp () { command cp -i -r -v "${@}"; }
+function mv () { command mv -i -n -v "${@}"; }
+function ln () { command ln -i -v "${@}"; }
+function rl () { command readlink -m "${@}"; }
+function mkdir () { command mkdir -p -v "${@}"; }
 alias sudo='sudo '
-cal () { command ncal -w -b -M "${@}"; }
-vi () { command vim "${@}"; }
-ip () { command hostname -I "${@}"; }
-less () { command less -R "${@}"; }
+function cal () { command ncal -w -b -M "${@}"; }
+function vi () { command vim "${@}"; }
+function ip () { command hostname -I "${@}"; }
+function less () { command less -R "${@}"; }
 
 set 1 2 3 4
 while [ "${*}" ]
@@ -60,7 +60,7 @@ do
   shift
 done
 
-extract () {
+function extract () {
   # Not enough args
   if [[ ${#} -lt 1 ]]; then
     echo "Usage: extract <path/file_name>"\
@@ -127,7 +127,7 @@ extract () {
 }
 
 git config --global --replace-all alias.ranking "!bash -c \"
-git-ranking () {
+function git-ranking () {
   if [[ \${#} -eq 0 ]]; then
     command git ls-files \
       | command xargs -n1 \git blame --line-porcelain | command sed -n 's/^author //p' \
@@ -146,42 +146,42 @@ git config --global --replace-all alias.file "checkout HEAD -- "
 git config --global --replace-all alias.uncommit "reset HEAD^"
 git config --global --replace-all alias.unpushed "log --oneline origin/master..master"
 
-ga () { command git add "${@}"; }
-gaa () { command git add -A "${@}"; }
-gam () { command git add -A && command git commit -m "${@}"; }
-gamp () { command git add -A && command git commit -m "$@" && command git pull && command git push; }
-gb () { command git branch "${@}"; }
-gc () { command git clone "${@}"; }
-gd () { tig status "${@}"; }
-gf () { command git file "${@}"; }
-gg () { command git ranking "${@}"; }
-gh () { command git checkout "${@}"; }
-gl () { command git pull "${@}"; }
-gm () { command git commit -m "${@}"; }
-gma () { command git commit --amend "${@}"; }
-gp () { command git push "${@}"; }
-gpl () { command git unpushed "${@}"; }
-gr () { command git root "${@}"; }
-gs () { command git status -s -uall "${@}"; }
-gsd () { command git stash drop "${@}"; }
-gsp () { command git stash pop "${@}"; }
-gst () { command git stash push "${@}"; }
-gu () { command git uncommit "${@}"; }
+function ga () { command git add "${@}"; }
+function gaa () { command git add -A "${@}"; }
+function gam () { command git add -A && command git commit -m "${@}"; }
+function gamp () { command git add -A && command git commit -m "$@" && command git pull && command git push; }
+function gb () { command git branch "${@}"; }
+function gc () { command git clone "${@}"; }
+function gd () { tig status "${@}"; }
+function gf () { command git file "${@}"; }
+function gg () { command git ranking "${@}"; }
+function gh () { command git checkout "${@}"; }
+function gl () { command git pull "${@}"; }
+function gm () { command git commit -m "${@}"; }
+function gma () { command git commit --amend "${@}"; }
+function gp () { command git push "${@}"; }
+function gpl () { command git unpushed "${@}"; }
+function gr () { command git root "${@}"; }
+function gs () { command git status -s -uall "${@}"; }
+function gsd () { command git stash drop "${@}"; }
+function gsp () { command git stash pop "${@}"; }
+function gst () { command git stash push "${@}"; }
+function gu () { command git uncommit "${@}"; }
 
-ti () { command tig "${@}"; }
-tb () { command tig blame "${@}"; }
-tg () { command tig grep "${@}"; }
+function ti () { command tig "${@}"; }
+function tb () { command tig blame "${@}"; }
+function tg () { command tig grep "${@}"; }
 
-tx () { command direnv exec / \tmux "${@}"; }
-ta () { command tmux attach "${@}"; }
-tl () { command tmux list-sessions "${@}"; }
-tk () { command tmux kill-server "${@}"; }
+function tx () { command direnv exec / \tmux "${@}"; }
+function ta () { command tmux attach "${@}"; }
+function tl () { command tmux list-sessions "${@}"; }
+function tk () { command tmux kill-server "${@}"; }
 
-du () { command docker compose up -d "${@}"; }
-dub () { command docker compose up -d --build "${@}"; }
-dd () { command docker compose down "${@}"; }
-dls () { command docker ps -a "${@}"; }
-dlsi () { command docker image ls "${@}"; }
-drm () { command docker rm -f "$(command docker ps -a -q)" "${@}"; }
-drmi () { command docker rmi -f "$(command docker images -a -q)" "${@}"; }
-dt () { if [[ ${dt_USER} ]]; then command docker exec -it --user "${dt_USER}" "${@}"; else command docker exec -it "${@}"; fi; }
+function du () { command docker compose up -d "${@}"; }
+function dub () { command docker compose up -d --build "${@}"; }
+function dd () { command docker compose down "${@}"; }
+function dls () { command docker ps -a "${@}"; }
+function dlsi () { command docker image ls "${@}"; }
+function drm () { command docker rm -f "$(command docker ps -a -q)" "${@}"; }
+function drmi () { command docker rmi -f "$(command docker images -a -q)" "${@}"; }
+function dt () { if [[ ${dt_USER} ]]; then command docker exec -it --user "${dt_USER}" "${@}"; else command docker exec -it "${@}"; fi; }
