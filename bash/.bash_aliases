@@ -1,10 +1,8 @@
-unalias -a
-
-function mario() {
+mario () {
   vim -u /etc/vim/vimrc -N -c "execute \"Mario\" | tabonly | set nowrap | normal! G | echo \"Poisson d'avril ! Quitter = Q, Jouer = Haut, Gauche, Droite et mettre la police du terminal à 6"
 }
 
-function tbm () {
+tbm () {
   while :; do
     D=$(date +"%A %d %B %Y %H:%M:%S")
     B1="$(curl https://ws.infotbm.com/ws/1.0/get-realtime-pass/3049/03 2> /dev/null | jq -r '.destinations[][] | "\(.waittime_text) \(.destination_name) \(.arrival_theorique)"')"
@@ -31,29 +29,27 @@ function tbm () {
   clear
 }
 
-function colors () {
-  curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash
-}
+colors () { curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash; }
 
-alias ls='ls --color'
-alias grep='grep --color'
-alias diff='diff -u --color'
-alias ag='ag -t --hidden --color --multiline --numbers --pager "less -R"'
-alias agi='ag --hidden --color --multiline --numbers --pager "less -R" --ignore'
-alias tree='tree -C'
-alias watch='watch -c -n 1'
-alias ps='ps -a -x'
-alias rm='rm -i -r -v'
-alias cp='cp -i -r -v'
-alias mv='mv -i -n -v'
-alias ln='ln -i -v'
-alias rl='readlink -m'
-alias mkdir='mkdir -p -v'
-alias sudo='sudo '
-alias cal='ncal -w -b -M'
-alias vi='vim'
-alias ip='hostname -I'
-alias less='less -R'
+ls () { ls --color "${@}"; }
+grep () { grep --color "${@}"; }
+diff () { diff -u --color "${@}"; }
+ag () { ag -t --hidden --color --multiline --numbers --pager "less -R" "${@}"; }
+agi () { ag --hidden --color --multiline --numbers --pager "less -R" --ignore "${@}"; }
+tree () { tree -C "${@}"; }
+watch () { watch -c -n 1 "${@}"; }
+ps () { ps -a -x "${@}"; }
+rm () { rm -i -r -v "${@}"; }
+cp () { cp -i -r -v "${@}"; }
+mv () { mv -i -n -v "${@}"; }
+ln () { ln -i -v "${@}"; }
+rl () { readlink -m "${@}"; }
+mkdir () { mkdir -p -v "${@}"; }
+sudo () { sudo  "${@}"; }
+cal () { ncal -w -b -M "${@}"; }
+vi () { vim "${@}"; }
+ip () { hostname -I "${@}"; }
+less () { less -R "${@}"; }
 
 set 1 2 3 4
 while [ "${*}" ]
@@ -62,86 +58,74 @@ do
   shift
 done
 
-function extract () {
-
-  if [[ "$#" -lt 1 ]]; then
+extract () {
+  # Not enough args
+  if [[ ${#} -lt 1 ]]; then
     echo "Usage: extract <path/file_name>"\
       ".<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
-    return 1 #not enough args
+    return 1
   fi
 
-  if [[ ! -e "${1}" ]]; then
+  # File not found
+  if [[ ! -e ${1} ]]; then
     echo -e "File does not exist!"
-    return 2 # File not found
+    return 2
   fi
 
-  local DESTDIR="${1}_extracted"
-  if [[ -d "${DESTDIR}" ]]; then
-    echo -e "${DESTDIR} already exists. Can't extract in a safe destination."
-    return 3 # extracted dest already exists
+  # Extracted dir already exists
+  local DIR="${1}_extracted"
+  if [[ -d ${DIR} ]]; then
+    echo -e "${DIR} already exists. Can't extract in a safe destination."
+    return 3
   fi
 
-  mkdir ${DESTDIR}
-
-  local FILE=$(basename "${1}")
+  mkdir "${DIR}"
+  local FILE="$(basename "${1}")"
 
   case "${FILE##*.}" in
     tar)
-      echo -e "Extracting ${1} to ${DESTDIR}: (uncompressed tar)"
-      tar xvf "${1}" -C "${DESTDIR}"
-      ;;
+      echo -e "Extracting ${1} to ${DIR}: (uncompressed tar)"
+      tar xvf "${1}" -C "${DIR}" ;;
     gz)
-      echo -e "Extracting ${1} to ${DESTDIR}: (gip compressed tar)"
-      tar xvfz "${1}" -C "${DESTDIR}"
-    ;;
+      echo -e "Extracting ${1} to ${DIR}: (gip compressed tar)"
+      tar xvfz "${1}" -C "${DIR}" ;;
     tgz)
-      echo -e "Extracting ${1} to ${DESTDIR}: (gip compressed tar)"
-      tar xvfz "${1}" -C "${DESTDIR}"
-      ;;
+      echo -e "Extracting ${1} to ${DIR}: (gip compressed tar)"
+      tar xvfz "${1}" -C "${DIR}" ;;
     xz)
-      echo -e "Extracting  ${1} to ${DESTDIR}: (gip compressed tar)"
-      tar xvf -J "${1}" -C "${DESTDIR}"
-      ;;
+      echo -e "Extracting  ${1} to ${DIR}: (gip compressed tar)"
+      tar xvf -J "${1}" -C "${DIR}" ;;
     bz2)
-      echo -e "Extracting ${1} to ${DESTDIR}: (bzip compressed tar)"
-      tar xvfj "${1}" -C "${DESTDIR}"
-      ;;
+      echo -e "Extracting ${1} to ${DIR}: (bzip compressed tar)"
+      tar xvfj "${1}" -C "${DIR}" ;;
     tbz2)
-      echo -e "Extracting ${1} to ${DESTDIR}: (tbz2 compressed tar)"
-      tar xvjf "${1}" -C "${DESTDIR}"
-      ;;
+      echo -e "Extracting ${1} to ${DIR}: (tbz2 compressed tar)"
+      tar xvjf "${1}" -C "${DIR}" ;;
     zip)
-      echo -e "Extracting ${1} to ${DESTDIR}: (zip compressed file)"
-      unzip "${1}" -d "${DESTDIR}"
-      ;;
+      echo -e "Extracting ${1} to ${DIR}: (zip compressed file)"
+      unzip "${1}" -d "${DIR}" ;;
     lzma)
       echo -e "Extracting ${1} : (lzma compressed file)"
-      unlzma "${1}"
-      ;;
+      unlzma "${1}" ;;
     rar)
-      echo -e "Extracting ${1} to ${DESTDIR}: (rar compressed file)"
-      unrar x "${1}" "${DESTDIR}"
-      ;;
+      echo -e "Extracting ${1} to ${DIR}: (rar compressed file)"
+      unrar x "${1}" "${DIR}" ;;
     7z)
-      echo -e  "Extracting ${1} to ${DESTDIR}: (7zip compressed file)"
-      7za e "${1}" -o "${DESTDIR}"
-      ;;
+      echo -e  "Extracting ${1} to ${DIR}: (7zip compressed file)"
+      7za e "${1}" -o "${DIR}" ;;
     xz)
       echo -e  "Extracting ${1} : (xz compressed file)"
-      unxz  "${1}"
-      ;;
+      unxz  "${1}" ;;
     exe)
-      cabextract "${1}"
-      ;;
+      cabextract "${1}" ;;
     *)
-      echo -e "Unknown format!"
-      return
-      ;;
+      echo -e "Unknown format"
+      return ;;
   esac
 }
 
 git config --global --replace-all alias.ranking "!bash -c \"
-function git-ranking () {
+git-ranking () {
   if [[ \${#} -eq 0 ]]; then
     git ls-files \
       | xargs -n1 git blame --line-porcelain | sed -n 's/^author //p' \
@@ -156,52 +140,46 @@ function git-ranking () {
 git-ranking\""
 
 git config --global --replace-all alias.root 'rev-parse --show-toplevel'
-
 git config --global --replace-all alias.file "checkout HEAD -- "
-
 git config --global --replace-all alias.uncommit "reset HEAD^"
-
 git config --global --replace-all alias.unpushed "log --oneline origin/master..master"
 
-alias ga='git add'
-alias gaa='git add -A'
-alias gam='git add -A && git commit -m'
-alias gb='git branch'
-alias gc='git clone'
-alias gd='tig status'
-alias gf='git file'
-alias gg='git ranking'
-alias gh='git checkout'
-alias gl='git pull'
-alias gm='git commit -m'
-alias gm!='git commit --amend'
-alias gp='git push'
-alias gp!='git unpushed'
-alias gr='git root'
-alias gs='git status -s -uall'
-alias gsd='git stash drop'
-alias gsp='git stash pop'
-alias gst='git stash push'
-alias gu='git uncommit'
+ga () { git add "${@}"; }
+gaa () { git add -A "${@}"; }
+gam () { git add -A && git commit -m "${@}"; }
+gamp () { git add -A && git commit -m "$@" && git pull && git push; }
+gb () { git branch "${@}"; }
+gc () { git clone "${@}"; }
+gd () { tig status "${@}"; }
+gf () { git file "${@}"; }
+gg () { git ranking "${@}"; }
+gh () { git checkout "${@}"; }
+gl () { git pull "${@}"; }
+gm () { git commit -m "${@}"; }
+gma () { git commit --amend "${@}"; }
+gp () { git push "${@}"; }
+gpl () { git unpushed "${@}"; }
+gr () { git root "${@}"; }
+gs () { git status -s -uall "${@}"; }
+gsd () { git stash drop "${@}"; }
+gsp () { git stash pop "${@}"; }
+gst () { git stash push "${@}"; }
+gu () { git uncommit "${@}"; }
 
-function gamp () {
-  git add -A && git commit -m "$@" && git pull && git push
-}
+ti () { tig "${@}"; }
+tb () { tig blame "${@}"; }
+tg () { tig grep "${@}"; }
 
-alias ti='tig'
-alias tb='tig blame'
-alias tg='tig grep'
+tx () { direnv exec / tmux "${@}"; }
+ta () { tmux attach "${@}"; }
+tl () { tmux list-sessions "${@}"; }
+tk () { tmux kill-server "${@}"; }
 
-alias tx='direnv exec / tmux'
-alias ta='tmux attach'
-alias tl='tmux list-sessions'
-alias tk='tmux kill-server'
-
-alias du='docker compose up -d'
-alias dub='docker compose up -d --build'
-alias dd='docker compose down'
-alias dls='docker ps -a'
-alias dlsi='docker image ls'
-alias drm='docker rm -f $(docker ps -a -q)'
-alias drmi='docker rmi -f $(docker images -a -q)'
-alias dt='docker exec -it'
+du () { docker compose up -d "${@}"; }
+dub () { docker compose up -d --build "${@}"; }
+dd () { docker compose down "${@}"; }
+dls () { docker ps -a "${@}"; }
+dlsi () { docker image ls "${@}"; }
+drm () { docker rm -f "$(docker ps -a -q)" "${@}"; }
+drmi () { docker rmi -f "$(docker images -a -q)" "${@}"; }
+dt () { if [[ ${dt_USER} ]]; then docker exec -it --user "${dt_USER}" "${@}"; else docker exec -it "${@}"; fi; }
