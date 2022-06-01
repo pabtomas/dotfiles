@@ -41,7 +41,7 @@ diff () { command diff -u --color "${@}"; }
 ag () { command ag -t --hidden --color --multiline --numbers --pager "less -R" "${@}"; }
 agi () { command ag --hidden --color --multiline --numbers --pager "less -R" --ignore "${@}"; }
 tree () { command tree -C "${@}"; }
-watch () { printf '\033[s\033[?1049h\033[?7l\033[?25l\033[H'; stty -echo; while :; do printf '\033[2J\033[H'; eval "${@}"; unset IN; read -r -n 1 -t 1 IN; [[ ${IN} == q ]] && break; done; pr    intf '\033[?7h\033[?25h\033[2J\033[?1049l\033[u'; stty echo; }
+watch () { printf '\033[s\033[?1049h\033[?7l\033[?25l\033[H'; stty -echo; while :; do printf '\033[2J\033[H'; eval "${@}"; unset IN; read -r -n 1 -t 1 IN; [[ ${IN} == q ]] && break; done; printf '\033[?7h\033[?25h\033[2J\033[?1049l\033[u'; stty echo; }
 ps () { command ps -a -x "${@}"; }
 rm () { command rm -i -r -v "${@}"; }
 cp () { command cp -i -r -v "${@}"; }
