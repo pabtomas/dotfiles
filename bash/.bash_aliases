@@ -188,4 +188,6 @@ dlsv () { command docker volume ls "${@}"; }
 drm () { command docker rm -f $(command docker ps -a -q); }
 drmi () { command docker rmi -f $(command docker images -a -q); }
 drmv () { command docker volume rm -f $(command docker volume ls -f dangling=true -q); }
+ds () { command docker compose start; }
 dt () { if [[ ${dt_USER} ]]; then command docker exec -it --user "${dt_USER}" "${@}"; else command docker exec -it "${@}"; fi; }
+dy () { command docker system prune -a -f; }
