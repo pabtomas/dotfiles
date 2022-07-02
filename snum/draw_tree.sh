@@ -24,8 +24,9 @@ o () {
 
 # Sort snapshots chronologically and get older snapshot as arg 1
 
+cd "$(mktemp -d)"
+
 {
-  cd "$(mktemp -d)"
   git init
   : > "${1}"
   git add -A
