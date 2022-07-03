@@ -52,6 +52,10 @@ cd "$(mktemp -d)"
   git checkout "$(cat "/home/user/Workspace/Perso/test/tree/current")"
 } > /dev/null 2>&1
 
+set -- "${PWD}"
+cd - > /dev/null
+rm -rf "${1}"
+
 IFS='
 '
 
