@@ -1254,25 +1254,6 @@ main () {
         $(git rev-list --tags --max-count=1)) &> /dev/null \
           && pushd ${SOURCES}/vim/src &> /dev/null
 
-      DASHED=$(dashed "Configuring VIM")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      ${SOURCES}/vim/src/configure &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
       DASHED=$(dashed "Compiling VIM")
       [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
         && sudo printf "" && SUDO_START=$(date +%s)
@@ -1288,6 +1269,7 @@ main () {
       if [[ ${STATUS} -eq 0 ]]; then
         echo -e ${DASHED} ${GREEN}"OK"${RESET}
       else
+        echo "$PWD"
         echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
           && dirs -c && return 1
       fi
