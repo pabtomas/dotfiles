@@ -1500,7 +1500,7 @@ main () {
         && sudo printf "" && SUDO_START=$(date +%s)
       dots "${DASHED}" &
       DOTS_PID=$!
-      make prefix=${LOCAL} &> /dev/null
+      make clean all prefix=${LOCAL} &> /dev/null
       STATUS=$?
 
       kill ${DOTS_PID} &> /dev/null
