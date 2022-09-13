@@ -4,13 +4,50 @@ ipsec ()
 {
   [ ${#} -ne 1 ] && printf "ipsec needs 1 parameter\n" && exit 1
   case "${1}" in
-    'up') sudo systemctl restart strongswan
-          sudo swanctl --load-creds
-          sudo swanctl --initiate --child safita_ipsec_child
+    'up') printf 'Connect through IPSEC\n'
+          sudo systemctl restart strongswan
+          printf '\n'
+          sudo iptables -L -n | grep -E '172.22.178.56'
+          if [ ${?} != 0 ]
+          then
+            echo 'Ouverture IPTABLES'
+            sudo iptables -A OUTPUT -d 172.22.178.56 -p tcp -m tcp --dport 8380 -m state --state NEW -j ACCEPT
+            sudo iptables -A OUTPUT -d 10.167.161.27 -p tcp -m tcp --dport 22 -m state --state NEW -j ACCEPT
+            printf '\n'
+          fi
+          printf 'Entrez votre code PIN de carte agent aux 2 demandes de mot de passe qui vont suivre\n\nDéblocage de la carte agent pour le tunnel\n'
+          sudo swanctl --load-creds 1> /dev/null
+          sudo swanctl --initiate --child safita_ipsec_child 1> /dev/null
+          if [ ${?} != 0 ]
+          then
+            printf 'Problème lors de l'"'"'établissement du tunnel - ABANDON\n'
+            sudo systemctl stop strongswan
+            printf '\n'
+            exit 1
+          fi
+
+          printf '\nAjout des clés de la carte dans l'"'"'agent SSH\n'
           ssh-add -e /usr/lib/in_p11/libidop11.so
-          ssh-add -s /usr/lib/in_p11/libidop11.so ;;
-    'down') sudo swanctl -t --ike safita_ipsec ;;
-    *) ssh bastion"${1}".edcs.fr ;;
+          ssh-add -s /usr/lib/in_p11/libidop11.so
+          printf '\nPassage du MTU a 1400\n'
+          sudo ifconfig wlo1 mtu 1400 up ;;
+    'down') printf 'Disconnect through IPSEC\n'
+            sudo swanctl -t --ike safita_ipsec 1>/dev/null
+
+            pkill -f proxycs
+            printf '\nRetrait des proxies Parisiens - A modifier si besoin\n'
+            sudo tee /etc/apt/apt.conf.d/99proxy <<EOT
+#Acquire::http::Proxy "http://127.0.0.1:3128";
+#Acquire::https::Proxy "http://127.0.0.1:3128";
+EOT
+
+            printf '\nRetrait des clés chargées dans l'"'"'agent SSH\n'
+            ssh-add -e /usr/lib/in_p11/libidop11.so
+            printf '\nArret du service Strongswan\n'
+            sudo systemctl stop strongswan
+            printf '\nPassage du MTU a 1500\n'
+            sudo ifconfig wlo1 mtu 1500 up ;;
+    *) ssh bdx.bastion"${1}".edcs.fr ;;
   esac
 }
 
