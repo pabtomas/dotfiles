@@ -1,14 +1,17 @@
 unalias -a
 
-ipsec () {
-  [ ${#} -ne 1 ] && printf "${0} needs 1 parameter\n" && exit 1
-  sudo systemctl restart strongswan
-  sudo swanctl --load-creds
-  sudo swanctl --initiate --child safita_ipsec_child
-  ssh-add -e /usr/lib/in_p11/libidop11.so
-  ssh-add -s /usr/lib/in_p11/libidop11.so
-  ssh bastion"${1}".edcs.fr
-  sudo swanctl -t --ike safita_ipsec
+ipsec ()
+{
+  [ ${#} -ne 1 ] && printf "ipsec needs 1 parameter\n" && exit 1
+  case "${1}" in
+    'up') sudo systemctl restart strongswan
+          sudo swanctl --load-creds
+          sudo swanctl --initiate --child safita_ipsec_child
+          ssh-add -e /usr/lib/in_p11/libidop11.so
+          ssh-add -s /usr/lib/in_p11/libidop11.so ;;
+    'down') sudo swanctl -t --ike safita_ipsec ;;
+    *) ssh bastion"${1}".edcs.fr ;;
+  esac
 }
 
 mario () {
