@@ -38,6 +38,7 @@ INSTALL="${PM} install -y"
 UPDATE="${PM} update -y"
 UPGRADE="${PM} upgrade -y"
 AUTOREMOVE="${PM} autoremove -y"
+SEP='@'
 readonly NANOS \
          DEFAULT_SPEED \
          SUDO_LIFETIME \
@@ -45,7 +46,8 @@ readonly NANOS \
          CLEAR ERASE_UNTIL_END \
          GREEN YELLOW RED RESET \
          SAVE_CURSOR RESTORE_CURSOR MOVE_START_LINE \
-         PM ADD_REPO POLICY UPDATE UPGRADE AUTOREMOVE
+         PM ADD_REPO POLICY UPDATE UPGRADE AUTOREMOVE \
+         SEP
 
 dashed ()
 {
@@ -130,8 +132,8 @@ run ()
 
 install ()
 {
-  dots "$(dashed "Checking ${1} installation")" "${DEFAULT_SPEED}" &
-  if command -v "${1}" > /dev/null 2>&1
+  dots "$(dashed "Checking ${1} package installation")" "${DEFAULT_SPEED}" &
+  if dpkg -l "${1}" > /dev/null 2>&1
   then
     stop_dots
     success 'OK'
@@ -143,18 +145,109 @@ install ()
   return 0
 }
 
+install_docker ()
+{
+  if ! command -v docker > /dev/null
+  then
+    curl -f -s -S -L https://download.docker.com/linux/ubuntu/gpg \
+      | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    printf "deb [arch=$(dpkg --print-architecture) \
+      signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\n" \
+      | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    install docker-ce
+    install docker-ce-cli
+    install containerd.io
+    install docker-compose-plugin
+  fi
+  return 0
+}
+
+install_direnv ()
+{
+  if ! command -v direnv > /dev/null || [ ! -d "${SOURCES}/direnv" ]
+  then
+    run 'Cloning direnv repository' \
+      "git clone https://github.com/direnv/direnv.git ${SOURCES}/direnv"
+    run 'Adding direnv repository as a GIT safe repository' \
+      "git config --global --add safe.directory ${SOURCES}/direnv"
+  else
+    run 'Adding direnv repository as a GIT safe repository' \
+      "git config --global --add safe.directory ${SOURCES}/direnv"
+    run 'Pulling direnv repository' \
+      "cd ${SOURCES}/direnv && git checkout master > /dev/null 2>&1 && git pull > /dev/null 2>&1"
+    set -- "$(git rev-list --tags --max-count=1)"
+    set -- "$(git describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    cd - > /dev/null
+  fi
+
+  set -- "${1}" "$(version_direnv)"
+
+  if ! command -v direnv > /dev/null || \
+    [ "${2%[[:space:]]"${1}"}" != 'direnv' ]
+  then
+    run 'Installing direnv' \
+      'curl -s -f -L https://direnv.net/install.sh | bash > /dev/null 2>&1'
+  fi
+  return 0
+}
+
+version_docker ()
+{
+  if command -v docker > /dev/null
+  then
+    set -- "$(docker --version)"
+    set -- "${1#Docker version }"
+    set -- "${1%,*}"
+    printf 'docker %s' "${1}"
+  else
+    printf 'docker unavailable'
+  fi
+  return 0
+}
+
+version_direnv ()
+{
+  if command -v direnv > /dev/null
+  then
+    printf 'direnv %s' "$(direnv --version)"
+  else
+    printf 'direnv unavailable'
+  fi
+  return 0
+}
+
+sumup ()
+{
+  printf '\n'
+  while [ -n "${1}" ]
+  do
+    if [ "${1%%"${SEP}"*}" != "$(eval "version_${1%%[[:space:]]*}")" ]
+    then
+      printf '%b' "${GREEN}"
+    fi
+    printf '%s -> ' "${1%%"${SEP}"*}"
+    eval "version_${1%%[[:space:]]*}"
+    set -- "${1#*"${SEP}"}"
+    printf '%b\n' "${RESET}"
+  done
+  printf '\n'
+  return 0
+}
+
 main ()
 {
   set -eu
 
   prompt_sudo
-  set -- "$(date '+%s')" '1'
 
-  local DOTS_PID=0
-  local STATUS=0
-  local VERSION=''
-  local TAG=''
-  local REBOOT=0
+  # -- ARGS --
+  # 1) last sudo prompt
+  # 2) is GNOME installed ?
+  # 3) old versions
+  set -- "$(date '+%s')" '1' ''
 
   mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${SOURCES}"
   sudo mkdir -p "${SCRIPTS_DEST}"
@@ -166,7 +259,7 @@ main ()
     success ' OK'
   else
     error ' KO'
-    set -- "${1}" '0'
+    set -- "${1}" '0' "${3}"
   fi
 
   if [ ${2} -eq 1 ]
@@ -181,7 +274,7 @@ main ()
     else
       error ' KO'
       gnome-shell --version
-      set -- "${3}" '0'
+      set -- "${3}" '0' "${5}"
     fi
   fi
 
@@ -211,6 +304,8 @@ main ()
     sudo ${ADD_REPO} ppa:kisak/kisak-mesa > /dev/null
   fi
 
+  set -- "${1}" "${2}" "${3}$(version_docker)${SEP}$(version_direnv)${SEP}"
+
   prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
   run 'Updating system' "sudo ${UPDATE} > /dev/null 2>&1"
 
@@ -220,376 +315,54 @@ main ()
   prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
   run 'Removing unused packages' "sudo ${AUTOREMOVE} > /dev/null 2>&1"
 
-  install git
-
-  return
-
-  # ???
-  echo -n -e $(dashed "Checking ca-certificates installation")$' '
-  if [[ $(dpkg -l | grep -E "ca-certificates" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing ca-certificates package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y ca-certificates | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
   # for CLI
-  echo -n -e $(dashed "Checking curl installation")$' '
-  if [[ $(which curl | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing curl package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y curl | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
+  install git
+  install curl
+  install jq
+  install silversearcher-ag
+  install build-essential
+  install make
+  install autoconf
+  install automake
+  install pkg-config
 
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for password-store
-  echo -n -e $(dashed "Checking gnupg installation")$' '
-  if [[ $(which gpg | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing gnupg package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y gnupg | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
+  # for password-store and docker
+  install gnupg
 
   # for shellcheck
-  echo -n -e $(dashed "Checking cabal installation")$' '
-  if [[ $(which cabal | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing cabal package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y cabal-install \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  install cabal-install
+  run 'Updating cabal' "cabal update > /dev/null 2>&1"
 
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
+  # for docker
+  install ca-certificates
+  install lsb-release
 
-  DASHED=$(dashed "Updating cabal")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  cabal update &> /dev/null
-  STATUS=$?
+  # for VIM, TMUX, tig, kakoune
+  install libncurses-dev
 
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
+  # for VIM, TMUX, tig
+  install gcc-10
+  install gcc-10-base
+  install gcc-10-doc
+  install g++-10
+  install libstdc++-10-dev
+  install libstdc++-10-doc
 
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
+  dashed 'Resetting GIT safe repositories' 
+  git config --global --unset-all safe.directory \
+    && success ' OK' || success ' OK'
 
-  # ???
-  echo -n -e $(dashed "Checking lsb-release installation")$' '
-  if [[ $(dpkg -l | grep -E "lsb-release" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing lsb-release package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y lsb-release \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
+  run 'Adding symbolic link to gcc 10' \
+    "sudo ln -f -s $(command -v gcc-10) $(command -v gcc)"
+  run 'Adding symbolic link to g++ 10' \
+    "sudo ln -f -s $(command -v g++-10) $(command -v g++)"
 
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
+  install_docker
+  install_direnv
 
-  echo -n -e $(dashed "Checking docker version")$' '
-  if [[ $(which docker | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(docker --version | tr -d 'Docker version ' \
-      | grep -E -o "^.*," | tr -d ',')"
-    echo -e "\n    docker ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
+  sumup "${3}"
 
-  if [[ "${VERSION}" == "0" ]]; then
-    DASHED=${CLEAR}$(dashed "Installing docker packages")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-      | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) \
-      signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
-      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-      | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo unbuffer apt install -y docker-ce docker-ce-cli containerd.io \
-      docker-compose-plugin | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-
-    VERSION="$(docker --version | tr -d 'Docker version ' \
-      | grep -E -o "^.*," | tr -d ',')"
-    echo -e "\n    docker ${VERSION}\n"
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking jq installation")$' '
-  if [[ $(which jq | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing jq package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y jq | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  echo -n -e $(dashed "Checking direnv version")$' '
-  if [[ $(which direnv | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(direnv --version | tr -d '\n')"
-    echo -e "\n    direnv ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/direnv" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning direnv repository")
-    unbuffer git clone https://github.com/direnv/direnv.git ${SOURCES}/direnv \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-
-    pushd ${SOURCES}/direnv &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding direnv repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding direnv repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling direnv repository")
-    pushd ${SOURCES}/direnv &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o '[0-9.]+')
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      DASHED=${CLEAR}$(dashed "Installing direnv")
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      curl -s -f -L https://direnv.net/install.sh | bash &> /dev/null \
-        && chmod +x $(which direnv)
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(direnv --version | tr -d '\n')"
-      echo -e "\n    direnv ${VERSION}\n"
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking Silver Searcher installation")$' '
-  if [[ $(which ag | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing silversearcher-ag package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y silversearcher-ag \
-      | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  echo -n -e $(dashed "Checking KVM installation")$' '
-  if [[ $(which kvm | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    echo -n -e $(dashed "Checking virtualization support")$' '
-    if [[ $(grep -E -c '(vmx|svm)' /proc/cpuinfo) -eq 0 ]]; then
-      echo -e ${RED}"Not OK"${RESET}
-    else
-      echo -e ${GREEN}"OK"${RESET}
-      echo -n -e $(dashed "")$' '
-      DASHED=${CLEAR}$(dashed "Installing KVM packages")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      sudo unbuffer apt install -y cpu-checker qemu-kvm \
-        libvirt-daemon-system libvirt-clients bridge-utils \
-        | unbuffer -p grep -E -o "[0-9]+%" \
-        | xargs -I {} echo -n -e ${DASHED} {}
-
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-        DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to libvirt group")
-        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-          && sudo printf "" && SUDO_START=$(date +%s)
-        [[ $(groups | tr ' ' '\n' | grep -E "libvirt" | wc -l) -eq 0 ]] \
-          && sudo adduser ${SUDO_USER:-${USER}} libvirt &> /dev/null
-
-        if [[ $? -eq 0 ]]; then
-          echo -e ${DASHED} ${GREEN}"OK"${RESET}
-        else
-          echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-            && dirs -c && return 1
-        fi
-
-        DASHED=${CLEAR}$(dashed "Adding ${SUDO_USER:-${USER}} to kvm group")
-        [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-          && sudo printf "" && SUDO_START=$(date +%s)
-        [[ $(groups | tr ' ' '\n' | grep -E "kvm" | wc -l) -eq 0 ]] \
-          && sudo adduser ${SUDO_USER:-${USER}} kvm &> /dev/null
-
-        if [[ $? -eq 0 ]]; then
-          echo -e ${DASHED} ${GREEN}"OK"${RESET}
-        else
-          echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-            && dirs -c && return 1
-        fi
-
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  echo -n -e $(dashed "Checking Virtual Manager installation")$' '
-  if [[ $(which virt-manager | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing Virtual Manager package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y virt-manager \
-      | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for VIM, kakoune, TMUX, tig
-  echo -n -e $(dashed "Checking libncurses-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libncurses-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libncurses-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libncurses-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
+  return
 
   # ???
   echo -n -e $(dashed "Checking libevent-dev installation")$' '
@@ -611,108 +384,6 @@ main ()
     echo -e ${GREEN}"OK"${RESET}
   fi
 
-  # for VIM, TMUX, Tig
-  echo -n -e $(dashed "Checking gcc installation")$' '
-  if [[ $(which gcc | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing build-essential package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y build-essential \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  echo -e "\n    $(gcc --version | head -n 1)"
-  echo -e "    $(g++ --version | head -n 1)\n"
-
-  echo -n -e $(dashed "Checking if gcc and g++ version are >= 10")$' '
-  if [[ $(gcc --version | head -n 1 | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' \
-    | grep -E -o "[0-9]+$") -lt 10 || $(g++ --version | head -n 1 \
-    | sed -e 's/\(\.[0-9]\+\)\{2\}$//g' \
-    | grep -E -o "[0-9]+$") -lt 10 ]]; then
-      echo -e ${RED}"Not OK"${RESET}
-
-      DASHED=${CLEAR}$(dashed "Installing gcc 10 packages")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      sudo unbuffer apt install -y gcc-10 gcc-10-base gcc-10-doc \
-        | unbuffer -p grep -E -o "[0-9]+%" \
-        | xargs -I {} echo -n -e ${DASHED} {}
-
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=${CLEAR}$(dashed "Installing g++ 10 package")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      sudo unbuffer apt install -y g++-10 \
-        | unbuffer -p grep -E -o "[0-9]+%" \
-        | xargs -I {} echo -n -e ${DASHED} {}
-
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=${CLEAR}$(dashed "Installing libc++ packages")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      sudo unbuffer apt install -y libstdc++-10-dev libstdc++-10-doc \
-        | unbuffer -p grep -E -o "[0-9]+%" \
-        | xargs -I {} echo -n -e ${DASHED} {}
-
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=${CLEAR}$(dashed "Adding symbolic link to gcc 10")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      sudo ln -fs $(which gcc-10) $(which gcc)
-
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=${CLEAR}$(dashed "Adding symbolic link to g++ 10")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      sudo ln -fs $(which g++-10) $(which g++)
-
-      if [[ $? -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  echo -e "\n    $(gcc --version | head -n 1)"
-  echo -e "    $(g++ --version | head -n 1)\n"
-
   # ???
   echo -n -e $(dashed "Checking yacc installation")$' '
   if [[ $(which yacc | wc -l) -eq 0 ]]; then
@@ -721,66 +392,6 @@ main ()
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
       && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y bison | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking make installation")$' '
-  if [[ $(which make | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing make package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y make | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking autoconf installation")$' '
-  if [[ $(which "autoconf" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing autoconf package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y autoconf | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking automake installation")$' '
-  if [[ $(which "automake" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing automake package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y automake | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
 
     if [[ $? -eq 0 ]]; then
@@ -802,26 +413,6 @@ main ()
       && sudo printf "" && SUDO_START=$(date +%s)
     sudo unbuffer apt install -y asciidoc | unbuffer -p grep -E -o "[0-9]+%" \
       | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking pkg-config installation")$' '
-  if [[ $(dpkg -l | grep -E "pkg-config" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing pkg-config package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y pkg-config \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
 
     if [[ $? -eq 0 ]]; then
       echo -e ${DASHED} ${GREEN}"OK"${RESET}

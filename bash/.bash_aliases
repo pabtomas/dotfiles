@@ -45,7 +45,8 @@ ipsec ()
           fi
           sudo bash -c "printf '[Service]\nEnvironment=\"HTTP_PROXY=http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\nEnvironment=\"HTTPS_PROXY=http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\n' > /etc/systemd/system/docker.service.d/service-env.conf"
           sudo bash -c "printf 'export http_proxy=\"http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\nexport https_proxy=\"http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\n' > /etc/default/docker"
-          git config --global https.proxy http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380
+          git config --global https.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
+          git config --global http.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
           ;;
     'down') if ! command ip route show dev eno1 | grep -E '172.22.68.' > /dev/null
             then
