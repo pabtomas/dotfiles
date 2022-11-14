@@ -1,197 +1,228 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-dashed () {
-  echo -e "$1 $(printf "%$(( 68 - ${#1} ))s" | tr ' ' '-' )"
+LOCAL="${HOME}/.local"
+SOURCES="${LOCAL}/sources"
+MANAGER_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+VIMRC="${MANAGER_DIR}/vim/.vimrc"
+TMUXCONF="${MANAGER_DIR}/tmux/.tmux.conf"
+TIGRC="${MANAGER_DIR}/tig/.tigrc"
+BASHRC="${MANAGER_DIR}/bash/.bashrc"
+PROFILE="${MANAGER_DIR}/bash/.bash_profile"
+ALIASES="${MANAGER_DIR}/bash/.bash_aliases"
+GITIGNORE="${MANAGER_DIR}/git/.gitignore"
+HOOKS="${MANAGER_DIR}/git/.hooks"
+SCRIPTS="${MANAGER_DIR}/scripts"
+TPM_DEST="${HOME}/.tmux/plugins/tpm"
+GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
+SCRIPTS_DEST="/opt/scripts"
+POLYGLOT_DEST="${HOME}/.vim/pack/plugins/start/vim-polyglot"
+
+CLEAR='\033[2K'
+ERASE_UNTIL_END='\033[K'
+GREEN='\033[38;5;2m'
+YELLOW='\033[38;5;11m'
+RED='\033[38;5;9m'
+RESET='\033[m'
+SAVE_CURSOR='\033[s'
+RESTORE_CURSOR='\033[u'
+MOVE_START_LINE='\033[G'
+NANOS='1000000000'
+DEFAULT_SPEED='2'
+TMP="$(mktemp -d)"
+SUDO_LIFETIME='290'
+DOTS_FLAG='dots_flag'
+PM='apt'
+ADD_REPO='add-apt-repository'
+POLICY="${PM} policy"
+INSTALL="${PM} install -y"
+UPDATE="${PM} update -y"
+UPGRADE="${PM} upgrade -y"
+AUTOREMOVE="${PM} autoremove -y"
+readonly NANOS \
+         DEFAULT_SPEED \
+         SUDO_LIFETIME \
+         TMP DOTS_FLAG \
+         CLEAR ERASE_UNTIL_END \
+         GREEN YELLOW RED RESET \
+         SAVE_CURSOR RESTORE_CURSOR MOVE_START_LINE \
+         PM ADD_REPO POLICY UPDATE UPGRADE AUTOREMOVE
+
+dashed ()
+{
+  set -- "${1}" "$(printf '%*s' "$(( 68 - ${#1} ))" | tr ' ' '-')"
+  printf '%s %s' "${1}" "${2}"
+  return 0
 }
 
-dots () {
-  local -r CLEAR="$(tput ed)"
-  local START=$(($(date +%s) + 1))
-  while true; do
-    printf %$(( (($(date +%s) - ${START}) % 3) + 1 ))s | tr ' ' '.' \
-      | xargs -I {} echo -n -e ${CLEAR}"$1 "{}$'\r' && sleep 0.2
+# -- INPUT --
+# 1) message
+# 2) speed
+dots ()
+{
+  printf '%s ' "${1}"
+  set -- "$(( $(date '+%s%N') * ${2} / NANOS ))" "${2}"
+  set -- "${1}" "${@}"
+  printf '%b' "${SAVE_CURSOR}"
+  while :
+  do
+    set -- "${1}" "${2}" "${3}" "$(( $(date '+%s%N') * ${3} / NANOS ))"
+    if [ $(( ${4} - ${1} )) -gt 0 ]
+    then
+      printf '.'
+      set -- "$(( $(date '+%s%N') * ${3} / NANOS ))" "${2}" "${3}" "${4}"
+    fi
+    if [ $(( ${4} - ${2} )) -gt 3 ]
+    then
+      printf '%b%b' "${RESTORE_CURSOR}" "${ERASE_UNTIL_END}"
+      set -- "${1}" "$(( $(date '+%s%N') * ${3} / NANOS ))" "${3}" "${4}"
+    fi
+    [ -e "${TMP}/${DOTS_FLAG}" ] && rm -rf "${TMP}/${DOTS_FLAG}" && break
   done
+  return 0
 }
 
-main () {
-  sudo -k && sudo printf "" && local SUDO_START=$(date +%s)
+stop_dots ()
+{
+  : > "${TMP}/${DOTS_FLAG}"
+  while [ -e "${TMP}/${DOTS_FLAG}" ]; do :; done
+  printf '%b%b' "${RESTORE_CURSOR}" "${ERASE_UNTIL_END}"
+  return 0
+}
 
-  local -r CLEAR="$(tput ed)"
-  local -r GREEN=$(tput setaf 2)
-  local -r YELLOW=$(tput setaf 11)
-  local -r RED=$(tput setaf 9)
-  local -r RESET=$(tput sgr0)
-  local -r LOCAL="${HOME}/.local"
-  local -r SOURCES="${LOCAL}/sources"
-  local -r MANAGER_DIR="$(command cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-  local -r VIMRC="${MANAGER_DIR}/vim/.vimrc"
-  local -r TMUXCONF="${MANAGER_DIR}/tmux/.tmux.conf"
-  local -r TIGRC="${MANAGER_DIR}/tig/.tigrc"
-  local -r BASHRC="${MANAGER_DIR}/bash/.bashrc"
-  local -r PROFILE="${MANAGER_DIR}/bash/.bash_profile"
-  local -r ALIASES="${MANAGER_DIR}/bash/.bash_aliases"
-  local -r GITIGNORE="${MANAGER_DIR}/git/.gitignore"
-  local -r HOOKS="${MANAGER_DIR}/git/.hooks"
-  local -r SCRIPTS="${MANAGER_DIR}/scripts"
-  local -r TPM_DEST="${HOME}/.tmux/plugins/tpm"
-  local -r GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
-  local -r SCRIPTS_DEST="/opt/scripts"
-  local -r POLYGLOT_DEST="${HOME}/.vim/pack/plugins/start/vim-polyglot"
-  local GNOME=1
-  local DASHED=""
+prompt_sudo ()
+{
+  if [ ${#} -eq 0 ] || \
+    { [ ${#} -eq 1 ] && [ $(( $(date '+%s') - ${1} )) -gt ${SUDO_LIFETIME} ]; }
+  then
+    sudo -k
+    sudo sh -c ':' || exit 1
+  fi
+  return 0
+}
+
+success ()
+{
+  printf '%b%s%b\n' "${GREEN}" "${@}" "${RESET}"
+  return 0
+}
+
+error ()
+{
+  printf '%b%s%b\n' "${RED}" "${@}" "${RESET}"
+  return 0
+}
+
+run ()
+{
+  dots "$(dashed "${1}")" "${DEFAULT_SPEED}" &
+  shift
+  if eval "${@}"
+  then
+    stop_dots
+    success 'OK'
+  else
+    stop_dots
+    error 'KO'
+    exit 1
+  fi
+  return 0
+}
+
+install ()
+{
+  dots "$(dashed "Checking ${1} installation")" "${DEFAULT_SPEED}" &
+  if command -v "${1}" > /dev/null 2>&1
+  then
+    stop_dots
+    success 'OK'
+  else
+    stop_dots
+    error 'KO'
+    run "Installing ${1} package" "sudo ${INSTALL} ${1} > /dev/null 2>&1"
+  fi
+  return 0
+}
+
+main ()
+{
+  set -eu
+
+  prompt_sudo
+  set -- "$(date '+%s')" '1'
+
   local DOTS_PID=0
   local STATUS=0
-  local VERSION=""
-  local TAG=""
+  local VERSION=''
+  local TAG=''
   local REBOOT=0
 
-  if [[ $(echo ${PATH} | tr ':' '\n' | grep -E "${LOCAL}/bin" \
-    | wc -l) -eq 0 ]]; then
-      export PATH=${LOCAL}/bin:${PATH}
-  fi
+  mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${SOURCES}"
+  sudo mkdir -p "${SCRIPTS_DEST}"
 
-  command mkdir -p ${LOCAL}/bin ${LOCAL}/share ${LOCAL}/lib ${SOURCES}
-  sudo \mkdir -p ${SCRIPTS_DEST}
-
-  echo -n -e $(dashed "Checking apt installation")$' '
-  if [[ $(which apt | wc -l) -gt 0 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
+  dashed 'Checking GNOME installation'
+  if [ "${XDG_CURRENT_DESKTOP##*:}" = 'GNOME' ] && \
+    command -v gnome-shell > /dev/null
+  then
+    success ' OK'
   else
-    echo -e ${RED}"Not OK"${RESET} && return 1
+    error ' KO'
+    set -- "${1}" '0'
   fi
 
-  echo -n -e $(dashed "Checking GNOME installation")$' '
-  if [[ $(echo "${XDG_CURRENT_DESKTOP}" | grep -E -i "GNOME" | wc -l) -gt 0 \
-    && $(which gnome-shell | wc -l) -gt 0 ]]; then
-      echo -e ${GREEN}"OK"${RESET}
-  else
-    echo -e ${RED}"Not OK"${RESET} && GNOME=0
-  fi
-
-  if [[ ${GNOME} -eq 1 ]]; then
-    echo -n -e $(dashed "Checking GNOME version")$' '
-    if [[ $(echo -e $(gnome-shell --version | sed "s/^[^0-9]\+//")"\n3.30.1" \
-      | sort -V | head -n1) == "3.30.1" ]]; then
-        echo -e ${GREEN}"OK"${RESET}
+  if [ ${2} -eq 1 ]
+  then
+    dashed 'Checking GNOME version'
+    set -- "$(gnome-shell --version)" "${@}"
+    set -- "${1##*[[:space:]]}\n3.30.1\n" "${@}"
+    if [ "$(printf '%b' "${1}" | sort -V | head -n1)" = '3.30.1' ]
+    then
+      success ' OK'
+      shift 2
     else
-      echo -e ${RED}"Not OK"${RESET} \
-        && echo -e "\n$(gnome-shell --version)\n" && GNOME=0
+      error ' KO'
+      gnome-shell --version
+      set -- "${3}" '0'
     fi
   fi
 
-  echo -n -e $(dashed "Checking bluetooth service")$' '
-  if [[ -f /etc/init.d/bluetooth ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    DASHED=$(dashed "Disabling bluetooth")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    sudo systemctl disable bluetooth.service &> /dev/null
-    STATUS=$?
+  dashed 'Checking bluetooth service'
+  if [ -f /etc/init.d/bluetooth ]
+  then
+    success ' OK'
 
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
+    prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
+    run 'Disabling bluetooth service' \
+      'sudo systemctl disable bluetooth.service > /dev/null 2>&1' \
+      '&& /lib/systemd/systemd-sysv-install disable bluetooth'
   else
-    echo -e ${RED}"Not OK"${RESET}
+    error ' KO'
+    return 1
   fi
 
-  # for BASH scripting
-  echo -n -e $(dashed "Checking unbuffer installation")$' '
-  if [[ $(which unbuffer | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=$(dashed "Installing expect-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    sudo apt install -y expect-dev &> /dev/null
-    STATUS=$?
+  printf '%b%b' "${MOVE_START_LINE}" "${SAVE_CURSOR}"
 
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
+  dashed 'Checking kisak-mesa ppa'
+  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
+  if ${POLICY} 2> /dev/null | grep -E 'kisak-mesa' > /dev/null
+  then
+    success ' OK'
   else
-    echo -e ${GREEN}"OK"${RESET}
+    error ' KO'
+    sudo ${ADD_REPO} ppa:kisak/kisak-mesa > /dev/null
   fi
 
-  echo -n -e $(dashed "Checking kisak-mesa ppa")$' '
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  if [[ $(apt policy 2> /dev/null | grep -E "kisak-mesa" \
-    | wc -l) -gt 0 ]]; then
-      echo -e ${GREEN}"OK"${RESET}
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    sudo add-apt-repository ppa:kisak/kisak-mesa
-  fi
+  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
+  run 'Updating system' "sudo ${UPDATE} > /dev/null 2>&1"
 
-  DASHED=${CLEAR}$(dashed "Updating system")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  sudo unbuffer apt update -y | unbuffer -p grep -E -o "[0-9]+%" \
-    | xargs -I {} echo -n -e ${DASHED} {}
+  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
+  run 'Upgrading system' "sudo ${UPGRADE} > /dev/null 2>&1"
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-  fi
+  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
+  run 'Removing unused packages' "sudo ${AUTOREMOVE} > /dev/null 2>&1"
 
-  DASHED=${CLEAR}$(dashed "Upgrading system")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  sudo unbuffer apt upgrade -y | unbuffer -p grep -E -o "[0-9]+%" \
-    | xargs -I {} echo -n -e ${DASHED} {}
+  install git
 
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-  fi
-
-  DASHED=${CLEAR}$(dashed "Removing unused packages")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  sudo unbuffer apt autoremove -y | unbuffer -p grep -E -o "[0-9]+%" \
-    | xargs -I {} echo -n -e ${DASHED} {}
-
-  if [[ $? -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-  fi
-
-  echo -n -e $(dashed "Checking GIT installation")$' '
-  if [[ $(which git | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing GIT package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y git | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
+  return
 
   # ???
   echo -n -e $(dashed "Checking ca-certificates installation")$' '
@@ -2623,7 +2654,4 @@ main () {
   pushd -0 &> /dev/null && dirs -c
 }
 
-(return 0 2> /dev/null)
-[[ $? -ne 0 ]] && echo "This script has to be sourced." && exit 1
 main
-unset -f dots dashed main
