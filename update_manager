@@ -1,58 +1,103 @@
 #!/bin/sh
 
-LOCAL="${HOME}/.local"
-SOURCES="${LOCAL}/sources"
-MANAGER_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-VIMRC="${MANAGER_DIR}/vim/.vimrc"
-TMUXCONF="${MANAGER_DIR}/tmux/.tmux.conf"
-TIGRC="${MANAGER_DIR}/tig/.tigrc"
-BASHRC="${MANAGER_DIR}/bash/.bashrc"
-PROFILE="${MANAGER_DIR}/bash/.bash_profile"
-ALIASES="${MANAGER_DIR}/bash/.bash_aliases"
-GITIGNORE="${MANAGER_DIR}/git/.gitignore"
-HOOKS="${MANAGER_DIR}/git/.hooks"
-SCRIPTS="${MANAGER_DIR}/scripts"
-TPM_DEST="${HOME}/.tmux/plugins/tpm"
-GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
-SCRIPTS_DEST="/opt/scripts"
-POLYGLOT_DEST="${HOME}/.vim/pack/plugins/start/vim-polyglot"
+OUTPUT_LEN='70'
 
-CLEAR='\033[2K'
+SEP='#'
+
 ERASE_UNTIL_END='\033[K'
+
 GREEN='\033[38;5;2m'
-YELLOW='\033[38;5;11m'
+GREEN2='\033[38;5;10m'
+BLUE='\033[38;5;14m'
 RED='\033[38;5;9m'
+WHITE='\033[38;5;15m'
 RESET='\033[m'
-SAVE_CURSOR='\033[s'
-RESTORE_CURSOR='\033[u'
+BOLD='\033[1m'
+RAINBOW="\033[38;5;196m${SEP}\033[38;5;202m${SEP}\033[38;5;208m${SEP}\033[38;5;214m${SEP}\033[38;5;220m${SEP}\033[38;5;226m${SEP}\033[38;5;190m${SEP}\033[38;5;154m${SEP}\033[38;5;118m${SEP}\033[38;5;82m${SEP}\033[38;5;46m${SEP}\033[38;5;47m${SEP}\033[38;5;48m${SEP}\033[38;5;49m${SEP}\033[38;5;50m${SEP}\033[38;5;51m${SEP}\033[38;5;45m${SEP}\033[38;5;39m${SEP}\033[38;5;33m${SEP}\033[38;5;27m${SEP}\033[38;5;21m${SEP}\033[38;5;57m${SEP}\033[38;5;93m${SEP}\033[38;5;129m${SEP}\033[38;5;165m${SEP}\033[38;5;201m${SEP}\033[38;5;200m${SEP}\033[38;5;199m${SEP}\033[38;5;198m${SEP}\033[38;5;197m${SEP}"
+
 MOVE_START_LINE='\033[G'
+MOVE_TO_COLX="${MOVE_START_LINE}\033[${OUTPUT_LEN}C"
+
+NL="$(printf '\nx')"
+NL="${NL%?}"
+
 NANOS='1000000000'
+
 DEFAULT_SPEED='2'
-TMP="$(mktemp -d)"
+
+SUDO='sudo -E'
 SUDO_LIFETIME='290'
-DOTS_FLAG='dots_flag'
+
 PM='apt'
 ADD_REPO='add-apt-repository'
 POLICY="${PM} policy"
-INSTALL="${PM} install -y"
-UPDATE="${PM} update -y"
-UPGRADE="${PM} upgrade -y"
-AUTOREMOVE="${PM} autoremove -y"
-SEP='@'
-readonly NANOS \
+INSTALL="${SUDO} ${PM} install -y"
+UPDATE="${SUDO} ${PM} update -y"
+UPGRADE="${SUDO} ${PM} upgrade -y"
+AUTOREMOVE="${SUDO} ${PM} autoremove -y"
+
+NOVERSION='unavailable'
+
+ARCH="$(dpkg --print-architecture)"
+RELEASE="$(lsb_release -cs)"
+
+LOCAL="${HOME}/.local"
+SOURCES="${LOCAL}/sources"
+_DIR="$(CDPATH= cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)"
+
+VIMRC="${_DIR}/vim/.vimrc"
+POLYGLOT_DEST="${HOME}/.vim/pack/plugins/start/vim-polyglot"
+TMUXCONF="${_DIR}/tmux/.tmux.conf"
+TMUXPLUGINS="${HOME}/.tmux/plugins/tpm"
+TIGRC="${_DIR}/tig/.tigrc"
+BASHRC="${_DIR}/bash/.bashrc"
+PROFILE="${_DIR}/bash/.bash_profile"
+ALIASES="${_DIR}/bash/.bash_aliases"
+GITIGNORE="${_DIR}/git/.gitignore"
+HOOKS="${_DIR}/git/.hooks"
+SCRIPTS="${_DIR}/scripts"
+GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
+SCRIPTS_DEST="/opt/scripts"
+
+readonly OUTPUT_LEN \
+         SEP \
+         ERASE_UNTIL_END \
+         BLUE GREEN GREEN2 RED WHITE RESET BOLD RAINBOW \
+         MOVE_START_LINE MOVE_TO_COLX \
+         NL \
+         NANOS \
          DEFAULT_SPEED \
-         SUDO_LIFETIME \
-         TMP DOTS_FLAG \
-         CLEAR ERASE_UNTIL_END \
-         GREEN YELLOW RED RESET \
-         SAVE_CURSOR RESTORE_CURSOR MOVE_START_LINE \
-         PM ADD_REPO POLICY UPDATE UPGRADE AUTOREMOVE \
-         SEP
+         SUDO SUDO_LIFETIME \
+         PM ADD_REPO POLICY INSTALL UPDATE UPGRADE AUTOREMOVE \
+         NOVERSION \
+         ARCH RELEASE \
+         LOCAL SOURCES _DIR \
+         VIMRC POLYGLOT_DEST TMUXCONF TIGRC
+
+_git ()
+{
+  if git --git-dir "${SOURCES}/${1}/.git" --work-tree "${SOURCES}/"${*}
+  then
+    return 0
+  else
+    return 1
+  fi
+}
 
 dashed ()
 {
-  set -- "${1}" "$(printf '%*s' "$(( 68 - ${#1} ))" | tr ' ' '-')"
-  printf '%s %s' "${1}" "${2}"
+  set -- "${1}" "${OUTPUT_LEN}" "${RAINBOW}" ''
+  while [ ${2} -gt 0 ]
+  do
+    [ -z "${3}" ] && set -- "${1}" "${2}" "${RAINBOW}" "${4}"
+    set -- "${1}" "$(( ${2} - 1 ))" "${3#*"${SEP}"}" "${4}${3%%"${SEP}"*}-"
+  done
+  set -- "${1}" "$(( ${#1} + 1 ))" "${4}"
+  while [ ${2} -gt 0 ]
+  do
+    set -- "${1}" "$(( ${2} - 1 ))" "${3#*-}"
+  done
+  printf '%b%s%b %b%b ' "${WHITE}" "${1}" "${RESET}" "${3%\\*}" "${RESET}"
   return 0
 }
 
@@ -61,87 +106,95 @@ dashed ()
 # 2) speed
 dots ()
 {
-  printf '%s ' "${1}"
+  trap 'DOTS_BREAK=""' USR1
+  dashed "${1}"
   set -- "$(( $(date '+%s%N') * ${2} / NANOS ))" "${2}"
   set -- "${1}" "${@}"
-  printf '%b' "${SAVE_CURSOR}"
-  while :
+  while [ -n "${DOTS_BREAK-x}" ]
   do
     set -- "${1}" "${2}" "${3}" "$(( $(date '+%s%N') * ${3} / NANOS ))"
     if [ $(( ${4} - ${1} )) -gt 0 ]
     then
-      printf '.'
+      printf '%b%b.%b' "${WHITE}" "${BOLD}" "${RESET}"
       set -- "$(( $(date '+%s%N') * ${3} / NANOS ))" "${2}" "${3}" "${4}"
     fi
     if [ $(( ${4} - ${2} )) -gt 3 ]
     then
-      printf '%b%b' "${RESTORE_CURSOR}" "${ERASE_UNTIL_END}"
+      printf '%b%b' "${MOVE_TO_COLX}" "${ERASE_UNTIL_END}"
       set -- "${1}" "$(( $(date '+%s%N') * ${3} / NANOS ))" "${3}" "${4}"
     fi
-    [ -e "${TMP}/${DOTS_FLAG}" ] && rm -rf "${TMP}/${DOTS_FLAG}" && break
   done
+  unset DOTS_BREAK
   return 0
 }
 
 stop_dots ()
 {
-  : > "${TMP}/${DOTS_FLAG}"
-  while [ -e "${TMP}/${DOTS_FLAG}" ]; do :; done
-  printf '%b%b' "${RESTORE_CURSOR}" "${ERASE_UNTIL_END}"
+  kill -USR1 "${1}"
+  wait "${1}" || :
+  printf '%b%b' "${MOVE_TO_COLX}" "${ERASE_UNTIL_END}"
   return 0
 }
 
 prompt_sudo ()
 {
-  if [ ${#} -eq 0 ] || \
-    { [ ${#} -eq 1 ] && [ $(( $(date '+%s') - ${1} )) -gt ${SUDO_LIFETIME} ]; }
+  if [ $(( $(date '+%s') - ${SUDO_LASTPROMPT:-0} )) -gt ${SUDO_LIFETIME} ]
   then
     sudo -k
-    sudo sh -c ':' || exit 1
+    SUDO_LASTPROMPT="$(date '+%s')"
+    ${SUDO} sh -c ':' || exit 1
   fi
   return 0
 }
 
 success ()
 {
-  printf '%b%s%b\n' "${GREEN}" "${@}" "${RESET}"
+  printf '%b%bOK%b\n' "${GREEN}" "${BOLD}" "${RESET}"
   return 0
 }
 
 error ()
 {
-  printf '%b%s%b\n' "${RED}" "${@}" "${RESET}"
+  printf '%b%bKO%b\n' "${RED}" "${BOLD}" "${RESET}"
   return 0
 }
 
 run ()
 {
-  dots "$(dashed "${1}")" "${DEFAULT_SPEED}" &
+  dots "${1}" "${DEFAULT_SPEED}" &
   shift
-  if eval "${@}"
-  then
-    stop_dots
-    success 'OK'
-  else
-    stop_dots
-    error 'KO'
-    exit 1
-  fi
+  while [ ${#} -gt 0 ]
+  do
+    if ! ${1} > /dev/null 2>&1
+    then
+      stop_dots "${!}"
+      error
+      exit 1
+    fi
+    shift
+  done
+  stop_dots "${!}"
+  success
   return 0
 }
 
 install ()
 {
-  dots "$(dashed "Checking ${1} package installation")" "${DEFAULT_SPEED}" &
-  if dpkg -l "${1}" > /dev/null 2>&1
-  then
-    stop_dots
-    success 'OK'
-  else
-    stop_dots
-    error 'KO'
-    run "Installing ${1} package" "sudo ${INSTALL} ${1} > /dev/null 2>&1"
-  fi
+  while [ ${#} -gt 0 ]
+  do
+    dots "Checking ${1} package installation" "${DEFAULT_SPEED}" &
+    if dpkg -l "${1}" > /dev/null 2>&1
+    then
+      stop_dots "${!}"
+      success
+    else
+      stop_dots "${!}"
+      error
+      prompt_sudo
+      run "Installing ${1} package" "${INSTALL} ${1}"
+    fi
+    shift
+  done
   return 0
 }
 
@@ -149,47 +202,52 @@ install_docker ()
 {
   if ! command -v docker > /dev/null
   then
+    prompt_sudo
     curl -f -s -S -L https://download.docker.com/linux/ubuntu/gpg \
-      | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    printf "deb [arch=$(dpkg --print-architecture) \
-      signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
-      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\n" \
-      | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    install docker-ce
-    install docker-ce-cli
-    install containerd.io
-    install docker-compose-plugin
+      | ${SUDO} gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    prompt_sudo
+    ${SUDO} sh -c "printf 'deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu ${RELEASE} stable\n' > /etc/apt/sources.list.d/docker.list"
+    install docker-ce docker-ce-cli containerd.io docker-compose-plugin
   fi
   return 0
 }
 
-install_direnv ()
+git_install ()
 {
-  if ! command -v direnv > /dev/null || [ ! -d "${SOURCES}/direnv" ]
+  if [ ! -d "${SOURCES}/${1}" ]
   then
-    run 'Cloning direnv repository' \
-      "git clone https://github.com/direnv/direnv.git ${SOURCES}/direnv"
-    run 'Adding direnv repository as a GIT safe repository' \
-      "git config --global --add safe.directory ${SOURCES}/direnv"
+    run "Cloning ${1} repository" "git clone ${2} ${SOURCES}/${1}"
+    run "Adding ${1} repository as a GIT safe repository" \
+      "git config --global --add safe.directory ${SOURCES}/${1}"
+    set -- '' '' '' '' "${@}"
   else
-    run 'Adding direnv repository as a GIT safe repository' \
-      "git config --global --add safe.directory ${SOURCES}/direnv"
-    run 'Pulling direnv repository' \
-      "cd ${SOURCES}/direnv && git checkout master > /dev/null 2>&1 && git pull > /dev/null 2>&1"
-    set -- "$(git rev-list --tags --max-count=1)"
-    set -- "$(git describe --tags "${1}")"
-    set -- "${1#"${1%%[[:digit:]]*}"}"
-    set -- "${1%"${1##[[:digit:]]*}"}"
-    cd - > /dev/null
+    run "Adding ${1} repository as a GIT safe repository" \
+      "git config --global --add safe.directory ${SOURCES}/${1}"
+    run "Moving to master branch into ${1} repository" \
+      "_git ${1} checkout master"
+    run "Pulling ${1} repository" "_git ${1} pull"
+    set -- "$(_git ${1} rev-list --tags --max-count=1)" "${@}"
+    set -- "$(_git ${2} describe --tags "${1}")" "${@}"
+    [ -n "${NOTAG:-}" ] && run "Moving to ${1} tag into ${3} repository" \
+      "_git ${3} checkout ${1}"
+    set -- "${1#"${1%%[[:digit:]]*}"}" "${@}"
+    set -- "${1%"${1##[[:digit:]]*}"}" "${@}"
   fi
 
-  set -- "${1}" "$(version_direnv)"
+  set -- "$(eval "version_${5}")" "${@}"
 
-  if ! command -v direnv > /dev/null || \
-    [ "${2%[[:space:]]"${1}"}" != 'direnv' ]
+  if ! command -v "${6}" > /dev/null || [ "${1%[[:space:]]"${2}"}" != "${6}" ]
   then
-    run 'Installing direnv' \
-      'curl -s -f -L https://direnv.net/install.sh | bash > /dev/null 2>&1'
+    shift 7
+    while [ "${#}" -gt 1 ]
+    do
+      case "${2}" in
+        sudo*) prompt_sudo ;;
+        *) ;;
+      esac
+      run "${1}" "${2}"
+      shift 2
+    done
   fi
   return 0
 }
@@ -199,11 +257,11 @@ version_docker ()
   if command -v docker > /dev/null
   then
     set -- "$(docker --version)"
-    set -- "${1#Docker version }"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
     set -- "${1%,*}"
     printf 'docker %s' "${1}"
   else
-    printf 'docker unavailable'
+    printf 'docker %s' "${NOVERSION}"
   fi
   return 0
 }
@@ -214,7 +272,123 @@ version_direnv ()
   then
     printf 'direnv %s' "$(direnv --version)"
   else
-    printf 'direnv unavailable'
+    printf 'direnv %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_vim ()
+{
+  if command -v vim > /dev/null
+  then
+    set -- "${IFS}"
+    IFS="${NL}"
+    set -- "${1}" $(vim --version)
+    IFS="${1}"
+    set -- "${2#"${2%%[[:digit:]]*}"}" "${3#"${3%%[[:digit:]]*}"}"
+    set -- "${1%[[:space:]]\(*\)}" "${2#*-}"
+    printf 'vim %s.0%s' "${1}" "${2}"
+  else
+    printf 'vim %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_tig ()
+{
+  if command -v tig > /dev/null
+  then
+    set -- "${IFS}"
+    IFS="${NL}"
+    set -- "${1}" $(tig --version)
+    IFS="${1}"
+    set -- "${2#"${2%%[[:digit:]]*}"}"
+    printf 'tig %s' "${1}"
+  else
+    printf 'tig %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_shellcheck ()
+{
+  if command -v shellcheck > /dev/null
+  then
+    set -- "${IFS}"
+    IFS="${NL}"
+    set -- "${1}" $(shellcheck --version)
+    IFS="${1}"
+    set -- "${3#"${3%%[[:digit:]]*}"}"
+    printf 'shellcheck %s' "${1}"
+  else
+    printf 'shellcheck %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_fff ()
+{
+  if command -v fff > /dev/null
+  then
+    fff -v | tr -d '\n'
+  else
+    printf 'fff %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_tmux ()
+{
+  if command -v tmux > /dev/null
+  then
+    tmux -V | tr -d '\n'
+  else
+    printf 'tmux %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_pass ()
+{
+  if command -v pass > /dev/null
+  then
+    set -- "${IFS}"
+    IFS="${NL}"
+    set -- "${1}" $(pass version)
+    IFS="${1}"
+    set -- "${5#"${5%%[[:digit:]]*}"}"
+    set -- "${1%"${1##*[[:digit:]]}"}"
+    printf 'pass %s' "${1}"
+  else
+    printf 'pass %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_linguist ()
+{
+  if command -v github-linguist > /dev/null
+  then
+    set -- "$(github-linguist --version)"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    printf 'linguist %s' "${1}"
+  else
+    printf 'linguist %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_polyglot ()
+{
+  if [ -d "${SOURCES}/polyglot" ] && [ -d "${POLYGLOT_DEST}" ]
+  then
+    set -- "$(_git polyglot rev-list --tags --max-count=1)"
+    set -- "$(_git polyglot describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    printf 'polyglot %s' "${1}"
+  else
+    printf 'polyglot %s' "${NOVERSION}"
   fi
   return 0
 }
@@ -224,11 +398,16 @@ sumup ()
   printf '\n'
   while [ -n "${1}" ]
   do
-    if [ "${1%%"${SEP}"*}" != "$(eval "version_${1%%[[:space:]]*}")" ]
-    then
-      printf '%b' "${GREEN}"
-    fi
-    printf '%s -> ' "${1%%"${SEP}"*}"
+    case "${1%%"${SEP}"*}" in
+      *"${NOVERSION}"*) printf '%b' "${BLUE}" ;;
+      *) if [ "${1%%"${SEP}"*}" != "$(eval "version_${1%%[[:space:]]*}")" ]
+         then
+           printf '%b' "${GREEN2}"
+         else
+           printf '%b' "${WHITE}"
+         fi ;;
+    esac
+    printf '%b%s -> ' "${BOLD}" "${1%%"${SEP}"*}"
     eval "version_${1%%[[:space:]]*}"
     set -- "${1#*"${SEP}"}"
     printf '%b\n' "${RESET}"
@@ -244,1710 +423,183 @@ main ()
   prompt_sudo
 
   # -- ARGS --
-  # 1) last sudo prompt
-  # 2) is GNOME installed ?
-  # 3) old versions
-  set -- "$(date '+%s')" '1' ''
+  # 1) is GNOME installed ?
+  # 2) old versions
+  set -- '1' ''
 
   mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${SOURCES}"
-  sudo mkdir -p "${SCRIPTS_DEST}"
+  ${SUDO} mkdir -p "${SCRIPTS_DEST}"
 
   dashed 'Checking GNOME installation'
   if [ "${XDG_CURRENT_DESKTOP##*:}" = 'GNOME' ] && \
     command -v gnome-shell > /dev/null
   then
-    success ' OK'
+    success
   else
-    error ' KO'
-    set -- "${1}" '0' "${3}"
+    error
+    set -- '0' "${2}"
   fi
 
-  if [ ${2} -eq 1 ]
+  if [ ${1} -eq 1 ]
   then
     dashed 'Checking GNOME version'
     set -- "$(gnome-shell --version)" "${@}"
     set -- "${1##*[[:space:]]}\n3.30.1\n" "${@}"
     if [ "$(printf '%b' "${1}" | sort -V | head -n1)" = '3.30.1' ]
     then
-      success ' OK'
+      success
       shift 2
     else
-      error ' KO'
+      error
       gnome-shell --version
-      set -- "${3}" '0' "${5}"
+      set -- '0' "${4}"
     fi
   fi
 
   dashed 'Checking bluetooth service'
   if [ -f /etc/init.d/bluetooth ]
   then
-    success ' OK'
+    success
 
-    prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
-    run 'Disabling bluetooth service' \
-      'sudo systemctl disable bluetooth.service > /dev/null 2>&1' \
-      '&& /lib/systemd/systemd-sysv-install disable bluetooth'
+    prompt_sudo
+    run 'Disabling bluetooth service' "${SUDO} systemctl disable bluetooth.service" \
+      '/lib/systemd/systemd-sysv-install disable bluetooth'
   else
-    error ' KO'
+    error
     return 1
   fi
 
-  printf '%b%b' "${MOVE_START_LINE}" "${SAVE_CURSOR}"
-
   dashed 'Checking kisak-mesa ppa'
-  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
-  if ${POLICY} 2> /dev/null | grep -E 'kisak-mesa' > /dev/null
-  then
-    success ' OK'
-  else
-    error ' KO'
-    sudo ${ADD_REPO} ppa:kisak/kisak-mesa > /dev/null
-  fi
+  prompt_sudo
+  case "$(${POLICY} 2> /dev/null)" in
+    *kisak-mesa*) success ;;
+    *) error
+       ${SUDO} ${ADD_REPO} ppa:kisak/kisak-mesa > /dev/null ;;
+  esac
 
-  set -- "${1}" "${2}" "${3}$(version_docker)${SEP}$(version_direnv)${SEP}"
+  set -- "${1}" "${2}$(version_docker)${SEP}"
+  set -- "${1}" "${2}$(version_direnv)${SEP}"
+  set -- "${1}" "${2}$(version_vim)${SEP}"
+  set -- "${1}" "${2}$(version_tig)${SEP}"
+  set -- "${1}" "${2}$(version_shellcheck)${SEP}"
+  set -- "${1}" "${2}$(version_fff)${SEP}"
+  set -- "${1}" "${2}$(version_tmux)${SEP}"
+  set -- "${1}" "${2}$(version_pass)${SEP}"
+  set -- "${1}" "${2}$(version_linguist)${SEP}"
+  set -- "${1}" "${2}$(version_polyglot)${SEP}"
 
-  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
-  run 'Updating system' "sudo ${UPDATE} > /dev/null 2>&1"
+  prompt_sudo
+  run 'Updating system' "${UPDATE}"
 
-  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
-  run 'Upgrading system' "sudo ${UPGRADE} > /dev/null 2>&1"
+  prompt_sudo
+  run 'Upgrading system' "${UPGRADE}"
 
-  prompt_sudo "${1}" && shift && set -- "$(date '+%s')" "${@}"
-  run 'Removing unused packages' "sudo ${AUTOREMOVE} > /dev/null 2>&1"
+  prompt_sudo
+  run 'Removing unused packages' "${AUTOREMOVE}"
 
   # for CLI
-  install git
-  install curl
-  install jq
-  install silversearcher-ag
-  install build-essential
-  install make
-  install autoconf
-  install automake
-  install pkg-config
+  install git tree curl jq silversearcher-ag build-essential make autoconf \
+    automake cmake redshift kcolorchooser
+
+  # for spaceporn
+  install libpng-dev libsystemd-dev libglew-dev libx11-dev
+
+  # for password-store
+  install xclip
 
   # for password-store and docker
   install gnupg
 
+  # for linguist
+  install ruby-dev libicu-dev zlib1g-dev libcurl4-openssl-dev libssl-dev
+
   # for shellcheck
   install cabal-install
-  run 'Updating cabal' "cabal update > /dev/null 2>&1"
+  run 'Updating cabal' 'cabal update'
 
   # for docker
-  install ca-certificates
-  install lsb-release
+  install ca-certificates lsb-release
 
-  # for VIM, TMUX, tig, kakoune
-  install libncurses-dev
+  # for vim
+  install libtool-bin
 
-  # for VIM, TMUX, tig
-  install gcc-10
-  install gcc-10-base
-  install gcc-10-doc
-  install g++-10
-  install libstdc++-10-dev
-  install libstdc++-10-doc
+  # for vim clipboard feature
+  install libxt-dev
 
-  dashed 'Resetting GIT safe repositories' 
-  git config --global --unset-all safe.directory \
-    && success ' OK' || success ' OK'
+  # for vim GUI server-client feature
+  install libgtk-3-dev
 
-  run 'Adding symbolic link to gcc 10' \
-    "sudo ln -f -s $(command -v gcc-10) $(command -v gcc)"
-  run 'Adding symbolic link to g++ 10' \
-    "sudo ln -f -s $(command -v g++-10) $(command -v g++)"
+  # for tmux
+  install libevent-dev bison
 
-  install_docker
-  install_direnv
+  # for vim, tmux and tig
+  install gcc-10 gcc-10-base gcc-10-doc g++-10 libstdc++-10-dev \
+    libstdc++-10-doc libncurses-dev
 
-  sumup "${3}"
+  # for tmux and tig
+  install pkg-config
 
-  return
-
-  # ???
-  echo -n -e $(dashed "Checking libevent-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libevent-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libevent-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libevent-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking yacc installation")$' '
-  if [[ $(which yacc | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing bison package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y bison | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # To compile man pages
-  echo -n -e $(dashed "Checking asciidoc installation")$' '
-  if [[ $(which asciidoc | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing asciidoc package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y asciidoc | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking python3-docutils installation")$' '
-  if [[ $(dpkg -l | grep -E "python3-docutils" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing python3-docutils package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y python3-docutils \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking libseccomp-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libseccomp-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libseccomp-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libseccomp-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking libjansson-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libjansson-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libjansson-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libjansson-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for ctags
-  echo -n -e $(dashed "Checking libyaml-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libyaml-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libyaml-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libyaml-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for ctags
-  echo -n -e $(dashed "Checking libxml2-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libxml2-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libxml2-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libxml2-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking libxt-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libxt-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libxt-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libxt-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking libgtk-3-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libgtk-3-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libgtk-3-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libgtk-3-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
+  # for tig documentation
+  install asciidoc
 
   # for .tmux.conf
-  echo -n -e $(dashed "Checking xsel installation")$' '
-  if [[ $(which xsel | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing xsel package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y xsel | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking cmake installation")$' '
-  if [[ $(which cmake | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing cmake package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y cmake \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking libicu-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libicu-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libicu-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libicu-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking zlib1g-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "zlib1g-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing zlib1g-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y zlib1g-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking libcurl4-openssl-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libcurl4-openssl-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libcurl4-openssl-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libcurl4-openssl-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # ???
-  echo -n -e $(dashed "Checking libssl-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libssl-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libssl-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libssl-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for linguist
-  echo -n -e $(dashed "Checking ruby-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "ruby-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing ruby-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y ruby-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for spaceporn
-  echo -n -e $(dashed "Checking libpng-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libpng-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libpng-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libpng-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for spaceporn
-  echo -n -e $(dashed "Checking libsystemd-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libsystemd-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libsystemd-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libsystemd-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for spaceporn
-  echo -n -e $(dashed "Checking libglew-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libglew-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libglew-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libglew-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for spaceporn
-  echo -n -e $(dashed "Checking libX11-dev installation")$' '
-  if [[ $(dpkg -l | grep -E "libx11-dev" | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing libX11-dev package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y libx11-dev \
-      | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  # for CLI
-  echo -n -e $(dashed "Checking redshift installation")$' '
-  if [[ $(which redshift | wc -l) -eq 0 ]]; then
-    echo -e ${RED}"Not OK"${RESET}
-    DASHED=${CLEAR}$(dashed "Installing redshift package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    sudo unbuffer apt install -y redshift \
-      | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-  else
-    echo -e ${GREEN}"OK"${RESET}
-  fi
-
-  echo -n -e $(dashed "Checking VIM version")$' '
-  if [[ $(which vim | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(echo $(vim --version | head -n 2 | grep -E -o \
-      ' [0-9]+\.[0-9]+ |[0-9]+$') | tr ' ' '.')"
-    echo -e "\n    vim ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/vim" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning VIM repository")
-    unbuffer git clone https://github.com/vim/vim.git ${SOURCES}/vim \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/vim &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding VIM repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding VIM repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling VIM repository")
-    pushd ${SOURCES}/vim &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o '[0-9.]+')
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      git checkout tags/$(git describe --tags \
-        $(git rev-list --tags --max-count=1)) &> /dev/null \
-          && pushd ${SOURCES}/vim/src &> /dev/null
-
-      DASHED=$(dashed "Compiling VIM")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo "$PWD"
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=$(dashed "Installing VIM")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      sudo make install &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(echo $(vim --version | head -n 2 | grep -E -o \
-        ' [0-9]+\.[0-9]+ |[0-9]+$') | tr ' ' '.')"
-      echo -e "\n    vim ${VERSION}\n"
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking Kakoune version")$' '
-  if [[ $(which kak | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(kak -version | grep -E -o '[0-9.]+')"
-    echo -e "\n    kak ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/kak" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning Kakoune repository")
-    unbuffer git clone https://github.com/mawww/kakoune.git ${SOURCES}/kak \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/kak &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding Kakoune repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding Kakoune repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling Kakoune repository")
-    pushd ${SOURCES}/kak &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o '[0-9.]+')
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      git checkout tags/$(git describe --tags \
-        $(git rev-list --tags --max-count=1)) &> /dev/null \
-          && pushd ${SOURCES}/kak/src &> /dev/null
-
-      DASHED=$(dashed "Compiling Kakoune")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=$(dashed "Installing Kakoune")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      PREFIX=${LOCAL} make install &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(kak -version | grep -E -o '[0-9.]+')"
-      echo -e "\n    kak ${VERSION}\n"
-
-      DASHED=$(dashed "Documenting Kakoune")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make man &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking Tig version")$' '
-  if [[ $(which tig | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(tig --version | head -n 1 | grep -E -o "[0-9.]+")"
-    echo -e "\n    tig ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/tig" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning Tig repository")
-    unbuffer git clone https://github.com/jonas/tig.git ${SOURCES}/tig \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/tig &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding Tig repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding Tig repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling Tig repository")
-    pushd ${SOURCES}/tig &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o '[0-9.]+')
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      git checkout tags/$(git describe --tags \
-        $(git rev-list --tags --max-count=1)) &> /dev/null
-
-      DASHED=$(dashed "Compiling Tig")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make clean all prefix=${LOCAL} &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=$(dashed "Installing tig")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make install prefix=${LOCAL} &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(tig --version | head -n 1 | grep -E -o "[0-9.]+")"
-      echo -e "\n    tig ${VERSION}\n"
-
-      DASHED=$(dashed "Documenting Tig")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      sudo make install-doc-man prefix=/usr &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking shellcheck version")$' '
-  if [[ $(which shellcheck | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(shellcheck -V | grep -oP '(?<=version: )[[:digit:].]+$')"
-    echo -e "\n    shellcheck ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/shellcheck" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning shellcheck repository")
-    unbuffer git clone https://github.com/koalaman/shellcheck ${SOURCES}/shellcheck \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/shellcheck &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding shellcheck repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding shellcheck repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling shellcheck repository")
-    pushd ${SOURCES}/shellcheck &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o '[0-9.]+')
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      git checkout tags/$(git describe --tags \
-        $(git rev-list --tags --max-count=1)) &> /dev/null
-
-      DASHED=$(dashed "Installing shellcheck")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      cabal install &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(${HOME}/.cabal/bin/shellcheck -V | grep -oP '(?<=version: )[[:digit:].]+$')"
-      echo -e "\n    shellcheck ${VERSION}\n"
-
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking Universal Ctags version")$' '
-  if [[ $(which ctags | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-      | grep -E -o "[.0-9]+")"
-    echo -e "\n    ctags ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/ctags" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning Universal Ctags repository")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    unbuffer git clone https://github.com/universal-ctags/ctags.git \
-      ${SOURCES}/ctags | unbuffer -p grep -E -o "[0-9]+%" \
-        | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/ctags &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding Universal Ctags repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Pulling Universal Ctags repository")
-    pushd ${SOURCES}/ctags &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Adding Universal Ctags repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o '[0-9.]+')
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      git checkout tags/$(git describe --tags \
-        $(git rev-list --tags --max-count=1)) &> /dev/null
-
-      DASHED=$(dashed "Configuring Universal Ctags")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      sh ${SOURCES}/ctags/autogen.sh &> /dev/null \
-        && ${SOURCES}/ctags/configure &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=$(dashed "Compiling Universal Ctags")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=$(dashed "Installing Universal Ctags")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      sudo make install &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(ctags --version | grep -m1 -E -o "|\(p[.0-9]+\)" \
-        | grep -E -o "[.0-9]+")"
-      echo -e "\n    ctags ${VERSION}\n"
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking fff version")$' '
-  if [[ $(which fff | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(fff -v | grep -E -o '[0-9.]+')"
-    echo -e "\n    fff ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/fff" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning fff repository")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    unbuffer git clone https://github.com/dylanaraps/fff ${SOURCES}/fff \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/fff &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding fff repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Pulling fff repository")
-    pushd ${SOURCES}/fff &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Adding fff repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o '[0-9.]+')
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      DASHED=$(dashed "Installing fff")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make PREFIX=${LOCAL} install &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(fff -v | grep -E -o '[0-9.]+')"
-      echo -e "\n    fff ${VERSION}\n"
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking TMUX version")$' '
-  if [[ $(which tmux | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(tmux -V | tr -d 'tmux ')"
-    echo -e "\n    tmux ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/tmux" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning TMUX repository")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    unbuffer git clone https://github.com/tmux/tmux.git ${SOURCES}/tmux \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/tmux &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding TMUX repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding TMUX repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling TMUX repository")
-    pushd ${SOURCES}/tmux &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      git checkout tags/$(git describe --tags \
-        $(git rev-list --tags --max-count=1)) &> /dev/null
-
-      DASHED=$(dashed "Configuring TMUX")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      sh ${SOURCES}/tmux/autogen.sh &> /dev/null \
-        && ${SOURCES}/tmux/configure &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=$(dashed "Compiling TMUX")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      make &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      DASHED=$(dashed "Installing TMUX")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      sudo make install &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(tmux -V | tr -d 'tmux ')"
-      echo -e "\n    tmux ${VERSION}\n"
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking password-store version")$' '
-  if [[ $(which pass | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(pass version | grep -E -o 'v[0-9.]*' | tr -d 'v')"
-    echo -e "\n    pass ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ "${VERSION}" == "0" || ! -d "${SOURCES}/pass" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning password-store repository")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    unbuffer git clone https://git.zx2c4.com/password-store ${SOURCES}/pass \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/pass &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding password-store repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding password-store repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling password-store repository")
-    pushd ${SOURCES}/pass &> /dev/null && git checkout master &> /dev/null \
-      && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-
-  if [[ "${VERSION}" == "0" || $(echo "${VERSION}" | grep -E -x "${TAG}" \
-    | wc -l) -eq 0 ]]; then
-      echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-
-      git checkout tags/$(git describe --tags \
-        $(git rev-list --tags --max-count=1)) &> /dev/null
-
-      DASHED=$(dashed "Installing password-store")
-      [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-        && sudo printf "" && SUDO_START=$(date +%s)
-      dots "${DASHED}" &
-      DOTS_PID=$!
-      sudo make install &> /dev/null
-      STATUS=$?
-
-      kill ${DOTS_PID} &> /dev/null
-      wait ${DOTS_PID} &> /dev/null
-      DASHED=${CLEAR}${DASHED}
-
-      if [[ ${STATUS} -eq 0 ]]; then
-        echo -e ${DASHED} ${GREEN}"OK"${RESET}
-      else
-        echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-          && dirs -c && return 1
-      fi
-
-      VERSION="$(pass version | grep -E -o 'v[0-9.]*' | tr -d 'v')"
-      echo -e "\n    pass ${VERSION}\n"
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  echo -n -e $(dashed "Checking linguist GEM package")$' '
-  if [[ $(which github-linguist | wc -l) -eq 1 ]]; then
-    echo -e ${GREEN}"OK"${RESET}
-    VERSION="$(github-linguist --help | head -n 1 | grep -E -o "[0-9.]*")"
-    echo -e "\n    linguist ${VERSION}\n"
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    VERSION="0"
-  fi
-
-  if [[ ! -d "${SOURCES}/linguist" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning linguist repository")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    unbuffer git clone https://github.com/github/linguist ${SOURCES}/linguist \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    pushd ${SOURCES}/linguist &> /dev/null
-
-    DASHED=${CLEAR}$(dashed "Adding linguist repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Adding linguist repository as a GIT safe directory")
-    sudo find ${SOURCES} -name '.git' -type d \
-      -exec bash -c 'git config --global --add safe.directory ${0%/.git}' {} \;
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    DASHED=${CLEAR}$(dashed "Pulling linguist repository")
-    pushd ${SOURCES}/linguist &> /dev/null \
-      && git checkout master &> /dev/null && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  TAG=$(git describe --tags $(git rev-list --tags --max-count=1) \
-    | grep -E -o "[0-9.]*")
-
-  if [[ "${VERSION}" == "0" ]]; then
-    echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-    DASHED=${CLEAR}$(dashed "Installing linguist GEM package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    sudo gem install github-linguist &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    VERSION="$(github-linguist --help | head -n 1 | grep -E -o "[0-9.]*")"
-    echo -e "\n    linguist ${VERSION}\n"
-
-  elif [[ $(echo "${VERSION}" | grep -E -x "${TAG}" | wc -l) -eq 0 ]]; then
-
-    echo -e "\n    tag ${TAG} != version ${VERSION}\n"
-    DASHED=${CLEAR}$(dashed "Updating linguist GEM package")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    sudo gem update github-linguist &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-
-    VERSION="$(github-linguist --help | head -n 1 | grep -E -o "[0-9.]*")"
-    echo -e "\n    linguist ${VERSION}\n"
-  else
-    echo -e "\n    tag ${TAG} == version ${VERSION}\n"
-  fi
-
-  pushd ${MANAGER_DIR} &> /dev/null
-
-  if [[ ! -d "${TPM_DEST}" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning TMUX Plugin Manager repository")
-    unbuffer git clone https://github.com/tmux-plugins/tpm ${TPM_DEST} \
-      | unbuffer -p grep -E -o "[0-9]+%" | xargs -I {} echo -n -e ${DASHED} {}
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Pulling TMUX Plugin Manager repository")
-    pushd ${TPM_DEST} &> /dev/null && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  DASHED=$(dashed "Copying .vimrc")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  command cp ${VIMRC} ${HOME} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
-  if [[ ! -d "${POLYGLOT_DEST}" ]]; then
-    DASHED=${CLEAR}$(dashed "Cloning vim-polyglot repository")
-    unbuffer git clone --depth 1 https://github.com/sheerun/vim-polyglot
-      ${POLYGLOT_DEST} | unbuffer -p grep -E -o "[0-9]+%" \
-      | xargs -I {} echo -n -e ${DASHED} {}
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  else
-    DASHED=${CLEAR}$(dashed "Pulling vim-polyglot repository")
-    pushd ${POLYGLOT_DEST} &> /dev/null && git pull &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-        && dirs -c && return 1
-    fi
-  fi
-
-  DASHED=$(dashed "Copying .tmux.conf")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  command cp ${TMUXCONF} ${HOME} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
-  DASHED=$(dashed "Installing TMUX Plugins")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  ${TPM_DEST}/bin/install_plugins &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
-  DASHED=$(dashed "Copying .tigrc")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  command cp ${TIGRC} ${HOME} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
+  install xsel
+
+  dashed 'Resetting GIT safe repositories'
+  git config --global --unset-all safe.directory && success || success
+
+  run 'Adding symbolic link to gcc 10 and g++ 10' \
+    "${SUDO} ln -f -s $(command -v gcc-10) $(command -v gcc)" \
+    "${SUDO} ln -f -s $(command -v g++-10) $(command -v g++)"
+
+  install_docker
+  git_install 'direnv' 'https://github.com/direnv/direnv' 'Installing direnv' \
+    'curl -s -f -L https://direnv.net/install.sh | bash'
+  git_install 'vim' 'https://github.com/vim/vim' 'Compiling vim' \
+    "make --directory ${SOURCES}/vim" 'Installing vim' \
+    "${SUDO} make --directory ${SOURCES}/vim install"
+  git_install 'tig' 'https://github.com/jonas/tig' 'Compiling tig' \
+    "make --directory ${SOURCES}/tig clean all prefix=${LOCAL}" 'Installing tig' \
+    "make --directory ${SOURCES}/tig install prefix=${LOCAL}" 'Documenting tig' \
+    "${SUDO} make --directory ${SOURCES}/tig install-doc prefix=/usr"
+  git_install 'shellcheck' 'https://github.com/koalaman/shellcheck' \
+    'Installing direnv' 'cabal install'
+  NOTAG=true git_install 'fff' 'https://github.com/dylanaraps/fff' 'Installing fff' \
+    "make --directory ${SOURCES}/fff PREFIX=${LOCAL}"
+  git_install 'tmux' 'https://github.com/tmux/tmux' \
+    'Generating tmux configuration' "sh ${SOURCES}/tmux/autogen.sh" \
+    'Configuring tmux' "${SOURCES}/tmux/configure" 'Compiling tmux' \
+    "make --directory ${SOURCES}/tmux" 'Installing tmux' \
+    "${SUDO} make --directory ${SOURCES}/tmux install"
+  git_install 'pass' 'https://git.zx2c4.com/password-store' \
+    'Installing password-store' \
+    "${SUDO} make install --directory ${SOURCES}/password-store"
+  git_install 'linguist' 'https://github.com/github/linguist' \
+    'Installing/Updating github-linguist' "${SUDO} gem install github-linguist"
+      # || ${SUDO} gem update github-linguist"
+
+  run 'Copying .vimrc' "cp ${VIMRC} ${HOME}"
+
+  NOTAG=true git_install 'polyglot' 'https://github.com/sheerun/vim-polyglot' \
+    'Copying polyglot to vim plugins directory' \
+    "mkdir -p ${POLYGLOT_DEST}" \
+    "cp -a ${SOURCES}/polyglot/. ${POLYGLOT_DEST}"
+
+  run 'Copying .tmux.conf' "cp ${TMUXCONF} ${HOME}"
+  run 'Installing tmux plugins' "${TMUXPLUGINS}/bin/install_plugins"
+
+  run 'Copying .tigrc' "cp ${TIGRC} ${HOME}"
+
+  #run 'Copying .bashrc 1/2' "cp /etc/skel/.bashrc ${HOME}"
+    # && >> ${HOME}/.bashrc"
+
+  sumup "${2}"
+
+  return 0
+
+  # CTAGS: echo -n -e $(dashed "Checking python3-docutils installation")$' '
+  # CTAGS: echo -n -e $(dashed "Checking libseccomp-dev installation")$' '
+  # CTAGS: echo -n -e $(dashed "Checking libjansson-dev installation")$' '
 
   DASHED=$(dashed "Copying .bashrc")
   dots "${DASHED}" &
