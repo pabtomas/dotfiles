@@ -658,8 +658,6 @@ function s:LoadColorscheme()
     \ . ' | highlight       Tag                 cterm=underline'
     \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.yellow   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       TagDigit            cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       TagName             cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight       Error                                  ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.red_1
     \ . ' | highlight       ErrorMsg            cterm=bold         ctermfg=' . s:PALETTE.red_1    . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight       Todo                                   ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
@@ -704,9 +702,7 @@ function s:LoadColorscheme()
   highlight  link Debug              Special
   highlight! link StatusLineTerm     StatusLine
   highlight! link StatusLineTermNC   StatusLineNC
-  highlight  link TagKind            Kind
   highlight  link MappingKind        Kind
-  highlight  link TagPunctuation     Punctuation
   highlight  link MappingPunctuation Punctuation
 
   if s:redhighlight.activated | execute s:redhighlight.command | endif
@@ -745,19 +741,6 @@ if index(prop_type_list(), 'diffdelete') != -1 | call prop_type_delete('diffdele
 call prop_type_add('button',     #{ highlight: 'Button'     })
 call prop_type_add('diffadd',    #{ highlight: 'DiffAdd'    })
 call prop_type_add('diffdelete', #{ highlight: 'DiffDelete' })
-
-"     }}}
-"     TagList {{{3
-
-if index(prop_type_list(), 'kind')  != -1 | call prop_type_delete('kind')  | endif
-if index(prop_type_list(), 'punct') != -1 | call prop_type_delete('punct') | endif
-if index(prop_type_list(), 'digit') != -1 | call prop_type_delete('digit') | endif
-if index(prop_type_list(), 'name')  != -1 | call prop_type_delete('name')  | endif
-
-call prop_type_add('kind',  #{ highlight: 'TagKind' })
-call prop_type_add('punct', #{ highlight: 'TagPunctuation' })
-call prop_type_add('digit', #{ highlight: 'TagDigit' })
-call prop_type_add('name',  #{ highlight: 'TagName' })
 
 "     }}}
 "   }}}
@@ -1525,110 +1508,6 @@ endfunction
 
 "     }}}
 "   }}}
-"   Gutentags {{{2
-
-function! s:HighlightGutentags()
-  if buflisted(bufnr())
-    let l:matches = getmatches()
-    if !empty(filter(mapnew(l:matches, { _, val -> val.group }),
-    \ 'v:val == "Tag"'))
-      call setmatches(filter(l:matches, { _, val -> val.group != 'Tag' }))
-    endif
-    call matchadd('Tag', substitute(substitute(join(sort(map(taglist('.*'),
-      \ { _, val -> val.name }),
-      \ { val1, val2 -> len(split(val2, '\zs')) - len(split(val1, '\zs')) }),
-      \ '\|'), '\[', '\\[', 'g'), '\]', '\\]', 'g'), -1)
-  endif
-endfunction
-
-function! s:GutentagsHandler(job, status)
-  call s:HighlightGutentags()
-  call s:HighlightStatusLines()
-  echomsg 'Tags generated !'
-endfunction
-
-function! s:GenerateGutentags()
-  if executable('ctags') && executable('git')
-    let l:bufdir = expand('%:p:h')
-    let l:git_root = trim(system('cd ' . l:bufdir
-      \ . ' && git rev-parse --show-toplevel 2> /dev/null'))
-    if !empty(l:git_root)
-      let l:tags_path = tempname()
-      let l:tagsignore_path = l:git_root . '/tagsignore'
-
-      " specify tags file path (semi-colon really important)
-      let l:tags_setting = l:tags_path . ';'
-      let &tags = l:tags_setting
-
-      let l:command = 'cd ' . l:git_root . ' && ctags -R'
-      let l:ctags_flags = #{
-      \   vim: ' --kinds-Vim=fvC',
-      \ }
-      if has_key(l:ctags_flags, &filetype)
-        let l:command .= l:ctags_flags[&filetype]
-      endif
-      let l:command .= ' $(for FILE in $(cat ' . l:tagsignore_path . ');'
-        \ . ' do echo -n "--exclude=' . l:git_root . '"/${FILE}" "; done) -o '
-        \ . l:tags_path . ' ' . l:git_root
-      call job_start(['/bin/bash', '-c', l:command],
-        \ #{ exit_cb: expand('<SID>') . 'GutentagsHandler' })
-    endif
-  else
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Gutentags plugin needs git executable'
-      \ . ' and ctags executable.'
-    echohl NONE
-  endif
-endfunction
-
-function! s:FollowTag()
-  try
-    let l:iskeyword_backup = ''
-    if &filetype == 'vim'
-      let l:iskeyword_backup = &iskeyword
-      setlocal iskeyword+=:
-    endif
-    let l:cword = expand('<cword>')
-    execute 'tag ' . l:cword
-    if foldlevel('.') > 0 | foldopen! | endif
-    if len(taglist('^' . l:cword . '$')) == 1
-      normal! zz
-    endif
-    if !empty(l:iskeyword_backup)
-      let &iskeyword = l:iskeyword_backup
-    endif
-  catch
-    echohl ErrorMsg
-    echomsg matchstr(v:exception, 'E[0-9]*: .*')
-    echohl NONE
-  endtry
-endfunction
-
-function! s:NextTag()
-  try
-    tag
-    if foldlevel('.') > 0 | foldopen! | endif
-    normal! zz
-  catch
-    echohl ErrorMsg
-    echomsg matchstr(v:exception, 'E[0-9]*: .*')
-    echohl NONE
-  endtry
-endfunction
-
-function! s:PreviousTag()
-  try
-    pop
-    if foldlevel('.') > 0 | foldopen! | endif
-    normal! zz
-  catch
-    echohl ErrorMsg
-    echomsg matchstr(v:exception, 'E[0-9]*: .*')
-    echohl NONE
-  endtry
-endfunction
-
-"   }}}
 "   Rainbow {{{2
 "     Variables & constants {{{3
 
@@ -1767,169 +1646,6 @@ endfunction
 function! s:RefreshRainbow()
   if s:rainbow.activated
     call s:ActivateRainbow()
-  endif
-endfunction
-
-"     }}}
-"   }}}
-"   Taglist {{{2
-"     Keys {{{3
-
-if exists('s:TAGLIST_KEY') | unlet s:TAGLIST_KEY | endif
-const s:TAGLIST_KEY = #{
-\   next:         "\<Down>",
-\   previous:       "\<Up>",
-\   select:      "\<Enter>",
-\   exit:          "\<Esc>",
-\ }
-
-"     }}}
-"     Functions {{{3
-
-function! LineLessThan(left, right)
-  if a:left.line == a:right.line
-    return 0
-  elseif a:left.line < a:right.line
-    return -1
-  else
-    return 1
-  endif
-endfunction
-
-function! s:TagListFilter(winid, key)
-  if a:key == s:TAGLIST_KEY.exit
-    call popup_clear()
-    unlet s:taglist
-    call s:UnlockServer('fff')
-  elseif a:key == s:TAGLIST_KEY.next
-    call win_execute(a:winid, 'if line(".") < line("$") - 1'
-      \ . ' | call cursor(line(".") + 1, 0)'
-      \ . ' | while match(getline("."), "^  ") < 0'
-      \ . ' && (line(".") < line("$") - 1)'
-      \ . ' | call cursor(line(".") + 1, 0) | endwhile | endif'
-      \ . ' | if (line(".") == line("$") - 1) && (line("$") > line("w$"))'
-      \ . ' | execute "normal! \<C-e>" | endif')
-  elseif a:key == s:TAGLIST_KEY.previous
-    call win_execute(a:winid, 'if line(".") > 3'
-      \ . ' | call cursor(line(".") - 1, 0)'
-      \ . ' | while (match(getline("."), "^  ") < 0) && (line(".") > 3)'
-      \ . ' | call cursor(line(".") - 1, 0) | endwhile'
-      \ . ' | else | execute "normal! \<C-y>"| endif')
-  elseif a:key == s:TAGLIST_KEY.select
-    call win_execute(a:winid, 'let s:taglist.tmp = trim(getline("."))')
-    call popup_clear()
-    call cursor(str2nr(matchstr(s:taglist.tmp, "^[0-9][0-9]*")), 0)
-    if foldlevel('.') > 0 | foldopen! | endif
-    unlet s:taglist
-    call s:UnlockServer('fff')
-  endif
-  return v:true
-endfunction
-
-function! s:UpdateTagList()
-  let s:taglist.text = []
-
-  let l:filename = expand("%:p")
-  let l:language = trim(system('ctags --print-language ' . l:filename
-    \ . ' | awk "{printf \"%s\n\", \$2}"'))
-  if l:language == "NONE"
-    echohl ErrorMsg
-    echomsg "Personal Error Message: Universal Ctags can not find the file"
-      \ . " language."
-    echohl NONE
-    return
-  else
-    let l:kinds = {}
-    for l:each in systemlist('ctags --list-kinds-full=' . l:language
-      \ . ' | tail -n+2 | awk "{printf \"%s %s\n\", \$1, \$2}"')
-        let l:each = split(l:each, " ")
-        let l:kinds[l:each[0]] = l:each[1] . 's'
-    endfor
-    let l:tags = sort(map(filter(taglist('.*'),
-      \ 'v:val.filename == l:filename'), {_, tag -> #{
-      \ name: tag.name, kind: tag.kind,
-      \ line: str2nr(trim(execute('global' . tag.cmd . 'echo line(".")')))
-    \ }}), function("LineLessThan"))
-
-    if empty(l:tags)
-      echohl ErrorMsg
-      echomsg "Personal Error Message: Universal Ctags does not find tags in"
-        \ . " this file."
-      echohl NONE
-      return
-    endif
-
-    let l:tags_letters = uniq(sort(mapnew(l:tags, 'v:val.kind')))
-
-    for [l:letter, l:name] in items(filter(l:kinds,
-    \ { letter -> index(l:tags_letters, letter) > -1 }))
-      let l:header_start = '--- ' . toupper(l:name) . ' '
-      let l:line = l:header_start
-        \ . repeat('-', winwidth(0) - len(l:header_start))
-      let l:properties = [#{ type: 'punct', col: 1, length: 3 },
-        \ #{ type: 'kind', col: 5, length: len(l:header_start) - 5 },
-        \ #{ type: 'punct', col: len(l:header_start) + 1,
-        \    length: winwidth(0) - len(l:header_start) }]
-      call add(s:taglist.text, #{ text: l:line, props: l:properties })
-      call add(s:taglist.text, #{ text: '', props: []})
-      for l:each in l:tags
-        if l:each.kind == l:letter
-          let l:line = '  ' . l:each.line . ': ' . l:each.name
-          let l:properties = [#{ type: 'digit', col: 1,
-            \ length: len(l:each.line) + 2 }, #{ type: 'punct',
-            \ col: len(l:each.line) + 3, length: 1 }, #{ type: 'name',
-            \ col: len(l:each.line) + 4, length: winwidth(0)
-            \   - len(l:each.line) - 4 }]
-          call add(s:taglist.text, #{ text: l:line, props: l:properties })
-        endif
-      endfor
-      let l:tags = filter(l:tags, { _, val -> val.kind != l:letter })
-      call add(s:taglist.text, #{ text: '', props: []})
-    endfor
-  endif
-endfunction
-
-function! s:TagList()
-  if empty(getcmdwintype())
-    if executable('ctags')
-      call s:LockServer('fff')
-      let l:savedview = winsaveview()
-      let l:line = line(".")
-      let s:taglist = {}
-      call s:UpdateTagList()
-      call winrestview(l:savedview)
-
-      if empty(s:taglist.text)
-        return
-      endif
-
-      let l:popup_id = popup_create(s:list.text,
-      \ #{
-        \ pos: 'topleft',
-        \ line: win_screenpos(0)[0],
-        \ col: win_screenpos(0)[1],
-        \ zindex: 2,
-        \ minwidth: winwidth(0),
-        \ maxwidth: winwidth(0),
-        \ minheight: winheight(0),
-        \ maxheight: winheight(0),
-        \ drag: v:true,
-        \ wrap: v:false,
-        \ fixed: v:true,
-        \ filter: expand('<SID>') . 'TagListFilter',
-        \ mapping: v:false,
-        \ scrollbar: v:false,
-        \ cursorline: v:true,
-      \ })
-
-      call win_execute(l:popup_id, 'while match(getline("."), "^  ") < 0'
-        \ . '| call cursor(line(".") + 1, 0) | endwhile')
-    else
-      echohl ErrorMsg
-      echomsg 'Personal Error Message: TagList plugin needs git executable'
-        \ . ' and ctags executable.'
-      echohl NONE
-    endif
   endif
 endfunction
 
@@ -2408,32 +2124,6 @@ const s:MAPPINGS = {
 \       description: 'Equalize splits',
 \     },
 \   ],
-\   'TAGS': [
-\     #{
-\       description: 'Follow tag under cursor',
-\       keys: s:LEADERS.global . 't',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>FollowTag()<CR>',
-\     },
-\     #{
-\       description: 'Next tag',
-\       keys: 'TT',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>NextTag()<CR>',
-\     },
-\     #{
-\       description: 'Previous tag',
-\       keys: 'tt',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>PreviousTag()<CR>',
-\     },
-\     #{
-\       description: 'Open Taglist',
-\       keys: s:LEADERS.shift . 'T',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TagList()<CR>',
-\     },
-\   ],
 \   'DEBUG': [
 \     #{
 \       description: 'Display log',
@@ -2801,12 +2491,6 @@ augroup vimrc_autocomands
 
   autocmd VimEnter * nested :call <SID>SourceObsession()
   autocmd VimLeavePre * :call <SID>PromptObsession()
-
-"     }}}
-"     Gutentags autocommands {{{3
-
-  autocmd BufEnter * :silent call <SID>HighlightGutentags()
-  autocmd VimEnter,BufWritePost * :silent call <SID>GenerateGutentags()
 
 "     }}}
 "     Rainbow autocommands {{{3
