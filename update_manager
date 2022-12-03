@@ -72,7 +72,7 @@ readonly OUTPUT_LEN \
          NOVERSION \
          ARCH RELEASE \
          LOCAL SOURCES _DIR \
-         VIMRC POLYGLOT_DEST TMUXCONF TIGRC
+         VIMRC POLYGLOT_DEST TMUXCONF TIGRC BASHRC PROFILE ALIASES
 
 _git ()
 {
@@ -165,6 +165,25 @@ run ()
   shift
   while [ ${#} -gt 0 ]
   do
+    if [ -n "${NEED_EVAL-}" ]
+    then
+      if [ "${NEED_EVAL%"${NEED_EVAL#?}"}" = "${SEP}" ]
+      then
+        NEED_EVAL="${NEED_EVAL#"${SEP}"}"
+      else
+        echo "$1"
+        if ! eval "${1}"
+        then
+          stop_dots "${!}"
+          error
+          exit 1
+        fi
+        NEED_EVAL="${NEED_EVAL#*"${SEP}"}"
+        shift
+        continue
+      fi
+    fi
+
     if ! ${1} > /dev/null 2>&1
     then
       stop_dots "${!}"
@@ -200,7 +219,7 @@ install ()
 
 install_docker ()
 {
-  if ! command -v docker > /dev/null
+  if [ ! -e "$(command -v docker)" ]
   then
     prompt_sudo
     curl -f -s -S -L https://download.docker.com/linux/ubuntu/gpg \
@@ -216,45 +235,43 @@ git_install ()
 {
   if [ ! -d "${SOURCES}/${1}" ]
   then
-    run "Cloning ${1} repository" "git clone ${2} ${SOURCES}/${1}"
-    run "Adding ${1} repository as a GIT safe repository" \
+    NEED_EVAL= run "Cloning ${1} repository" "git clone ${2} ${SOURCES}/${1}"
+    NEED_EVAL= run "Adding ${1} repository as a GIT safe repository" \
       "git config --global --add safe.directory ${SOURCES}/${1}"
     set -- '' '' '' '' "${@}"
   else
-    run "Adding ${1} repository as a GIT safe repository" \
+    NEED_EVAL= run "Adding ${1} repository as a GIT safe repository" \
       "git config --global --add safe.directory ${SOURCES}/${1}"
-    run "Moving to master branch into ${1} repository" \
+    NEED_EVAL= run "Moving to master branch into ${1} repository" \
       "_git ${1} checkout master"
-    run "Pulling ${1} repository" "_git ${1} pull"
+    NEED_EVAL= run "Pulling ${1} repository" "_git ${1} pull"
     set -- "$(_git ${1} rev-list --tags --max-count=1)" "${@}"
     set -- "$(_git ${2} describe --tags "${1}")" "${@}"
-    [ -n "${NOTAG:-}" ] && run "Moving to ${1} tag into ${3} repository" \
-      "_git ${3} checkout ${1}"
+    [ -z "${NOTAG+x}${NOTAG-}" ] && \
+      NEED_EVAL= run "Moving to ${1} tag into ${3} repository" \
+        "_git ${3} checkout ${1}"
     set -- "${1#"${1%%[[:digit:]]*}"}" "${@}"
     set -- "${1%"${1##[[:digit:]]*}"}" "${@}"
   fi
 
   set -- "$(eval "version_${5}")" "${@}"
 
-  if ! command -v "${6}" > /dev/null || [ "${1%[[:space:]]"${2}"}" != "${6}" ]
+  if [ ! -e "$(command -v "${6}")" ] || [ "${1%[[:space:]]"${2}"}" != "${6}" ]
   then
     shift 7
-    while [ "${#}" -gt 1 ]
-    do
-      case "${2}" in
-        sudo*) prompt_sudo ;;
-        *) ;;
-      esac
-      run "${1}" "${2}"
-      shift 2
-    done
+    case "$(shift; printf '%s\n' "${*}")" in
+      *'sudo '*) prompt_sudo ;;
+      *) ;;
+    esac
+    NEED_EVAL="${NEED_EVAL-}" run "${1}" "${2}"
+    shift 2
   fi
   return 0
 }
 
 version_docker ()
 {
-  if command -v docker > /dev/null
+  if [ -e "$(command -v docker)" ]
   then
     set -- "$(docker --version)"
     set -- "${1#"${1%%[[:digit:]]*}"}"
@@ -268,9 +285,13 @@ version_docker ()
 
 version_direnv ()
 {
-  if command -v direnv > /dev/null
+  if [ -e "$(command -v direnv)" ]
   then
-    printf 'direnv %s' "$(direnv --version)"
+    set -- "$(_git direnv rev-list --tags --max-count=1)"
+    set -- "$(_git direnv describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    printf 'direnv %s' "${1}"
   else
     printf 'direnv %s' "${NOVERSION}"
   fi
@@ -279,7 +300,7 @@ version_direnv ()
 
 version_vim ()
 {
-  if command -v vim > /dev/null
+  if [ -e "$(command -v vim)" ]
   then
     set -- "${IFS}"
     IFS="${NL}"
@@ -296,7 +317,7 @@ version_vim ()
 
 version_tig ()
 {
-  if command -v tig > /dev/null
+  if [ -e "$(command -v tig)" ]
   then
     set -- "${IFS}"
     IFS="${NL}"
@@ -312,7 +333,7 @@ version_tig ()
 
 version_shellcheck ()
 {
-  if command -v shellcheck > /dev/null
+  if [ -e "$(command -v shellcheck)" ]
   then
     set -- "${IFS}"
     IFS="${NL}"
@@ -328,7 +349,7 @@ version_shellcheck ()
 
 version_fff ()
 {
-  if command -v fff > /dev/null
+  if [ -e "$(command -v fff)" ]
   then
     fff -v | tr -d '\n'
   else
@@ -339,7 +360,7 @@ version_fff ()
 
 version_tmux ()
 {
-  if command -v tmux > /dev/null
+  if [ -e "$(command -v tmux)" ]
   then
     tmux -V | tr -d '\n'
   else
@@ -350,7 +371,7 @@ version_tmux ()
 
 version_pass ()
 {
-  if command -v pass > /dev/null
+  if [ -e "$(command -v pass)" ]
   then
     set -- "${IFS}"
     IFS="${NL}"
@@ -367,7 +388,7 @@ version_pass ()
 
 version_linguist ()
 {
-  if command -v github-linguist > /dev/null
+  if [ -e "$(command -v github-linguist)" ]
   then
     set -- "$(github-linguist --version)"
     set -- "${1#"${1%%[[:digit:]]*}"}"
@@ -432,7 +453,7 @@ main ()
 
   dashed 'Checking GNOME installation'
   if [ "${XDG_CURRENT_DESKTOP##*:}" = 'GNOME' ] && \
-    command -v gnome-shell > /dev/null
+    [ -e "$(command -v gnome-shell)" ]
   then
     success
   else
@@ -553,8 +574,9 @@ main ()
     "${SUDO} ln -f -s $(command -v g++-10) $(command -v g++)"
 
   install_docker
-  git_install 'direnv' 'https://github.com/direnv/direnv' 'Installing direnv' \
-    'curl -s -f -L https://direnv.net/install.sh | bash'
+  NEED_EVAL="NEED_EVAL${SEP}" git_install 'direnv' \
+    'https://github.com/direnv/direnv' 'Installing direnv' \
+    "cd ${SOURCES}/direnv && bash install.sh > /dev/null 2>&1 && cd - > /dev/null"
   git_install 'vim' 'https://github.com/vim/vim' 'Compiling vim' \
     "make --directory ${SOURCES}/vim" 'Installing vim' \
     "${SUDO} make --directory ${SOURCES}/vim install"
@@ -562,8 +584,9 @@ main ()
     "make --directory ${SOURCES}/tig clean all prefix=${LOCAL}" 'Installing tig' \
     "make --directory ${SOURCES}/tig install prefix=${LOCAL}" 'Documenting tig' \
     "${SUDO} make --directory ${SOURCES}/tig install-doc prefix=/usr"
-  git_install 'shellcheck' 'https://github.com/koalaman/shellcheck' \
-    'Installing direnv' 'cabal install'
+  NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
+    'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
+    "cd ${SOURCES}/shellcheck && cabal install > /dev/null && cd - > /dev/null"
   NOTAG=true git_install 'fff' 'https://github.com/dylanaraps/fff' 'Installing fff' \
     "make --directory ${SOURCES}/fff PREFIX=${LOCAL}"
   git_install 'tmux' 'https://github.com/tmux/tmux' \
@@ -590,8 +613,15 @@ main ()
 
   run 'Copying .tigrc' "cp ${TIGRC} ${HOME}"
 
-  #run 'Copying .bashrc 1/2' "cp /etc/skel/.bashrc ${HOME}"
-    # && >> ${HOME}/.bashrc"
+  NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bashrc' \
+    "cp /etc/skel/.bashrc ${HOME}" \
+    'while read -r REPLY; do printf "%s\\n" "${REPLY}"; done < '"${BASHRC} >> ${HOME}/.bashrc"
+
+  NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bash_profile' \
+    "cp /etc/skel/.profile ${HOME}/.bash_profile" \
+    'while read -r REPLY; do printf "%s\n" "${REPLY}"; done < '"${PROFILE} >> ${HOME}/.bash_profile"
+
+  run 'Copying .bash_aliases' "cp ${ALIASES} ${HOME}/.bash_aliases"
 
   sumup "${2}"
 
@@ -600,59 +630,6 @@ main ()
   # CTAGS: echo -n -e $(dashed "Checking python3-docutils installation")$' '
   # CTAGS: echo -n -e $(dashed "Checking libseccomp-dev installation")$' '
   # CTAGS: echo -n -e $(dashed "Checking libjansson-dev installation")$' '
-
-  DASHED=$(dashed "Copying .bashrc")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  command cp /etc/skel/.bashrc ${HOME} &> /dev/null \
-    && echo -e "\n$(cat ${BASHRC})" >> ${HOME}/.bashrc
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
-  DASHED=$(dashed "Copying .bash_profile")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  command cp /etc/skel/.profile ${HOME}/.bash_profile &> /dev/null \
-    && echo -e "\n$(cat ${PROFILE})" >> ${HOME}/.bash_profile
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
-  DASHED=$(dashed "Copying .bash_aliases")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  command cp ${ALIASES} ${HOME}/.bash_aliases &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
 
   DASHED=$(dashed "Copying .gitignore")
   [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
