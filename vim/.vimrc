@@ -615,102 +615,6 @@ const s:PALETTE = #{
 \ }
 
 "   }}}
-"   Colorscheme {{{2
-
-function s:LoadColorscheme()
-  set t_Co=256
-  set t_ut=
-  set background=dark
-  if exists('g:syntax_on') | syntax reset | endif
-  set wincolor=NormalAlt
-
-  highlight clear
-  execute  'highlight       Buffer              cterm=bold         ctermfg=' . s:PALETTE.grey_2   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       ModifiedBuf         cterm=bold         ctermfg=' . s:PALETTE.red_1
-    \ . ' | highlight       BuffersMenuBorders  cterm=bold         ctermfg=' . s:PALETTE.blue_4
-    \ . ' | highlight       RootPath            cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       ClosedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       FilePath            cterm=NONE         ctermfg=' . s:PALETTE.white_2  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       DiffAdd             cterm=NONE         ctermfg=' . s:PALETTE.green_3  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       DiffDelete          cterm=NONE         ctermfg=' . s:PALETTE.red_2    . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Normal              cterm=bold         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:PALETTE.white_2  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       ModeMsg             cterm=NONE         ctermfg=' . s:PALETTE.blue_2   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       MoreMsg             cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Question            cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       NonText             cterm=NONE         ctermfg=' . s:PALETTE.orange_1 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Comment             cterm=NONE         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Constant            cterm=NONE         ctermfg=' . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Special             cterm=NONE         ctermfg=' . s:PALETTE.blue_2   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Identifier          cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Statement           cterm=NONE         ctermfg=' . s:PALETTE.red_1    . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       PreProc             cterm=NONE         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Type                cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Visual              cterm=reverse      ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       LineNr              cterm=NONE         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Tag                 cterm=underline'
-    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.yellow   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Error                                  ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.red_1
-    \ . ' | highlight       ErrorMsg            cterm=bold         ctermfg=' . s:PALETTE.red_1    . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Todo                                   ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
-    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Folded              cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.orange_2
-    \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:PALETTE.purple_2 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       CursorLine          cterm=bold,reverse ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       MatchParen          cterm=bold         ctermfg=' . s:PALETTE.purple_1 . ' ctermbg=' . s:PALETTE.white_1
-    \ . ' | highlight       Pmenu               cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       PopupSelected       cterm=bold         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.purple_2
-    \ . ' | highlight       PmenuSbar           cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_3
-    \ . ' | highlight       PmenuThumb          cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
-    \ . ' | highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:PALETTE.red_2
-  highlight! link WarningMsg         ErrorMsg
-  highlight  link String             Constant
-  highlight  link Character          Constant
-  highlight  link Number             Constant
-  highlight  link Boolean            Constant
-  highlight  link Float              Number
-  highlight  link Function           Identifier
-  highlight  link Conditional        Statement
-  highlight  link Repeat             Statement
-  highlight  link Label              Statement
-  highlight  link Operator           Statement
-  highlight  link Keyword            Statement
-  highlight  link Exception          Statement
-  highlight  link Include            PreProc
-  highlight  link Define             PreProc
-  highlight  link Macro              PreProc
-  highlight  link PreCondit          PreProc
-  highlight  link StorageClass       Type
-  highlight  link Structure          Type
-  highlight  link Typedef            Type
-  highlight  link SpecialChar        Special
-  highlight  link Delimiter          Special
-  highlight  link SpecialComment     Special
-  highlight  link SpecialKey         Special
-  highlight  link Debug              Special
-  highlight! link StatusLineTerm     StatusLine
-  highlight! link StatusLineTermNC   StatusLineNC
-  highlight  link MappingKind        Kind
-  highlight  link MappingPunctuation Punctuation
-
-  if s:redhighlight.activated | execute s:redhighlight.command | endif
-endfunction
-
-call s:LoadColorscheme()
-
-"   }}}
 "   Text properties {{{2
 
 if index(prop_type_list(), 'statusline') != -1 | call prop_type_delete('statusline') | endif
@@ -1616,7 +1520,7 @@ function! s:InactivateRainbow()
   let &eventignore = l:eventignore_backup
 
   syntax enable
-  call s:LoadColorscheme()
+  if s:redhighlight.activated | execute s:redhighlight.command | endif
 endfunction
 
 function! s:ToggleRainbow()
@@ -2469,11 +2373,6 @@ augroup vimrc_autocomands
 
   " reload file automatically after sudo save command
   autocmd FileChangedShell * let v:fcs_choice="reload"
-
-"   }}}
-"   Color autocommands {{{2
-
-  autocmd WinEnter * set wincolor=NormalAlt
 
 "   }}}
 "   Redhighlight autocommands {{{2

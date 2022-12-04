@@ -29,7 +29,7 @@ SUDO='sudo -E'
 SUDO_LIFETIME='290'
 
 PM='apt'
-ADD_REPO='add-apt-repository'
+ADD_REPO='add-apt-repository -y'
 POLICY="${PM} policy"
 INSTALL="${SUDO} ${PM} install -y"
 UPDATE="${SUDO} ${PM} update -y"
@@ -171,7 +171,6 @@ run ()
       then
         NEED_EVAL="${NEED_EVAL#"${SEP}"}"
       else
-        echo "$1"
         if ! eval "${1}"
         then
           stop_dots "${!}"
@@ -202,16 +201,14 @@ install ()
   while [ ${#} -gt 0 ]
   do
     dots "Checking ${1} package installation" "${DEFAULT_SPEED}" &
-    if dpkg -l "${1}" > /dev/null 2>&1
-    then
-      stop_dots "${!}"
-      success
-    else
-      stop_dots "${!}"
-      error
-      prompt_sudo
-      run "Installing ${1} package" "${INSTALL} ${1}"
-    fi
+    case "$(dpkg -l)" in 
+      *" ${1}"*) stop_dots "${!}"
+              success ;;
+      *) stop_dots "${!}"
+         error
+         prompt_sudo
+         run "Installing ${1} package" "${INSTALL} ${1}" ;;
+    esac
     shift
   done
   return 0
@@ -244,9 +241,9 @@ git_install ()
       "git config --global --add safe.directory ${SOURCES}/${1}"
     NEED_EVAL= run "Moving to master branch into ${1} repository" \
       "_git ${1} checkout master"
-    NEED_EVAL= run "Pulling ${1} repository" "_git ${1} pull"
     set -- "$(_git ${1} rev-list --tags --max-count=1)" "${@}"
     set -- "$(_git ${2} describe --tags "${1}")" "${@}"
+    NEED_EVAL= run "Pulling ${3} repository" "_git ${3} pull"
     [ -z "${NOTAG+x}${NOTAG-}" ] && \
       NEED_EVAL= run "Moving to ${1} tag into ${3} repository" \
         "_git ${3} checkout ${1}"
@@ -259,12 +256,15 @@ git_install ()
   if [ ! -e "$(command -v "${6}")" ] || [ "${1%[[:space:]]"${2}"}" != "${6}" ]
   then
     shift 7
-    case "$(shift; printf '%s\n' "${*}")" in
-      *'sudo '*) prompt_sudo ;;
-      *) ;;
-    esac
-    NEED_EVAL="${NEED_EVAL-}" run "${1}" "${2}"
-    shift 2
+    while [ ${#} -gt 0 ]
+    do
+      case "$(shift; printf '%s\n' "${*}")" in
+        *'sudo '*) prompt_sudo ;;
+        *) ;;
+      esac
+      NEED_EVAL="${NEED_EVAL-}" run "${1}" "${2}"
+      shift 2
+    done
   fi
   return 0
 }
@@ -285,7 +285,7 @@ version_docker ()
 
 version_direnv ()
 {
-  if [ -e "$(command -v direnv)" ]
+  if [ -e "$(command -v direnv)" ] && [ -d "${SOURCES}/direnv" ]
   then
     set -- "$(_git direnv rev-list --tags --max-count=1)"
     set -- "$(_git direnv describe --tags "${1}")"
@@ -300,15 +300,13 @@ version_direnv ()
 
 version_vim ()
 {
-  if [ -e "$(command -v vim)" ]
+  if [ -e "$(command -v vim)" ] && [ -d "${SOURCES}/vim" ]
   then
-    set -- "${IFS}"
-    IFS="${NL}"
-    set -- "${1}" $(vim --version)
-    IFS="${1}"
-    set -- "${2#"${2%%[[:digit:]]*}"}" "${3#"${3%%[[:digit:]]*}"}"
-    set -- "${1%[[:space:]]\(*\)}" "${2#*-}"
-    printf 'vim %s.0%s' "${1}" "${2}"
+    set -- "$(_git vim rev-list --tags --max-count=1)"
+    set -- "$(_git vim describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    printf 'vim %s' "${1}"
   else
     printf 'vim %s' "${NOVERSION}"
   fi
@@ -490,12 +488,12 @@ main ()
     return 1
   fi
 
-  dashed 'Checking kisak-mesa ppa'
+  dashed 'Checking mesa drivers ppa'
   prompt_sudo
   case "$(${POLICY} 2> /dev/null)" in
-    *kisak-mesa*) success ;;
+    *graphics-drivers*) success ;;
     *) error
-       ${SUDO} ${ADD_REPO} ppa:kisak/kisak-mesa > /dev/null ;;
+       ${SUDO} ${ADD_REPO} ppa:oibaf/graphics-drivers > /dev/null ;;
   esac
 
   set -- "${1}" "${2}$(version_docker)${SEP}"
@@ -520,7 +518,7 @@ main ()
 
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
-    automake cmake redshift kcolorchooser
+    automake cmake redshift kcolorchooser libreoffice-common
 
   # for spaceporn
   install libpng-dev libsystemd-dev libglew-dev libx11-dev
@@ -576,7 +574,7 @@ main ()
   install_docker
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'direnv' \
     'https://github.com/direnv/direnv' 'Installing direnv' \
-    "cd ${SOURCES}/direnv && bash install.sh > /dev/null 2>&1 && cd - > /dev/null"
+    "cd ${SOURCES}/direnv && sudo bash install.sh > /dev/null 2>&1 && cd - > /dev/null"
   git_install 'vim' 'https://github.com/vim/vim' 'Compiling vim' \
     "make --directory ${SOURCES}/vim" 'Installing vim' \
     "${SUDO} make --directory ${SOURCES}/vim install"
@@ -586,27 +584,25 @@ main ()
     "${SUDO} make --directory ${SOURCES}/tig install-doc prefix=/usr"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
-    "cd ${SOURCES}/shellcheck && cabal install > /dev/null && cd - > /dev/null"
+    "cd ${SOURCES}/shellcheck && cabal install --overwrite-policy=always > /dev/null && cd - > /dev/null"
   NOTAG=true git_install 'fff' 'https://github.com/dylanaraps/fff' 'Installing fff' \
     "make --directory ${SOURCES}/fff PREFIX=${LOCAL}"
-  git_install 'tmux' 'https://github.com/tmux/tmux' \
-    'Generating tmux configuration' "sh ${SOURCES}/tmux/autogen.sh" \
-    'Configuring tmux' "${SOURCES}/tmux/configure" 'Compiling tmux' \
-    "make --directory ${SOURCES}/tmux" 'Installing tmux' \
-    "${SUDO} make --directory ${SOURCES}/tmux install"
+  NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' 'https://github.com/tmux/tmux' \
+    'Generating tmux configuration' "cd ${SOURCES}/tmux && sh autogen.sh > /dev/null 2>&1 && cd - > /dev/null" \
+    'Configuring tmux' "cd ${SOURCES}/tmux && ./configure > /dev/null 2>&1 && cd - > /dev/null" \
+    'Compiling tmux' "make --directory ${SOURCES}/tmux > /dev/null 2>&1" \
+    'Installing tmux' "${SUDO} make --directory ${SOURCES}/tmux install > /dev/null"
   git_install 'pass' 'https://git.zx2c4.com/password-store' \
     'Installing password-store' \
-    "${SUDO} make install --directory ${SOURCES}/password-store"
-  git_install 'linguist' 'https://github.com/github/linguist' \
-    'Installing/Updating github-linguist' "${SUDO} gem install github-linguist"
-      # || ${SUDO} gem update github-linguist"
+    "${SUDO} make install --directory ${SOURCES}/pass"
+  NEED_EVAL="NEED_EVAL${SEP}" git_install 'linguist' 'https://github.com/github/linguist' \
+    'Installing/Updating github-linguist' "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi > /dev/null"
 
   run 'Copying .vimrc' "cp ${VIMRC} ${HOME}"
 
   NOTAG=true git_install 'polyglot' 'https://github.com/sheerun/vim-polyglot' \
     'Copying polyglot to vim plugins directory' \
-    "mkdir -p ${POLYGLOT_DEST}" \
-    "cp -a ${SOURCES}/polyglot/. ${POLYGLOT_DEST}"
+    "mkdir -p ${POLYGLOT_DEST} && cp -a ${SOURCES}/polyglot/. ${POLYGLOT_DEST}"
 
   run 'Copying .tmux.conf' "cp ${TMUXCONF} ${HOME}"
   run 'Installing tmux plugins' "${TMUXPLUGINS}/bin/install_plugins"
