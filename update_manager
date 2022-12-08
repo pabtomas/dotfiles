@@ -54,10 +54,10 @@ BASHRC="${_DIR}/bash/.bashrc"
 PROFILE="${_DIR}/bash/.bash_profile"
 ALIASES="${_DIR}/bash/.bash_aliases"
 GITIGNORE="${_DIR}/git/.gitignore"
+GIT_TEMPLATE_DIR='/usr/share/git-core/templates'
 HOOKS="${_DIR}/git/.hooks"
 SCRIPTS="${_DIR}/scripts"
-GIT_TEMPLATE_DIR="/usr/share/git-core/templates"
-SCRIPTS_DEST="/opt/scripts"
+SCRIPTS_DEST='/opt/scripts'
 
 readonly OUTPUT_LEN \
          SEP \
@@ -72,7 +72,7 @@ readonly OUTPUT_LEN \
          NOVERSION \
          ARCH RELEASE \
          LOCAL SOURCES _DIR \
-         VIMRC POLYGLOT_DEST TMUXCONF TIGRC BASHRC PROFILE ALIASES
+         VIMRC POLYGLOT_DEST TMUXCONF TMUXPLUGINS TIGRC BASHRC PROFILE ALIASES GITIGNORE GIT_TEMPLATE_DIR HOOKS
 
 _git ()
 {
@@ -412,6 +412,36 @@ version_polyglot ()
   return 0
 }
 
+version_tpm ()
+{
+  if [ -d "${SOURCES}/tpm" ]
+  then
+    set -- "$(_git tpm rev-list --tags --max-count=1)"
+    set -- "$(_git tpm describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    printf 'tpm %s' "${1}"
+  else
+    printf 'tpm %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_vimix ()
+{
+  if [ -d "${SOURCES}/vimix" ]
+  then
+    set -- "$(_git vimix rev-list --tags --max-count=1)"
+    set -- "$(_git vimix describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    printf 'vimix %s' "${1}"
+  else
+    printf 'vimix %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
 sumup ()
 {
   printf '\n'
@@ -518,7 +548,8 @@ main ()
 
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
-    automake cmake redshift kcolorchooser libreoffice-common
+    automake cmake redshift kcolorchooser libreoffice-gnome libreoffice \
+    gnome-tweaks gtk2-engines-murrine gtk2-engines-pixbuf
 
   # for spaceporn
   install libpng-dev libsystemd-dev libglew-dev libx11-dev
@@ -579,45 +610,66 @@ main ()
     "make --directory ${SOURCES}/vim" 'Installing vim' \
     "${SUDO} make --directory ${SOURCES}/vim install"
   git_install 'tig' 'https://github.com/jonas/tig' 'Compiling tig' \
-    "make --directory ${SOURCES}/tig clean all prefix=${LOCAL}" 'Installing tig' \
-    "make --directory ${SOURCES}/tig install prefix=${LOCAL}" 'Documenting tig' \
+    "make --directory ${SOURCES}/tig clean all prefix=${LOCAL}" \
+    'Installing tig' \
+    "make --directory ${SOURCES}/tig install prefix=${LOCAL}" \
+    'Documenting tig' \
     "${SUDO} make --directory ${SOURCES}/tig install-doc prefix=/usr"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
     "cd ${SOURCES}/shellcheck && cabal install --overwrite-policy=always > /dev/null && cd - > /dev/null"
-  NOTAG=true git_install 'fff' 'https://github.com/dylanaraps/fff' 'Installing fff' \
-    "make --directory ${SOURCES}/fff PREFIX=${LOCAL}"
-  NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' 'https://github.com/tmux/tmux' \
-    'Generating tmux configuration' "cd ${SOURCES}/tmux && sh autogen.sh > /dev/null 2>&1 && cd - > /dev/null" \
-    'Configuring tmux' "cd ${SOURCES}/tmux && ./configure > /dev/null 2>&1 && cd - > /dev/null" \
+  NOTAG='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
+    'Installing fff' "make --directory ${SOURCES}/fff PREFIX=${LOCAL} install"
+  NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' \
+    'https://github.com/tmux/tmux' 'Generating tmux configuration' \
+    "cd ${SOURCES}/tmux && sh autogen.sh > /dev/null 2>&1 && cd - > /dev/null" \
+    'Configuring tmux' \
+    "cd ${SOURCES}/tmux && ./configure > /dev/null 2>&1 && cd - > /dev/null" \
     'Compiling tmux' "make --directory ${SOURCES}/tmux > /dev/null 2>&1" \
-    'Installing tmux' "${SUDO} make --directory ${SOURCES}/tmux install > /dev/null"
-  git_install 'pass' 'https://git.zx2c4.com/password-store' \
+    'Installing tmux' \
+    "${SUDO} make --directory ${SOURCES}/tmux install > /dev/null"
+  NOTAG='true' git_install 'pass' 'https://git.zx2c4.com/password-store' \
     'Installing password-store' \
     "${SUDO} make install --directory ${SOURCES}/pass"
-  NEED_EVAL="NEED_EVAL${SEP}" git_install 'linguist' 'https://github.com/github/linguist' \
-    'Installing/Updating github-linguist' "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi > /dev/null"
+  NEED_EVAL="NEED_EVAL${SEP}" git_install 'linguist' \
+    'https://github.com/github/linguist' \
+    'Installing/Updating github-linguist' \
+    "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi > /dev/null"
 
   run 'Copying .vimrc' "cp ${VIMRC} ${HOME}"
 
-  NOTAG=true git_install 'polyglot' 'https://github.com/sheerun/vim-polyglot' \
+  NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'polyglot' \
+    'https://github.com/sheerun/vim-polyglot' \
     'Copying polyglot to vim plugins directory' \
-    "mkdir -p ${POLYGLOT_DEST} && cp -a ${SOURCES}/polyglot/. ${POLYGLOT_DEST}"
+    "(set -- ${SOURCES}/polyglot/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${POLYGLOT_DEST} ;; esac; shift; done)"
 
   run 'Copying .tmux.conf' "cp ${TMUXCONF} ${HOME}"
+
+  NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'tpm' 'https://github.com/tmux-plugins/tpm' \
+    'Copying tpm into .tmux directory' \
+    "(set -- ${SOURCES}/tpm/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${TMUXPLUGINS} ;; esac; shift; done)"
+
   run 'Installing tmux plugins' "${TMUXPLUGINS}/bin/install_plugins"
+
+  NOTAG='true' git_install 'vimix' \
+    'https://github.com/vinceliuice/vimix-gtk-themes' \
+    'Installing vimix themes' "sudo ${SOURCES}/vimix/install.sh -t all -s all"
 
   run 'Copying .tigrc' "cp ${TIGRC} ${HOME}"
 
   NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bashrc' \
     "cp /etc/skel/.bashrc ${HOME}" \
-    'while read -r REPLY; do printf "%s\\n" "${REPLY}"; done < '"${BASHRC} >> ${HOME}/.bashrc"
+    "cat ${BASHRC} >> ${HOME}/.bashrc"
 
   NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bash_profile' \
     "cp /etc/skel/.profile ${HOME}/.bash_profile" \
-    'while read -r REPLY; do printf "%s\n" "${REPLY}"; done < '"${PROFILE} >> ${HOME}/.bash_profile"
+    "cat ${PROFILE} >> ${HOME}/.bash_profile"
 
   run 'Copying .bash_aliases' "cp ${ALIASES} ${HOME}/.bash_aliases"
+
+  run 'Copying .gitignore' "cp ${GITIGNORE} ${GIT_TEMPLATE_DIR}"
+
+  run 'Copying hooks' "cp -a ${HOOKS} ${GIT_TEMPLATE_DIR}"
 
   sumup "${2}"
 
@@ -626,44 +678,6 @@ main ()
   # CTAGS: echo -n -e $(dashed "Checking python3-docutils installation")$' '
   # CTAGS: echo -n -e $(dashed "Checking libseccomp-dev installation")$' '
   # CTAGS: echo -n -e $(dashed "Checking libjansson-dev installation")$' '
-
-  DASHED=$(dashed "Copying .gitignore")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo \cp ${GITIGNORE} ${GIT_TEMPLATE_DIR} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
-  DASHED=$(dashed "Copying GIT hooks")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo \cp -r ${HOOKS} ${GIT_TEMPLATE_DIR} &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
 
   if [[ ${GNOME} -eq 1 ]]; then
 

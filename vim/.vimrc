@@ -1,5 +1,3 @@
-" TODO {{{1
-" }}}
 " Dependencies {{{1
 
 function! s:CheckDependencies()
@@ -26,6 +24,9 @@ endfunction
 
 " Vi default options unused
 set nocompatible
+
+" Remove all bell
+set belloff=all
 
 " allow mouse use
 set mouse=a
@@ -84,9 +85,6 @@ set viminfo='0,f0,h
 
 " vimdiff vertical splits
 set diffopt=vertical
-
-" write swap files to disk and trigger CursorHold event faster
-set updatetime=200
 
 " use popup menu & additional info when completion is used
 set completeopt=menu,preview
@@ -182,6 +180,60 @@ endfunction
 function! s:CloseLonelyUnlistedBuffers()
   if s:ActiveListedBuffers() == 0
     quitall
+  endif
+endfunction
+
+let s:buffers_backup = []
+function! s:TriggerBuffersListChanged(timer_id)
+  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }))
+  let l:buffers = map(l:buffers_nr, { nr -> #{ name: bufname(nr), nr: nr, hidden: empty(win_findbuf(nr)) } })
+  if s:buffers_backup != l:buffers
+    doautocmd User BuffersListChanged
+    let s:buffers_backup = l:buffers
+  endif
+endfunction
+
+function! s:UpdateTmuxPaneLine()
+  if exists('${TMUX}')
+    let l:tmux_pane_border = ''
+    let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }))
+
+    if len(l:buffers_nr) > 1
+      while empty(win_findbuf(get(l:buffers_nr, 1)))
+        let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
+      endwhile
+    endif
+
+    if !empty(l:buffers_nr)
+      const l:max_len = system('tmux display -p "#{pane_width}"') - 4
+      if len(join(mapnew(l:buffers_nr, { nr -> bufname(nr) }), '  ')) + 2 > l:max_len
+        let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ... #[none]'
+
+        while len(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g') . bufname(get(l:buffers_nr, 0))) + 5 + 2 < l:max_len
+          let l:current_buf = get(l:buffers_nr, 0)
+          if empty(win_findbuf(l:current_buf))
+            let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ' . bufname(l:current_buf) . ' #[none]'
+          else
+            let l:tmux_pane_border .= '#[fg=#ffffff#,bold,bg=#000000] ' . bufname(l:current_buf) . ' #[none]'
+          endif
+          call remove(l:buffers_nr, 0)
+        endwhile
+
+        let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ... #[none]'
+      else
+        while !empty(join(l:buffers_nr, ''))
+          let l:current_buf = get(l:buffers_nr, 0)
+          if empty(win_findbuf(l:current_buf))
+            let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ' . bufname(l:current_buf) . ' #[none]'
+          else
+            let l:tmux_pane_border .= '#[fg=#ffffff#,bold,bg=#000000] ' . bufname(l:current_buf) . ' #[none]'
+          endif
+          call remove(l:buffers_nr, 0)
+        endwhile
+      endif
+
+      call system('tmux set-option -p pane-border-format "' . l:tmux_pane_border . '"')
+    endif
   endif
 endfunction
 
@@ -531,7 +583,7 @@ if !exists('s:servers') | let s:servers = {} | endif
 "     }}}
 "     Functions {{{3
 
-function! StartServer(app, id)
+function! s:StartServer(app, id)
   if has('clientserver')
     if empty(v:servername)
       call remote_startserver(s:SERVER_PREFIX . a:id)
@@ -543,22 +595,6 @@ function! StartServer(app, id)
       \ . ' +clientserver feature to use this command'
     echohl NONE
   endif
-endfunction
-
-function! s:StartRemote(app, id)
-  let l:has_clientserver = has('clientserver')
-  if l:has_clientserver
-    if !has_key(s:servers, a:app)
-      let s:servers[a:app] = #{ names: [] }
-    endif
-    let s:servers[a:app].names += [s:SERVER_PREFIX . a:id]
-  else
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Vim needs to be compiled with'
-      \ . ' +clientserver feature to use this command'
-    echohl NONE
-  endif
-  return l:has_clientserver
 endfunction
 
 function! s:LockServer(app)
@@ -612,7 +648,104 @@ const s:PALETTE = #{
 \   grey_2: 244,
 \   grey_3: 248,
 \   black: 232,
+\   pink_1: 93,
 \ }
+
+"   }}}
+"   Colors {{{2
+
+function s:LoadColorscheme()
+  set t_Co=256
+  set t_ut=
+  set background=dark
+  if exists('g:syntax_on') | syntax reset | endif
+  set wincolor=NormalAlt
+
+  highlight clear
+  execute  'highlight       Buffer              cterm=bold         ctermfg=' . s:PALETTE.grey_2   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       ModifiedBuf         cterm=bold         ctermfg=' . s:PALETTE.green_3
+    \ . ' | highlight       BuffersMenuBorders  cterm=bold         ctermfg=' . s:PALETTE.blue_4
+    \ . ' | highlight       RootPath            cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       ClosedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       FilePath            cterm=NONE         ctermfg=' . s:PALETTE.white_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.pink_1 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       DiffAdd             cterm=NONE         ctermfg=' . s:PALETTE.green_3  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       DiffDelete          cterm=NONE         ctermfg=' . s:PALETTE.red_2    . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Normal              cterm=bold         ctermfg=' . s:PALETTE.pink_1 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:PALETTE.white_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       ModeMsg             cterm=NONE         ctermfg=' . s:PALETTE.blue_2   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       MoreMsg             cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Question            cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       NonText             cterm=NONE         ctermfg=' . s:PALETTE.orange_1 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Comment             cterm=NONE         ctermfg=' . s:PALETTE.pink_1 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Constant            cterm=NONE         ctermfg=' . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Special             cterm=NONE         ctermfg=' . s:PALETTE.blue_2   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Identifier          cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Statement           cterm=NONE         ctermfg=' . s:PALETTE.green_3    . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       PreProc             cterm=NONE         ctermfg=' . s:PALETTE.pink_1 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Type                cterm=NONE         ctermfg=' . s:PALETTE.blue_3   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Visual              cterm=reverse      ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       LineNr              cterm=NONE         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Tag                 cterm=underline'
+    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.yellow   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Error                                  ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.green_3
+    \ . ' | highlight       ErrorMsg            cterm=bold         ctermfg=' . s:PALETTE.green_3    . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Todo                                   ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
+    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       Folded              cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.orange_2
+    \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:PALETTE.pink_1 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       CursorLine          cterm=bold,reverse ctermfg=' . s:PALETTE.blue_4   . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       MatchParen          cterm=bold         ctermfg=' . s:PALETTE.purple_1 . ' ctermbg=' . s:PALETTE.white_1
+    \ . ' | highlight       Pmenu               cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       PopupSelected       cterm=bold         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.pink_1
+    \ . ' | highlight       PmenuSbar           cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_3
+    \ . ' | highlight       PmenuThumb          cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
+    \ . ' | highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
+    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:PALETTE.red_2
+  highlight! link WarningMsg         ErrorMsg
+  highlight  link String             Constant
+  highlight  link Character          Constant
+  highlight  link Number             Constant
+  highlight  link Boolean            Constant
+  highlight  link Float              Number
+  highlight  link Function           Identifier
+  highlight  link Conditional        Statement
+  highlight  link Repeat             Statement
+  highlight  link Label              Statement
+  highlight  link Operator           Statement
+  highlight  link Keyword            Statement
+  highlight  link Exception          Statement
+  highlight  link Include            PreProc
+  highlight  link Define             PreProc
+  highlight  link Macro              PreProc
+  highlight  link PreCondit          PreProc
+  highlight  link StorageClass       Type
+  highlight  link Structure          Type
+  highlight  link Typedef            Type
+  highlight  link SpecialChar        Special
+  highlight  link Delimiter          Special
+  highlight  link SpecialComment     Special
+  highlight  link SpecialKey         Special
+  highlight  link Debug              Special
+  highlight! link StatusLineTerm     StatusLine
+  highlight! link StatusLineTermNC   StatusLineNC
+  highlight  link MappingKind        Kind
+  highlight  link MappingPunctuation Punctuation
+
+  if s:redhighlight.activated | execute s:redhighlight.command | endif
+endfunction
+
+call s:LoadColorscheme()
 
 "   }}}
 "   Text properties {{{2
@@ -679,209 +812,6 @@ set foldopen+=jump
 "   }}}
 " }}}
 " Plugins {{{1
-"   Buffers menu {{{2
-"     Keys {{{3
-
-if exists('s:MENUKEY') | unlet s:MENUKEY | endif
-const s:MENU_KEY = #{
-\   next:         "\<Down>",
-\   previous:       "\<Up>",
-\   select:      "\<Enter>",
-\   delete:             "d",
-\   exit:          "\<Esc>",
-\   selectchars:   '\d\|\$',
-\   erase:          "\<BS>",
-\   help:               "?",
-\ }
-
-"     }}}
-"     Help {{{3
-
-function! s:HelpBuffersMenu()
-  let l:lines = [ '     ' . s:Key([s:MENU_KEY.help]) . '     - Show this help',
-   \ '    ' . s:Key([s:MENU_KEY.exit]) . '    - Exit buffers menu',
-   \ '   ' . s:Key([s:MENU_KEY.next, s:MENU_KEY.previous])
-     \ . '   - Next/Previous buffer',
-   \ '   ' . s:Key([s:MENU_KEY.select]) . '   - Select buffer',
-   \ '     ' . s:Key([s:MENU_KEY.delete]) . '     - Delete buffer',
-   \ '    < 0-9 >    - Buffer-id characters',
-   \ '     < $ >     - End-of-string buffer-id character',
-   \ ' ' . s:Key([s:MENU_KEY.erase]) . ' - Erase last buffer-id character',
-  \ ]
-  let l:text = []
-  for l:each in l:lines
-    let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
-    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1 }]
-    let l:properties = l:properties + [#{ type: 'statusline',
-      \ col: l:start - 2, length: 1 }]
-    let l:start = 0
-    while l:start > -1
-      let l:start = match(l:each,
-        \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ', l:start)
-      if l:start > -1
-        let l:start += 1
-        let l:properties = l:properties + [#{ type: 'statusline',
-          \ col: l:start, length: 1 }]
-      endif
-    endwhile
-    call add(l:text, #{ text: l:each, props: l:properties })
-  endfor
-  call popup_create(l:text, #{ pos: 'topleft',
-                           \   line: win_screenpos(0)[0] + winheight(0)
-                           \     - len(l:text) - &cmdheight,
-                           \   col: win_screenpos(0)[1],
-                           \   zindex: 1,
-                           \   wrap: v:false,
-                           \   fixed: v:true,
-                           \   minwidth: winwidth(0),
-                           \   time: 10000,
-                           \   border: [1, 0, 0, 0],
-                           \   borderchars: ['━'],
-                           \   borderhighlight: ['StatusLine'],
-                           \   highlight: 'Help',
-                           \ })
-endfunction
-
-"     }}}
-"     Functions {{{3
-
-function! s:ReplaceCursorOnCurrentBuffer(winid)
-  call win_execute(a:winid,
-    \ 'call cursor(index(map(getbufinfo(#{ buflisted: 1 }),'
-    \ . '{ _, val -> val.bufnr }), winbufnr(s:menu.win_backup)) + 1, 0)')
-endfunction
-
-function! s:BuffersMenuFilter(winid, key)
-  if a:key == s:MENU_KEY.next
-    bnext
-    call s:ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == s:MENU_KEY.previous
-    bprevious
-    call s:ReplaceCursorOnCurrentBuffer(a:winid)
-  elseif a:key == s:MENU_KEY.select
-    call popup_clear()
-    unlet s:menu
-    call s:UnlockServer('fff')
-  elseif a:key == s:MENU_KEY.delete
-    let l:listed_buf = getbufinfo(#{ buflisted: 1 })
-    if len(l:listed_buf) > 1
-      let l:buf = bufnr()
-      if len(win_findbuf(l:buf)) == 1
-        if l:buf == l:listed_buf[-1].bufnr
-          bprevious
-        else
-          bnext
-        endif
-        execute 'silent bdelete ' . l:buf
-        call s:UpdateBuffersMenu()
-        call popup_settext(a:winid, s:menu.text)
-        call popup_setoptions(a:winid, #{
-        \ line: win_screenpos(0)[0] + (winheight(0) - s:menu.height) / 2,
-        \ col: win_screenpos(0)[1] + (winwidth(0) - s:menu.width) / 2,
-        \ })
-        call s:ReplaceCursorOnCurrentBuffer(a:winid)
-      endif
-    endif
-  elseif a:key == s:MENU_KEY.exit
-    if !empty(win_findbuf(s:menu.buf_backup))
-      execute 'buffer ' . s:menu.buf_backup
-    endif
-    call popup_clear()
-    unlet s:menu
-    call s:UnlockServer('fff')
-  elseif match(a:key, s:MENU_KEY.selectchars) > -1
-    if (a:key != "0") || (len(s:menu.input) > 0)
-      let s:menu.input = s:menu.input . a:key
-      let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
-        \ { _, val -> val.bufnr }),
-        \ { _, val -> match(val, '^' . s:menu.input) > -1 })
-      if len(l:matches) == 1
-        execute 'buffer ' . l:matches[0]
-        call s:ReplaceCursorOnCurrentBuffer(a:winid)
-        let s:menu.input = ""
-        echo len(l:matches) . ' match: ' . l:matches[0]
-      else
-        echo s:menu.input . ' (' . len(l:matches) . ' matches:'
-          \ . string(l:matches) . ')'
-      endif
-    endif
-  elseif a:key == s:MENU_KEY.erase
-    let s:menu.input = s:menu.input[:-2]
-    if len(s:menu.input) > 0
-      let l:matches = filter(map(getbufinfo(#{ buflisted: 1 }),
-        \ { _, val -> val.bufnr }),
-        \ { _, val -> match(val, '^' . s:menu.input) > -1 })
-      echo s:menu.input . ' (' . len(l:matches) . ' matches:'
-        \ . string(l:matches) . ')'
-    else
-      echo s:menu.input
-    endif
-  elseif a:key == s:MENU_KEY.help
-    call s:HelpBuffersMenu()
-  endif
-  return v:true
-endfunction
-
-function! s:UpdateBuffersMenu()
-  let l:listed_buf = getbufinfo(#{ buflisted: 1 })
-  let l:listedbuf_nb = len(l:listed_buf)
-
-  if l:listedbuf_nb < 1
-    return
-  endif
-
-  let s:menu.text = []
-  let l:width = max(mapnew(l:listed_buf,
-    \ { _, val -> len(val.bufnr . ': ""' . fnamemodify(val.name, ':.')) }))
-
-  for l:each in l:listed_buf
-    let l:line = l:each.bufnr . ': "' . fnamemodify(l:each.name, ':.') . '"'
-    let l:line = l:line . repeat(' ', l:width - len(l:line))
-
-    let l:properties = [#{ type: 'buf', col: 0, length: l:width + 1 }]
-    if l:each.changed
-      let l:properties = [#{ type: 'modified', col: 0, length: l:width + 1 }]
-    endif
-
-    call add(s:menu.text, #{ text: l:line, props: l:properties })
-  endfor
-
-  let s:menu.width = l:width
-  let s:menu.height = len(s:menu.text)
-endfunction
-
-function! s:BuffersMenu()
-  if empty(getcmdwintype())
-    call s:LockServer('fff')
-    let s:menu = {}
-    call s:UpdateBuffersMenu()
-    let s:menu.buf_backup = bufnr()
-    let s:menu.win_backup = winnr()
-    let s:menu.input = ''
-
-    let l:popup_id = popup_create(s:menu.text,
-    \ #{
-      \ pos: 'topleft',
-      \ line: win_screenpos(0)[0] + (winheight(0) - s:menu.height) / 2,
-      \ col: win_screenpos(0)[1] + (winwidth(0) - s:menu.width) / 2,
-      \ zindex: 2,
-      \ drag: v:true,
-      \ wrap: v:false,
-      \ fixed: v:true,
-      \ filter: expand('<SID>') . 'BuffersMenuFilter',
-      \ mapping: v:false,
-      \ border: [],
-      \ borderhighlight: ['BuffersMenuBorders'],
-      \ borderchars: ['━', '┃', '━', '┃', '┏', '┓', '┛', '┗'],
-      \ cursorline: v:true,
-    \ })
-    call s:ReplaceCursorOnCurrentBuffer(l:popup_id)
-    call s:HelpBuffersMenu()
-  endif
-endfunction
-
-"     }}}
-"   }}}
 "   Obsession {{{2
 "     Keys {{{3
 
@@ -910,38 +840,6 @@ function! s:SourceObsession()
   if !argc() && empty(v:this_session) && filereadable('Session.vim')
     \ && !&modified
     source Session.vim
-  endif
-endfunction
-
-function! s:PromptObsession()
-  if len(getbufinfo(#{ buflisted: 1 })) > 1
-    call inputsave()
-    while v:true
-      redraw!
-      echon 'Build a new session in "'
-      echohl PMenu
-      echon fnamemodify('.', ':p')
-      echohl NONE
-      echon '": ['
-      echohl PMenu
-      echon 'Y'
-      echohl NONE
-      echon ']es or ['
-      echohl PMenu
-      echon 'N'
-      echohl NONE
-      echon ']o ? '
-      let l:mkses = input('')
-      let l:mkses = tolower(l:mkses)
-      if l:mkses == s:OBESSION_KEY.yes
-        mksession!
-        break
-      elseif l:mkses == s:OBESSION_KEY.no
-        break
-      endif
-      echohl NONE
-    endwhile
-    call inputrestore()
   endif
 endfunction
 
@@ -1105,7 +1003,7 @@ endfunction
 function! s:UndotreeFilter(winid, key)
   if a:key == s:UNDO_KEY.exit
     execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-      \ . s:PALETTE.black . ' ctermbg=' . s:PALETTE.purple_2
+      \ . s:PALETTE.black . ' ctermbg=' . s:PALETTE.pink_1
     call popup_clear()
     unlet s:undo
     call s:UnlockServer('fff')
@@ -1520,7 +1418,7 @@ function! s:InactivateRainbow()
   let &eventignore = l:eventignore_backup
 
   syntax enable
-  if s:redhighlight.activated | execute s:redhighlight.command | endif
+  call s:LoadColorscheme()
 endfunction
 
 function! s:ToggleRainbow()
@@ -1600,7 +1498,7 @@ function! s:Tig(command, env, conf_tigrc, term_options)
       let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
         \ "trim(v:val)")) + 1
     endif
-    call StartServer('tig', l:id)
+    call s:StartServer('tig', l:id)
   else
     call s:UnlockServer('tig')
   endif
@@ -1889,6 +1787,19 @@ function! FFFedit(file)
   endif
 endfunction
 
+function! s:ToggleFFFpane()
+  if s:IsServerReachable('fff')
+  else
+    let l:id = 1
+    if !empty(serverlist())
+      let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
+        \ "trim(v:val)")) + 1
+    endif
+    call s:StartServer('fff', l:id)
+    call system('tmux split-window -h -b -l 30')
+  endif
+endfunction
+
 "   }}}
 " }}}
 " Filetype specific {{{1
@@ -2049,12 +1960,6 @@ const s:MAPPINGS = {
 \     },
 \   ],
 \   'POPUPS': [
-\     #{
-\       description: 'Open Buffers Menu',
-\       keys: s:LEADERS.global . s:LEADERS.global,
-\       mode: 'n',
-\       command: '<Cmd>call <SID>BuffersMenu()<CR>',
-\     },
 \     #{
 \       description: 'Open Undotree',
 \       keys: s:LEADERS.shift . 'U',
@@ -2375,6 +2280,11 @@ augroup vimrc_autocomands
   autocmd FileChangedShell * let v:fcs_choice="reload"
 
 "   }}}
+"   Color autocommands {{{2
+
+  autocmd WinEnter * set wincolor=NormalAlt
+
+"   }}}
 "   Redhighlight autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>RedHighlight()
@@ -2383,13 +2293,15 @@ augroup vimrc_autocomands
 "   Buffers autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
+  autocmd User BuffersListChanged :silent call <SID>UpdateTmuxPaneLine()
+  autocmd VimEnter * :silent call timer_start(200, function('s:TriggerBuffersListChanged'), {'repeat': -1})
+  autocmd VimLeavePre * :call system('tmux set-option -p pane-border-format " [#P] "')
 
 "   }}}
 "   Plugins autocommands {{{2
 "     Obsession autocommands {{{3
 
   autocmd VimEnter * nested :call <SID>SourceObsession()
-  autocmd VimLeavePre * :call <SID>PromptObsession()
 
 "     }}}
 "     Rainbow autocommands {{{3
