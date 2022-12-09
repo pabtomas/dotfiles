@@ -120,6 +120,19 @@ const s:MODES = {
 \ }
 
 "   }}}
+"   User autocommand {{{2
+
+let s:buffers_backup = []
+function! s:TriggerUserEvents(timer_id)
+  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }), 'N')
+  let l:buffers = map(l:buffers_nr, { nr -> #{ name: bufname(nr), nr: nr, hidden: empty(win_findbuf(nr)) } })
+  if s:buffers_backup != l:buffers
+    doautocmd User BuffersListChanged
+    let s:buffers_backup = l:buffers
+  endif
+endfunction
+
+"   }}}
 "   Search {{{2
 "     Variables & constants {{{3
 
@@ -183,56 +196,87 @@ function! s:CloseLonelyUnlistedBuffers()
   endif
 endfunction
 
-let s:buffers_backup = []
-function! s:TriggerBuffersListChanged(timer_id)
-  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }))
-  let l:buffers = map(l:buffers_nr, { nr -> #{ name: bufname(nr), nr: nr, hidden: empty(win_findbuf(nr)) } })
-  if s:buffers_backup != l:buffers
-    doautocmd User BuffersListChanged
-    let s:buffers_backup = l:buffers
+function! s:NextBuffer()
+  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }), 'N')
+  if len(l:buffers_nr) > 1
+    while get(l:buffers_nr, 0) != bufnr()
+      let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
+    endwhile
+    execute 'buffer ' . get(l:buffers_nr, 1)
+    redraw!
   endif
+endfunction
+
+function! s:PreviousBuffer()
+  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }), 'N')
+  if len(l:buffers_nr) > 1
+    while get(l:buffers_nr, 0) != bufnr()
+      let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
+    endwhile
+    execute 'buffer ' . get(l:buffers_nr, -1)
+    redraw!
+  endif
+endfunction
+
+function! s:BuildTmuxPaneLine(buf)
+  if empty(win_findbuf(a:buf))
+    let l:res = '#[fg=#00d7ff#,underscore,bg=#444444] ' . bufname(a:buf) . ' #[none]'
+  else
+    let l:res = '#[fg=#00d7ff#,bold,bg=#1c1c1c] ' . bufname(a:buf) . ' #[none]'
+  endif
+  return l:res
 endfunction
 
 function! s:UpdateTmuxPaneLine()
   if exists('${TMUX}')
     let l:tmux_pane_border = ''
-    let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }))
-
-    if len(l:buffers_nr) > 1
-      while empty(win_findbuf(get(l:buffers_nr, 1)))
-        let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
-      endwhile
-    endif
+    let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }),
+      \ { _, val -> val.bufnr }), 'N')
 
     if !empty(l:buffers_nr)
       const l:max_len = system('tmux display -p "#{pane_width}"') - 4
-      if len(join(mapnew(l:buffers_nr, { nr -> bufname(nr) }), '  ')) + 2 > l:max_len
-        let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ... #[none]'
 
-        while len(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g') . bufname(get(l:buffers_nr, 0))) + 5 + 2 < l:max_len
-          let l:current_buf = get(l:buffers_nr, 0)
-          if empty(win_findbuf(l:current_buf))
-            let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ' . bufname(l:current_buf) . ' #[none]'
-          else
-            let l:tmux_pane_border .= '#[fg=#ffffff#,bold,bg=#000000] ' . bufname(l:current_buf) . ' #[none]'
-          endif
-          call remove(l:buffers_nr, 0)
+      if len(join(mapnew(l:buffers_nr, { nr -> bufname(nr) }), '  ')) + 2 >= l:max_len
+
+        if len(l:buffers_nr) > 1
+          while get(l:buffers_nr, 0) != bufnr()
+            let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
+          endwhile
+        endif
+
+        let l:tmux_pane_border = '#[fg=#00d7ff#,bold,bg=#1c1c1c] '
+          \ . bufname(get(l:buffers_nr, 0)) . ' #[none]'
+        call remove(l:buffers_nr, 0)
+
+        while len(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g')
+          \ . bufname(get(l:buffers_nr, -1)) . bufname(get(l:buffers_nr, 0)))
+          \ + 10 + 4 <= l:max_len
+            let l:tmux_pane_border = s:BuildTmuxPaneLine(get(l:buffers_nr, -1))
+              \ . l:tmux_pane_border . s:BuildTmuxPaneLine(get(l:buffers_nr, 0))
+            call remove(l:buffers_nr, -1)
+            call remove(l:buffers_nr, 0)
         endwhile
 
-        let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ... #[none]'
+        let l:tmux_pane_border =
+          \ '#[fg=#00d7ff#,underscore,bg=#444444] ... #[none]'
+          \ . l:tmux_pane_border
+          \ . '#[fg=#00d7ff#,underscore,bg=#444444] ... #[none]'
       else
         while !empty(join(l:buffers_nr, ''))
-          let l:current_buf = get(l:buffers_nr, 0)
-          if empty(win_findbuf(l:current_buf))
-            let l:tmux_pane_border .= '#[fg=#ffffff#,underscore,bg=#606060] ' . bufname(l:current_buf) . ' #[none]'
-          else
-            let l:tmux_pane_border .= '#[fg=#ffffff#,bold,bg=#000000] ' . bufname(l:current_buf) . ' #[none]'
-          endif
+          let l:tmux_pane_border .= s:BuildTmuxPaneLine(get(l:buffers_nr, 0))
           call remove(l:buffers_nr, 0)
         endwhile
       endif
 
-      call system('tmux set-option -p pane-border-format "' . l:tmux_pane_border . '"')
+      let l:tmux_pane_border .= '#[fg=#00d7ff]'
+
+      while len(split(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g'), '\zs')) <= l:max_len
+        let l:tmux_pane_border = '━' . l:tmux_pane_border . '━'
+      endwhile
+
+      let l:tmux_pane_border = '#[fg=#00d7ff]' . l:tmux_pane_border . '#[none]'
+      call system('tmux set-option -p pane-border-format "'
+        \ . l:tmux_pane_border . '"')
     endif
   endif
 endfunction
@@ -662,13 +706,7 @@ function s:LoadColorscheme()
   set wincolor=NormalAlt
 
   highlight clear
-  execute  'highlight       Buffer              cterm=bold         ctermfg=' . s:PALETTE.grey_2   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       ModifiedBuf         cterm=bold         ctermfg=' . s:PALETTE.green_3
-    \ . ' | highlight       BuffersMenuBorders  cterm=bold         ctermfg=' . s:PALETTE.blue_4
-    \ . ' | highlight       RootPath            cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       ClosedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       FilePath            cterm=NONE         ctermfg=' . s:PALETTE.white_2  . ' ctermbg=' . s:PALETTE.black
+  execute  'highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.pink_1 . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
     \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
@@ -760,15 +798,6 @@ call prop_type_add('key',        #{ highlight: 'HelpKey'    })
 call prop_type_add('help',       #{ highlight: 'Help'       })
 call prop_type_add('mode',       #{ highlight: 'HelpMode'   })
 
-"     Buffers menu {{{3
-
-if index(prop_type_list(), 'buf')      != -1 | call prop_type_delete('buf')      | endif
-if index(prop_type_list(), 'modified') != -1 | call prop_type_delete('modified') | endif
-
-call prop_type_add('buf',      #{ highlight: 'Buffer'      })
-call prop_type_add('modified', #{ highlight: 'ModifiedBuf' })
-
-"     }}}
 "     Undotree {{{3
 
 if index(prop_type_list(), 'button')     != -1 | call prop_type_delete('button')     | endif
@@ -796,8 +825,8 @@ endfunction
 
 function! FoldText()
   return substitute(substitute(foldtext(), '\s*\(\d\+\)',
-    \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' [\1', ''),
-    \ '\(\a\+\)\s\?: ["#]\s\+', '\1] ', '')
+    \ repeat('-', 10 - len(string(v:foldend - v:foldstart + 1))) . ' \1', ''),
+    \ '\(\a\+\)\s\?: ["#]\s\+', '\1 ', '')
 endfunction
 
 "     }}}
@@ -1788,15 +1817,17 @@ function! FFFedit(file)
 endfunction
 
 function! s:ToggleFFFpane()
-  if s:IsServerReachable('fff')
-  else
-    let l:id = 1
-    if !empty(serverlist())
-      let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
-        \ "trim(v:val)")) + 1
+  if exists('${TMUX}')
+    if s:IsServerReachable('fff')
+    else
+      let l:id = 1
+      if !empty(serverlist())
+        let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
+          \ "trim(v:val)")) + 1
+      endif
+      call s:StartServer('fff', l:id)
+      call system('tmux split-window -h -b -l 30 fff')
     endif
-    call s:StartServer('fff', l:id)
-    call system('tmux split-window -h -b -l 30')
   endif
 endfunction
 
@@ -1919,6 +1950,20 @@ const s:MAPPINGS = {
 \       command: '<Cmd>call <SID>ToggleRainbow()<CR>',
 \     },
 \   ],
+\   'BUFFERS': [
+\     #{
+\       description: 'Next buffer',
+\       keys: 'gt',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>NextBuffer()<CR>',
+\     },
+\     #{
+\       description: 'Previous buffer',
+\       keys: 'tg',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>PreviousBuffer()<CR>',
+\     },
+\   ],
 \   'WINDOWING': [
 \     #{
 \       description: 'Next window',
@@ -1937,6 +1982,26 @@ const s:MAPPINGS = {
 \       mode: 'n',
 \       command: '<C-w>=',
 \       description: 'Equalize splits',
+\     },
+\   ],
+\   'TAGS': [
+\     #{
+\       description: 'Follow tag under cursor',
+\       keys: s:LEADERS.global . 't',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>FollowTag()<CR>',
+\     },
+\     #{
+\       description: 'Next tag',
+\       keys: 'TT',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>NextTag()<CR>',
+\     },
+\     #{
+\       description: 'Previous tag',
+\       keys: 'tt',
+\       mode: 'n',
+\       command: '<Cmd>call <SID>PreviousTag()<CR>',
 \     },
 \   ],
 \   'DEBUG': [
@@ -2294,7 +2359,7 @@ augroup vimrc_autocomands
 
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
   autocmd User BuffersListChanged :silent call <SID>UpdateTmuxPaneLine()
-  autocmd VimEnter * :silent call timer_start(200, function('s:TriggerBuffersListChanged'), {'repeat': -1})
+  autocmd VimEnter * :silent call timer_start(200, function('s:TriggerUserEvents'), {'repeat': -1})
   autocmd VimLeavePre * :call system('tmux set-option -p pane-border-format " [#P] "')
 
 "   }}}
