@@ -500,25 +500,25 @@ endfunction
 " status line content:
 " [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
 function! s:StatusLineData()
-  set statusline+=\ [%3*%{winnr()}%0*]\ %3*%{bufnr()}%0*:
+  set statusline+=\ %5*[%3*%{winnr()}%5*]\ %3*%{bufnr()}%5*:%0*
                    \%2*%{FileName(v:false,v:true)}%0*
                    \%2*%{FileName(v:false,v:false)}%0*
                    \%4*%{FileName(v:true,v:false)}%0*
                    \%1*%{FileName(v:true,v:true)}%0*
-  set statusline+=\ [%3*%{&filetype}%0*]
-  set statusline+=\ C%3*%{virtcol('.')}%0*
-  set statusline+=\ L%3*%{line('.')}%0*/%3*%{line('$')}\ %0*
-  set statusline+=%{StartMode()}%3*%{Mode()}%0*%{EndMode()}
-  set statusline+=%3*%{IndexedMatch()}%0*%{Bar()}%3*%{TotalMatch()}%0*
+  set statusline+=\ %5*[%3*%{&filetype}%5*]%0*
+  set statusline+=\ %5*C%3*%{virtcol('.')}%0*
+  set statusline+=\ %5*L%3*%{line('.')}%5*/%3*%{line('$')}\ %0*
+  set statusline+=%5*%{StartMode()}%3*%{Mode()}%5*%{EndMode()}%0*
+  set statusline+=%3*%{IndexedMatch()}%5*%{Bar()}%3*%{TotalMatch()}%0*
 endfunction
 
 function! s:RestoreStatusLines(timer_id)
   execute  'highlight StatusLine   cterm=bold ctermfg='
-    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight StatusLineNC cterm=NONE ctermfg='
-    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight VertSplit    cterm=NONE ctermfg='
-    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_700
+    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
 endfunction
 
 function! s:HighlightStatusLines()
@@ -731,6 +731,8 @@ if exists('s:PALETTE') | unlet s:PALETTE | endif
 const s:PALETTE = #{
 \   red: 196,
 \   green: 42,
+\   apple: 120,
+\   pink: 205,
 \   gray_900: 233,
 \   gray_800: 239,
 \   gray_700: 243,
@@ -754,8 +756,8 @@ function s:LoadColorscheme()
 
   highlight clear
 
-  " default
   " https://github.com/n1ghtmare/noirblaze-vim/blob/master/colors/noirblaze.vim
+  " Default
   execute ' highlight       Comment                                ctermfg=' . s:PALETTE.gray_800
     \ . ' | highlight       Constant                               ctermfg=' . s:PALETTE.theme
     \ . ' | highlight       Character                              ctermfg=' . s:PALETTE.gray_700
@@ -773,11 +775,10 @@ function s:LoadColorscheme()
     \ . ' | highlight       Cursor                                 ctermfg=' . s:PALETTE.gray_900
     \ . ' | highlight       CursorColumn                                                              ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       CursorLine          cterm=NONE                                            ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       DiffAdd                                ctermfg=' . s:PALETTE.green    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       DiffAdd                                ctermfg=' . s:PALETTE.apple    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       DiffDelete                             ctermfg=' . s:PALETTE.red      . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       ErrorMsg                               ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.theme
-    \ . ' | highlight       VertSplit                              ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_700
+    \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Folded                                 ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       FoldColumn                             ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       IncSearch                              ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.white
@@ -788,7 +789,6 @@ function s:LoadColorscheme()
     \ . ' | highlight       NonText                                ctermfg=' . s:PALETTE.zinc     . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Pmenu                                  ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       PmenuSel                               ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       PopupSelelected                        ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       PmenuSbar                              ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       PmenuThumb                             ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_800
     \ . ' | highlight       Question                               ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
@@ -798,8 +798,8 @@ function s:LoadColorscheme()
     \ . ' | highlight       SpellCap            cterm=undercurl    ctermfg=' . s:PALETTE.white    . ' ctermbg=NONE'
     \ . ' | highlight       SpellLocal                             ctermfg=' . s:PALETTE.gray_700
     \ . ' | highlight       SpellRare                              ctermfg=' . s:PALETTE.theme
-    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       StatusLineNC                           ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Title                                  ctermfg=' . s:PALETTE.gray_500
     \ . ' | highlight       Visual              cterm=reverse                                         ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       WarningMsg                             ctermfg=' . s:PALETTE.theme
@@ -807,12 +807,26 @@ function s:LoadColorscheme()
     \ . ' | highlight       Tag                 cterm=underline'
     \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.theme
     \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+
+  " Plugin
+  execute  'highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       Normal              cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       PopupSelelected                        ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+
+  " Normal
+  execute  'highlight       Normal              cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
+
+  " StatusLine
+  execute  'highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.apple    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:PALETTE.red      . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       User5               cterm=bold         ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.gray_900
+
   highlight  link String             Constant
   highlight  link Number             Constant
   highlight  link Boolean            Constant

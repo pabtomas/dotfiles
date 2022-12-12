@@ -39,7 +39,6 @@ AUTOREMOVE="${SUDO} ${PM} autoremove -y"
 NOVERSION='unavailable'
 
 ARCH="$(dpkg --print-architecture)"
-USER="${USER:-"$(id -un)"}"
 
 LOCAL="${HOME}/.local"
 SOURCES="${LOCAL}/sources"
@@ -70,7 +69,7 @@ readonly OUTPUT_LEN \
          SUDO SUDO_LIFETIME \
          PM ADD_REPO POLICY INSTALL UPDATE UPGRADE AUTOREMOVE \
          NOVERSION \
-         ARCH USER \
+         ARCH \
          LOCAL SOURCES _DIR \
          VIMRC POLYGLOT_DEST TMUXCONF TMUXPLUGINS TIGRC BASHRC PROFILE ALIASES GITIGNORE GIT_TEMPLATE_DIR HOOKS
 
@@ -596,7 +595,7 @@ main ()
   if [ "${3%%.*}" -lt 3 ]
   then
     run 'Installing cabal 3' 'cabal install --reinstall cabal-install'
-    run 'Creating cabal 3 symbolic link' "sudo ln -s -f /home/${USER}/.cabal/bin/cabal $(command -v cabal)"
+    run 'Creating cabal 3 symbolic link' "sudo ln -s -f ${HOME}/.cabal/bin/cabal $(command -v cabal)"
   fi
   set -- "${1}" "${2}"
 
@@ -654,7 +653,7 @@ main ()
     "${SUDO} make --directory ${SOURCES}/tig install-doc prefix=/usr"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
-    "cd ${SOURCES}/shellcheck && cabal install --overwrite-policy=always --installdir=/home/${USER}/.cabal/bin > /dev/null && cd - > /dev/null"
+    "cd ${SOURCES}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin > /dev/null && cd - > /dev/null"
   NOTAG='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
     'Installing fff' "make --directory ${SOURCES}/fff PREFIX=${LOCAL} install"
   NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' \
