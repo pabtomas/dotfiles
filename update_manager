@@ -39,7 +39,7 @@ AUTOREMOVE="${SUDO} ${PM} autoremove -y"
 NOVERSION='unavailable'
 
 ARCH="$(dpkg --print-architecture)"
-RELEASE="$(lsb_release -cs)"
+USER="${USER:-"$(id -un)"}"
 
 LOCAL="${HOME}/.local"
 SOURCES="${LOCAL}/sources"
@@ -70,7 +70,7 @@ readonly OUTPUT_LEN \
          SUDO SUDO_LIFETIME \
          PM ADD_REPO POLICY INSTALL UPDATE UPGRADE AUTOREMOVE \
          NOVERSION \
-         ARCH RELEASE \
+         ARCH USER \
          LOCAL SOURCES _DIR \
          VIMRC POLYGLOT_DEST TMUXCONF TMUXPLUGINS TIGRC BASHRC PROFILE ALIASES GITIGNORE GIT_TEMPLATE_DIR HOOKS
 
@@ -222,8 +222,8 @@ install_docker ()
     curl -f -s -S -L https://download.docker.com/linux/ubuntu/gpg \
       | ${SUDO} gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     prompt_sudo
-    ${SUDO} sh -c "printf 'deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu ${RELEASE} stable\n' > /etc/apt/sources.list.d/docker.list"
-    install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    printf 'deb [arch=%s signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu %s stable\n' "${ARCH}" "${RELEASE}" \
+      | ${SUDO} tee /etc/apt/sources.list.d/docker.list > /dev/null
   fi
   return 0
 }
@@ -476,7 +476,7 @@ main ()
   # 2) old versions
   set -- '1' ''
 
-  mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${SOURCES}"
+  mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${SOURCES}" "${POLYGLOT_DEST}" "${TMUXPLUGINS}"
   ${SUDO} mkdir -p "${SCRIPTS_DEST}"
 
   dashed 'Checking GNOME installation'
@@ -518,12 +518,31 @@ main ()
     return 1
   fi
 
+  if ! command -v lsb_release > /dev/null
+  then
+    prompt_sudo
+    run 'Updating system' "${UPDATE}"
+    prompt_sudo
+    install lsb-release
+  fi
+
+  RELEASE="$(lsb_release -cs)"
+  readonly RELEASE
+
   dashed 'Checking mesa drivers ppa'
-  prompt_sudo
-  case "$(${POLICY} 2> /dev/null)" in
-    *graphics-drivers*) success ;;
+  case "${RELEASE}" in
+    focal) PPA_REPO='kisak/kisak-mesa' ;;
+    jammy) PPA_REPO='oibaf/graphics-drivers' ;;
     *) error
-       ${SUDO} ${ADD_REPO} ppa:oibaf/graphics-drivers > /dev/null ;;
+       printf 'Unknown %s release\n' "${RELEASE}" 1>&2
+       return 1 ;;
+  esac
+  case "$(${POLICY} 2> /dev/null)" in
+    *"${PPA_REPO#*/}"*) success ;;
+    *) error
+       set -f
+       ${SUDO} ${ADD_REPO} ppa:${PPA_REPO} > /dev/null
+       set +f ;;
   esac
 
   set -- "${1}" "${2}$(version_docker)${SEP}"
@@ -549,7 +568,10 @@ main ()
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
     automake cmake redshift kcolorchooser libreoffice-gnome libreoffice \
-    gnome-tweaks gtk2-engines-murrine gtk2-engines-pixbuf
+    gnome-tweaks
+  
+  # for vimix  
+  install gtk2-engines-murrine gtk2-engines-pixbuf
 
   # for spaceporn
   install libpng-dev libsystemd-dev libglew-dev libx11-dev
@@ -566,6 +588,17 @@ main ()
   # for shellcheck
   install cabal-install
   run 'Updating cabal' 'cabal update'
+  set -- "${@}" "${IFS}"
+  IFS="${NL}"
+  set -- "${@}" $(cabal --version)
+  IFS="${3}"
+  set -- "${1}" "${2}" "${4##*[[:space:]]}"
+  if [ "${3%%.*}" -lt 3 ]
+  then
+    run 'Installing cabal 3' 'cabal install --reinstall cabal-install'
+    run 'Creating cabal 3 symbolic link' "sudo ln -s -f /home/${USER}/.cabal/bin/cabal $(command -v cabal)"
+  fi
+  set -- "${1}" "${2}"
 
   # for docker
   install ca-certificates lsb-release
@@ -603,6 +636,10 @@ main ()
     "${SUDO} ln -f -s $(command -v g++-10) $(command -v g++)"
 
   install_docker
+
+  # for docker
+  install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'direnv' \
     'https://github.com/direnv/direnv' 'Installing direnv' \
     "cd ${SOURCES}/direnv && sudo bash install.sh > /dev/null 2>&1 && cd - > /dev/null"
@@ -617,7 +654,7 @@ main ()
     "${SUDO} make --directory ${SOURCES}/tig install-doc prefix=/usr"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
-    "cd ${SOURCES}/shellcheck && cabal install --overwrite-policy=always > /dev/null && cd - > /dev/null"
+    "cd ${SOURCES}/shellcheck && cabal install --overwrite-policy=always --installdir=/home/${USER}/.cabal/bin > /dev/null && cd - > /dev/null"
   NOTAG='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
     'Installing fff' "make --directory ${SOURCES}/fff PREFIX=${LOCAL} install"
   NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' \
