@@ -71,6 +71,7 @@ ipsec ()
             sudo rm -f /etc/systemd/system/docker.service.d/service-env.conf
             sudo bash -c ': > /etc/default/docker'
             git config --global --unset https.proxy
+            git config --global --unset http.proxy
             ;;
     *) ssh bdx.bastion"${1}".edcs.fr ;;
   esac

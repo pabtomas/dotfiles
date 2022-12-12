@@ -220,11 +220,11 @@ endfunction
 
 function! s:BuildTmuxPaneLine(buf)
   if empty(win_findbuf(a:buf))
-    let l:res = '#[fg=#' . s:TERM_COLORS[s:PALETTE.theme]
-      \ . '#,underscore,bg=#444444] ' . bufname(a:buf) . ' #[none]'
+    let l:res = '#[fg=colour' . s:PALETTE.theme
+      \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . '] ' . bufname(a:buf) . ' #[none]'
   else
-    let l:res = '#[fg=#' . s:TERM_COLORS[s:PALETTE.theme]
-      \ . '#,bold,bg=#1c1c1c] ' . bufname(a:buf) . ' #[none]'
+    let l:res = '#[fg=colour' . s:PALETTE.theme
+      \ . ',bold,bg=colour' . s:PALETTE.gray_900 . '] ' . bufname(a:buf) . ' #[none]'
   endif
   return l:res
 endfunction
@@ -246,8 +246,8 @@ function! s:UpdateTmuxPaneLine()
           endwhile
         endif
 
-        let l:tmux_pane_border = '#[fg=#' . s:TERM_COLORS[s:PALETTE.theme]
-          \ . '#,bold,bg=#1c1c1c] ' . bufname(get(l:buffers_nr, 0)) . ' #[none]'
+        let l:tmux_pane_border = '#[fg=colour' . s:PALETTE.theme
+          \ . ',bold,bg=colour' . s:PALETTE.gray_900 . '] ' . bufname(get(l:buffers_nr, 0)) . ' #[none]'
         call remove(l:buffers_nr, 0)
 
         while len(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g')
@@ -259,10 +259,10 @@ function! s:UpdateTmuxPaneLine()
             call remove(l:buffers_nr, 0)
         endwhile
 
-        let l:tmux_pane_border = '#[fg=#' . s:TERM_COLORS[s:PALETTE.theme]
-          \ . '#,underscore,bg=#444444] ... #[none]' . l:tmux_pane_border
-          \ . '#[fg=#' . s:TERM_COLORS[s:PALETTE.theme] .
-          \ . '#,underscore,bg=#444444] ... #[none]'
+        let l:tmux_pane_border = '#[fg=colour' . s:PALETTE.theme
+          \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . '] ... #[none]' . l:tmux_pane_border
+          \ . '#[fg=colour' . s:PALETTE.theme .
+          \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . '] ... #[none]'
       else
         while !empty(join(l:buffers_nr, ''))
           let l:tmux_pane_border .= s:BuildTmuxPaneLine(get(l:buffers_nr, 0))
@@ -270,13 +270,13 @@ function! s:UpdateTmuxPaneLine()
         endwhile
       endif
 
-      let l:tmux_pane_border .= '#[fg=#' . s:TERM_COLORS[s:PALETTE.theme] . ']'
+      let l:tmux_pane_border .= '#[fg=colour' . s:PALETTE.theme . ']'
 
       while len(split(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g'), '\zs')) <= l:max_len
         let l:tmux_pane_border = '━' . l:tmux_pane_border . '━'
       endwhile
 
-      let l:tmux_pane_border = '#[fg=#' . s:TERM_COLORS[s:PALETTE.theme] . ']'
+      let l:tmux_pane_border = '#[fg=colour' . s:PALETTE.theme . ']'
         \ . l:tmux_pane_border . '#[none]'
       call system('tmux set-option -p pane-border-format "'
         \ . l:tmux_pane_border . '"')
@@ -513,11 +513,11 @@ function! s:StatusLineData()
 endfunction
 
 function! s:RestoreStatusLines(timer_id)
-  execute  'highlight StatusLine   term=bold cterm=bold ctermfg='
-    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight StatusLineNC term=NONE cterm=NONE ctermfg='
-    \ . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight VertSplit    term=NONE cterm=NONE ctermfg='
+  execute  'highlight StatusLine   cterm=bold ctermfg='
+    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight StatusLineNC cterm=NONE ctermfg='
+    \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight VertSplit    cterm=NONE ctermfg='
     \ . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_700
 endfunction
 
@@ -726,50 +726,11 @@ else
   let s:seed = srand()
   const s:TMUX_THEME = rand(s:seed) % 216 + 16
 endif
-const s:TERM_COLORS = ['000000', '800000', '008000', '808000', '000080',
-  \ '800080', '008080', 'c0c0c0', '808080', 'ff0000', 'ffff00', '00ff00',
-  \ '0000ff', 'ff00ff', '00ffff', 'ffffff', '000000', '00005f', '000087',
-  \ '0000af', '0000d7', '0000ff', '005f00', '005f5f', '005f87', '005faf',
-  \ '005fd7', '005fff', '008700', '00875f', '008787', '0087af', '0087d7',
-  \ '0087ff', '00af00', '00af5f', '00af87', '00afaf', '00afd7', '00afff',
-  \ '00d700', '00d75f', '00d787', '00d7af', '00d7d7', '00d7ff', '00ff00',
-  \ '00ff5f', '00ff87', '00ffaf', '00ffd7', '00ffff', '5f0000', '5f005f',
-  \ '5f0087', '5f00af', '5f00d7', '5f00ff', '5f5f00', '5f5f5f', '5f5f87',
-  \ '5f5faf', '5f5fd7', '5f5fff', '5f8700', '5f875f', '5f8787', '5f87af',
-  \ '5f87d7', '5f87ff', '5faf00', '5faf5f', '5faf87', '5fafaf', '5fafd7',
-  \ '5fafff', '5fd700', '5fd75f', '5fd787', '5fd7af', '5fd7d7', '5fd7ff',
-  \ '5fff00', '5fff5f', '5fff87', '5fffaf', '5fffd7', '5fffff', '870000',
-  \ '87005f', '870087', '8700af', '8700d7', '8700ff', '875f00', '875f5f',
-  \ '875f87', '875faf', '875fd7', '875fff', '878700', '87875f', '878787',
-  \ '8787af', '8787d7', '8787ff', '87af00', '87af5f', '87af87', '87afaf',
-  \ '87afd7', '87afff', '87d700', '87d75f', '87d787', '87d7af', '87d7d7',
-  \ '87d7ff', '87ff00', '87ff5f', '87ff87', '87ffaf', '87ffd7', '87ffff',
-  \ 'af0000', 'af005f', 'af0087', 'af00af', 'af00d7', 'af00ff', 'af5f00',
-  \ 'af5f5f', 'af5f87', 'af5faf', 'af5fd7', 'af5fff', 'af8700', 'af875f',
-  \ 'af8787', 'af87af', 'af87d7', 'af87ff', 'afaf00', 'afaf5f', 'afaf87',
-  \ 'afafaf', 'afafd7', 'afafff', 'afd700', 'afd75f', 'afd787', 'afd7af',
-  \ 'afd7d7', 'afd7ff', 'afff00', 'afff5f', 'afff87', 'afffaf', 'afffd7',
-  \ 'afffff', 'd70000', 'd7005f', 'd70087', 'd700af', 'd700d7', 'd700ff',
-  \ 'd75f00', 'd75f5f', 'd75f87', 'd75faf', 'd75fd7', 'd75fff', 'd78700',
-  \ 'd7875f', 'd78787', 'd787af', 'd787d7', 'd787ff', 'd7af00', 'd7af5f',
-  \ 'd7af87', 'd7afaf', 'd7afd7', 'd7afff', 'd7d700', 'd7d75f', 'd7d787',
-  \ 'd7d7af', 'd7d7d7', 'd7d7ff', 'd7ff00', 'd7ff5f', 'd7ff87', 'd7ffaf',
-  \ 'd7ffd7', 'd7ffff', 'ff0000', 'ff005f', 'ff0087', 'ff00af', 'ff00d7',
-  \ 'ff00ff', 'ff5f00', 'ff5f5f', 'ff5f87', 'ff5faf', 'ff5fd7', 'ff5fff',
-  \ 'ff8700', 'ff875f', 'ff8787', 'ff87af', 'ff87d7', 'ff87ff', 'ffaf00',
-  \ 'ffaf5f', 'ffaf87', 'ffafaf', 'ffafd7', 'ffafff', 'ffd700', 'ffd75f',
-  \ 'ffd787', 'ffd7af', 'ffd7d7', 'ffd7ff', 'ffff00', 'ffff5f', 'ffff87',
-  \ 'ffffaf', 'ffffd7', 'ffffff', '080808', '121212', '1c1c1c', '262626',
-  \ '303030', '3a3a3a', '444444', '4e4e4e', '585858', '626262', '6c6c6c',
-  \ '767676', '808080', '8a8a8a', '949494', '9e9e9e', 'a8a8a8', 'b2b2b2',
-  \ 'bcbcbc', 'c6c6c6', 'd0d0d0', 'dadada', 'e4e4e4', 'eeeeee'
-\ ]
-
 
 if exists('s:PALETTE') | unlet s:PALETTE | endif
 const s:PALETTE = #{
-\   red: 1,
-\   green: 2,
+\   red: 196,
+\   green: 42,
 \   gray_900: 233,
 \   gray_800: 239,
 \   gray_700: 243,
@@ -800,12 +761,12 @@ function s:LoadColorscheme()
     \ . ' | highlight       Character                              ctermfg=' . s:PALETTE.gray_700
     \ . ' | highlight       Identifier                             ctermfg=' . s:PALETTE.white
     \ . ' | highlight       Statement                              ctermfg=' . s:PALETTE.gray_500
-    \ . ' | highlight       Preproc                                ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       PreProc                                ctermfg=' . s:PALETTE.theme
     \ . ' | highlight       Type                                   ctermfg=' . s:PALETTE.theme
     \ . ' | highlight       Special                                ctermfg=' . s:PALETTE.gray_700
     \ . ' | highlight       Underlined                             ctermfg=' . s:PALETTE.gray_500
-    \ . ' | highlight       Error                                  ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       Todo                                   ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Error                                  ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Todo                                   ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       Function                               ctermfg=' . s:PALETTE.theme
     \ . ' | highlight       ColorColumn                                                               ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       Conceal                                ctermfg=' . s:PALETTE.gray_800
@@ -823,35 +784,35 @@ function s:LoadColorscheme()
     \ . ' | highlight       LineNr                                 ctermfg=' . s:PALETTE.zinc     . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       CursorLineNr                           ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       MatchParen                                                                ctermbg=' . s:PALETTE.gray_800
-
-    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.pink_1 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-
+    \ . ' | highlight       MoreMsg                                ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.gray_700
+    \ . ' | highlight       NonText                                ctermfg=' . s:PALETTE.zinc     . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Pmenu                                  ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       PmenuSel                               ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       PopupSelelected                        ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       PmenuSbar                              ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       PmenuThumb                             ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_800
+    \ . ' | highlight       Question                               ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Search                                 ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.white
+    \ . ' | highlight       SpecialKey                             ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       SpellBad            cterm=undercurl    ctermfg=' . s:PALETTE.theme    . ' ctermbg=NONE'
+    \ . ' | highlight       SpellCap            cterm=undercurl    ctermfg=' . s:PALETTE.white    . ' ctermbg=NONE'
+    \ . ' | highlight       SpellLocal                             ctermfg=' . s:PALETTE.gray_700
+    \ . ' | highlight       SpellRare                              ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       StatusLineNC                           ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Title                                  ctermfg=' . s:PALETTE.gray_500
+    \ . ' | highlight       Visual              cterm=reverse                                         ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       WarningMsg                             ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       WildMenu                               ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Tag                 cterm=underline'
+    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       Normal              cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       MoreMsg             cterm=NONE         ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.gray_700
-    \ . ' | highlight       Question            cterm=NONE         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       NonText             cterm=NONE         ctermfg=' . s:PALETTE.zinc     . ' ctermbg=' . s:PALETTE.gray_900
-
-    \ . ' | highlight       Visual              cterm=reverse      ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Search              cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       IncSearch           cterm=reverse      ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Tag                 cterm=underline'
-    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.yellow   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:TMUX_THEME       . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:PALETTE.blue_1   . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       Pmenu               cterm=bold         ctermfg=' . s:PALETTE.green_1  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       PopupSelected       cterm=bold         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.pink_1
-    \ . ' | highlight       PmenuSbar           cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_3
-    \ . ' | highlight       PmenuThumb          cterm=NONE         ctermfg=' . s:PALETTE.black    . ' ctermbg=' . s:PALETTE.blue_1
-    \ . ' | highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.green_2  . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:PALETTE.orange_3 . ' ctermbg=' . s:PALETTE.black
-    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:PALETTE.red_2
-  highlight! link WarningMsg         ErrorMsg
   highlight  link String             Constant
   highlight  link Number             Constant
   highlight  link Boolean            Constant
@@ -872,7 +833,6 @@ function s:LoadColorscheme()
   highlight  link SpecialChar        Special
   highlight  link Delimiter          Special
   highlight  link SpecialComment     Special
-  highlight  link SpecialKey         Special
   highlight  link Debug              Special
   highlight! link StatusLineTerm     StatusLine
   highlight! link StatusLineTermNC   StatusLineNC
@@ -1130,8 +1090,8 @@ endfunction
 
 function! s:UndotreeFilter(winid, key)
   if a:key == s:UNDO_KEY.exit
-    execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-      \ . s:PALETTE.black . ' ctermbg=' . s:PALETTE.pink_1
+    execute 'highlight PopupSelected ctermfg=' . s:PALETTE.gray_700
+      \ . ' ctermbg=' . s:PALETTE.zinc
     call popup_clear()
     unlet s:undo
     call s:UnlockServer('fff')
@@ -1388,8 +1348,8 @@ function! s:Undotree()
   let s:undo = {}
   call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
-  execute 'highlight PopupSelected term=bold cterm=bold ctermfg='
-    \ . s:PALETTE.pink . ' ctermbg=' . s:PALETTE.black
+  execute 'highlight PopupSelected ctermfg=' . s:PALETTE.gray_700
+    \ . ' ctermbg=' . s:PALETTE.zinc
 
   let s:undo.diff_id = popup_create('',
   \ #{
