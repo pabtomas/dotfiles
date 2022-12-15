@@ -1602,16 +1602,16 @@ function! s:Tig(command, env, conf_tigrc, term_options)
   endif
 
   let l:tmp_tigrc = tempname()
-  if !filereadable(s:TIGRC_USER)
+  if !filereadable($TIGRC_USER)
     echohl ErrorMsg
-    echomsg 'Personal Error Message: ' . s:TIGRC_USER . ' not readable.'
+    echomsg 'Personal Error Message: ' . $TIGRC_USER . ' not readable.'
     echohl NONE
     return
   endif
-  let l:tmp_tigrc_content = readfile(s:TIGRC_USER)
+  let l:tmp_tigrc_content = readfile($TIGRC_USER)
   if empty(l:tmp_tigrc_content)
     echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not read ' . s:TIGRC_USER
+    echomsg 'Personal Error Message: Can not read ' . $TIGRC_USER
     echohl NONE
     return
   endif
@@ -2404,11 +2404,6 @@ augroup vimrc_autocomands
 "   Dependencies autocommands {{{2
 
   autocmd VimEnter * :call <SID>CheckDependencies()
-
-"   }}}
-"   Tigrc generation autocommands {{{2
-
-  autocmd VimEnter * :const s:TIGRC_USER = system('sh ' . $HOME . '/.local/sh/generate-tigrc.sh')
 
 "   }}}
 "   VimRC sourcing autocommands {{{2
