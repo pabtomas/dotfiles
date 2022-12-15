@@ -499,14 +499,14 @@ endfunction
 " status line content:
 " [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
 function! s:StatusLineData()
-  set statusline+=\ %5*[%3*%{winnr()}%5*]\ %3*%{bufnr()}%5*:%0*
+  set statusline+=\ %4*[%3*%{winnr()}%4*]\ %3*%{bufnr()}%4*:%0*
                    \%2*%{FileName(v:false)}%0*
                    \%1*%{FileName(v:true)}%0*
-  set statusline+=\ %5*[%3*%{&filetype}%5*]%0*
-  set statusline+=\ %5*C%3*%{virtcol('.')}%0*
-  set statusline+=\ %5*L%3*%{line('.')}%5*/%3*%{line('$')}\ %0*
-  set statusline+=%5*%{StartMode()}%3*%{Mode()}%5*%{EndMode()}%0*
-  set statusline+=%3*%{IndexedMatch()}%5*%{Bar()}%3*%{TotalMatch()}%0*
+  set statusline+=\ %4*[%3*%{&filetype}%4*]%0*
+  set statusline+=\ %4*C%3*%{virtcol('.')}%0*
+  set statusline+=\ %4*L%3*%{line('.')}%4*/%3*%{line('$')}\ %0*
+  set statusline+=%4*%{StartMode()}%3*%{Mode()}%4*%{EndMode()}%0*
+  set statusline+=%3*%{IndexedMatch()}%4*%{Bar()}%3*%{TotalMatch()}%0*
 endfunction
 
 function! s:RestoreStatusLines(timer_id)
@@ -813,7 +813,7 @@ function s:LoadColorscheme()
   execute  'highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       User5               cterm=bold         ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.gray_900
 
 
   highlight  link String             Constant
