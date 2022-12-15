@@ -25,7 +25,3 @@
 - Vim 8.2 required
 - Tig required
 - fff required
-
-### .tigrc
-
-Tig 2.5.4 required

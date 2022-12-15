@@ -124,7 +124,7 @@ const s:MODES = {
 
 let s:buffers_backup = []
 function! s:TriggerUserEvents(timer_id)
-  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }), 'N')
+  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 1 }), { _, val -> val.bufnr }), 'N')
   let l:buffers = map(l:buffers_nr, { nr -> #{ name: bufname(nr), nr: nr, hidden: empty(win_findbuf(nr)) } })
   if s:buffers_backup != l:buffers
     doautocmd User BuffersListChanged
@@ -197,7 +197,7 @@ function! s:CloseLonelyUnlistedBuffers()
 endfunction
 
 function! s:NextBuffer()
-  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }), 'N')
+  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 1 }), { _, val -> val.bufnr }), 'N')
   if len(l:buffers_nr) > 1
     while get(l:buffers_nr, 0) != bufnr()
       let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
@@ -208,7 +208,7 @@ function! s:NextBuffer()
 endfunction
 
 function! s:PreviousBuffer()
-  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }), { _, val -> val.bufnr }), 'N')
+  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 1 }), { _, val -> val.bufnr }), 'N')
   if len(l:buffers_nr) > 1
     while get(l:buffers_nr, 0) != bufnr()
       let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
@@ -232,7 +232,7 @@ endfunction
 function! s:UpdateTmuxPaneLine()
   if exists('${TMUX}')
     let l:tmux_pane_border = ''
-    let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 0 }),
+    let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 1 }),
       \ { _, val -> val.bufnr }), 'N')
 
     if !empty(l:buffers_nr)
@@ -720,29 +720,20 @@ endfunction
 " Style {{{1
 "   Palette {{{2
 
-if exists('${TMUX_THEME}')
-  const s:TMUX_THEME = $TMUX_THEME
-else
-  let s:seed = srand()
-  const s:TMUX_THEME = rand(s:seed) % 216 + 16
-endif
-
-if exists('s:PALETTE') | unlet s:PALETTE | endif
-const s:PALETTE = #{
-\   red: 196,
-\   green: 42,
-\   apple: 120,
-\   pink: 205,
-\   gray_900: 233,
-\   gray_800: 239,
-\   gray_700: 243,
-\   gray_600: 246,
-\   gray_500: 249,
-\   gray_400: 252,
-\   zinc: 59,
-\   white: 231,
-\   theme: s:TMUX_THEME,
-\ }
+let s:PALETTE = #{}
+let s:PALETTE.red = 196
+let s:PALETTE.green = $GREEN
+let s:PALETTE.apple = 120
+let s:PALETTE.pink = 205
+let s:PALETTE.gray_900 = $GRAY_900
+let s:PALETTE.gray_800 = $GRAY_800
+let s:PALETTE.gray_700 = $GRAY_700
+let s:PALETTE.gray_600 = $GRAY_600
+let s:PALETTE.gray_500 = $GRAY_500
+let s:PALETTE.gray_400 = $GRAY_400
+let s:PALETTE.zinc = $ZINC
+let s:PALETTE.white = $WHITE
+let s:PALETTE.theme = $THEME
 
 "   }}}
 "   Colors {{{2
@@ -767,8 +758,8 @@ function s:LoadColorscheme()
     \ . ' | highlight       Type                                   ctermfg=' . s:PALETTE.theme
     \ . ' | highlight       Special                                ctermfg=' . s:PALETTE.gray_700
     \ . ' | highlight       Underlined                             ctermfg=' . s:PALETTE.gray_500
-    \ . ' | highlight       Error                                  ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       Todo                                   ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Error               cterm=bold         ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.theme
+    \ . ' | highlight       Todo                cterm=bold         ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.theme
     \ . ' | highlight       Function                               ctermfg=' . s:PALETTE.theme
     \ . ' | highlight       ColorColumn                                                               ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       Conceal                                ctermfg=' . s:PALETTE.gray_800
@@ -777,7 +768,7 @@ function s:LoadColorscheme()
     \ . ' | highlight       CursorLine          cterm=NONE                                            ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       DiffAdd                                ctermfg=' . s:PALETTE.apple    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       DiffDelete                             ctermfg=' . s:PALETTE.red      . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       ErrorMsg                               ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.theme
+    \ . ' | highlight       ErrorMsg                               ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.theme
     \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Folded                                 ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       FoldColumn                             ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.zinc
@@ -788,7 +779,7 @@ function s:LoadColorscheme()
     \ . ' | highlight       MoreMsg                                ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.gray_700
     \ . ' | highlight       NonText                                ctermfg=' . s:PALETTE.zinc     . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Pmenu                                  ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       PmenuSel                               ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       PmenuSel                               ctermfg=' . s:PALETTE.gray_500 . ' ctermbg=' . s:PALETTE.gray_800
     \ . ' | highlight       PmenuSbar                              ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       PmenuThumb                             ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_800
     \ . ' | highlight       Question                               ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
@@ -803,18 +794,22 @@ function s:LoadColorscheme()
     \ . ' | highlight       Title                                  ctermfg=' . s:PALETTE.gray_500
     \ . ' | highlight       Visual              cterm=reverse                                         ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       WarningMsg                             ctermfg=' . s:PALETTE.theme
-    \ . ' | highlight       WildMenu                               ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       WildMenu            cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_800
+    \ . ' | highlight       Menu                                   ctermfg=' . s:PALETTE.gray_500 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Tag                 cterm=underline'
     \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.theme
-    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
 
   " Plugin
   execute  'highlight       OpenedDirPath       cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       PopupSelelected                        ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
+    \ . ' | highlight       Help                cterm=bold         ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       HelpKey             cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       HelpMode            cterm=bold         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       PopupSelelected                        ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       UndoPopup                              ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       MappingPunctuation  cterm=bold         ctermfg=' . s:PALETTE.gray_400
+    \ . ' | highlight       MappingKind         cterm=bold         ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.gray_900
 
   " Normal
   execute  'highlight       Normal              cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
@@ -850,8 +845,6 @@ function s:LoadColorscheme()
   highlight  link Debug              Special
   highlight! link StatusLineTerm     StatusLine
   highlight! link StatusLineTermNC   StatusLineNC
-  highlight  link MappingKind        Kind
-  highlight  link MappingPunctuation Punctuation
 
   if s:redhighlight.activated | execute s:redhighlight.command | endif
 endfunction
@@ -1005,22 +998,23 @@ function! s:HelpUndotree()
     endwhile
     call add(l:text, #{ text: l:each, props: l:properties })
   endfor
-  call popup_create(l:text, #{ pos: 'topleft',
-                           \   line: win_screenpos(0)[0] + winheight(0)
-                           \     - len(l:text) - &cmdheight,
-                           \   col: win_screenpos(0)[1] + s:undo.max_length
-                           \     + 1,
-                           \   zindex: 4,
-                           \   wrap: v:false,
-                           \   fixed: v:true,
-                           \   minwidth: winwidth(0) - s:undo.max_length - 1,
-                           \   maxwidth: winwidth(0) - s:undo.max_length - 1,
-                           \   time: 10000,
-                           \   border: [1, 0, 0, 0],
-                           \   borderchars: ['━'],
-                           \   borderhighlight: ['StatusLine'],
-                           \   highlight: 'Help',
-                           \ })
+  call popup_create(l:text,
+                  \ #{
+                  \   pos: 'topleft',
+                  \   line: win_screenpos(0)[0] + winheight(0)
+                  \     - len(l:text) - &cmdheight,
+                  \   col: win_screenpos(0)[1] + s:undo.max_length + 1,
+                  \   zindex: 4,
+                  \   wrap: v:false,
+                  \   fixed: v:true,
+                  \   minwidth: winwidth(0) - s:undo.max_length - 1,
+                  \   maxwidth: winwidth(0) - s:undo.max_length - 1,
+                  \   time: 10000,
+                  \   border: [1, 0, 0, 0],
+                  \   borderchars: ['━'],
+                  \   borderhighlight: ['StatusLine'],
+                  \   highlight: 'Help',
+                  \ })
 endfunction
 
 "     }}}
@@ -1384,6 +1378,7 @@ function! s:Undotree()
     \ borderchars: ['│'],
     \ borderhighlight: ['VertSplit'],
   \ })
+  call setwinvar(s:undo.diff_id, '&wincolor', 'UndoPopup')
 
   let l:popup_id = popup_create(s:undo.text,
   \ #{
@@ -1403,6 +1398,7 @@ function! s:Undotree()
     \ scrollbar: v:false,
     \ cursorline: v:true,
   \ })
+  call setwinvar(l:popup_id, '&wincolor', 'UndoPopup')
   call win_execute(l:popup_id, 'let w:line = 1 | call cursor(w:line, 0)'
   \ . ' | while s:undo.meta[line(".") - 1] != s:undo.change_backup'
   \ . ' | let w:line += 1 | call cursor(w:line, 0) | endwhile')
@@ -1606,17 +1602,16 @@ function! s:Tig(command, env, conf_tigrc, term_options)
   endif
 
   let l:tmp_tigrc = tempname()
-  let l:tigrc = expand('$HOME') . '/.tigrc'
-  if !filereadable(l:tigrc)
+  if !filereadable(s:TIGRC_USER)
     echohl ErrorMsg
-    echomsg 'Personal Error Message: ' . l:tigrc . ' not readable.'
+    echomsg 'Personal Error Message: ' . s:TIGRC_USER . ' not readable.'
     echohl NONE
     return
   endif
-  let l:tmp_tigrc_content = readfile(l:tigrc)
+  let l:tmp_tigrc_content = readfile(s:TIGRC_USER)
   if empty(l:tmp_tigrc_content)
     echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not read ' . l:tigrc
+    echomsg 'Personal Error Message: Can not read ' . s:TIGRC_USER
     echohl NONE
     return
   endif
@@ -1662,6 +1657,8 @@ function! s:Tig(command, env, conf_tigrc, term_options)
     \ mapping: v:false,
     \ scrollbar: v:false,
   \ })
+
+  setlocal nobuflisted
 
   call s:LockServer('tig')
   call s:UnlockServer('fff')
@@ -1933,9 +1930,11 @@ endfunction
 "   Variables & constants {{{2
 
 if exists('s:leaders') | unlet s:leaders | endif
+"\   global:    '²',
+"\   shift:     '³',
 const s:LEADERS = #{
-\   global:    '²',
-\   shift:     '³',
+\   global:    '`',
+\   shift:     '~',
 \   tig:       '&',
 \   tig_shift: '1',
 \ }
@@ -2407,6 +2406,11 @@ augroup vimrc_autocomands
   autocmd VimEnter * :call <SID>CheckDependencies()
 
 "   }}}
+"   Tigrc generation autocommands {{{2
+
+  autocmd VimEnter * :const s:TIGRC_USER = system('sh ' . $HOME . '/.local/sh/generate-tigrc.sh')
+
+"   }}}
 "   VimRC sourcing autocommands {{{2
 
   autocmd BufWritePost $MYVIMRC :silent call <SID>SourceVimRC()
@@ -2432,8 +2436,9 @@ augroup vimrc_autocomands
 
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
   autocmd User BuffersListChanged :silent call <SID>UpdateTmuxPaneLine()
+  autocmd VimResume * :silent call <SID>UpdateTmuxPaneLine()
   autocmd VimEnter * :silent call timer_start(200, function('s:TriggerUserEvents'), {'repeat': -1})
-  autocmd VimLeavePre * :call system('tmux set-option -p pane-border-format " [#P] "')
+  autocmd VimSuspend,VimLeavePre * :silent call system('tmux set-option -p pane-border-format " [#P] "')
 
 "   }}}
 "   Plugins autocommands {{{2

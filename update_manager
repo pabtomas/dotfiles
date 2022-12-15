@@ -41,22 +41,22 @@ NOVERSION='unavailable'
 ARCH="$(dpkg --print-architecture)"
 
 LOCAL="${HOME}/.local"
-SOURCES="${LOCAL}/sources"
-_DIR="$(CDPATH= cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)"
+LOCAL_SRC="${LOCAL}/src"
+LOCAL_SH="${LOCAL}/sh"
 
-VIMRC="${_DIR}/vim/.vimrc"
-POLYGLOT_DEST="${HOME}/.vim/pack/plugins/start/vim-polyglot"
-TMUXCONF="${_DIR}/tmux/.tmux.conf"
+POLYGLOT="${HOME}/.vim/pack/plugins/start/vim-polyglot"
 TMUXPLUGINS="${HOME}/.tmux/plugins/tpm"
-TIGRC="${_DIR}/tig/.tigrc"
-BASHRC="${_DIR}/bash/.bashrc"
-PROFILE="${_DIR}/bash/.bash_profile"
-ALIASES="${_DIR}/bash/.bash_aliases"
-GITIGNORE="${_DIR}/git/.gitignore"
-GIT_TEMPLATE_DIR='/usr/share/git-core/templates'
-HOOKS="${_DIR}/git/.hooks"
-SCRIPTS="${_DIR}/scripts"
-SCRIPTS_DEST='/opt/scripts'
+GITTEMPLATES='/usr/share/git-core/templates'
+
+DOT="$(CDPATH= cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)"
+DOT_VIMRC="${DOT}/vim/.vimrc"
+DOT_TMUXCONF="${DOT}/tmux/.tmux.conf"
+DOT_BASHRC="${DOT}/bash/.bashrc"
+DOT_PROFILE="${DOT}/bash/.bash_profile"
+DOT_ALIASES="${DOT}/bash/.bash_aliases"
+DOT_GITIGNORE="${DOT}/git/.gitignore"
+DOT_HOOKS="${DOT}/git/.hooks"
+DOT_SH="${DOT}/sh"
 
 readonly OUTPUT_LEN \
          SEP \
@@ -70,12 +70,12 @@ readonly OUTPUT_LEN \
          PM ADD_REPO POLICY INSTALL UPDATE UPGRADE AUTOREMOVE \
          NOVERSION \
          ARCH \
-         LOCAL SOURCES _DIR \
-         VIMRC POLYGLOT_DEST TMUXCONF TMUXPLUGINS TIGRC BASHRC PROFILE ALIASES GITIGNORE GIT_TEMPLATE_DIR HOOKS
+         LOCAL LOCAL_SRC DOT \
+         DOT_VIMRC POLYGLOT DOT_TMUXCONF TMUXPLUGINS DOT_BASHRC DOT_PROFILE DOT_ALIASES DOT_GITIGNORE GITTEMPLATES DOT_HOOKS
 
 _git ()
 {
-  if git --git-dir "${SOURCES}/${1}/.git" --work-tree "${SOURCES}/"${*}
+  if git --git-dir "${LOCAL_SRC}/${1}/.git" --work-tree "${LOCAL_SRC}/"${*}
   then
     return 0
   else
@@ -229,23 +229,25 @@ install_docker ()
 
 git_install ()
 {
-  if [ ! -d "${SOURCES}/${1}" ]
+  if [ ! -d "${LOCAL_SRC}/${1}" ]
   then
-    NEED_EVAL= run "Cloning ${1} repository" "git clone ${2} ${SOURCES}/${1}"
+    NEED_EVAL= run "Cloning ${1} repository" "git clone ${2} ${LOCAL_SRC}/${1}"
     NEED_EVAL= run "Adding ${1} repository as a GIT safe repository" \
-      "git config --global --add safe.directory ${SOURCES}/${1}"
+      "git config --global --add safe.directory ${LOCAL_SRC}/${1}"
     set -- '' '' '' '' "${@}"
   else
     NEED_EVAL= run "Adding ${1} repository as a GIT safe repository" \
-      "git config --global --add safe.directory ${SOURCES}/${1}"
+      "git config --global --add safe.directory ${LOCAL_SRC}/${1}"
     NEED_EVAL= run "Moving to master branch into ${1} repository" \
       "_git ${1} checkout master"
+    NEED_EVAL= run "Pulling ${1} repository" "_git ${1} pull"
     set -- "$(_git ${1} rev-list --tags --max-count=1)" "${@}"
     set -- "$(_git ${2} describe --tags "${1}")" "${@}"
-    NEED_EVAL= run "Pulling ${3} repository" "_git ${3} pull"
-    [ -z "${NOTAG+x}${NOTAG-}" ] && \
+    if [ -z "${NOTAG+x}${NOTAG-}" ]
+    then
       NEED_EVAL= run "Moving to ${1} tag into ${3} repository" \
         "_git ${3} checkout ${1}"
+    fi
     set -- "${1#"${1%%[[:digit:]]*}"}" "${@}"
     set -- "${1%"${1##[[:digit:]]*}"}" "${@}"
   fi
@@ -284,7 +286,7 @@ version_docker ()
 
 version_direnv ()
 {
-  if [ -e "$(command -v direnv)" ] && [ -d "${SOURCES}/direnv" ]
+  if [ -e "$(command -v direnv)" ] && [ -d "${LOCAL_SRC}/direnv" ]
   then
     set -- "$(_git direnv rev-list --tags --max-count=1)"
     set -- "$(_git direnv describe --tags "${1}")"
@@ -299,7 +301,7 @@ version_direnv ()
 
 version_vim ()
 {
-  if [ -e "$(command -v vim)" ] && [ -d "${SOURCES}/vim" ]
+  if [ -e "$(command -v vim)" ] && [ -d "${LOCAL_SRC}/vim" ]
   then
     set -- "$(_git vim rev-list --tags --max-count=1)"
     set -- "$(_git vim describe --tags "${1}")"
@@ -398,7 +400,7 @@ version_linguist ()
 
 version_polyglot ()
 {
-  if [ -d "${SOURCES}/polyglot" ] && [ -d "${POLYGLOT_DEST}" ]
+  if [ -d "${LOCAL_SRC}/polyglot" ] && [ -d "${POLYGLOT}" ]
   then
     set -- "$(_git polyglot rev-list --tags --max-count=1)"
     set -- "$(_git polyglot describe --tags "${1}")"
@@ -413,7 +415,7 @@ version_polyglot ()
 
 version_tpm ()
 {
-  if [ -d "${SOURCES}/tpm" ]
+  if [ -d "${LOCAL_SRC}/tpm" ]
   then
     set -- "$(_git tpm rev-list --tags --max-count=1)"
     set -- "$(_git tpm describe --tags "${1}")"
@@ -428,7 +430,7 @@ version_tpm ()
 
 version_vimix ()
 {
-  if [ -d "${SOURCES}/vimix" ]
+  if [ -d "${LOCAL_SRC}/vimix" ]
   then
     set -- "$(_git vimix rev-list --tags --max-count=1)"
     set -- "$(_git vimix describe --tags "${1}")"
@@ -475,8 +477,8 @@ main ()
   # 2) old versions
   set -- '1' ''
 
-  mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${SOURCES}" "${POLYGLOT_DEST}" "${TMUXPLUGINS}"
-  ${SUDO} mkdir -p "${SCRIPTS_DEST}"
+  mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${LOCAL_SRC}" \
+    "${POLYGLOT}" "${TMUXPLUGINS}" "${LOCAL_SH}"
 
   dashed 'Checking GNOME installation'
   if [ "${XDG_CURRENT_DESKTOP##*:}" = 'GNOME' ] && \
@@ -521,7 +523,6 @@ main ()
   then
     prompt_sudo
     run 'Updating system' "${UPDATE}"
-    prompt_sudo
     install lsb-release
   fi
 
@@ -595,6 +596,7 @@ main ()
   if [ "${3%%.*}" -lt 3 ]
   then
     run 'Installing cabal 3' 'cabal install --reinstall cabal-install'
+    prompt_sudo
     run 'Creating cabal 3 symbolic link' "sudo ln -s -f ${HOME}/.cabal/bin/cabal $(command -v cabal)"
   fi
   set -- "${1}" "${2}"
@@ -630,6 +632,7 @@ main ()
   dashed 'Resetting GIT safe repositories'
   git config --global --unset-all safe.directory && success || success
 
+  prompt_sudo
   run 'Adding symbolic link to gcc 10 and g++ 10' \
     "${SUDO} ln -f -s $(command -v gcc-10) $(command -v gcc)" \
     "${SUDO} ln -f -s $(command -v g++-10) $(command -v g++)"
@@ -641,71 +644,73 @@ main ()
 
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'direnv' \
     'https://github.com/direnv/direnv' 'Installing direnv' \
-    "cd ${SOURCES}/direnv && sudo bash install.sh > /dev/null 2>&1 && cd - > /dev/null"
+    "cd ${LOCAL_SRC}/direnv && sudo bash install.sh > /dev/null 2>&1 && cd - > /dev/null"
   git_install 'vim' 'https://github.com/vim/vim' 'Compiling vim' \
-    "make --directory ${SOURCES}/vim" 'Installing vim' \
-    "${SUDO} make --directory ${SOURCES}/vim install"
+    "make --directory ${LOCAL_SRC}/vim" 'Installing vim' \
+    "${SUDO} make --directory ${LOCAL_SRC}/vim install"
   git_install 'tig' 'https://github.com/jonas/tig' 'Compiling tig' \
-    "make --directory ${SOURCES}/tig clean all prefix=${LOCAL}" \
+    "make --directory ${LOCAL_SRC}/tig clean all prefix=${LOCAL}" \
     'Installing tig' \
-    "make --directory ${SOURCES}/tig install prefix=${LOCAL}" \
+    "make --directory ${LOCAL_SRC}/tig install prefix=${LOCAL}" \
     'Documenting tig' \
-    "${SUDO} make --directory ${SOURCES}/tig install-doc prefix=/usr"
+    "${SUDO} make --directory ${LOCAL_SRC}/tig install-doc prefix=/usr"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
-    "cd ${SOURCES}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin > /dev/null && cd - > /dev/null"
+    "cd ${LOCAL_SRC}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin > /dev/null && cd - > /dev/null"
   NOTAG='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
-    'Installing fff' "make --directory ${SOURCES}/fff PREFIX=${LOCAL} install"
+    'Installing fff' "make --directory ${LOCAL_SRC}/fff PREFIX=${LOCAL} install"
   NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' \
     'https://github.com/tmux/tmux' 'Generating tmux configuration' \
-    "cd ${SOURCES}/tmux && sh autogen.sh > /dev/null 2>&1 && cd - > /dev/null" \
+    "cd ${LOCAL_SRC}/tmux && sh autogen.sh > /dev/null 2>&1 && cd - > /dev/null" \
     'Configuring tmux' \
-    "cd ${SOURCES}/tmux && ./configure > /dev/null 2>&1 && cd - > /dev/null" \
-    'Compiling tmux' "make --directory ${SOURCES}/tmux > /dev/null 2>&1" \
+    "cd ${LOCAL_SRC}/tmux && ./configure > /dev/null 2>&1 && cd - > /dev/null" \
+    'Compiling tmux' "make --directory ${LOCAL_SRC}/tmux > /dev/null 2>&1" \
     'Installing tmux' \
-    "${SUDO} make --directory ${SOURCES}/tmux install > /dev/null"
+    "${SUDO} make --directory ${LOCAL_SRC}/tmux install > /dev/null"
   NOTAG='true' git_install 'pass' 'https://git.zx2c4.com/password-store' \
     'Installing password-store' \
-    "${SUDO} make install --directory ${SOURCES}/pass"
+    "${SUDO} make install --directory ${LOCAL_SRC}/pass"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'linguist' \
     'https://github.com/github/linguist' \
     'Installing/Updating github-linguist' \
     "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi > /dev/null"
 
-  run 'Copying .vimrc' "cp ${VIMRC} ${HOME}"
+  run 'Copying .vimrc' "cp ${DOT_VIMRC} ${HOME}"
 
   NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'polyglot' \
     'https://github.com/sheerun/vim-polyglot' \
     'Copying polyglot to vim plugins directory' \
-    "(set -- ${SOURCES}/polyglot/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${POLYGLOT_DEST} ;; esac; shift; done)"
+    "(set -- ${LOCAL_SRC}/polyglot/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${POLYGLOT} ;; esac; shift; done)"
 
-  run 'Copying .tmux.conf' "cp ${TMUXCONF} ${HOME}"
+  run 'Copying .tmux.conf' "cp ${DOT_TMUXCONF} ${HOME}"
 
   NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'tpm' 'https://github.com/tmux-plugins/tpm' \
     'Copying tpm into .tmux directory' \
-    "(set -- ${SOURCES}/tpm/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${TMUXPLUGINS} ;; esac; shift; done)"
+    "(set -- ${LOCAL_SRC}/tpm/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${TMUXPLUGINS} ;; esac; shift; done)"
 
   run 'Installing tmux plugins' "${TMUXPLUGINS}/bin/install_plugins"
 
   NOTAG='true' git_install 'vimix' \
     'https://github.com/vinceliuice/vimix-gtk-themes' \
-    'Installing vimix themes' "sudo ${SOURCES}/vimix/install.sh -t all -s all"
-
-  run 'Copying .tigrc' "cp ${TIGRC} ${HOME}"
+    'Installing vimix themes' "sudo ${LOCAL_SRC}/vimix/install.sh -t all -s all"
 
   NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bashrc' \
     "cp /etc/skel/.bashrc ${HOME}" \
-    "cat ${BASHRC} >> ${HOME}/.bashrc"
+    "cat ${DOT_BASHRC} >> ${HOME}/.bashrc"
 
   NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bash_profile' \
     "cp /etc/skel/.profile ${HOME}/.bash_profile" \
-    "cat ${PROFILE} >> ${HOME}/.bash_profile"
+    "cat ${DOT_PROFILE} >> ${HOME}/.bash_profile"
 
-  run 'Copying .bash_aliases' "cp ${ALIASES} ${HOME}/.bash_aliases"
+  run 'Copying .bash_aliases' "cp ${DOT_ALIASES} ${HOME}/.bash_aliases"
 
-  run 'Copying .gitignore' "cp ${GITIGNORE} ${GIT_TEMPLATE_DIR}"
+  prompt_sudo
+  run 'Copying .gitignore' "sudo cp ${DOT_GITIGNORE} ${GITTEMPLATES}"
 
-  run 'Copying hooks' "cp -a ${HOOKS} ${GIT_TEMPLATE_DIR}"
+  prompt_sudo
+  run 'Copying hooks' "sudo cp -a ${DOT_HOOKS} ${GITTEMPLATES}"
+
+  run 'Copying scripts' "cp -a ${DOT_SH}/. ${LOCAL_SH}"
 
   sumup "${2}"
 
@@ -722,8 +727,8 @@ main ()
       && sudo printf "" && SUDO_START=$(date +%s)
     dots "${DASHED}" &
     DOTS_PID=$!
-    for SCRIPT in $(command ls ${SCRIPTS}); do
-      sudo \cp ${SCRIPTS}/${SCRIPT} ${SCRIPTS_DEST} &> /dev/null
+    for SCRIPT in $(command ls ${DOT_SH}); do
+      sudo \cp ${DOT_SH}/${SCRIPT} ${LOCAL_SH} &> /dev/null
     done
     STATUS=$?
 
@@ -744,7 +749,7 @@ main ()
     dots "${DASHED}" &
     DOTS_PID=$!
     [[ $(which crontab | wc -l) -eq 1 ]] && echo "* * * * * env DISPLAY=:0.0\
- sh ${SCRIPTS_DEST}/redshift.sh > /dev/null 2>&1" | crontab - &> /dev/null
+ sh ${LOCAL_SH}/redshift.sh > /dev/null 2>&1" | crontab - &> /dev/null
     STATUS=$?
 
     kill ${DOTS_PID} &> /dev/null
