@@ -1,3 +1,4 @@
-- clone & update GPG
-- update_manager_ubuntu_22_04
-- .vimrc with vim9script
+- .vimrc: vim9script
+- .vimrc: mapping to open fff pane
+- .bashrc: choose colors
+- .tmux.conf: modify pane format - result of jobs/dirs commands

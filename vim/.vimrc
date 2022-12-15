@@ -408,9 +408,8 @@ let s:statusline = #{
 "     }}}
 "     Functions {{{3
 
-function! FileName(modified, is_current_win)
-  let l:check_current_win = (g:actual_curwin == win_getid())
-  if (&modified != a:modified) || (l:check_current_win != a:is_current_win)
+function! FileName(modified)
+  if (&modified != a:modified)
     return ''
   endif
   return fnamemodify(bufname('%'), ':.')
@@ -501,10 +500,8 @@ endfunction
 " [winnr] bufnr:filename [filetype] col('.') line('.')/line('$') [mode] matches
 function! s:StatusLineData()
   set statusline+=\ %5*[%3*%{winnr()}%5*]\ %3*%{bufnr()}%5*:%0*
-                   \%2*%{FileName(v:false,v:true)}%0*
-                   \%2*%{FileName(v:false,v:false)}%0*
-                   \%4*%{FileName(v:true,v:false)}%0*
-                   \%1*%{FileName(v:true,v:true)}%0*
+                   \%2*%{FileName(v:false)}%0*
+                   \%1*%{FileName(v:true)}%0*
   set statusline+=\ %5*[%3*%{&filetype}%5*]%0*
   set statusline+=\ %5*C%3*%{virtcol('.')}%0*
   set statusline+=\ %5*L%3*%{line('.')}%5*/%3*%{line('$')}\ %0*
@@ -721,10 +718,7 @@ endfunction
 "   Palette {{{2
 
 let s:PALETTE = #{}
-let s:PALETTE.red = 196
 let s:PALETTE.green = $GREEN
-let s:PALETTE.apple = 120
-let s:PALETTE.pink = 205
 let s:PALETTE.gray_900 = $GRAY_900
 let s:PALETTE.gray_800 = $GRAY_800
 let s:PALETTE.gray_700 = $GRAY_700
@@ -766,8 +760,8 @@ function s:LoadColorscheme()
     \ . ' | highlight       Cursor                                 ctermfg=' . s:PALETTE.gray_900
     \ . ' | highlight       CursorColumn                                                              ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       CursorLine          cterm=NONE                                            ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       DiffAdd                                ctermfg=' . s:PALETTE.apple    . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       DiffDelete                             ctermfg=' . s:PALETTE.red      . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       DiffAdd                                ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       DiffDelete                             ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       ErrorMsg                               ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.theme
     \ . ' | highlight       VertSplit           cterm=NONE         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Folded                                 ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.zinc
@@ -816,11 +810,11 @@ function s:LoadColorscheme()
     \ . ' | highlight       NormalAlt           cterm=NONE         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
 
   " StatusLine
-  execute  'highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.pink     . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.apple    . ' ctermbg=' . s:PALETTE.gray_900
+  execute  'highlight       User1               cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       User2               cterm=bold         ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       User3               cterm=bold         ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       User4               cterm=bold         ctermfg=' . s:PALETTE.red      . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       User5               cterm=bold         ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.gray_900
+
 
   highlight  link String             Constant
   highlight  link Number             Constant
