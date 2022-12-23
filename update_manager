@@ -48,6 +48,10 @@ POLYGLOT="${HOME}/.vim/pack/plugins/start/vim-polyglot"
 TMUXPLUGINS="${HOME}/.tmux/plugins/tpm"
 GITTEMPLATES='/usr/share/git-core/templates'
 
+GNOME_THEMES="${HOME}/.themes"
+GNOME_ICONS="${HOME}/.icons"
+GNOME_LOCAL_ICONS="${LOCAL}/share/icons"
+
 DOT="$(CDPATH= cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)"
 DOT_VIMRC="${DOT}/vim/.vimrc"
 DOT_TMUXCONF="${DOT}/tmux/.tmux.conf"
@@ -71,7 +75,9 @@ readonly OUTPUT_LEN \
          NOVERSION \
          ARCH \
          LOCAL LOCAL_SRC DOT \
-         DOT_VIMRC POLYGLOT DOT_TMUXCONF TMUXPLUGINS DOT_BASHRC DOT_PROFILE DOT_ALIASES DOT_GITIGNORE GITTEMPLATES DOT_HOOKS
+         POLYGLOT TMUXPLUGINS GITTEMPLATES \
+         GNOME_THEMES GNOME_ICONS GNOME_LOCAL_ICONS \
+         DOT DOT_VIMRC DOT_TMUXCONF DOT_BASHRC DOT_PROFILE DOT_ALIASES DOT_GITIGNORE DOT_HOOKS DOT_SH
 
 _git ()
 {
@@ -170,7 +176,7 @@ run ()
       then
         NEED_EVAL="${NEED_EVAL#"${SEP}"}"
       else
-        if ! eval "${1}"
+        if ! eval "{ ${1}; } > /dev/null 2>&1"
         then
           stop_dots "${!}"
           error
@@ -200,7 +206,7 @@ install ()
   while [ ${#} -gt 0 ]
   do
     dots "Checking ${1} package installation" "${DEFAULT_SPEED}" &
-    case "$(dpkg -l)" in 
+    case "$(dpkg -l)" in
       *" ${1}"*) stop_dots "${!}"
               success ;;
       *) stop_dots "${!}"
@@ -238,12 +244,13 @@ git_install ()
   else
     NEED_EVAL= run "Adding ${1} repository as a GIT safe repository" \
       "git config --global --add safe.directory ${LOCAL_SRC}/${1}"
-    NEED_EVAL= run "Moving to master branch into ${1} repository" \
-      "_git ${1} checkout master"
+    NEED_EVAL="NEED_EVAL${SEP}" run \
+      "Moving to master/main branch into ${1} repository" \
+      "_git ${1} checkout master || _git ${1} checkout main"
     NEED_EVAL= run "Pulling ${1} repository" "_git ${1} pull"
-    set -- "$(_git ${1} rev-list --tags --max-count=1)" "${@}"
-    set -- "$(_git ${2} describe --tags "${1}")" "${@}"
-    if [ -z "${NOTAG+x}${NOTAG-}" ]
+    set -- "$(_git "${1}" rev-list --tags --max-count=1)" "${@}"
+    set -- "$(_git "${2}" describe --tags "${1}" 2> /dev/null || :)" "${@}"
+    if [ -n "${1}" ] && [ -z "${NOTAG+x}${NOTAG-}" ]
     then
       NEED_EVAL= run "Moving to ${1} tag into ${3} repository" \
         "_git ${3} checkout ${1}"
@@ -428,17 +435,35 @@ version_tpm ()
   return 0
 }
 
-version_vimix ()
+version_chromethemes ()
 {
-  if [ -d "${LOCAL_SRC}/vimix" ]
+  if [ -d "${LOCAL_SRC}/chromethemes" ]
   then
-    set -- "$(_git vimix rev-list --tags --max-count=1)"
-    set -- "$(_git vimix describe --tags "${1}")"
-    set -- "${1#"${1%%[[:digit:]]*}"}"
-    set -- "${1%"${1##[[:digit:]]*}"}"
-    printf 'vimix %s' "${1}"
+    printf 'chromethemes 0'
   else
-    printf 'vimix %s' "${NOVERSION}"
+    printf 'chromethemes %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_candyicons ()
+{
+  if [ -d "${LOCAL_SRC}/candyicons" ]
+  then
+    printf 'candyicons 0'
+  else
+    printf 'candyicons %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
+version_sweetfolders ()
+{
+  if [ -d "${LOCAL_SRC}/sweetfolders" ]
+  then
+    printf 'sweetfolders 0'
+  else
+    printf 'sweetfolders %s' "${NOVERSION}"
   fi
   return 0
 }
@@ -475,10 +500,11 @@ main ()
   # -- ARGS --
   # 1) is GNOME installed ?
   # 2) old versions
-  set -- '1' ''
+  set -- 'true' ''
 
   mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${LOCAL_SRC}" \
-    "${POLYGLOT}" "${TMUXPLUGINS}" "${LOCAL_SH}"
+    "${POLYGLOT}" "${TMUXPLUGINS}" "${LOCAL_SH}" "${GNOME_THEMES}" \
+    "${GNOME_ICONS}"
 
   dashed 'Checking GNOME installation'
   if [ "${XDG_CURRENT_DESKTOP##*:}" = 'GNOME' ] && \
@@ -487,23 +513,7 @@ main ()
     success
   else
     error
-    set -- '0' "${2}"
-  fi
-
-  if [ ${1} -eq 1 ]
-  then
-    dashed 'Checking GNOME version'
-    set -- "$(gnome-shell --version)" "${@}"
-    set -- "${1##*[[:space:]]}\n3.30.1\n" "${@}"
-    if [ "$(printf '%b' "${1}" | sort -V | head -n1)" = '3.30.1' ]
-    then
-      success
-      shift 2
-    else
-      error
-      gnome-shell --version
-      set -- '0' "${4}"
-    fi
+    set -- 'false' "${2}"
   fi
 
   dashed 'Checking bluetooth service'
@@ -555,6 +565,9 @@ main ()
   set -- "${1}" "${2}$(version_pass)${SEP}"
   set -- "${1}" "${2}$(version_linguist)${SEP}"
   set -- "${1}" "${2}$(version_polyglot)${SEP}"
+  set -- "${1}" "${2}$(version_chromethemes)${SEP}"
+  set -- "${1}" "${2}$(version_candyicons)${SEP}"
+  set -- "${1}" "${2}$(version_sweetfolders)${SEP}"
 
   prompt_sudo
   run 'Updating system' "${UPDATE}"
@@ -568,9 +581,9 @@ main ()
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
     automake cmake redshift kcolorchooser libreoffice-gnome libreoffice \
-    gnome-tweaks
-  
-  # for vimix  
+    gnome-tweaks gnome-shell-extensions
+
+  # for GNOME extensions and themes
   install gtk2-engines-murrine gtk2-engines-pixbuf
 
   # for spaceporn
@@ -644,7 +657,7 @@ main ()
 
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'direnv' \
     'https://github.com/direnv/direnv' 'Installing direnv' \
-    "cd ${LOCAL_SRC}/direnv && sudo bash install.sh > /dev/null 2>&1 && cd - > /dev/null"
+    "cd ${LOCAL_SRC}/direnv && sudo bash install.sh && cd -"
   git_install 'vim' 'https://github.com/vim/vim' 'Compiling vim' \
     "make --directory ${LOCAL_SRC}/vim" 'Installing vim' \
     "${SUDO} make --directory ${LOCAL_SRC}/vim install"
@@ -656,24 +669,21 @@ main ()
     "${SUDO} make --directory ${LOCAL_SRC}/tig install-doc prefix=/usr"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
-    "cd ${LOCAL_SRC}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin > /dev/null && cd - > /dev/null"
+    "cd ${LOCAL_SRC}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin && cd -"
   NOTAG='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
     'Installing fff' "make --directory ${LOCAL_SRC}/fff PREFIX=${LOCAL} install"
   NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' \
     'https://github.com/tmux/tmux' 'Generating tmux configuration' \
-    "cd ${LOCAL_SRC}/tmux && sh autogen.sh > /dev/null 2>&1 && cd - > /dev/null" \
-    'Configuring tmux' \
-    "cd ${LOCAL_SRC}/tmux && ./configure > /dev/null 2>&1 && cd - > /dev/null" \
-    'Compiling tmux' "make --directory ${LOCAL_SRC}/tmux > /dev/null 2>&1" \
-    'Installing tmux' \
-    "${SUDO} make --directory ${LOCAL_SRC}/tmux install > /dev/null"
+    "cd ${LOCAL_SRC}/tmux && sh autogen.sh && cd -" 'Configuring tmux' \
+    "cd ${LOCAL_SRC}/tmux && ./configure && cd -" 'Compiling tmux' \
+    "make --directory ${LOCAL_SRC}/tmux" 'Installing tmux' \
+    "${SUDO} make --directory ${LOCAL_SRC}/tmux install"
   NOTAG='true' git_install 'pass' 'https://git.zx2c4.com/password-store' \
     'Installing password-store' \
     "${SUDO} make install --directory ${LOCAL_SRC}/pass"
   NEED_EVAL="NEED_EVAL${SEP}" git_install 'linguist' \
-    'https://github.com/github/linguist' \
-    'Installing/Updating github-linguist' \
-    "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi > /dev/null"
+    'https://github.com/github/linguist' 'Installing/Updating github-linguist' \
+    "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi"
 
   run 'Copying .vimrc' "cp ${DOT_VIMRC} ${HOME}"
 
@@ -689,10 +699,6 @@ main ()
     "(set -- ${LOCAL_SRC}/tpm/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${TMUXPLUGINS} ;; esac; shift; done)"
 
   run 'Installing tmux plugins' "${TMUXPLUGINS}/bin/install_plugins"
-
-  NOTAG='true' git_install 'vimix' \
-    'https://github.com/vinceliuice/vimix-gtk-themes' \
-    'Installing vimix themes' "sudo ${LOCAL_SRC}/vimix/install.sh -t all -s all"
 
   NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bashrc' \
     "cp /etc/skel/.bashrc ${HOME}" \
@@ -711,6 +717,65 @@ main ()
   run 'Copying hooks' "sudo cp -a ${DOT_HOOKS} ${GITTEMPLATES}"
 
   run 'Copying scripts' "cp -a ${DOT_SH}/. ${LOCAL_SH}"
+
+  if [ "${1}" = 'true' ]
+  then
+    dashed 'Checking GNOME version'
+    set -- "$(gnome-shell --version)" "${@}"
+    set -- "${1##*[[:space:]]}\n3.30.1\n" "${@}"
+    if [ "$(printf '%b' "${1}" | sort -V | head -n1)" = '3.30.1' ]
+    then
+      success
+      run 'Enabling GNOME extensions' \
+        'gsettings set org.gnome.shell disable-user-extensions false'
+      run 'Hidding desktop icons' \
+        'gsettings set org.gnome.desktop.background show-desktop-icons false'
+
+      case "$(gnome-extensions list)" in
+        *'desktop-icons@csoriano'*) run 'Disabling desktop-icons extension' \
+          'gsettings set org.gnome.shell.extensions.desktop-icons show-home false' \
+          'gsettings set org.gnome.shell.extensions.desktop-icons show-trash false' \
+          'gnome-extensions disable desktop-icons@csoriano' ;;
+        *'ding@rastersoft'*) run 'Disabling ding extension' \
+          'gsettings set org.gnome.shell.extensions.ding show-home false' \
+          'gsettings set org.gnome.shell.extensions.ding show-trash false' \
+          'gnome-extensions disable ding@rastersoft.com' ;;
+        *) error
+           printf 'Unknown desktop icon extension\n' 1>&2
+           return 1 ;;
+      esac
+
+      NOTAG='true' git_install 'chromethemes' 'https://github.com/rtlewis1/GTK' \
+        'Moving to Chrome OS themes branch' \
+        '_git chromethemes checkout remotes/origin/ChromeOS-Dark' \
+        'Copying UltraViolet theme' \
+        "cp -a -f ${LOCAL_SRC}/chromethemes/ChromeOS-Darker-UltraViolet-Rounded ${GNOME_THEMES}"
+
+      NOTAG='true' git_install 'candyicons' \
+        'https://github.com/EliverLara/candy-icons' 'Copying candy icons' \
+        "cp -a -f ${LOCAL_SRC}/candyicons ${GNOME_ICONS}" \
+        'Creating candy-link symbolic link' \
+        "ln -s -f ${GNOME_ICONS}/candyicons ${GNOME_ICONS}/candy-icons"
+
+      NOTAG='true' git_install 'sweetfolders' \
+        'https://github.com/EliverLara/Sweet-folders' 'Copying sweet folders' \
+        "cp -a -f ${LOCAL_SRC}/sweetfolders ${GNOME_LOCAL_ICONS}"
+
+      run 'Setting GNOME Interface' \
+        'gsettings set org.gnome.desktop.interface show-battery-percentage true' \
+        'gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com' \
+        "gsettings set org.gnome.desktop.interface cursor-theme 'redglass'" \
+        "gsettings set org.gnome.desktop.interface icon-theme 'Sweet-Rainbow'" \
+        "gsettings set org.gnome.desktop.interface gtk-theme 'ChromeOS-Darker-UltraViolet-Rounded'" \
+        "gsettings set org.gnome.shell.extensions.user-theme name 'ChromeOS-Darker-UltraViolet-Rounded'"
+
+      shift 2
+    else
+      error
+      gnome-shell --version
+      set -- 'false' "${4}"
+    fi
+  fi
 
   sumup "${2}"
 
@@ -761,99 +826,6 @@ main ()
     else
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
         && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-
-    DASHED=$(dashed "Enabling GNOME extensions")
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    gsettings set org.gnome.shell disable-user-extensions false &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-
-    DASHED=$(dashed "Hidding desktop icons")
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    gsettings set org.gnome.desktop.background show-desktop-icons false \
-      &> /dev/null
-
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET}
-    fi
-
-    if [[ $(gnome-extensions list | grep -E "desktop-icons" | wc -l) -eq 1 ]];
-      then
-        DASHED=$(dashed "Disabling desktop-icons extension")
-        dots "${DASHED}" &
-        DOTS_PID=$!
-        gsettings set org.gnome.shell.extensions.desktop-icons show-home \
-          false &> /dev/null && gsettings set \
-            org.gnome.shell.extensions.desktop-icons show-trash false \
-              &> /dev/null && gnome-extensions disable desktop-icons@csoriano \
-                &> /dev/null
-        STATUS=$?
-
-        kill ${DOTS_PID} &> /dev/null
-        wait ${DOTS_PID} &> /dev/null
-        DASHED=${CLEAR}${DASHED}
-
-        if [[ ${STATUS} -eq 0 ]]; then
-          echo -e ${DASHED} ${GREEN}"OK"${RESET}
-        else
-          echo -e ${DASHED} ${RED}"Not OK"${RESET}
-        fi
-    fi
-
-    DASHED=$(dashed "Setting GNOME Interface")
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    gsettings set org.gnome.desktop.interface show-battery-percentage true \
-      &> /dev/null && [[ -f /etc/X11/cursors/redglass.theme ]] \
-      && gsettings set org.gnome.desktop.interface cursor-theme 'redglass' \
-        &> /dev/null && [[ -d /usr/share/icons/HighContrast ]] \
-      && gsettings set org.gnome.desktop.interface gtk-theme \
-        'HighContrastInverse' &> /dev/null
-
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET}
-    fi
-
-    DASHED=$(dashed "Restarting GNOME")
-    echo -n -e "${DASHED}"$' '
-    killall -3 gnome-shell &> /dev/null
-
-    if [[ $? -eq 0 ]]; then
-      echo -n -e ${GREEN}"OK"${RESET}\
-        "\n\n    Press Enter when GNOME service is functional again " \
-          && read && echo
-    else
-      echo -e ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null && dirs -c \
-        && return 1
     fi
   fi
 

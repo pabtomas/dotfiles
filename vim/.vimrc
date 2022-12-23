@@ -121,17 +121,35 @@ const s:MODES = {
 
 "   }}}
 "   User autocommand {{{2
+"     Variables {{{3
 
-let s:buffers_backup = []
+let s:user_events = #{
+  \ lines: &lines,
+  \ columns: &columns,
+  \ buffers: [],
+\ }
+
+"     }}}
+"     Functions {{{3
+
 function! s:TriggerUserEvents(timer_id)
   let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 1 }), { _, val -> val.bufnr }), 'N')
   let l:buffers = map(l:buffers_nr, { nr -> #{ name: bufname(nr), nr: nr, hidden: empty(win_findbuf(nr)) } })
-  if s:buffers_backup != l:buffers
+  if s:user_events.buffers != l:buffers
     doautocmd User BuffersListChanged
-    let s:buffers_backup = l:buffers
+    let s:user_events.buffers = l:buffers
+  endif
+  if s:user_events.lines != &lines
+    doautocmd User Resized
+    let s:user_events.lines = &lines
+  endif
+  if s:user_events.columns != &columns
+    doautocmd User Resized
+    let s:user_events.columns = &columns
   endif
 endfunction
 
+"     }}}
 "   }}}
 "   Search {{{2
 "     Variables & constants {{{3
@@ -218,69 +236,63 @@ function! s:PreviousBuffer()
   endif
 endfunction
 
-function! s:BuildTmuxPaneLine(buf)
-  if empty(win_findbuf(a:buf))
-    let l:res = '#[fg=colour' . s:PALETTE.theme
-      \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . '] ' . bufname(a:buf) . ' #[none]'
+function! s:BuildTmuxPaneLine(buf, COLORS)
+  let l:res = ''
+  if a:buf.nr == bufnr('%')
+    let l:res = a:COLORS.current_buf
   else
-    let l:res = '#[fg=colour' . s:PALETTE.theme
-      \ . ',bold,bg=colour' . s:PALETTE.gray_900 . '] ' . bufname(a:buf) . ' #[none]'
+    let l:res = a:COLORS.buf
   endif
-  return l:res
+  return l:res . ' ' . a:buf.name . ' #[none]'
 endfunction
 
 function! s:UpdateTmuxPaneLine()
   if exists('${TMUX}')
     let l:tmux_pane_border = ''
-    let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 1 }),
-      \ { _, val -> val.bufnr }), 'N')
 
-    if !empty(l:buffers_nr)
-      const l:max_len = system('tmux display -p "#{pane_width}"') - 4
+    const l:COLORS = #{
+      \ current_buf: '#[fg=colour' . s:PALETTE.theme
+        \ . ',bold,bg=colour' . s:PALETTE.gray_900 . ']',
+      \ buf: '#[fg=colour' . s:PALETTE.theme
+        \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . ']',
+    \ }
 
-      if len(join(mapnew(l:buffers_nr, { nr -> bufname(nr) }), '  ')) + 2 >= l:max_len
+    const l:max_len = &columns - 4
 
-        if len(l:buffers_nr) > 1
-          while get(l:buffers_nr, 0) != bufnr()
-            let l:buffers_nr = add(l:buffers_nr, remove(l:buffers_nr, 0))
-          endwhile
-        endif
+    let l:bufs = map(
+        \ sort(
+          \ map(getbufinfo(#{ buflisted: 1 }),
+          \ { _, buf -> buf.bufnr }),
+        \ 'N'),
+      \ { _, nr -> { 'nr': nr, 'name': bufname(nr) }})
 
-        let l:tmux_pane_border = '#[fg=colour' . s:PALETTE.theme
-          \ . ',bold,bg=colour' . s:PALETTE.gray_900 . '] ' . bufname(get(l:buffers_nr, 0)) . ' #[none]'
-        call remove(l:buffers_nr, 0)
+    if len(l:bufs) > 1
+      while l:bufs[1].nr != bufnr('%')
+        let l:bufs = add(l:bufs, remove(l:bufs, 0))
+      endwhile
+    endif
 
-        while len(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g')
-          \ . bufname(get(l:buffers_nr, -1)) . bufname(get(l:buffers_nr, 0)))
-          \ + 10 + 4 <= l:max_len
-            let l:tmux_pane_border = s:BuildTmuxPaneLine(get(l:buffers_nr, -1))
-              \ . l:tmux_pane_border . s:BuildTmuxPaneLine(get(l:buffers_nr, 0))
-            call remove(l:buffers_nr, -1)
-            call remove(l:buffers_nr, 0)
-        endwhile
+    if len(join(mapnew(l:bufs, { _, buf -> buf.name }), '  ')) + 2 >= l:max_len
 
-        let l:tmux_pane_border = '#[fg=colour' . s:PALETTE.theme
-          \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . '] ... #[none]' . l:tmux_pane_border
-          \ . '#[fg=colour' . s:PALETTE.theme .
-          \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . '] ... #[none]'
-      else
-        while !empty(join(l:buffers_nr, ''))
-          let l:tmux_pane_border .= s:BuildTmuxPaneLine(get(l:buffers_nr, 0))
-          call remove(l:buffers_nr, 0)
-        endwhile
-      endif
-
-      let l:tmux_pane_border .= '#[fg=colour' . s:PALETTE.theme . ']'
-
-      while len(split(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g'), '\zs')) <= l:max_len
-        let l:tmux_pane_border = '━' . l:tmux_pane_border . '━'
+      while len(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g')
+        \ . l:bufs[0].name) + 10 + 2 <= l:max_len
+          let l:tmux_pane_border .= s:BuildTmuxPaneLine(l:bufs[0], l:COLORS)
+          call remove(l:bufs, 0)
       endwhile
 
-      let l:tmux_pane_border = '#[fg=colour' . s:PALETTE.theme . ']'
-        \ . l:tmux_pane_border . '#[none]'
-      call system('tmux set-option -p pane-border-format "'
-        \ . l:tmux_pane_border . '"')
+      let l:tmux_pane_border = l:COLORS.buf . ' ... #[none]'
+        \ . l:tmux_pane_border . l:COLORS.buf . ' ... #[none]'
+    else
+      while !empty(join(mapnew(l:bufs, { _, buf -> buf.nr }), ''))
+        let l:tmux_pane_border .= s:BuildTmuxPaneLine(l:bufs[0], l:COLORS)
+        call remove(l:bufs, 0)
+      endwhile
     endif
+
+    let l:command = 'tmux set-option -p pane-border-format "'
+      \ . l:tmux_pane_border . '"'
+
+    call system(l:command)
   endif
 endfunction
 
@@ -743,21 +755,21 @@ function s:LoadColorscheme()
 
   " https://github.com/n1ghtmare/noirblaze-vim/blob/master/colors/noirblaze.vim
   " Default
-  execute ' highlight       Comment                                ctermfg=' . s:PALETTE.gray_800
-    \ . ' | highlight       Constant                               ctermfg=' . s:PALETTE.theme
-    \ . ' | highlight       Character                              ctermfg=' . s:PALETTE.gray_700
-    \ . ' | highlight       Identifier                             ctermfg=' . s:PALETTE.white
-    \ . ' | highlight       Statement                              ctermfg=' . s:PALETTE.gray_500
-    \ . ' | highlight       PreProc                                ctermfg=' . s:PALETTE.theme
-    \ . ' | highlight       Type                                   ctermfg=' . s:PALETTE.theme
-    \ . ' | highlight       Special                                ctermfg=' . s:PALETTE.gray_700
-    \ . ' | highlight       Underlined                             ctermfg=' . s:PALETTE.gray_500
+  execute ' highlight       Comment                                ctermfg=' . s:PALETTE.gray_800 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Constant                               ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Character                              ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Identifier                             ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Statement                              ctermfg=' . s:PALETTE.gray_500 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       PreProc                                ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Type                                   ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Special                                ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Underlined                             ctermfg=' . s:PALETTE.gray_500 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Error               cterm=bold         ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.theme
     \ . ' | highlight       Todo                cterm=bold         ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.theme
-    \ . ' | highlight       Function                               ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       Function                               ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       ColorColumn                                                               ctermbg=' . s:PALETTE.zinc
-    \ . ' | highlight       Conceal                                ctermfg=' . s:PALETTE.gray_800
-    \ . ' | highlight       Cursor                                 ctermfg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Conceal                                ctermfg=' . s:PALETTE.gray_800 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Cursor                                 ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       CursorColumn                                                              ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       CursorLine          cterm=NONE                                            ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       DiffAdd                                ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
@@ -779,19 +791,19 @@ function s:LoadColorscheme()
     \ . ' | highlight       Question                               ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       Search                                 ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.white
     \ . ' | highlight       SpecialKey                             ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       SpellBad            cterm=undercurl    ctermfg=' . s:PALETTE.theme    . ' ctermbg=NONE'
-    \ . ' | highlight       SpellCap            cterm=undercurl    ctermfg=' . s:PALETTE.white    . ' ctermbg=NONE'
-    \ . ' | highlight       SpellLocal                             ctermfg=' . s:PALETTE.gray_700
-    \ . ' | highlight       SpellRare                              ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       SpellBad            cterm=undercurl    ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       SpellCap            cterm=undercurl    ctermfg=' . s:PALETTE.white    . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       SpellLocal                             ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       SpellRare                              ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       StatusLine          cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       StatusLineNC        cterm=NONE         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       Title                                  ctermfg=' . s:PALETTE.gray_500
-    \ . ' | highlight       Visual              cterm=reverse                                         ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       WarningMsg                             ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       Title                                  ctermfg=' . s:PALETTE.gray_500 . ' ctermbg=' . s:PALETTE.gray_900
+    \ . ' | highlight       Visual              cterm=reverse'
+    \ . ' | highlight       WarningMsg                             ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       WildMenu            cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_800
     \ . ' | highlight       Menu                                   ctermfg=' . s:PALETTE.gray_500 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Tag                 cterm=underline'
-    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.theme
+    \ . ' | highlight       Punctuation         cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Kind                cterm=bold         ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
 
   " Plugin
@@ -802,7 +814,7 @@ function s:LoadColorscheme()
     \ . ' | highlight       PopupSelelected                        ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       Button              cterm=bold,reverse ctermfg=' . s:PALETTE.theme    . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       UndoPopup                              ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.gray_900
-    \ . ' | highlight       MappingPunctuation  cterm=bold         ctermfg=' . s:PALETTE.gray_400
+    \ . ' | highlight       MappingPunctuation  cterm=bold         ctermfg=' . s:PALETTE.gray_400 . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       MappingKind         cterm=bold         ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.gray_900
 
   " Normal
@@ -2395,6 +2407,11 @@ cnoreabbrev <expr> help (getcmdtype() == ':' ? "top help" : "help")
 
 augroup vimrc_autocomands
   autocmd!
+"   User autocommands {{{2
+
+  autocmd VimEnter * :silent call timer_start(200, function('s:TriggerUserEvents'), {'repeat': -1})
+
+"   }}}
 "   Dependencies autocommands {{{2
 
   autocmd VimEnter * :call <SID>CheckDependencies()
@@ -2424,10 +2441,15 @@ augroup vimrc_autocomands
 "   Buffers autocommands {{{2
 
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
+
+"   }}}
+"   Tmux autocommands {{{2
+
+  autocmd VimResized :doautocmd User Resized
   autocmd User BuffersListChanged :silent call <SID>UpdateTmuxPaneLine()
+  autocmd User Resized :silent call <SID>UpdateTmuxPaneLine()
   autocmd VimResume * :silent call <SID>UpdateTmuxPaneLine()
-  autocmd VimEnter * :silent call timer_start(200, function('s:TriggerUserEvents'), {'repeat': -1})
-  autocmd VimSuspend,VimLeavePre * :silent call system('tmux set-option -p pane-border-format " [#P] "')
+  autocmd VimSuspend,VimLeavePre * :silent call systemlist('tmux set-option -p pane-border-format " [#P] "')
 
 "   }}}
 "   Plugins autocommands {{{2

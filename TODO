@@ -1,4 +1,3 @@
 - .vimrc: vim9script
 - .vimrc: mapping to open fff pane
-- .bashrc: choose colors
 - .tmux.conf: modify pane format - result of jobs/dirs commands
