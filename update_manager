@@ -468,6 +468,21 @@ version_sweetfolders ()
   return 0
 }
 
+version_pokemoncursor ()
+{
+  if [ -d "${LOCAL_SRC}/pokemoncursor" ]
+  then
+    set -- "$(_git pokemoncursor rev-list --tags --max-count=1)"
+    set -- "$(_git pokemoncursor describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    printf 'pokemoncursor %s' "${1}"
+  else
+    printf 'pokemoncursor %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
 sumup ()
 {
   printf '\n'
@@ -568,6 +583,7 @@ main ()
   set -- "${1}" "${2}$(version_chromethemes)${SEP}"
   set -- "${1}" "${2}$(version_candyicons)${SEP}"
   set -- "${1}" "${2}$(version_sweetfolders)${SEP}"
+  set -- "${1}" "${2}$(version_pokemoncursor)${SEP}"
 
   prompt_sudo
   run 'Updating system' "${UPDATE}"
@@ -761,10 +777,21 @@ main ()
         'https://github.com/EliverLara/Sweet-folders' 'Copying sweet folders' \
         "cp -a -f ${LOCAL_SRC}/sweetfolders ${GNOME_LOCAL_ICONS}"
 
+      URL="$(curl -s https://api.github.com/repos/ful1e5/pokemon-cursor/releases/latest \
+        | jq -r '.assets[] | select(.name | test("tar.gz")) | .browser_download_url')"
+      readonly URL
+
+      git_install 'pokemoncursor' 'https://github.com/ful1e5/pokemon-cursor' \
+        'Download pokemon cursor archive' \
+        "curl -L ${URL} --output ${GNOME_ICONS}/Pokemon.tar.gz" \
+        'Unarchive the pokemon cursor' \
+        "tar xf ${GNOME_ICONS}/Pokemon.tar.gz -C ${GNOME_ICONS}" \
+        'Removing archives' "rm -f ${GNOME_ICONS}/Pokemon.tar.gz"
+
       run 'Setting GNOME Interface' \
         'gsettings set org.gnome.desktop.interface show-battery-percentage true' \
         'gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com' \
-        "gsettings set org.gnome.desktop.interface cursor-theme 'redglass'" \
+        "gsettings set org.gnome.desktop.interface cursor-theme 'Pokemon'" \
         "gsettings set org.gnome.desktop.interface icon-theme 'Sweet-Rainbow'" \
         "gsettings set org.gnome.desktop.interface gtk-theme 'ChromeOS-Darker-UltraViolet-Rounded'" \
         "gsettings set org.gnome.shell.extensions.user-theme name 'ChromeOS-Darker-UltraViolet-Rounded'"
