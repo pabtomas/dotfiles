@@ -166,49 +166,18 @@ else
     PROMPT_COMMAND="${PROMPT_COMMAND}"'
     update_statusline ()
     {
-      set -- "$(jobs -l)"
-      local I="0"
-      local JOBS=""
-      local DIRS=""
-      if [[ -n "${1}" ]]
-      then
-        I="$(( I + 1 ))"
-        set -- ${@}
-        JOBS="#[fg=colour$GRAY_900#,underscore,bg=colour$THEME]JOBS#[none]"
-        while [[ ${#} -gt 0 ]]
-        do
-          JOBS="${JOBS:-} ${1} $(ps -q "${2}" -o "pid,args" | while read -r PS; do case "${PS}" in "${2}"*) set -- ${PS}; shift; printf "%s" "${*}" ;; *) ;; esac; done)"
-          unset PS
-          shift 2
-          while [[ ${#} -gt 0 ]]
-          do
-            case "${1}" in
-              \[*\]*) break ;;
-              *) shift ;;
-            esac
-          done
-        done
-      fi
       if [[ "$(dirs -l)" != "${PWD:-"$(pwd -L)"}" ]]
       then
         I="$(( I + 1 ))"
         set -- $(dirs -v)
-        DIRS="#[fg=colour$GRAY_900#,underscore,bg=colour$THEME]DIRS#[none]"
+        local DIRS="#[fg=colour$GRAY_900#,underscore,bg=colour$THEME]DIRS#[none]"
         while [[ ${#} -gt 0 ]]
         do
           DIRS="${DIRS:-} [${1}] ${2}"
           shift 2
         done
-      fi
-      if [[ ${I} -eq 1 ]]
-      then
         tmux -S "${TMUX%%,*}" set-option -g status on
-        tmux -S "${TMUX%%,*}" set-option -g status-format[0] "${JOBS:-}${DIRS:-}"
-      elif [[ ${I} -eq 2 ]]
-      then
-        tmux -S "${TMUX%%,*}" set-option -g status 2
         tmux -S "${TMUX%%,*}" set-option -g status-format[0] "${DIRS:-}"
-        tmux -S "${TMUX%%,*}" set-option -g status-format[1] "${JOBS:-}"
       else
         tmux -S "${TMUX%%,*}" set-option -g status off
       fi
