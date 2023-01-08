@@ -5,6 +5,20 @@ git config mergetool.prompt false 2> /dev/null
 
 TMUX_NESTED="${HOME}/.tmux/nested"
 
+PROMPT_COMMAND='
+  update_gitbranch ()
+  {
+    if git rev-parse --quiet --git-dir > /dev/null 2>&1
+    then
+      GIT_BRANCH="(\[\033[01;38;5;93m\]$(git rev-parse --abbrev-ref HEAD)\[\033[m\])"
+    else
+      GIT_BRANCH=""
+    fi
+  }
+
+  update_gitbranch
+  PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[m\]:\[\033[01;34m\]\w\[\033[m\]$GIT_BRANCH\$ "'
+
 # Clean TMUX socket nested session
 if [[ -d "${TMUX_NESTED}" ]]
 then
@@ -149,69 +163,68 @@ else
       tmux -S "${1}" -f "${HOME}/.tmuxintmux.conf" new-session -A -s nested -e "TMUX_PARENT=${TMUX%%,*}"
     fi
   else
-    PROMPT_COMMAND='
+    PROMPT_COMMAND="${PROMPT_COMMAND}"'
     update_statusline ()
     {
-      set -- "$(jobs -l)";
-      local I="0";
-      local JOBS="";
-      local DIRS="";
-      if [[ -n "${1}" ]];
+      set -- "$(jobs -l)"
+      local I="0"
+      local JOBS=""
+      local DIRS=""
+      if [[ -n "${1}" ]]
       then
-        I="$(( I + 1 ))";
-        set -- ${@};
-        JOBS="#[fg=colour$GRAY_900#,underscore,bg=colour$THEME]JOBS#[none]";
-        while [[ ${#} -gt 0 ]];
+        I="$(( I + 1 ))"
+        set -- ${@}
+        JOBS="#[fg=colour$GRAY_900#,underscore,bg=colour$THEME]JOBS#[none]"
+        while [[ ${#} -gt 0 ]]
         do
-          JOBS="${JOBS:-} ${1} $(ps -q "${2}" -o "pid,args" | while read -r PS; do case "${PS}" in "${2}"*) set -- ${PS}; shift; printf "%s" "${*}" ;; *) ;; esac; done)";
-          unset PS;
-          shift 2;
-          while [[ ${#} -gt 0 ]];
+          JOBS="${JOBS:-} ${1} $(ps -q "${2}" -o "pid,args" | while read -r PS; do case "${PS}" in "${2}"*) set -- ${PS}; shift; printf "%s" "${*}" ;; *) ;; esac; done)"
+          unset PS
+          shift 2
+          while [[ ${#} -gt 0 ]]
           do
             case "${1}" in
               \[*\]*) break ;;
               *) shift ;;
-            esac;
-          done;
-        done;
-      fi;
-      if [[ "$(dirs -l)" != "${PWD:-"$(pwd -L)"}" ]];
+            esac
+          done
+        done
+      fi
+      if [[ "$(dirs -l)" != "${PWD:-"$(pwd -L)"}" ]]
       then
-        I="$(( I + 1 ))";
-        set -- $(dirs -v);
-        DIRS="#[fg=colour$GRAY_900#,underscore,bg=colour$THEME]DIRS#[none]";
-        while [[ ${#} -gt 0 ]];
+        I="$(( I + 1 ))"
+        set -- $(dirs -v)
+        DIRS="#[fg=colour$GRAY_900#,underscore,bg=colour$THEME]DIRS#[none]"
+        while [[ ${#} -gt 0 ]]
         do
-          DIRS="${DIRS:-} [${1}] ${2}";
-          shift 2;
-        done;
-      fi;
-      if [[ ${I} -eq 1 ]];
+          DIRS="${DIRS:-} [${1}] ${2}"
+          shift 2
+        done
+      fi
+      if [[ ${I} -eq 1 ]]
       then
-        tmux -S "${TMUX%%,*}" set-option -g status on;
-        tmux -S "${TMUX%%,*}" set-option -g status-format[0] "${JOBS:-}${DIRS:-}";
-      elif [[ ${I} -eq 2 ]];
+        tmux -S "${TMUX%%,*}" set-option -g status on
+        tmux -S "${TMUX%%,*}" set-option -g status-format[0] "${JOBS:-}${DIRS:-}"
+      elif [[ ${I} -eq 2 ]]
       then
-        tmux -S "${TMUX%%,*}" set-option -g status 2;
-        tmux -S "${TMUX%%,*}" set-option -g status-format[0] "${DIRS:-}";
-        tmux -S "${TMUX%%,*}" set-option -g status-format[1] "${JOBS:-}";
+        tmux -S "${TMUX%%,*}" set-option -g status 2
+        tmux -S "${TMUX%%,*}" set-option -g status-format[0] "${DIRS:-}"
+        tmux -S "${TMUX%%,*}" set-option -g status-format[1] "${JOBS:-}"
       else
-        tmux -S "${TMUX%%,*}" set-option -g status off;
-      fi;
+        tmux -S "${TMUX%%,*}" set-option -g status off
+      fi
     }
 
     save_statusline ()
     {
-      if ! tmux -S "${TMUX_PARENT}" show-environment -g TMUX_IS_RESTORING > /dev/null 2>&1;
+      if ! tmux -S "${TMUX_PARENT}" show-environment -g TMUX_IS_RESTORING > /dev/null 2>&1
       then
-        unset JOB_PID;
-        dirs -p -l > "${TMUX%/*}/dirs";
-      fi;
+        unset JOB_PID
+        dirs -p -l > "${TMUX%/*}/dirs"
+      fi
     }
 
     update_statusline
     save_statusline'
-    export PROMPT_COMMAND
 
     if tmux -S "${TMUX_PARENT}" show-environment -g TMUX_IS_RESTORING > /dev/null 2>&1
     then
