@@ -834,32 +834,7 @@ main ()
 
   return 0
 
-  # CTAGS: echo -n -e $(dashed "Checking python3-docutils installation")$' '
-  # CTAGS: echo -n -e $(dashed "Checking libseccomp-dev installation")$' '
-  # CTAGS: echo -n -e $(dashed "Checking libjansson-dev installation")$' '
-
   if [[ ${GNOME} -eq 1 ]]; then
-
-    DASHED=$(dashed "Copying scripts")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    for SCRIPT in $(command ls ${DOT_SH}); do
-      sudo \cp ${DOT_SH}/${SCRIPT} ${LOCAL_SH} &> /dev/null
-    done
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
 
     DASHED=$(dashed "Copying crons")
     [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
@@ -880,23 +855,6 @@ main ()
       echo -e ${DASHED} ${RED}"Not OK"${RESET} \
         && pushd -0 &> /dev/null && dirs -c && return 1
     fi
-  fi
-
-  DASHED=$(dashed "Sourcing .bash_profile")
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  source ${HOME}/.bash_profile &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
   fi
 
   DASHED=$(dashed "Reloading CRON service")
@@ -943,11 +901,6 @@ main ()
       "echo -e 'Section \"Device\"\n   Identifier  \"Intel Graphics\"\n   Driver      \"intel\"\n   Option      \"DRI\"    \"3\"\nEndSection' >> /etc/X11/xorg.conf.d/20-intel.conf"
     REBOOT=1
   fi
-
-  [[ ${REBOOT} -gt 0 ]] \
-    && echo -e "${YELLOW}Some configuration files have been modified and need a reboot to be used${RESET}"
-
-  pushd -0 &> /dev/null && dirs -c
 }
 
 main
