@@ -621,8 +621,8 @@ main ()
 
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
-    automake cmake redshift kcolorchooser libreoffice-gnome libreoffice \
-    gnome-tweaks gnome-shell-extensions
+    automake cmake kcolorchooser libreoffice-gnome libreoffice gnome-tweaks \
+    gnome-shell-extensions
 
   # for GNOME extensions and themes
   install gtk2-engines-murrine gtk2-engines-pixbuf
@@ -833,74 +833,6 @@ main ()
   sumup "${2}"
 
   return 0
-
-  if [[ ${GNOME} -eq 1 ]]; then
-
-    DASHED=$(dashed "Copying crons")
-    [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-      && sudo printf "" && SUDO_START=$(date +%s)
-    dots "${DASHED}" &
-    DOTS_PID=$!
-    [[ $(which crontab | wc -l) -eq 1 ]] && echo "* * * * * env DISPLAY=:0.0\
- sh ${LOCAL_SH}/redshift.sh > /dev/null 2>&1" | crontab - &> /dev/null
-    STATUS=$?
-
-    kill ${DOTS_PID} &> /dev/null
-    wait ${DOTS_PID} &> /dev/null
-    DASHED=${CLEAR}${DASHED}
-
-    if [[ ${STATUS} -eq 0 ]]; then
-      echo -e ${DASHED} ${GREEN}"OK"${RESET}
-    else
-      echo -e ${DASHED} ${RED}"Not OK"${RESET} \
-        && pushd -0 &> /dev/null && dirs -c && return 1
-    fi
-  fi
-
-  DASHED=$(dashed "Reloading CRON service")
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  dots "${DASHED}" &
-  DOTS_PID=$!
-  sudo service cron reload &> /dev/null
-  STATUS=$?
-
-  kill ${DOTS_PID} &> /dev/null
-  wait ${DOTS_PID} &> /dev/null
-  DASHED=${CLEAR}${DASHED}
-
-  if [[ ${STATUS} -eq 0 ]]; then
-    echo -e ${DASHED} ${GREEN}"OK"${RESET}
-  else
-    echo -e ${DASHED} ${RED}"Not OK"${RESET} && pushd -0 &> /dev/null \
-      && dirs -c && return 1
-  fi
-
-  echo -n -e $(dashed "Checking Crocus driver usage")$' '
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  if [[ $(sudo cat /etc/environment \
-    | grep -E "MESA_LOADER_DRIVER_OVERRIDE=crocus" | wc -l ) -eq 1 ]]; then
-      echo -e ${GREEN}"OK"${RESET}
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    sudo bash -c "echo 'MESA_LOADER_DRIVER_OVERRIDE=crocus' >> /etc/environment"
-    REBOOT=1
-  fi
-
-  echo -n -e $(dashed "Checking DRI3 usage")$' '
-  [[ $(( $(date +%s) - ${SUDO_START} )) -gt 290 ]] && sudo -k \
-    && sudo printf "" && SUDO_START=$(date +%s)
-  if [[ -f /etc/X11/xorg.conf.d/20-intel.conf && \
-    $(sudo cat /etc/X11/xorg.conf.d/20-intel.conf | grep -E "DRI" \
-    | grep -E "3" | wc -l ) -eq 1 ]]; then
-      echo -e ${GREEN}"OK"${RESET}
-  else
-    echo -e ${RED}"Not OK"${RESET}
-    sudo mkdir -p /etc/X11/xorg.conf.d && sudo bash -c \
-      "echo -e 'Section \"Device\"\n   Identifier  \"Intel Graphics\"\n   Driver      \"intel\"\n   Option      \"DRI\"    \"3\"\nEndSection' >> /etc/X11/xorg.conf.d/20-intel.conf"
-    REBOOT=1
-  fi
 }
 
 main
