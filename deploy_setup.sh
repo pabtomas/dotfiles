@@ -42,7 +42,7 @@ ARCH="$(dpkg --print-architecture)"
 
 LOCAL="${HOME}/.local"
 LOCAL_SRC="${LOCAL}/src"
-LOCAL_SH="${LOCAL}/sh"
+LOCAL_SYSTEMD="${HOME}/.config/systemd/user"
 
 POLYGLOT="${HOME}/.vim/pack/plugins/start/vim-polyglot"
 TMUXPLUGINS="${HOME}/.tmux/plugins/tpm"
@@ -61,7 +61,7 @@ DOT_PROFILE="${DOT}/bash/.bash_profile"
 DOT_ALIASES="${DOT}/bash/.bash_aliases"
 DOT_GITIGNORE="${DOT}/git/.gitignore"
 DOT_HOOKS="${DOT}/git/.hooks"
-DOT_SH="${DOT}/sh"
+DOT_SYSTEMD="${DOT}/systemd"
 
 readonly OUTPUT_LEN \
          SEP \
@@ -75,10 +75,11 @@ readonly OUTPUT_LEN \
          PM ADD_REPO POLICY INSTALL UPDATE UPGRADE AUTOREMOVE \
          NOVERSION \
          ARCH \
-         LOCAL LOCAL_SRC DOT \
+         LOCAL LOCAL_SRC LOCAL_SYSTEMD \
          POLYGLOT TMUXPLUGINS GITTEMPLATES \
          GNOME_THEMES GNOME_ICONS GNOME_LOCAL_ICONS \
-         DOT DOT_VIMRC DOT_TMUXCONF DOT_TMUXINTMUXCONF DOT_BASHRC DOT_PROFILE DOT_ALIASES DOT_GITIGNORE DOT_HOOKS DOT_SH
+         DOT DOT_VIMRC DOT_TMUXCONF DOT_TMUXINTMUXCONF DOT_BASHRC DOT_PROFILE \
+         DOT_ALIASES DOT_GITIGNORE DOT_HOOKS DOT_SYSTEMD
 
 _git ()
 {
@@ -543,7 +544,7 @@ main ()
   set -- 'true' ''
 
   mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${LOCAL_SRC}" \
-    "${POLYGLOT}" "${TMUXPLUGINS}" "${LOCAL_SH}" "${GNOME_THEMES}" \
+    "${LOCAL_SYSTEMD}" "${POLYGLOT}" "${TMUXPLUGINS}" "${GNOME_THEMES}" \
     "${GNOME_ICONS}"
 
   dashed 'Checking GNOME installation'
@@ -622,7 +623,7 @@ main ()
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
     automake cmake kcolorchooser libreoffice-gnome libreoffice gnome-tweaks \
-    gnome-shell-extensions
+    gnome-shell-extensions dbus-x11
 
   # for GNOME extensions and themes
   install gtk2-engines-murrine gtk2-engines-pixbuf
@@ -758,8 +759,6 @@ main ()
   prompt_sudo
   run 'Copying hooks' "sudo cp -a ${DOT_HOOKS} ${GITTEMPLATES}"
 
-  run 'Copying scripts' "cp -a ${DOT_SH}/. ${LOCAL_SH}"
-
   if [ "${1}" = 'true' ]
   then
     dashed 'Checking GNOME version'
@@ -816,11 +815,21 @@ main ()
 
       run 'Setting GNOME Interface' \
         'gsettings set org.gnome.desktop.interface show-battery-percentage true' \
+        'gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true' \
+        'gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-automatic false' \
+        'gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-from 0.0' \
+        'gsettings set org.gnome.settings-daemon.plugins.color night-light-schedule-to 0.0' \
         'gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com' \
         "gsettings set org.gnome.desktop.interface cursor-theme 'Banana'" \
         "gsettings set org.gnome.desktop.interface icon-theme 'Sweet-Rainbow'" \
         "gsettings set org.gnome.desktop.interface gtk-theme 'ChromeOS-Darker-UltraViolet-Rounded'" \
         "gsettings set org.gnome.shell.extensions.user-theme name 'ChromeOS-Darker-UltraViolet-Rounded'"
+
+      run 'Deploy systemd timers' "cp -f ${DOT_SYSTEMD}/* ${LOCAL_SYSTEMD}" \
+        'systemctl --user enable bluelight.service' \
+        'systemctl --user enable bluelight.timer' \
+        'systemctl --user start bluelight.timer' \
+        'systemctl --user daemon-reload'
 
       shift 2
     else

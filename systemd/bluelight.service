@@ -1,0 +1,11 @@
+[Unit]
+Description=restrict blue light
+After=graphical.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+ExecStart=/bin/sh /home/user/.config/systemd/user/bluelight.sh
+
+[Install]
+WantedBy=multi-user.target
