@@ -57,7 +57,7 @@ DOT_VIMRC="${DOT}/vim/.vimrc"
 DOT_TMUXCONF="${DOT}/tmux/.tmux.conf"
 DOT_TMUXINTMUXCONF="${DOT}/tmux/.tmuxintmux.conf"
 DOT_BASHRC="${DOT}/bash/.bashrc"
-DOT_PROFILE="${DOT}/bash/.bash_profile"
+DOT_PROFILE="${DOT}/sh/.profile"
 DOT_ALIASES="${DOT}/bash/.bash_aliases"
 DOT_GITIGNORE="${DOT}/git/.gitignore"
 DOT_HOOKS="${DOT}/git/.hooks"
@@ -208,14 +208,16 @@ install ()
   while [ ${#} -gt 0 ]
   do
     dots "Checking ${1} package installation" "${DEFAULT_SPEED}" &
-    case "$(dpkg -l)" in
-      *" ${1}"*) stop_dots "${!}"
-              success ;;
-      *) stop_dots "${!}"
-         error
-         prompt_sudo
-         run "Installing ${1} package" "${INSTALL} ${1}" ;;
-    esac
+    if dpkg -l "${1}" > /dev/null 2>&1
+    then
+      stop_dots "${!}"
+      success
+    else
+      stop_dots "${!}"
+      error
+      prompt_sudo
+      run "Installing ${1} package" "${INSTALL} ${1}"
+    fi
     shift
   done
   return 0
@@ -655,6 +657,7 @@ main ()
     run 'Creating cabal 3 symbolic link' "sudo ln -s -f ${HOME}/.cabal/bin/cabal $(command -v cabal)"
   fi
   set -- "${1}" "${2}"
+  run 'Cleaning cabal temporary files' 'cabal clean'
 
   # for docker
   install ca-certificates lsb-release
@@ -727,15 +730,15 @@ main ()
     'https://github.com/github/linguist' 'Installing/Updating github-linguist' \
     "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi"
 
-  run 'Copying .vimrc' "cp ${DOT_VIMRC} ${HOME}"
+  run 'Copying .vimrc' "cp -f ${DOT_VIMRC} ${HOME}"
 
   NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'polyglot' \
     'https://github.com/sheerun/vim-polyglot' \
     'Copying polyglot to vim plugins directory' \
-    "(set -- ${LOCAL_SRC}/polyglot/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${POLYGLOT} ;; esac; shift; done)"
+    "(set -- ${LOCAL_SRC}/polyglot/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a -f "${1}"'" ${POLYGLOT} ;; esac; shift; done)"
 
-  run 'Copying .tmux.conf' "cp ${DOT_TMUXCONF} ${HOME}"
-  run 'Copying .tmuxintmux.conf' "cp ${DOT_TMUXINTMUXCONF} ${HOME}"
+  run 'Copying .tmux.conf' "cp -f ${DOT_TMUXCONF} ${HOME}"
+  run 'Copying .tmuxintmux.conf' "cp -f ${DOT_TMUXINTMUXCONF} ${HOME}"
 
   NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'tpm' 'https://github.com/tmux-plugins/tpm' \
     'Copying tpm into .tmux directory' \
@@ -744,20 +747,20 @@ main ()
   run 'Installing tmux plugins' "${TMUXPLUGINS}/bin/install_plugins"
 
   NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bashrc' \
-    "cp /etc/skel/.bashrc ${HOME}" \
+    "cp -f /etc/skel/.bashrc ${HOME}" \
     "cat ${DOT_BASHRC} >> ${HOME}/.bashrc"
 
-  NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bash_profile' \
-    "cp /etc/skel/.profile ${HOME}/.bash_profile" \
-    "cat ${DOT_PROFILE} >> ${HOME}/.bash_profile"
+  NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .profile' \
+    "cp -f /etc/skel/.profile ${HOME}/.profile" \
+    "cat ${DOT_PROFILE} >> ${HOME}/.profile"
 
-  run 'Copying .bash_aliases' "cp ${DOT_ALIASES} ${HOME}/.bash_aliases"
-
-  prompt_sudo
-  run 'Copying .gitignore' "sudo cp ${DOT_GITIGNORE} ${GITTEMPLATES}"
+  run 'Copying .bash_aliases' "cp -f ${DOT_ALIASES} ${HOME}/.bash_aliases"
 
   prompt_sudo
-  run 'Copying hooks' "sudo cp -a ${DOT_HOOKS} ${GITTEMPLATES}"
+  run 'Copying .gitignore' "sudo cp -f ${DOT_GITIGNORE} ${GITTEMPLATES}"
+
+  prompt_sudo
+  run 'Copying hooks' "sudo cp -a -f ${DOT_HOOKS} ${GITTEMPLATES}"
 
   if [ "${1}" = 'true' ]
   then
