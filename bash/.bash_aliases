@@ -73,7 +73,7 @@ ipsec ()
             git config --global --unset https.proxy
             git config --global --unset http.proxy
             ;;
-    *) ssh bdx.bastion"${1}".edcs.fr ;;
+    *) ssh ptomas@bdx.bastion"${1}".edcs.fr ;;
   esac
 }
 
