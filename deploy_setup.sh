@@ -305,6 +305,19 @@ git_install ()
   return 0
 }
 
+version_git ()
+{
+  if [ -e "$(command -v git)" ]
+  then
+    set -- "$(git --version)"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    printf 'git %s' "${1}"
+  else
+    printf 'git %s' "${NOVERSION}"
+  fi
+  return 0
+}
+
 version_docker ()
 {
   if [ -e "$(command -v docker)" ]
@@ -591,13 +604,24 @@ main ()
        return 1 ;;
   esac
   case "$(${POLICY} 2> /dev/null)" in
-    *"${PPA_REPO#*/}"*) success ;;
+    *"${PPA_REPO}"*) success ;;
     *) error
        set -f
-       ${SUDO} ${ADD_REPO} ppa:${PPA_REPO} > /dev/null
+       run 'Adding mesa drivers ppa' "${SUDO} ${ADD_REPO} ppa:${PPA_REPO}"
        set +f ;;
   esac
 
+  dashed 'Checking git ppa'
+  PPA_REPO='git-core/ppa'
+  case "$(${POLICY} 2> /dev/null)" in
+    *"${PPA_REPO}"*) success ;;
+    *) error
+       set -f
+       run 'Adding git-core ppa' "${SUDO} ${ADD_REPO} ppa:${PPA_REPO}"
+       set +f ;;
+  esac
+
+  set -- "${1}" "${2}$(version_git)${SEP}"
   set -- "${1}" "${2}$(version_docker)${SEP}"
   set -- "${1}" "${2}$(version_direnv)${SEP}"
   set -- "${1}" "${2}$(version_vim)${SEP}"
