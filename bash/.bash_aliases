@@ -216,16 +216,16 @@ git ()
     then
       if [[ -x ${git_dir}/hooks/pre-push ]]
       then
-        exec "${git_dir}/hooks/pre-push" || return 1
+        "${git_dir}"/hooks/pre-push
       fi
-    fi
-    command git "${@}" || return 1
-    if [[ ${1} == push ]]
-    then
+      shift
+      command git push --no-verify "${@}" || return 1
       if [[ -x ${git_dir}/hooks/post-push ]]
       then
-        exec "${git_dir}/hooks/post-push" || return 1
+        "${git_dir}"/hooks/post-push
       fi
+    else
+      command git "${@}" || return 1
     fi
   else
     return 1
