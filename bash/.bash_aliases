@@ -221,9 +221,8 @@ git-ranking () {
 git-ranking\""
 
 git config --global --replace-all alias.root 'rev-parse --show-toplevel'
-git config --global --replace-all alias.file "checkout HEAD -- "
-git config --global --replace-all alias.uncommit "reset HEAD^"
-git config --global --replace-all alias.unpushed "log --oneline origin/master..master"
+git config --global --replace-all alias.uncommit 'reset --soft HEAD~1'
+git config --global --replace-all alias.unpushed 'log --oneline origin/master..master'
 
 ga () { command git add "${@}"; }
 gaa () { command git add -A "${@}"; }
@@ -232,7 +231,6 @@ gamp () { command git add -A && command git commit -m "$@" && command git pull &
 gb () { command git branch "${@}"; }
 gc () { command git clone "${@}"; }
 gd () { tig status "${@}"; }
-gf () { command git file "${@}"; }
 gg () { command git ranking "${@}"; }
 gh () { command git checkout "${@}"; }
 gl () { command git pull "${@}"; }
