@@ -205,14 +205,41 @@ extract () {
   esac
 }
 
+git ()
+{
+  local git_dir
+  git_dir="$(command git rev-parse --git-dir 2> /dev/null)"
+  readonly git_dir
+  if command git rev-parse --git-dir > /dev/null 2>&1
+  then
+    if [[ ${1} == push ]]
+    then
+      if [[ -x ${git_dir}/hooks/pre-push ]]
+      then
+        "${git_dir}"/hooks/pre-push
+      fi
+      shift
+      command git push --no-verify "${@}" || return 1
+      if [[ -x ${git_dir}/hooks/post-push ]]
+      then
+        "${git_dir}"/hooks/post-push
+      fi
+    else
+      command git "${@}" || return 1
+    fi
+  else
+    return 1
+  fi
+}
+
 git config --global --replace-all alias.ranking "!bash -c \"
 git-ranking () {
   if [[ \${#} -eq 0 ]]; then
-    command git ls-files \
+    git ls-files \
       | command xargs -n1 \git blame --line-porcelain | command sed -n 's/^author //p' \
       | command sort -f | command uniq -i -c | command sort -n -r
   else
-    command git blame --line-porcelain \$* | command sed -n 's/^author //p' | command sort -f \
+    git blame --line-porcelain \$* | command sed -n 's/^author //p' | command sort -f \
       | command uniq -i -c | command sort -n -r
   fi
   echo
@@ -224,26 +251,26 @@ git config --global --replace-all alias.root 'rev-parse --show-toplevel'
 git config --global --replace-all alias.uncommit 'reset --soft HEAD~1'
 git config --global --replace-all alias.unpushed 'log --oneline origin/master..master'
 
-ga () { command git add "${@}"; }
-gaa () { command git add -A "${@}"; }
-gam () { command git add -A && command git commit -m "${@}"; }
-gamp () { command git add -A && command git commit -m "$@" && command git pull && command git push; }
-gb () { command git branch "${@}"; }
-gc () { command git clone "${@}"; }
+ga () { git add "${@}"; }
+gaa () { git add -A "${@}"; }
+gam () { git add -A && git commit -m "${@}"; }
+gamp () { git add -A && git commit -m "$@" && git pull && git push; }
+gb () { git branch "${@}"; }
+gc () { git clone "${@}"; }
 gd () { tig status "${@}"; }
-gg () { command git ranking "${@}"; }
-gh () { command git checkout "${@}"; }
-gl () { command git pull "${@}"; }
-gm () { command git commit -m "${@}"; }
-gma () { command git commit --amend "${@}"; }
-gp () { command git push "${@}"; }
-gpl () { command git unpushed "${@}"; }
-gr () { command git root "${@}"; }
-gs () { command git status -s -uall "${@}"; }
-gsd () { command git stash drop "${@}"; }
-gsp () { command git stash pop "${@}"; }
-gst () { command git stash push "${@}"; }
-gu () { command git uncommit "${@}"; }
+gg () { git ranking "${@}"; }
+gh () { git checkout "${@}"; }
+gl () { git pull "${@}"; }
+gm () { git commit -m "${@}"; }
+gma () { git commit --amend "${@}"; }
+gp () { git push "${@}"; }
+gpl () { git unpushed "${@}"; }
+gr () { git root "${@}"; }
+gs () { git status -s -uall "${@}"; }
+gsd () { git stash drop "${@}"; }
+gsp () { git stash pop "${@}"; }
+gst () { git stash push "${@}"; }
+gu () { git uncommit "${@}"; }
 
 ti () { command tig "${@}"; }
 tb () { command tig blame "${@}"; }
