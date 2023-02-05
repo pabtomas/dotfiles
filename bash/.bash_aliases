@@ -207,28 +207,24 @@ extract () {
 
 git ()
 {
-  local git_dir
-  git_dir="$(command git rev-parse --git-dir 2> /dev/null)"
-  readonly git_dir
-  if command git rev-parse --git-dir > /dev/null 2>&1
+  if [[ ${1} == push ]]
   then
-    if [[ ${1} == push ]]
+    if command git rev-parse --git-dir > /dev/null 2>&1
     then
-      if [[ -x ${git_dir}/hooks/pre-push ]]
-      then
-        "${git_dir}"/hooks/pre-push
-      fi
+      local git_dir
+      git_dir="$(command git rev-parse --git-dir)"
+      readonly git_dir
+      [[ -x ${git_dir}/hooks/pre-push ]] && "${git_dir}"/hooks/pre-push
       shift
-      command git push --no-verify "${@}" || return 1
-      if [[ -x ${git_dir}/hooks/post-push ]]
+      if command git push --no-verify "${@}"
       then
-        "${git_dir}"/hooks/post-push
+        [[ -x ${git_dir}/hooks/post-push ]] && "${git_dir}"/hooks/post-push
       fi
     else
-      command git "${@}" || return 1
+      return 1
     fi
   else
-    return 1
+    command git "${@}"
   fi
 }
 
