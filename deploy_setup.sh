@@ -1,89 +1,97 @@
 #!/bin/sh
 
-OUTPUT_LEN='80'
+has ()
+{
+  set -- "$(command -v "${1}")" 2> /dev/null || return 1
+  [ -x "${1}" ] || return 1
+  return 0
+}
 
-SEP='#'
+setup_outputlen='80'
 
-ERASE_UNTIL_END='\033[K'
+setup_sep='#'
 
-GREEN='\033[38;5;2m'
-GREEN2='\033[38;5;10m'
-BLUE='\033[38;5;14m'
-RED='\033[38;5;9m'
-WHITE='\033[38;5;15m'
-RESET='\033[m'
-BOLD='\033[1m'
-RAINBOW="\033[38;5;196m${SEP}\033[38;5;202m${SEP}\033[38;5;208m${SEP}\033[38;5;214m${SEP}\033[38;5;220m${SEP}\033[38;5;226m${SEP}\033[38;5;190m${SEP}\033[38;5;154m${SEP}\033[38;5;118m${SEP}\033[38;5;82m${SEP}\033[38;5;46m${SEP}\033[38;5;47m${SEP}\033[38;5;48m${SEP}\033[38;5;49m${SEP}\033[38;5;50m${SEP}\033[38;5;51m${SEP}\033[38;5;45m${SEP}\033[38;5;39m${SEP}\033[38;5;33m${SEP}\033[38;5;27m${SEP}\033[38;5;21m${SEP}\033[38;5;57m${SEP}\033[38;5;93m${SEP}\033[38;5;129m${SEP}\033[38;5;165m${SEP}\033[38;5;201m${SEP}\033[38;5;200m${SEP}\033[38;5;199m${SEP}\033[38;5;198m${SEP}\033[38;5;197m${SEP}"
+setup_eraseuntilend='\033[K'
 
-MOVE_START_LINE='\033[G'
-MOVE_TO_COLX="${MOVE_START_LINE}\033[${OUTPUT_LEN}C"
+setup_green='\033[38;5;2m'
+setup_green2='\033[38;5;10m'
+setup_blue='\033[38;5;14m'
+setup_red='\033[38;5;9m'
+setup_white='\033[38;5;15m'
+setup_reset='\033[m'
+setup_bold='\033[1m'
+setup_rainbow="\033[38;5;196m${setup_sep}\033[38;5;202m${setup_sep}\033[38;5;208m${setup_sep}\033[38;5;214m${setup_sep}\033[38;5;220m${setup_sep}\033[38;5;226m${setup_sep}\033[38;5;190m${setup_sep}\033[38;5;154m${setup_sep}\033[38;5;118m${setup_sep}\033[38;5;82m${setup_sep}\033[38;5;46m${setup_sep}\033[38;5;47m${setup_sep}\033[38;5;48m${setup_sep}\033[38;5;49m${setup_sep}\033[38;5;50m${setup_sep}\033[38;5;51m${setup_sep}\033[38;5;45m${setup_sep}\033[38;5;39m${setup_sep}\033[38;5;33m${setup_sep}\033[38;5;27m${setup_sep}\033[38;5;21m${setup_sep}\033[38;5;57m${setup_sep}\033[38;5;93m${setup_sep}\033[38;5;129m${setup_sep}\033[38;5;165m${setup_sep}\033[38;5;201m${setup_sep}\033[38;5;200m${setup_sep}\033[38;5;199m${setup_sep}\033[38;5;198m${setup_sep}\033[38;5;197m${setup_sep}"
 
-NL="$(printf '\nx')"
-NL="${NL%?}"
+setup_movestartline='\033[G'
+setup_movetocolx="${setup_movestartline}\033[${setup_outputlen}C"
 
-NANOS='1000000000'
+setup_newline="$(printf '\nx')"
+setup_newline="${setup_newline%?}"
 
-DEFAULT_SPEED='2'
+setup_nanos='1000000000'
 
-SUDO='sudo -E'
-SUDO_LIFETIME='290'
+setup_defaultspeed='2'
 
-PM='apt'
-ADD_REPO='add-apt-repository -y'
-POLICY="${PM} policy"
-INSTALL="${SUDO} ${PM} install -y"
-UPDATE="${SUDO} ${PM} update -y"
-UPGRADE="${SUDO} ${PM} upgrade -y"
-AUTOREMOVE="${SUDO} ${PM} autoremove -y"
+_sudo='sudo -E'
+setup_sudolifetime='290'
 
-NOVERSION='unavailable'
+_pm='apt'
+_addrepo='add-apt-repository -y'
+_pm_policy="${_pm} policy"
+_pm_install="${_sudo} ${_pm} install -y"
+_pm_update="${_sudo} ${_pm} update -y"
+_pm_upgrade="${_sudo} ${_pm} upgrade -y"
+_pm_clean="${_sudo} ${_pm} autoremove -y"
 
-ARCH="$(dpkg --print-architecture)"
+setup_noversion='unavailable'
 
-LOCAL="${HOME}/.local"
-LOCAL_SRC="${LOCAL}/src"
-LOCAL_SYSTEMD="${HOME}/.config/systemd/user"
+setup_arch="$(dpkg --print-architecture)"
+setup_user="${USER:-$(if has id; then id -un; elif has whoami; then whoami; fi)}"
 
-POLYGLOT="${HOME}/.vim/pack/plugins/start/vim-polyglot"
-TMUXPLUGINS="${HOME}/.tmux/plugins/tpm"
-GITTEMPLATES='/usr/share/git-core/templates'
+setup_local="${HOME}/.local"
+setup_localsrc="${setup_local}/src"
+setup_localsystemd="${HOME}/.config/systemd/user"
 
-GNOME_THEMES="${HOME}/.themes"
-GNOME_ICONS="${HOME}/.icons"
-GNOME_LOCAL_ICONS="${LOCAL}/share/icons"
+setup_polyglot="${HOME}/.vim/pack/plugins/start/vim-polyglot"
+setup_tpm="${HOME}/.tmux/plugins/tpm"
+setup_gittemplates='/usr/share/git-core/templates'
 
-DOT="$(CDPATH= cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)"
-DOT_VIMRC="${DOT}/vim/.vimrc"
-DOT_TMUXCONF="${DOT}/tmux/.tmux.conf"
-DOT_TMUXINTMUXCONF="${DOT}/tmux/.tmuxintmux.conf"
-DOT_BASHRC="${DOT}/bash/.bashrc"
-DOT_PROFILE="${DOT}/sh/.profile"
-DOT_ALIASES="${DOT}/bash/.bash_aliases"
-DOT_GITIGNORE="${DOT}/git/.gitignore"
-DOT_HOOKS="${DOT}/git/.hooks"
-DOT_SYSTEMD="${DOT}/systemd"
+setup_gnomethemes="${HOME}/.themes"
+setup_gnomeicons="${HOME}/.icons"
+setup_gnomelocalicons="${setup_local}/share/icons"
 
-readonly OUTPUT_LEN \
-         SEP \
-         ERASE_UNTIL_END \
-         BLUE GREEN GREEN2 RED WHITE RESET BOLD RAINBOW \
-         MOVE_START_LINE MOVE_TO_COLX \
-         NL \
-         NANOS \
-         DEFAULT_SPEED \
-         SUDO SUDO_LIFETIME \
-         PM ADD_REPO POLICY INSTALL UPDATE UPGRADE AUTOREMOVE \
-         NOVERSION \
-         ARCH \
-         LOCAL LOCAL_SRC LOCAL_SYSTEMD \
-         POLYGLOT TMUXPLUGINS GITTEMPLATES \
-         GNOME_THEMES GNOME_ICONS GNOME_LOCAL_ICONS \
-         DOT DOT_VIMRC DOT_TMUXCONF DOT_TMUXINTMUXCONF DOT_BASHRC DOT_PROFILE \
-         DOT_ALIASES DOT_GITIGNORE DOT_HOOKS DOT_SYSTEMD
+setup_dot="$(CDPATH= cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)"
+setup_dot_vimrc="${setup_dot}/vim/.vimrc"
+setup_dot_tmuxconf="${setup_dot}/tmux/.tmux.conf"
+setup_dot_tmuxintmuxconf="${setup_dot}/tmux/.tmuxintmux.conf"
+setup_dot_bashrc="${setup_dot}/bash/.bashrc"
+setup_dot_profile="${setup_dot}/sh/.profile"
+setup_dot_aliases="${setup_dot}/bash/.bash_aliases"
+setup_dot_gitignore="${setup_dot}/git/.gitignore"
+setup_dot_hooks="${setup_dot}/git/.hooks"
+setup_dot_systemd="${setup_dot}/systemd"
+
+readonly setup_outputlen \
+         setup_sep \
+         setup_eraseuntilend \
+         setup_blue setup_green setup_green2 setup_red setup_white setup_reset setup_bold setup_rainbow \
+         setup_movestartline setup_movetocolx \
+         setup_newline \
+         setup_nanos \
+         setup_defaultspeed \
+         _sudo setup_sudolifetime \
+         _pm _addrepo _pm_policy _pm_install _pm_update _pm_upgrade _pm_clean \
+         setup_noversion \
+         setup_arch \
+         setup_local setup_localsrc setup_localsystemd \
+         setup_polyglot setup_tpm setup_gittemplates \
+         setup_gnomethemes setup_gnomeicons setup_gnomelocalicons \
+         setup_dot setup_dot_vimrc setup_dot_tmuxconf setup_dot_tmuxintmuxconf setup_dot_bashrc setup_dot_profile \
+         setup_dot_aliases setup_dot_gitignore setup_dot_hooks setup_dot_systemd
 
 _git ()
 {
-  if git --git-dir "${LOCAL_SRC}/${1}/.git" --work-tree "${LOCAL_SRC}/"${*}
+  if git --git-dir "${setup_localsrc}/${1}/.git" --work-tree "${setup_localsrc}/"${*}
   then
     return 0
   else
@@ -93,18 +101,18 @@ _git ()
 
 dashed ()
 {
-  set -- "${1}" "${OUTPUT_LEN}" "${RAINBOW}" ''
+  set -- "${1}" "${setup_outputlen}" "${setup_rainbow}" ''
   while [ ${2} -gt 0 ]
   do
-    [ -z "${3}" ] && set -- "${1}" "${2}" "${RAINBOW}" "${4}"
-    set -- "${1}" "$(( ${2} - 1 ))" "${3#*"${SEP}"}" "${4}${3%%"${SEP}"*}-"
+    [ -z "${3}" ] && set -- "${1}" "${2}" "${setup_rainbow}" "${4}"
+    set -- "${1}" "$(( ${2} - 1 ))" "${3#*"${setup_sep}"}" "${4}${3%%"${setup_sep}"*}-"
   done
   set -- "${1}" "$(( ${#1} + 1 ))" "${4}"
   while [ ${2} -gt 0 ]
   do
     set -- "${1}" "$(( ${2} - 1 ))" "${3#*-}"
   done
-  printf '%b%s%b %b%b ' "${WHITE}" "${1}" "${RESET}" "${3%\\*}" "${RESET}"
+  printf '%b%s%b %b%b ' "${setup_white}" "${1}" "${setup_reset}" "${3%\\*}" "${setup_reset}"
   return 0
 }
 
@@ -113,25 +121,25 @@ dashed ()
 # 2) speed
 dots ()
 {
-  trap 'DOTS_BREAK=""' USR1
+  trap 'setup_dotsbreak=""' USR1
   dashed "${1}"
-  set -- "$(( $(date '+%s%N') * ${2} / NANOS ))" "${2}"
+  set -- "$(( $(date '+%s%N') * ${2} / setup_nanos ))" "${2}"
   set -- "${1}" "${@}"
-  while [ -n "${DOTS_BREAK-x}" ]
+  while [ -n "${setup_dotsbreak-x}" ]
   do
-    set -- "${1}" "${2}" "${3}" "$(( $(date '+%s%N') * ${3} / NANOS ))"
+    set -- "${1}" "${2}" "${3}" "$(( $(date '+%s%N') * ${3} / setup_nanos ))"
     if [ $(( ${4} - ${1} )) -gt 0 ]
     then
-      printf '%b%b.%b' "${WHITE}" "${BOLD}" "${RESET}"
-      set -- "$(( $(date '+%s%N') * ${3} / NANOS ))" "${2}" "${3}" "${4}"
+      printf '%b%b.%b' "${setup_white}" "${setup_bold}" "${setup_reset}"
+      set -- "$(( $(date '+%s%N') * ${3} / setup_nanos ))" "${2}" "${3}" "${4}"
     fi
     if [ $(( ${4} - ${2} )) -gt 3 ]
     then
-      printf '%b%b' "${MOVE_TO_COLX}" "${ERASE_UNTIL_END}"
-      set -- "${1}" "$(( $(date '+%s%N') * ${3} / NANOS ))" "${3}" "${4}"
+      printf '%b%b' "${setup_movetocolx}" "${setup_eraseuntilend}"
+      set -- "${1}" "$(( $(date '+%s%N') * ${3} / setup_nanos ))" "${3}" "${4}"
     fi
   done
-  unset DOTS_BREAK
+  unset setup_dotsbreak
   return 0
 }
 
@@ -139,44 +147,44 @@ stop_dots ()
 {
   kill -USR1 "${1}"
   wait "${1}" || :
-  printf '%b%b' "${MOVE_TO_COLX}" "${ERASE_UNTIL_END}"
+  printf '%b%b' "${setup_movetocolx}" "${setup_eraseuntilend}"
   return 0
 }
 
 prompt_sudo ()
 {
-  if [ $(( $(date '+%s') - ${SUDO_LASTPROMPT:-0} )) -gt ${SUDO_LIFETIME} ]
+  if [ $(( $(date '+%s') - ${setup_sudolastprompt:-"0"} )) -gt ${setup_sudolifetime} ]
   then
     sudo -k
-    SUDO_LASTPROMPT="$(date '+%s')"
-    ${SUDO} sh -c ':' || exit 1
+    setup_sudolastprompt="$(date '+%s')"
+    ${_sudo} sh -c ':' || exit 1
   fi
   return 0
 }
 
 success ()
 {
-  printf '%b%bOK%b\n' "${GREEN}" "${BOLD}" "${RESET}"
+  printf '%b%bOK%b\n' "${setup_green}" "${setup_bold}" "${setup_reset}"
   return 0
 }
 
 error ()
 {
-  printf '%b%bKO%b\n' "${RED}" "${BOLD}" "${RESET}"
+  printf '%b%bKO%b\n' "${setup_red}" "${setup_bold}" "${setup_reset}"
   return 0
 }
 
 run ()
 {
-  dots "${1}" "${DEFAULT_SPEED}" &
+  dots "${1}" "${setup_defaultspeed}" &
   shift
   while [ ${#} -gt 0 ]
   do
-    if [ -n "${NEED_EVAL-}" ]
+    if [ -n "${setup_needeval-}" ]
     then
-      if [ "${NEED_EVAL%"${NEED_EVAL#?}"}" = "${SEP}" ]
+      if [ "${setup_needeval%"${setup_needeval#?}"}" = "${setup_sep}" ]
       then
-        NEED_EVAL="${NEED_EVAL#"${SEP}"}"
+        setup_needeval="${setup_needeval#"${setup_sep}"}"
       else
         if ! eval "{ ${1}; } > /dev/null 2>&1"
         then
@@ -184,7 +192,7 @@ run ()
           error
           exit 1
         fi
-        NEED_EVAL="${NEED_EVAL#*"${SEP}"}"
+        setup_needeval="${setup_needeval#*"${setup_sep}"}"
         shift
         continue
       fi
@@ -207,7 +215,7 @@ install ()
 {
   while [ ${#} -gt 0 ]
   do
-    dots "Checking ${1} package installation" "${DEFAULT_SPEED}" &
+    dots "Checking ${1} package installation" "${setup_defaultspeed}" &
     if dpkg -l "${1}" > /dev/null 2>&1
     then
       stop_dots "${!}"
@@ -216,7 +224,7 @@ install ()
       stop_dots "${!}"
       error
       prompt_sudo
-      run "Installing ${1} package" "${INSTALL} ${1}"
+      run "Installing ${1} package" "${_pm_install} ${1}"
     fi
     shift
   done
@@ -229,33 +237,50 @@ install_docker ()
   then
     prompt_sudo
     curl -f -s -S -L https://download.docker.com/linux/ubuntu/gpg \
-      | ${SUDO} gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      | ${_sudo} gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     prompt_sudo
-    printf 'deb [arch=%s signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu %s stable\n' "${ARCH}" "${RELEASE}" \
-      | ${SUDO} tee /etc/apt/sources.list.d/docker.list > /dev/null
+    printf 'deb [arch=%s signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu %s stable\n' "${setup_arch}" "${setup_release}" \
+      | ${_sudo} tee /etc/apt/sources.list.d/docker.list > /dev/null
   fi
+
+  if ! getent group docker > /dev/null
+  then
+    prompt_sudo
+    run 'Adding new docker group' "${_sudo} groupadd docker"
+  fi
+
+  case "$(getent group docker):" in
+    *:"${setup_user}":*) ;;
+    *) prompt_sudo
+       run 'Adding current user to docker group' "${_sudo} usermod -aG docker ${setup_user}" ;;
+  esac
+
+  case " $(groups) " in
+    *" docker "*) ;;
+    *) run 'Logging as docker group' 'newgrp docker' ;;
+  esac
   return 0
 }
 
 git_install ()
 {
-  if [ ! -d "${LOCAL_SRC}/${1}" ]
+  if [ ! -d "${setup_localsrc}/${1}" ]
   then
-    NEED_EVAL= run "Cloning ${1} repository" "git clone ${2} ${LOCAL_SRC}/${1}"
-    NEED_EVAL= run "Adding ${1} repository as a GIT safe repository" \
-      "git config --global --add safe.directory ${LOCAL_SRC}/${1}"
+    setup_needeval= run "Cloning ${1} repository" "git clone ${2} ${setup_localsrc}/${1}"
+    setup_needeval= run "Adding ${1} repository as a GIT safe repository" \
+      "git config --global --add safe.directory ${setup_localsrc}/${1}"
     set -- '' '' '' '' "${@}"
   else
-    NEED_EVAL= run "Adding ${1} repository as a GIT safe repository" \
-      "git config --global --add safe.directory ${LOCAL_SRC}/${1}"
-    NEED_EVAL="NEED_EVAL${SEP}" run \
+    setup_needeval= run "Adding ${1} repository as a GIT safe repository" \
+      "git config --global --add safe.directory ${setup_localsrc}/${1}"
+    setup_needeval="NEEDEVAL${setup_sep}" run \
       "Moving to master/main branch into ${1} repository" \
       "_git ${1} checkout master || _git ${1} checkout main"
-    NEED_EVAL= run \
+    setup_needeval= run \
       "Checking ${1} remote and local master branches are Up-to-date" \
       "_git ${1} remote update"
 
-    # $1=LOCAL, $2=REMOTE, $3=BASE
+    # $1=setup_local, $2=REMOTE, $3=BASE
     set -- "$(_git "${1}" rev-parse @{0})" "$(_git "${1}" rev-parse @{u})" \
       "$(_git "${1}" merge-base @{0} @{u})" "${@}"
 
@@ -267,12 +292,12 @@ git_install ()
     then
       # Need to pull
       shift 3
-      NEED_EVAL= run "Pulling ${1} repository" "_git ${1} pull"
+      setup_needeval= run "Pulling ${1} repository" "_git ${1} pull"
       set -- "$(_git "${1}" rev-list --tags --max-count=1)" "${@}"
       set -- "$(_git "${2}" describe --tags "${1}" 2> /dev/null || :)" "${@}"
-      if [ -n "${1}" ] && [ -z "${NOTAG+x}${NOTAG-}" ]
+      if [ -n "${1}" ] && [ -z "${setup_notag+x}${setup_notag-}" ]
       then
-        NEED_EVAL= run "Moving to ${1} tag into ${3} repository" \
+        setup_needeval= run "Moving to ${1} tag into ${3} repository" \
           "_git ${3} checkout ${1}"
       fi
       set -- "${1#"${1%%[[:digit:]]*}"}" "${@}"
@@ -298,7 +323,7 @@ git_install ()
         *'sudo '*) prompt_sudo ;;
         *) ;;
       esac
-      NEED_EVAL="${NEED_EVAL-}" run "${1}" "${2}"
+      setup_needeval="${setup_needeval-}" run "${1}" "${2}"
       shift 2
     done
   fi
@@ -313,7 +338,7 @@ version_git ()
     set -- "${1#"${1%%[[:digit:]]*}"}"
     printf 'git %s' "${1}"
   else
-    printf 'git %s' "${NOVERSION}"
+    printf 'git %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -327,14 +352,14 @@ version_docker ()
     set -- "${1%,*}"
     printf 'docker %s' "${1}"
   else
-    printf 'docker %s' "${NOVERSION}"
+    printf 'docker %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_direnv ()
 {
-  if [ -e "$(command -v direnv)" ] && [ -d "${LOCAL_SRC}/direnv" ]
+  if [ -e "$(command -v direnv)" ] && [ -d "${setup_localsrc}/direnv" ]
   then
     set -- "$(_git direnv rev-list --tags --max-count=1)"
     set -- "$(_git direnv describe --tags "${1}")"
@@ -342,14 +367,14 @@ version_direnv ()
     set -- "${1%"${1##[[:digit:]]*}"}"
     printf 'direnv %s' "${1}"
   else
-    printf 'direnv %s' "${NOVERSION}"
+    printf 'direnv %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_vim ()
 {
-  if [ -e "$(command -v vim)" ] && [ -d "${LOCAL_SRC}/vim" ]
+  if [ -e "$(command -v vim)" ] && [ -d "${setup_localsrc}/vim" ]
   then
     set -- "$(_git vim rev-list --tags --max-count=1)"
     set -- "$(_git vim describe --tags "${1}")"
@@ -357,7 +382,7 @@ version_vim ()
     set -- "${1%"${1##[[:digit:]]*}"}"
     printf 'vim %s' "${1}"
   else
-    printf 'vim %s' "${NOVERSION}"
+    printf 'vim %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -367,13 +392,13 @@ version_tig ()
   if [ -e "$(command -v tig)" ]
   then
     set -- "${IFS}"
-    IFS="${NL}"
+    IFS="${setup_newline}"
     set -- "${1}" $(tig --version)
     IFS="${1}"
     set -- "${2#"${2%%[[:digit:]]*}"}"
     printf 'tig %s' "${1}"
   else
-    printf 'tig %s' "${NOVERSION}"
+    printf 'tig %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -383,13 +408,13 @@ version_shellcheck ()
   if [ -e "$(command -v shellcheck)" ]
   then
     set -- "${IFS}"
-    IFS="${NL}"
+    IFS="${setup_newline}"
     set -- "${1}" $(shellcheck --version)
     IFS="${1}"
     set -- "${3#"${3%%[[:digit:]]*}"}"
     printf 'shellcheck %s' "${1}"
   else
-    printf 'shellcheck %s' "${NOVERSION}"
+    printf 'shellcheck %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -400,7 +425,7 @@ version_fff ()
   then
     fff -v | tr -d '\n'
   else
-    printf 'fff %s' "${NOVERSION}"
+    printf 'fff %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -411,7 +436,7 @@ version_tmux ()
   then
     tmux -V | tr -d '\n'
   else
-    printf 'tmux %s' "${NOVERSION}"
+    printf 'tmux %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -421,14 +446,14 @@ version_pass ()
   if [ -e "$(command -v pass)" ]
   then
     set -- "${IFS}"
-    IFS="${NL}"
+    IFS="${setup_newline}"
     set -- "${1}" $(pass version)
     IFS="${1}"
     set -- "${5#"${5%%[[:digit:]]*}"}"
     set -- "${1%"${1##*[[:digit:]]}"}"
     printf 'pass %s' "${1}"
   else
-    printf 'pass %s' "${NOVERSION}"
+    printf 'pass %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -441,14 +466,14 @@ version_linguist ()
     set -- "${1#"${1%%[[:digit:]]*}"}"
     printf 'linguist %s' "${1}"
   else
-    printf 'linguist %s' "${NOVERSION}"
+    printf 'linguist %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_polyglot ()
 {
-  if [ -d "${LOCAL_SRC}/polyglot" ] && [ -d "${POLYGLOT}" ]
+  if [ -d "${setup_localsrc}/polyglot" ] && [ -d "${setup_polyglot}" ]
   then
     set -- "$(_git polyglot rev-list --tags --max-count=1)"
     set -- "$(_git polyglot describe --tags "${1}")"
@@ -456,14 +481,14 @@ version_polyglot ()
     set -- "${1%"${1##[[:digit:]]*}"}"
     printf 'polyglot %s' "${1}"
   else
-    printf 'polyglot %s' "${NOVERSION}"
+    printf 'polyglot %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_tpm ()
 {
-  if [ -d "${LOCAL_SRC}/tpm" ]
+  if [ -d "${setup_localsrc}/tpm" ]
   then
     set -- "$(_git tpm rev-list --tags --max-count=1)"
     set -- "$(_git tpm describe --tags "${1}")"
@@ -471,47 +496,47 @@ version_tpm ()
     set -- "${1%"${1##[[:digit:]]*}"}"
     printf 'tpm %s' "${1}"
   else
-    printf 'tpm %s' "${NOVERSION}"
+    printf 'tpm %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_chromethemes ()
 {
-  if [ -d "${LOCAL_SRC}/chromethemes" ]
+  if [ -d "${setup_localsrc}/chromethemes" ]
   then
     printf 'chromethemes 0'
   else
-    printf 'chromethemes %s' "${NOVERSION}"
+    printf 'chromethemes %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_candyicons ()
 {
-  if [ -d "${LOCAL_SRC}/candyicons" ]
+  if [ -d "${setup_localsrc}/candyicons" ]
   then
     printf 'candyicons 0'
   else
-    printf 'candyicons %s' "${NOVERSION}"
+    printf 'candyicons %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_sweetfolders ()
 {
-  if [ -d "${LOCAL_SRC}/sweetfolders" ]
+  if [ -d "${setup_localsrc}/sweetfolders" ]
   then
     printf 'sweetfolders 0'
   else
-    printf 'sweetfolders %s' "${NOVERSION}"
+    printf 'sweetfolders %s' "${setup_noversion}"
   fi
   return 0
 }
 
 version_bananacursor ()
 {
-  if [ -d "${LOCAL_SRC}/bananacursor" ]
+  if [ -d "${setup_localsrc}/bananacursor" ]
   then
     set -- "$(_git bananacursor rev-list --tags --max-count=1)"
     set -- "$(_git bananacursor describe --tags "${1}")"
@@ -519,7 +544,7 @@ version_bananacursor ()
     set -- "${1%"${1##[[:digit:]]*}"}"
     printf 'bananacursor %s' "${1}"
   else
-    printf 'bananacursor %s' "${NOVERSION}"
+    printf 'bananacursor %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -529,19 +554,19 @@ sumup ()
   printf '\n'
   while [ -n "${1}" ]
   do
-    case "${1%%"${SEP}"*}" in
-      *"${NOVERSION}"*) printf '%b' "${BLUE}" ;;
-      *) if [ "${1%%"${SEP}"*}" != "$(eval "version_${1%%[[:space:]]*}")" ]
+    case "${1%%"${setup_sep}"*}" in
+      *"${setup_noversion}"*) printf '%b' "${setup_blue}" ;;
+      *) if [ "${1%%"${setup_sep}"*}" != "$(eval "version_${1%%[[:space:]]*}")" ]
          then
-           printf '%b' "${GREEN2}"
+           printf '%b' "${setup_green2}"
          else
-           printf '%b' "${WHITE}"
+           printf '%b' "${setup_white}"
          fi ;;
     esac
-    printf '%b%s -> ' "${BOLD}" "${1%%"${SEP}"*}"
+    printf '%b%s -> ' "${setup_bold}" "${1%%"${setup_sep}"*}"
     eval "version_${1%%[[:space:]]*}"
-    set -- "${1#*"${SEP}"}"
-    printf '%b\n' "${RESET}"
+    set -- "${1#*"${setup_sep}"}"
+    printf '%b\n' "${setup_reset}"
   done
   printf '\n'
   return 0
@@ -558,9 +583,9 @@ main ()
   # 2) old versions
   set -- 'true' ''
 
-  mkdir -p "${LOCAL}/bin" "${LOCAL}/share" "${LOCAL}/lib" "${LOCAL_SRC}" \
-    "${LOCAL_SYSTEMD}" "${POLYGLOT}" "${TMUXPLUGINS}" "${GNOME_THEMES}" \
-    "${GNOME_ICONS}"
+  mkdir -p "${setup_local}/bin" "${setup_local}/share" "${setup_local}/lib" "${setup_localsrc}" \
+    "${setup_localsystemd}" "${setup_polyglot}" "${setup_tpm}" "${setup_gnomethemes}" \
+    "${setup_gnomeicons}"
 
   dashed 'Checking GNOME installation'
   if [ "${XDG_CURRENT_DESKTOP##*:}" = 'GNOME' ] && \
@@ -578,7 +603,7 @@ main ()
     success
 
     prompt_sudo
-    run 'Disabling bluetooth service' "${SUDO} systemctl disable bluetooth.service" \
+    run 'Disabling bluetooth service' "${_sudo} systemctl disable bluetooth.service" \
       '/lib/systemd/systemd-sysv-install disable bluetooth'
   else
     error
@@ -588,74 +613,75 @@ main ()
   if ! command -v lsb_release > /dev/null
   then
     prompt_sudo
-    run 'Updating system' "${UPDATE}"
+    run 'Updating system' "${_pm_update}"
     install lsb-release
   fi
 
-  RELEASE="$(lsb_release -cs)"
-  readonly RELEASE
+  setup_release="$(lsb_release -cs)"
+  readonly setup_release
 
   dashed 'Checking mesa drivers ppa'
-  case "${RELEASE}" in
-    focal) PPA_REPO='kisak/kisak-mesa' ;;
-    jammy) PPA_REPO='oibaf/graphics-drivers' ;;
+  case "${setup_release}" in
+    focal) setup_pparepo='kisak/kisak-mesa' ;;
+    jammy) setup_pparepo='oibaf/graphics-drivers' ;;
     *) error
-       printf 'Unknown %s release\n' "${RELEASE}" 1>&2
+       printf 'Unknown %s release\n' "${setup_release}" 1>&2
        return 1 ;;
   esac
-  case "$(${POLICY} 2> /dev/null)" in
-    *"${PPA_REPO}"*) success ;;
+  case "$(${_pm_policy} 2> /dev/null)" in
+    *"${setup_pparepo}"*) success ;;
     *) error
        set -f
-       run 'Adding mesa drivers ppa' "${SUDO} ${ADD_REPO} ppa:${PPA_REPO}"
+       run 'Adding mesa drivers ppa' "${_sudo} ${_addrepo} ppa:${setup_pparepo}"
        set +f ;;
   esac
 
   dashed 'Checking git ppa'
-  PPA_REPO='git-core/ppa'
-  case "$(${POLICY} 2> /dev/null)" in
-    *"${PPA_REPO}"*) success ;;
+  setup_pparepo='git-core/ppa'
+  case "$(${_pm_policy} 2> /dev/null)" in
+    *"${setup_pparepo}"*) success ;;
     *) error
        set -f
-       run 'Adding git-core ppa' "${SUDO} ${ADD_REPO} ppa:${PPA_REPO}"
+       run 'Adding git-core ppa' "${_sudo} ${_addrepo} ppa:${setup_pparepo}"
        set +f ;;
   esac
 
-  set -- "${1}" "${2}$(version_git)${SEP}"
-  set -- "${1}" "${2}$(version_docker)${SEP}"
-  set -- "${1}" "${2}$(version_direnv)${SEP}"
-  set -- "${1}" "${2}$(version_vim)${SEP}"
-  set -- "${1}" "${2}$(version_tig)${SEP}"
-  set -- "${1}" "${2}$(version_shellcheck)${SEP}"
-  set -- "${1}" "${2}$(version_fff)${SEP}"
-  set -- "${1}" "${2}$(version_tmux)${SEP}"
-  set -- "${1}" "${2}$(version_pass)${SEP}"
-  set -- "${1}" "${2}$(version_linguist)${SEP}"
-  set -- "${1}" "${2}$(version_polyglot)${SEP}"
-  set -- "${1}" "${2}$(version_chromethemes)${SEP}"
-  set -- "${1}" "${2}$(version_candyicons)${SEP}"
-  set -- "${1}" "${2}$(version_sweetfolders)${SEP}"
-  set -- "${1}" "${2}$(version_bananacursor)${SEP}"
+  set -- "${1}" "${2}$(version_git)${setup_sep}"
+  set -- "${1}" "${2}$(version_docker)${setup_sep}"
+  set -- "${1}" "${2}$(version_direnv)${setup_sep}"
+  set -- "${1}" "${2}$(version_vim)${setup_sep}"
+  set -- "${1}" "${2}$(version_tig)${setup_sep}"
+  set -- "${1}" "${2}$(version_shellcheck)${setup_sep}"
+  set -- "${1}" "${2}$(version_fff)${setup_sep}"
+  set -- "${1}" "${2}$(version_tmux)${setup_sep}"
+  set -- "${1}" "${2}$(version_pass)${setup_sep}"
+  set -- "${1}" "${2}$(version_linguist)${setup_sep}"
+  set -- "${1}" "${2}$(version_polyglot)${setup_sep}"
+  set -- "${1}" "${2}$(version_chromethemes)${setup_sep}"
+  set -- "${1}" "${2}$(version_candyicons)${setup_sep}"
+  set -- "${1}" "${2}$(version_sweetfolders)${setup_sep}"
+  set -- "${1}" "${2}$(version_bananacursor)${setup_sep}"
 
   prompt_sudo
-  run 'Updating system' "${UPDATE}"
+  run 'Updating system' "${_pm_update}"
 
   prompt_sudo
-  run 'Upgrading system' "${UPGRADE}"
+  run 'Upgrading system' "${_pm_upgrade}"
 
   prompt_sudo
-  run 'Removing unused packages' "${AUTOREMOVE}"
+  run 'Removing unused packages' "${_pm_clean}"
 
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
     automake cmake kcolorchooser libreoffice-gnome libreoffice gnome-tweaks \
-    gnome-shell-extensions dbus-x11
+    gnome-shell-extensions dbus-x11 vulkan-tools 
 
   # for GNOME extensions and themes
   install gtk2-engines-murrine gtk2-engines-pixbuf
 
   # for spaceporn
-  install libpng-dev libsystemd-dev libglew-dev libx11-dev
+  install libpng-dev libvulkan-dev vulkan-validationlayers-dev spirv-tools \
+    libglfw3-dev libxxf86vm-dev libxi-dev imagemagick
 
   # for password-store
   install xclip
@@ -670,7 +696,7 @@ main ()
   install cabal-install
   run 'Updating cabal' 'cabal update'
   set -- "${@}" "${IFS}"
-  IFS="${NL}"
+  IFS="${setup_newline}"
   set -- "${@}" $(cabal --version)
   IFS="${3}"
   set -- "${1}" "${2}" "${4##*[[:space:]]}"
@@ -716,75 +742,75 @@ main ()
 
   prompt_sudo
   run 'Adding symbolic link to gcc 10 and g++ 10' \
-    "${SUDO} ln -f -s $(command -v gcc-10) $(command -v gcc)" \
-    "${SUDO} ln -f -s $(command -v g++-10) $(command -v g++)"
+    "${_sudo} ln -f -s $(command -v gcc-10) $(command -v gcc)" \
+    "${_sudo} ln -f -s $(command -v g++-10) $(command -v g++)"
 
   install_docker
 
   # for docker
   install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-  NEED_EVAL="NEED_EVAL${SEP}" git_install 'direnv' \
+  setup_needeval="NEEDEVAL${setup_sep}" git_install 'direnv' \
     'https://github.com/direnv/direnv' 'Installing direnv' \
-    "cd ${LOCAL_SRC}/direnv && sudo bash install.sh && cd -"
+    "cd ${setup_localsrc}/direnv && sudo bash install.sh && cd -"
   git_install 'vim' 'https://github.com/vim/vim' 'Compiling vim' \
-    "make --directory ${LOCAL_SRC}/vim" 'Installing vim' \
-    "${SUDO} make --directory ${LOCAL_SRC}/vim install"
+    "make --directory ${setup_localsrc}/vim" 'Installing vim' \
+    "${_sudo} make --directory ${setup_localsrc}/vim install"
   git_install 'tig' 'https://github.com/jonas/tig' 'Compiling tig' \
-    "make --directory ${LOCAL_SRC}/tig clean all prefix=${LOCAL}" \
+    "make --directory ${setup_localsrc}/tig clean all prefix=${setup_local}" \
     'Installing tig' \
-    "make --directory ${LOCAL_SRC}/tig install prefix=${LOCAL}" \
+    "make --directory ${setup_localsrc}/tig install prefix=${setup_local}" \
     'Documenting tig' \
-    "${SUDO} make --directory ${LOCAL_SRC}/tig install-doc prefix=/usr"
-  NEED_EVAL="NEED_EVAL${SEP}" git_install 'shellcheck' \
+    "${_sudo} make --directory ${setup_localsrc}/tig install-doc prefix=/usr"
+  setup_needeval="NEEDEVAL${setup_sep}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
-    "cd ${LOCAL_SRC}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin && cd -"
-  NOTAG='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
-    'Installing fff' "make --directory ${LOCAL_SRC}/fff PREFIX=${LOCAL} install"
-  NEED_EVAL="NEED_EVAL${SEP}NEED_EVAL${SEP}${SEP}${SEP}" git_install 'tmux' \
+    "cd ${setup_localsrc}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin && cd -"
+  setup_notag='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
+    'Installing fff' "make --directory ${setup_localsrc}/fff PREFIX=${setup_local} install"
+  setup_needeval="NEEDEVAL${setup_sep}NEEDEVAL${setup_sep}${setup_sep}${setup_sep}" git_install 'tmux' \
     'https://github.com/tmux/tmux' 'Generating tmux configuration' \
-    "cd ${LOCAL_SRC}/tmux && sh autogen.sh && cd -" 'Configuring tmux' \
-    "cd ${LOCAL_SRC}/tmux && ./configure && cd -" 'Compiling tmux' \
-    "make --directory ${LOCAL_SRC}/tmux" 'Installing tmux' \
-    "${SUDO} make --directory ${LOCAL_SRC}/tmux install"
-  NOTAG='true' git_install 'pass' 'https://git.zx2c4.com/password-store' \
+    "cd ${setup_localsrc}/tmux && sh autogen.sh && cd -" 'Configuring tmux' \
+    "cd ${setup_localsrc}/tmux && ./configure && cd -" 'Compiling tmux' \
+    "make --directory ${setup_localsrc}/tmux" 'Installing tmux' \
+    "${_sudo} make --directory ${setup_localsrc}/tmux install"
+  setup_notag='true' git_install 'pass' 'https://git.zx2c4.com/password-store' \
     'Installing password-store' \
-    "${SUDO} make install --directory ${LOCAL_SRC}/pass"
-  NEED_EVAL="NEED_EVAL${SEP}" git_install 'linguist' \
+    "${_sudo} make install --directory ${setup_localsrc}/pass"
+  setup_needeval="NEEDEVAL${setup_sep}" git_install 'linguist' \
     'https://github.com/github/linguist' 'Installing/Updating github-linguist' \
-    "if command -v github-linguist; then ${SUDO} gem update github-linguist; else ${SUDO} gem install github-linguist; fi"
+    "if command -v github-linguist; then ${_sudo} gem update github-linguist; else ${_sudo} gem install github-linguist; fi"
 
-  run 'Copying .vimrc' "cp -f ${DOT_VIMRC} ${HOME}"
+  run 'Copying .vimrc' "cp -f ${setup_dot_vimrc} ${HOME}"
 
-  NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'polyglot' \
+  setup_needeval="NEEDEVAL${setup_sep}" setup_notag='true' git_install 'polyglot' \
     'https://github.com/sheerun/vim-polyglot' \
     'Copying polyglot to vim plugins directory' \
-    "(set -- ${LOCAL_SRC}/polyglot/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a -f "${1}"'" ${POLYGLOT} ;; esac; shift; done)"
+    "(set -- ${setup_localsrc}/polyglot/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a -f "${1}"'" ${setup_polyglot} ;; esac; shift; done)"
 
-  run 'Copying .tmux.conf' "cp -f ${DOT_TMUXCONF} ${HOME}"
-  run 'Copying .tmuxintmux.conf' "cp -f ${DOT_TMUXINTMUXCONF} ${HOME}"
+  run 'Copying .tmux.conf' "cp -f ${setup_dot_tmuxconf} ${HOME}"
+  run 'Copying .tmuxintmux.conf' "cp -f ${setup_dot_tmuxintmuxconf} ${HOME}"
 
-  NEED_EVAL="NEED_EVAL${SEP}" NOTAG='true' git_install 'tpm' 'https://github.com/tmux-plugins/tpm' \
+  setup_needeval="NEEDEVAL${setup_sep}" setup_notag='true' git_install 'tpm' 'https://github.com/tmux-plugins/tpm' \
     'Copying tpm into .tmux directory' \
-    "(set -- ${LOCAL_SRC}/tpm/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${TMUXPLUGINS} ;; esac; shift; done)"
+    "(set -- ${setup_localsrc}/tpm/*;"' while [ ${#} -gt 0 ]; do case "${1}" in *.git) ;; *) cp -a "${1}"'" ${setup_tpm} ;; esac; shift; done)"
 
-  run 'Installing tmux plugins' "${TMUXPLUGINS}/bin/install_plugins"
+  run 'Installing tmux plugins' "${setup_tpm}/bin/install_plugins"
 
-  NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .bashrc' \
+  setup_needeval="${setup_sep}NEEDEVAL${setup_sep}" run 'Copying .bashrc' \
     "cp -f /etc/skel/.bashrc ${HOME}" \
-    "cat ${DOT_BASHRC} >> ${HOME}/.bashrc"
+    "cat ${setup_dot_bashrc} >> ${HOME}/.bashrc"
 
-  NEED_EVAL="${SEP}NEED_EVAL${SEP}" run 'Copying .profile' \
+  setup_needeval="${setup_sep}NEEDEVAL${setup_sep}" run 'Copying .profile' \
     "cp -f /etc/skel/.profile ${HOME}/.profile" \
-    "cat ${DOT_PROFILE} >> ${HOME}/.profile"
+    "cat ${setup_dot_profile} >> ${HOME}/.profile"
 
-  run 'Copying .bash_aliases' "cp -f ${DOT_ALIASES} ${HOME}/.bash_aliases"
-
-  prompt_sudo
-  run 'Copying .gitignore' "sudo cp -f ${DOT_GITIGNORE} ${GITTEMPLATES}"
+  run 'Copying .bash_aliases' "cp -f ${setup_dot_aliases} ${HOME}/.bash_aliases"
 
   prompt_sudo
-  run 'Copying hooks' "sudo cp -a -f ${DOT_HOOKS} ${GITTEMPLATES}"
+  run 'Copying .gitignore' "sudo cp -f ${setup_dot_gitignore} ${setup_gittemplates}"
+
+  prompt_sudo
+  run 'Copying hooks' "sudo cp -a -f ${setup_dot_hooks} ${setup_gittemplates}"
 
   if [ "${1}" = 'true' ]
   then
@@ -813,32 +839,32 @@ main ()
            return 1 ;;
       esac
 
-      NOTAG='true' git_install 'chromethemes' 'https://github.com/rtlewis1/GTK' \
+      setup_notag='true' git_install 'chromethemes' 'https://github.com/rtlewis1/GTK' \
         'Moving to Chrome OS themes branch' \
         '_git chromethemes checkout remotes/origin/ChromeOS-Dark' \
         'Copying UltraViolet theme' \
-        "cp -a -f ${LOCAL_SRC}/chromethemes/ChromeOS-Darker-UltraViolet-Rounded ${GNOME_THEMES}"
+        "cp -a -f ${setup_localsrc}/chromethemes/ChromeOS-Darker-UltraViolet-Rounded ${setup_gnomethemes}"
 
-      NOTAG='true' git_install 'candyicons' \
+      setup_notag='true' git_install 'candyicons' \
         'https://github.com/EliverLara/candy-icons' 'Copying candy icons' \
-        "cp -a -f ${LOCAL_SRC}/candyicons ${GNOME_ICONS}" \
+        "cp -a -f ${setup_localsrc}/candyicons ${setup_gnomeicons}" \
         'Creating candy-link symbolic link' \
-        "ln -s -f ${GNOME_ICONS}/candyicons ${GNOME_ICONS}/candy-icons"
+        "ln -s -f ${setup_gnomeicons}/candyicons ${setup_gnomeicons}/candy-icons"
 
-      NOTAG='true' git_install 'sweetfolders' \
+      setup_notag='true' git_install 'sweetfolders' \
         'https://github.com/EliverLara/Sweet-folders' 'Copying sweet folders' \
-        "cp -a -f ${LOCAL_SRC}/sweetfolders ${GNOME_LOCAL_ICONS}"
+        "cp -a -f ${setup_localsrc}/sweetfolders ${setup_gnomelocalicons}"
 
-      URL="$(curl -s https://api.github.com/repos/ful1e5/banana-cursor/releases/latest \
+      setup_url="$(curl -s https://api.github.com/repos/ful1e5/banana-cursor/releases/latest \
         | jq -r '.assets[] | select(.name | test("tar.gz")) | .browser_download_url')"
-      readonly URL
+      readonly setup_url
 
       git_install 'bananacursor' 'https://github.com/ful1e5/banana-cursor' \
         'Download banana cursor archive' \
-        "curl -L ${URL} --output ${GNOME_ICONS}/Banana.tar.gz" \
+        "curl -L ${setup_url} --output ${setup_gnomeicons}/Banana.tar.gz" \
         'Unarchive the banana cursor' \
-        "tar xf ${GNOME_ICONS}/Banana.tar.gz -C ${GNOME_ICONS}" \
-        'Removing archives' "rm -f ${GNOME_ICONS}/Banana.tar.gz"
+        "tar xf ${setup_gnomeicons}/Banana.tar.gz -C ${setup_gnomeicons}" \
+        'Removing archives' "rm -f ${setup_gnomeicons}/Banana.tar.gz"
 
       run 'Setting GNOME Interface' \
         'gsettings set org.gnome.desktop.interface show-battery-percentage true' \
@@ -852,7 +878,7 @@ main ()
         "gsettings set org.gnome.desktop.interface gtk-theme 'ChromeOS-Darker-UltraViolet-Rounded'" \
         "gsettings set org.gnome.shell.extensions.user-theme name 'ChromeOS-Darker-UltraViolet-Rounded'"
 
-      run 'Deploy systemd timers' "cp -f ${DOT_SYSTEMD}/* ${LOCAL_SYSTEMD}" \
+      run 'Deploy systemd timers' "cp -f ${setup_dot_systemd}/* ${setup_localsystemd}" \
         'systemctl --user enable bluelight.service' \
         'systemctl --user enable bluelight.timer' \
         'systemctl --user start bluelight.timer' \
@@ -871,4 +897,4 @@ main ()
   return 0
 }
 
-main
+main "${@}"
