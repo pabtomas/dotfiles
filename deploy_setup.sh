@@ -255,10 +255,6 @@ install_docker ()
        run 'Adding current user to docker group' "${_sudo} usermod -aG docker ${setup_user}" ;;
   esac
 
-  case " $(groups) " in
-    *" docker "*) ;;
-    *) run 'Logging as docker group' 'newgrp docker' ;;
-  esac
   return 0
 }
 
