@@ -18,6 +18,11 @@ ipsec ()
             ssh-add -s /usr/lib/in_p11/libidop11.so
             printf '\nArret du service Strongswan\n'
             sudo systemctl stop strongswan
+            printf '\nAjout des proxies pour le service DOCKER\n'
+            sudo bash -c "printf '[Service]\nEnvironment=\"HTTP_PROXY=http://pfrie-std.proxy.e2.rie.gouv.fr:8080\"\nEnvironment=\"HTTPS_PROXY=pfrie-std.proxy.e2.rie.gouv.fr:8080\"\n' > /etc/systemd/system/docker.service.d/service-env.conf"
+            printf '\nAjout des proxies pour git\n'
+            git config --global http.proxy pfrie-std.proxy.e2.rie.gouv.fr:8080
+            git config --global https.proxy pfrie-std.proxy.e2.rie.gouv.fr:8080
             printf '\nPassage du MTU a 1500\n'
             sudo ifconfig wlo1 mtu 1500 up
           else
@@ -39,14 +44,18 @@ ipsec ()
             ssh-add -e /usr/lib/in_p11/libidop11.so
             printf '\nAjout des clés de la carte dans l'"'"'agent SSH\n'
             ssh-add -s /usr/lib/in_p11/libidop11.so
+            printf '\nAjout des proxies pour le service DOCKER\n'
+            sudo bash -c "printf '[Service]\nEnvironment=\"HTTP_PROXY=http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\nEnvironment=\"HTTPS_PROXY=http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\n' > /etc/systemd/system/docker.service.d/service-env.conf"
+            printf '\nAjout des proxies pour git\n'
+            git config --global http.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
+            git config --global https.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
             set -- '1400'
             printf '\nPassage du MTU a %s\n' "${1}"
             sudo ifconfig wlo1 mtu "${1}" up
           fi
-          sudo bash -c "printf '[Service]\nEnvironment=\"HTTP_PROXY=http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\nEnvironment=\"HTTPS_PROXY=http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\n' > /etc/systemd/system/docker.service.d/service-env.conf"
-          sudo bash -c "printf 'export http_proxy=\"http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\nexport https_proxy=\"http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\"\n' > /etc/default/docker"
-          git config --global https.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
-          git config --global http.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
+          printf '\nRedémarrage du service DOCKER\n'
+          sudo systemctl daemon-reload
+          sudo systemctl restart docker
           ;;
     'down') if ! command ip route show dev eno1 | grep -E '172.22.68.' > /dev/null
             then
@@ -69,7 +78,6 @@ ipsec ()
             printf '\nPassage du MTU a 1500\n'
             sudo ifconfig wlo1 mtu 1500 up
             sudo rm -f /etc/systemd/system/docker.service.d/service-env.conf
-            sudo bash -c ': > /etc/default/docker'
             git config --global --unset https.proxy
             git config --global --unset http.proxy
             ;;
