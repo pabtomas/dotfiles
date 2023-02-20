@@ -677,7 +677,7 @@ main ()
 
   # for spaceporn
   install libpng-dev libvulkan-dev vulkan-validationlayers-dev spirv-tools \
-    libglfw3-dev libxxf86vm-dev libxi-dev imagemagick
+    libglfw3-dev libxxf86vm-dev libxi-dev imagemagick fonts-powerline
 
   # for password-store
   install xclip
