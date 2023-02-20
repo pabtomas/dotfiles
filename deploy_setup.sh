@@ -545,6 +545,21 @@ version_bananacursor ()
   return 0
 }
 
+version_fonts ()
+{
+  if [ -d "${setup_localsrc}/fonts" ]
+  then
+    set -- "$(_git fonts rev-list --tags --max-count=1)"
+    set -- "$(_git fonts describe --tags "${1}")"
+    set -- "${1#"${1%%[[:digit:]]*}"}"
+    set -- "${1%"${1##[[:digit:]]*}"}"
+    printf 'fonts %s' "${1}"
+  else
+    printf 'fonts %s' "${setup_noversion}"
+  fi
+  return 0
+}
+
 sumup ()
 {
   printf '\n'
@@ -657,6 +672,7 @@ main ()
   set -- "${1}" "${2}$(version_candyicons)${setup_sep}"
   set -- "${1}" "${2}$(version_sweetfolders)${setup_sep}"
   set -- "${1}" "${2}$(version_bananacursor)${setup_sep}"
+  set -- "${1}" "${2}$(version_fonts)${setup_sep}"
 
   prompt_sudo
   run 'Updating system' "${_pm_update}"
@@ -670,14 +686,14 @@ main ()
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
     automake cmake kcolorchooser libreoffice-gnome libreoffice gnome-tweaks \
-    gnome-shell-extensions dbus-x11 vulkan-tools 
+    gnome-shell-extensions dbus-x11 vulkan-tools
 
   # for GNOME extensions and themes
   install gtk2-engines-murrine gtk2-engines-pixbuf
 
   # for spaceporn
   install libpng-dev libvulkan-dev vulkan-validationlayers-dev spirv-tools \
-    libglfw3-dev libxxf86vm-dev libxi-dev imagemagick fonts-powerline
+    libglfw3-dev libxxf86vm-dev libxi-dev imagemagick dconf-cli
 
   # for password-store
   install xclip
@@ -775,6 +791,9 @@ main ()
   setup_needeval="NEEDEVAL${setup_sep}" git_install 'linguist' \
     'https://github.com/github/linguist' 'Installing/Updating github-linguist' \
     "if command -v github-linguist; then ${_sudo} gem update github-linguist; else ${_sudo} gem install github-linguist; fi"
+  setup_needeval="NEEDEVAL${setup_sep}" setup_notag='true' git_install \
+    'fonts' 'https://github.com/powerline/fonts' \
+    'Installing powerline fonts' "cd ${setup_localsrc}/fonts && ./install.sh"
 
   run 'Copying .vimrc' "cp -f ${setup_dot_vimrc} ${HOME}"
 
@@ -834,6 +853,9 @@ main ()
            printf 'Unknown desktop icon extension\n' 1>&2
            return 1 ;;
       esac
+
+      setup_needeval="NEEDEVAL${setup_sep}" run 'Changing terminal font to Powerline font' \
+        "dconf write \"/org/gnome/terminal/legacy/profiles:/\$(dconf list /org/gnome/terminal/legacy/profiles:/)font\" \"'Ubuntu Mono derivative Powerline 13'\""
 
       setup_notag='true' git_install 'chromethemes' 'https://github.com/rtlewis1/GTK' \
         'Moving to Chrome OS themes branch' \
