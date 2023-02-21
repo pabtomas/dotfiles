@@ -262,7 +262,7 @@ git_install ()
 {
   if [ ! -d "${setup_localsrc}/${1}" ]
   then
-    setup_needeval= run "Cloning ${1} repository" "git clone ${2} ${setup_localsrc}/${1}"
+    setup_needeval= run "Cloning ${1} repository" "git clone${setup_shallowclone+" --depth 1"} ${2} ${setup_localsrc}/${1}"
     setup_needeval= run "Adding ${1} repository as a GIT safe repository" \
       "git config --global --add safe.directory ${setup_localsrc}/${1}"
     set -- '' '' '' '' "${@}"
@@ -549,11 +549,7 @@ version_fonts ()
 {
   if [ -d "${setup_localsrc}/fonts" ]
   then
-    set -- "$(_git fonts rev-list --tags --max-count=1)"
-    set -- "$(_git fonts describe --tags "${1}")"
-    set -- "${1#"${1%%[[:digit:]]*}"}"
-    set -- "${1%"${1##[[:digit:]]*}"}"
-    printf 'fonts %s' "${1}"
+    printf 'fonts 0'
   else
     printf 'fonts %s' "${setup_noversion}"
   fi
@@ -791,9 +787,10 @@ main ()
   setup_needeval="NEEDEVAL${setup_sep}" git_install 'linguist' \
     'https://github.com/github/linguist' 'Installing/Updating github-linguist' \
     "if command -v github-linguist; then ${_sudo} gem update github-linguist; else ${_sudo} gem install github-linguist; fi"
-  setup_needeval="NEEDEVAL${setup_sep}" setup_notag='true' git_install \
-    'fonts' 'https://github.com/powerline/fonts' \
-    'Installing powerline fonts' "cd ${setup_localsrc}/fonts && ./install.sh"
+  setup_needeval="NEEDEVAL${setup_sep}" setup_shallowclone='true' \
+  setup_notag='true' git_install 'fonts' \
+    'https://github.com/ryanoasis/nerd-fonts' \
+    'Installing nerd fonts' "cd ${setup_localsrc}/fonts && ./install.sh"
 
   run 'Copying .vimrc' "cp -f ${setup_dot_vimrc} ${HOME}"
 
@@ -854,8 +851,8 @@ main ()
            return 1 ;;
       esac
 
-      setup_needeval="NEEDEVAL${setup_sep}" run 'Changing terminal font to Powerline font' \
-        "dconf write \"/org/gnome/terminal/legacy/profiles:/\$(dconf list /org/gnome/terminal/legacy/profiles:/)font\" \"'Ubuntu Mono derivative Powerline 13'\""
+      setup_needeval="NEEDEVAL${setup_sep}" run 'Changing terminal font to nerd font' \
+        "dconf write \"/org/gnome/terminal/legacy/profiles:/\$(dconf list /org/gnome/terminal/legacy/profiles:/)font\" \"'UbuntuMono Nerd Font 13'\""
 
       setup_notag='true' git_install 'chromethemes' 'https://github.com/rtlewis1/GTK' \
         'Moving to Chrome OS themes branch' \
