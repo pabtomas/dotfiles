@@ -78,6 +78,9 @@ ipsec ()
             printf '\nPassage du MTU a 1500\n'
             sudo ifconfig wlo1 mtu 1500 up
             sudo rm -f /etc/systemd/system/docker.service.d/service-env.conf
+            printf '\nRedémarrage du service DOCKER\n'
+            sudo systemctl daemon-reload
+            sudo systemctl restart docker
             git config --global --unset https.proxy
             git config --global --unset http.proxy
             ;;
