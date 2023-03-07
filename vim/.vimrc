@@ -246,6 +246,10 @@ function! s:BuildTmuxPaneLine(buf, COLORS)
   return l:res . ' ' . a:buf.name . ' #[none]'
 endfunction
 
+function! s:ResetTmuxPaneLine()
+  call systemlist('tmux -S "/tmp/tmux-${UID}/default" set-option -p pane-border-format " [#P] "')
+endfunction
+
 function! s:UpdateTmuxPaneLine()
   if exists('${TMUX}')
     let l:tmux_pane_border = ''
@@ -289,7 +293,7 @@ function! s:UpdateTmuxPaneLine()
       endwhile
     endif
 
-    let l:command = 'tmux set-option -p pane-border-format "'
+    let l:command = 'tmux -S "/tmp/tmux-${UID}/default" set-option -p pane-border-format "'
       \ . l:tmux_pane_border . '"'
 
     call system(l:command)
@@ -2449,7 +2453,7 @@ augroup vimrc_autocomands
   autocmd User BuffersListChanged :silent call <SID>UpdateTmuxPaneLine()
   autocmd User Resized :silent call <SID>UpdateTmuxPaneLine()
   autocmd VimResume * :silent call <SID>UpdateTmuxPaneLine()
-  autocmd VimSuspend,VimLeavePre * :silent call systemlist('tmux set-option -p pane-border-format " [#P] "')
+  autocmd VimSuspend,VimLeavePre * :silent call <SID>ResetTmuxPaneLine()
 
 "   }}}
 "   Plugins autocommands {{{2
