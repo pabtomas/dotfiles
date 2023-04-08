@@ -94,7 +94,7 @@ set noerrorbells
 set visualbell
 
 " specify which shell use with shell commands
-set shell=bash
+set shell=/bin/bash
 
 " more pairs for % command and MatchParen highlight
 set matchpairs+=<:>
@@ -247,7 +247,23 @@ function! s:BuildTmuxPaneLine(buf, COLORS)
 endfunction
 
 function! s:ResetTmuxPaneLine()
-  call systemlist('tmux -S "/tmp/tmux-${UID}/default" set-option -p pane-border-format " [#P] "')
+  if exists('${TMUX}')
+    call systemlist('tmux -S "/tmp/tmux-${UID}/default" set-option -t '
+      \ . s:tmux_pane_id . ' -p pane-border-format " [#P] "')
+  endif
+endfunction
+
+function! s:SetTmuxBuffer()
+  if exists('${TMUX}')
+    call systemlist('tmux -S "/tmp/tmux-${UID}/default" set-buffer -b "vim" '
+      \ . shellescape(getreg("")))
+  endif
+endfunction
+
+function! s:GetTmuxPaneID()
+  if exists('${TMUX}')
+    let s:tmux_pane_id = systemlist('tmux -S "/tmp/tmux-${UID}/default" display-message -p "#S:#I.#P"')[0]
+  endif
 endfunction
 
 function! s:UpdateTmuxPaneLine()
@@ -293,8 +309,8 @@ function! s:UpdateTmuxPaneLine()
       endwhile
     endif
 
-    let l:command = 'tmux -S "/tmp/tmux-${UID}/default" set-option -p pane-border-format "'
-      \ . l:tmux_pane_border . '"'
+    let l:command = 'tmux -S "/tmp/tmux-${UID}/default" set-option -t '
+      \ . s:tmux_pane_id . ' -p pane-border-format "' . l:tmux_pane_border . '"'
 
     call system(l:command)
   endif
@@ -1112,7 +1128,6 @@ function! s:UndotreeFilter(winid, key)
       \ . ' ctermbg=' . s:PALETTE.zinc
     call popup_clear()
     unlet s:undo
-    call s:UnlockServer('fff')
   elseif a:key == s:UNDO_KEY.next
     call s:UpdateUndotree()
     call win_execute(a:winid, 'while line(".") > 1'
@@ -1362,7 +1377,6 @@ function! s:Undotree()
     return
   endif
 
-  call s:LockServer('fff')
   let s:undo = {}
   call s:UpdateUndotree()
   let s:undo.change_backup = changenr()
@@ -1599,7 +1613,6 @@ function! s:IsTigUsable()
 endfunction
 
 function! s:Tig(command, env, conf_tigrc, term_options)
-  call s:LockServer('fff')
   if empty(v:servername)
     let l:id = 1
     if !empty(serverlist())
@@ -1671,7 +1684,6 @@ function! s:Tig(command, env, conf_tigrc, term_options)
   setlocal nobuflisted
 
   call s:LockServer('tig')
-  call s:UnlockServer('fff')
 endfunction
 
 function! s:TigLog()
@@ -1887,38 +1899,13 @@ command! -nargs=1 TigGrep call <SID>TigGrep(<args>)
 
 "     }}}
 "   }}}
-"   fff {{{2
-
-function! FFFedit(file)
-  if s:IsServerReachable('fff')
-    execute 'edit ' . a:file
-    redraw!
-  endif
-endfunction
-
-function! s:ToggleFFFpane()
-  if exists('${TMUX}')
-    if s:IsServerReachable('fff')
-    else
-      let l:id = 1
-      if !empty(serverlist())
-        let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
-          \ "trim(v:val)")) + 1
-      endif
-      call s:StartServer('fff', l:id)
-      call system('tmux split-window -h -b -l 30 fff')
-    endif
-  endif
-endfunction
-
-"   }}}
 " }}}
 " Filetype specific {{{1
 "   Bash {{{2
 
 function! s:PrefillShFile()
   call append(0, [
-  \                '#!/usr/bin/env bash',
+  \                '#!/bin/sh',
   \                '',
   \              ])
 endfunction
@@ -2449,11 +2436,13 @@ augroup vimrc_autocomands
 "   }}}
 "   Tmux autocommands {{{2
 
+  autocmd VimEnter * :silent call <SID>GetTmuxPaneID()
   autocmd VimResized :doautocmd User Resized
   autocmd User BuffersListChanged :silent call <SID>UpdateTmuxPaneLine()
   autocmd User Resized :silent call <SID>UpdateTmuxPaneLine()
   autocmd VimResume * :silent call <SID>UpdateTmuxPaneLine()
   autocmd VimSuspend,VimLeavePre * :silent call <SID>ResetTmuxPaneLine()
+  autocmd TextYankPost * :silent call <SID>SetTmuxBuffer()
 
 "   }}}
 "   Plugins autocommands {{{2

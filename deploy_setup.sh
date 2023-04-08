@@ -415,13 +415,14 @@ version_shellcheck ()
   return 0
 }
 
-version_fff ()
+version_vifm ()
 {
-  if [ -e "$(command -v fff)" ]
+  if [ -e "$(command -v vifm)" ]
   then
-    fff -v | tr -d '\n'
+    set -- $(vifm -v)
+    printf 'vifm %s' "${2}"
   else
-    printf 'fff %s' "${setup_noversion}"
+    printf 'vifm %s' "${setup_noversion}"
   fi
   return 0
 }
@@ -659,7 +660,7 @@ main ()
   set -- "${1}" "${2}$(version_vim)${setup_sep}"
   set -- "${1}" "${2}$(version_tig)${setup_sep}"
   set -- "${1}" "${2}$(version_shellcheck)${setup_sep}"
-  set -- "${1}" "${2}$(version_fff)${setup_sep}"
+  set -- "${1}" "${2}$(version_vifm)${setup_sep}"
   set -- "${1}" "${2}$(version_tmux)${setup_sep}"
   set -- "${1}" "${2}$(version_pass)${setup_sep}"
   set -- "${1}" "${2}$(version_linguist)${setup_sep}"
@@ -723,6 +724,9 @@ main ()
   # for vim
   install libtool-bin
 
+  # for vifm
+  install libncursesw5-dev sshfs curlftpfs fuse fuse-zip fusefat fuseiso
+
   # for vim clipboard feature
   install libxt-dev
 
@@ -773,8 +777,11 @@ main ()
   setup_needeval="NEEDEVAL${setup_sep}" git_install 'shellcheck' \
     'https://github.com/koalaman/shellcheck' 'Installing shellcheck' \
     "cd ${setup_localsrc}/shellcheck && cabal install --overwrite-policy=always --installdir=${HOME}/.cabal/bin && cd -"
-  setup_notag='true' git_install 'fff' 'https://github.com/dylanaraps/fff' \
-    'Installing fff' "make --directory ${setup_localsrc}/fff PREFIX=${setup_local} install"
+  setup_needeval="NEEDEVAL${setup_sep}${setup_sep}${setup_sep}" git_install 'vifm' \
+    'https://github.com/vifm/vifm' 'Generating vifm configuration' \
+    "cd ${setup_localsrc}/vifm && ./configure --prefix=${setup_local} && cd -" \
+    'Compiling vifm' "make --directory ${setup_localsrc}/vifm" \
+    'Installing vifm' "${_sudo} make --directory ${setup_localsrc}/vifm install"
   setup_needeval="NEEDEVAL${setup_sep}NEEDEVAL${setup_sep}${setup_sep}${setup_sep}" git_install 'tmux' \
     'https://github.com/tmux/tmux' 'Generating tmux configuration' \
     "cd ${setup_localsrc}/tmux && sh autogen.sh && cd -" 'Configuring tmux' \
