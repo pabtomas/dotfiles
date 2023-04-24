@@ -6,8 +6,8 @@ ipsec ()
   case "${1}" in
     'up') if command ip route show dev eno1 | grep -E '172.22.68.' > /dev/null
           then
-            printf '\nRetrait des proxies Parisiens\n'
-            sudo bash -c "printf '#Acquire::http::Proxy \"http://127.0.0.1:3128\";\n#Acquire::https::Proxy \"http://127.0.0.1:3128\";\n' > /etc/apt/apt.conf.d/99proxy"
+            printf '\nAjout des proxies Parisiens\n'
+            sudo bash -c "printf 'Acquire::http::Proxy \"http://pfrie-std.proxy.e2.rie.gouv.fr:8080\";\nAcquire::https::Proxy \"http://pfrie-std.proxy.e2.rie.gouv.fr:8080\";\n' > /etc/apt/apt.conf.d/99proxy"
             printf 'function FindProxyForURL(url, host){\n  return "DIRECT";\n}\n' > "${HOME}"/.proxy.pac
             chmod 0644 "${HOME}"/.proxy.pac
             printf '\nRetrait du DNS menteur\n'
@@ -19,10 +19,13 @@ ipsec ()
             printf '\nArret du service Strongswan\n'
             sudo systemctl stop strongswan
             printf '\nAjout des proxies pour le service DOCKER\n'
-            sudo bash -c "printf '[Service]\nEnvironment=\"HTTP_PROXY=http://pfrie-std.proxy.e2.rie.gouv.fr:8080\"\nEnvironment=\"HTTPS_PROXY=pfrie-std.proxy.e2.rie.gouv.fr:8080\"\n' > /etc/systemd/system/docker.service.d/service-env.conf"
+            sudo bash -c "printf '[Service]\nEnvironment=\"HTTP_PROXY=http://pfrie-std.proxy.e2.rie.gouv.fr:8080\"\nEnvironment=\"HTTPS_PROXY=http://pfrie-std.proxy.e2.rie.gouv.fr:8080\"\n' > /etc/systemd/system/docker.service.d/service-env.conf"
             printf '\nAjout des proxies pour git\n'
             git config --global http.proxy pfrie-std.proxy.e2.rie.gouv.fr:8080
             git config --global https.proxy pfrie-std.proxy.e2.rie.gouv.fr:8080
+            printf "\nAjout des proxies dans l'environnment\n"
+            export http_proxy='http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+            export https_proxy='http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
             printf '\nPassage du MTU a 1500\n'
             sudo ifconfig wlo1 mtu 1500 up
           else
@@ -49,6 +52,9 @@ ipsec ()
             printf '\nAjout des proxies pour git\n'
             git config --global http.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
             git config --global https.proxy ha1-cspx-astreinte.sen.centre-serveur.i2:8380
+            printf "\nAjout des proxies dans l'environnment\n"
+            export http_proxy='http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380'
+            export https_proxy='http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380'
             set -- '1400'
             printf '\nPassage du MTU a %s\n' "${1}"
             sudo ifconfig wlo1 mtu "${1}" up
