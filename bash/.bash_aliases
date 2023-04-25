@@ -87,6 +87,7 @@ ipsec ()
             printf '\nRedémarrage du service DOCKER\n'
             sudo systemctl daemon-reload
             sudo systemctl restart docker
+            unset http_proxy https_proxy
             git config --global --unset https.proxy
             git config --global --unset http.proxy
             ;;
