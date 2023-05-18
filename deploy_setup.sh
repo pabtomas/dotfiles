@@ -288,6 +288,8 @@ git_install ()
     then
       # Need to pull
       shift 3
+      setup_needeval= run "Resetting ${1} repository" "_git ${1} reset --hard"
+      setup_needeval= run "Cleaning ${1} repository" "_git ${1} clean -f -x -d :/"
       setup_needeval= run "Pulling ${1} repository" "_git ${1} pull"
       set -- "$(_git "${1}" rev-list --tags --max-count=1)" "${@}"
       set -- "$(_git "${2}" describe --tags "${1}" 2> /dev/null || :)" "${@}"
