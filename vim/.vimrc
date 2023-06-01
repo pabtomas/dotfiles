@@ -799,7 +799,7 @@ function s:LoadColorscheme()
     \ . ' | highlight       Folded                                 ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       FoldColumn                             ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       IncSearch                              ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.white
-    \ . ' | highlight       LineNr                                 ctermfg=' . s:PALETTE.gray_600 . ' ctermbg=' . s:PALETTE.gray_800
+    \ . ' | highlight       LineNr                                 ctermfg=' . s:PALETTE.zinc     . ' ctermbg=' . s:PALETTE.gray_900
     \ . ' | highlight       CursorLineNr                           ctermfg=' . s:PALETTE.gray_700 . ' ctermbg=' . s:PALETTE.zinc
     \ . ' | highlight       MatchParen                                                                ctermbg=' . s:PALETTE.gray_800
     \ . ' | highlight       MoreMsg                                ctermfg=' . s:PALETTE.gray_900 . ' ctermbg=' . s:PALETTE.gray_700
