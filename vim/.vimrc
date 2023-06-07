@@ -99,6 +99,8 @@ set shell=/bin/bash
 " more pairs for % command and MatchParen highlight
 set matchpairs+=<:>
 
+let g:zig_fmt_autosave = 0
+
 "     Performance {{{3
 
 " draw only when needed
