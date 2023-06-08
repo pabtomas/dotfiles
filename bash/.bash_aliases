@@ -247,44 +247,42 @@ git ()
 }
 
 git config --global --replace-all alias.ranking "!bash -c \"
-git-ranking () {
+git_ranking () {
   if [[ \${#} -eq 0 ]]; then
     git ls-files \
       | command xargs -n1 \git blame --line-porcelain | command sed -n 's/^author //p' \
       | command sort -f | command uniq -i -c | command sort -n -r
   else
-    git blame --line-porcelain \$* | command sed -n 's/^author //p' | command sort -f \
+    git blame --line-porcelain \${*} | command sed -n 's/^author //p' | command sort -f \
       | command uniq -i -c | command sort -n -r
   fi
   echo
-  command github-linguist \$*
+  command github-linguist \${*}
 }
-git-ranking\""
+git_ranking\""
 
 git config --global --replace-all alias.root 'rev-parse --show-toplevel'
-git config --global --replace-all alias.uncommit 'reset --soft HEAD~1'
-git config --global --replace-all alias.unpushed 'log --oneline origin/master..master'
+git config --global --replace-all alias.clear "!bash -c \"git_clear () { command git reset --hard; command git clean -f -x -d :/; }; git_clear\""
 
-ga () { git add "${@}"; }
-gaa () { git add -A "${@}"; }
+ga () { git add "${@}" && git status -s -uall; }
+gaa () { git add -A "${@}" && git status -s -uall; }
 gam () { git add -A && git commit -m "${@}"; }
-gamp () { git add -A && git commit -m "$@" && git pull && git push; }
+gamp () { git add -A && git commit -m "${@}" && git pull && git push; }
 gb () { git branch "${@}"; }
-gc () { git clone "${@}"; }
-gd () { tig status "${@}"; }
-gg () { git ranking "${@}"; }
-gh () { git checkout "${@}"; }
-gl () { git pull "${@}"; }
+gbd () { git branch -D "${@}"; }
+gbm () { git branch -M "${@}"; }
+gc () { git clone --recurse-submodules "${@}"; }
+gg () { git ranking; }
+gk () { git checkout --recurse-submodules "${@}"; }
 gm () { git commit -m "${@}"; }
 gma () { git commit --amend "${@}"; }
 gp () { git push "${@}"; }
-gpl () { git unpushed "${@}"; }
-gr () { git root "${@}"; }
-gs () { git status -s -uall "${@}"; }
-gsd () { git stash drop "${@}"; }
-gsp () { git stash pop "${@}"; }
-gst () { git stash push "${@}"; }
-gu () { git uncommit "${@}"; }
+gpp () { git pull "${@}"; }
+gr () { git reset --soft HEAD~"${1:-1}"; }
+grr () { git restore "${@}"; }
+gs () { git status -s -uall; }
+gsa () { git stash apply; }
+gsd () { git stash drop; }
 
 ti () { command tig "${@}"; }
 tb () { command tig blame "${@}"; }
