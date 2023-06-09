@@ -280,9 +280,11 @@ gp () { git push "${@}"; }
 gpp () { git pull "${@}"; }
 gr () { git reset --soft HEAD~"${1:-1}"; }
 grr () { git restore "${@}"; }
+grs () { git restore --staged "${@}"; }
 gs () { git status -s -uall; }
 gsa () { git stash apply; }
 gsd () { git stash drop; }
+gsu () { git submodule update --init --recursive --remote; }
 
 ti () { command tig "${@}"; }
 tb () { command tig blame "${@}"; }
