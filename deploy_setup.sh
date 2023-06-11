@@ -685,7 +685,8 @@ main ()
   # for CLI
   install git tree curl jq silversearcher-ag build-essential make autoconf \
     automake cmake kcolorchooser libreoffice-gnome libreoffice figlet \
-    gnome-tweaks gnome-shell-extensions dbus-x11 vulkan-tools
+    gnome-tweaks gnome-shell-extensions dbus-x11 vulkan-tools libglfw3-dev \
+    vulkan-validationlayers-dev spirv-tools libvulkan-dev lolcat
 
   # for GNOME extensions and themes
   install gtk2-engines-murrine gtk2-engines-pixbuf
