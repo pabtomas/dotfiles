@@ -54,7 +54,6 @@ setup_localsystemd="${HOME}/.config/systemd/user"
 
 setup_polyglot="${HOME}/.vim/pack/plugins/start/vim-polyglot"
 setup_tpm="${HOME}/.tmux/plugins/tpm"
-setup_gittemplates='/usr/share/git-core/templates'
 
 setup_gnomethemes="${HOME}/.themes"
 setup_gnomeicons="${HOME}/.icons"
@@ -67,8 +66,6 @@ setup_dot_tmuxintmuxconf="${setup_dot}/tmux/.tmuxintmux.conf"
 setup_dot_bashrc="${setup_dot}/bash/.bashrc"
 setup_dot_profile="${setup_dot}/sh/.profile"
 setup_dot_aliases="${setup_dot}/bash/.bash_aliases"
-setup_dot_gitignore="${setup_dot}/git/.gitignore"
-setup_dot_hooks="${setup_dot}/git/.hooks"
 setup_dot_systemd="${setup_dot}/systemd"
 
 readonly setup_outputlen \
@@ -84,10 +81,10 @@ readonly setup_outputlen \
          setup_noversion \
          setup_arch \
          setup_local setup_localsrc setup_localsystemd \
-         setup_polyglot setup_tpm setup_gittemplates \
+         setup_polyglot setup_tpm \
          setup_gnomethemes setup_gnomeicons setup_gnomelocalicons \
          setup_dot setup_dot_vimrc setup_dot_tmuxconf setup_dot_tmuxintmuxconf setup_dot_bashrc setup_dot_profile \
-         setup_dot_aliases setup_dot_gitignore setup_dot_hooks setup_dot_systemd
+         setup_dot_aliases setup_dot_systemd
 
 _git ()
 {
@@ -827,12 +824,6 @@ main ()
     "cat ${setup_dot_profile} >> ${HOME}/.profile"
 
   run 'Copying .bash_aliases' "cp -f ${setup_dot_aliases} ${HOME}/.bash_aliases"
-
-  prompt_sudo
-  run 'Copying .gitignore' "sudo cp -f ${setup_dot_gitignore} ${setup_gittemplates}"
-
-  prompt_sudo
-  run 'Copying hooks' "sudo cp -a -f ${setup_dot_hooks} ${setup_gittemplates}"
 
   if [ "${1}" = 'true' ]
   then
