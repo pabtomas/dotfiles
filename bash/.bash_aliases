@@ -274,9 +274,11 @@ gbm () { git branch -M "${@}"; }
 gc () { git clone --recurse-submodules "${@}"; }
 gg () { git ranking; }
 gk () { git checkout --recurse-submodules "${@}"; }
+gkf () { git checkout --recurse-submodules --force "${@}"; }
 gm () { git commit -m "${@}"; }
 gma () { git commit --amend "${@}"; }
 gp () { git push "${@}"; }
+gpf () { git push --force origin "${@}"; }
 gpp () { git pull "${@}"; }
 gr () { git reset --soft HEAD~"${1:-1}"; }
 grr () { git restore "${@}"; }
@@ -284,6 +286,7 @@ grs () { git restore --staged "${@}"; }
 gs () { git status -s -uall; }
 gsa () { git stash apply; }
 gsd () { git stash drop; }
+gsp () { git stash push; }
 gsu () { git submodule update --init --recursive --remote; }
 
 ti () { command tig "${@}"; }
