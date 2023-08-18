@@ -4,6 +4,7 @@ ipsec ()
 {
   [ ${#} -ne 1 ] && printf "ipsec needs 1 parameter\n" && return 1
   case "${1}" in
+    'gitlab') ssh -D 3129 bdx.bastion0.cs.e2.rie.gouv.fr ;;
     'up') if command ip route show dev eno1 | grep -E '172.22.68.' > /dev/null
           then
             printf '\nAjout des proxies Parisiens\n'
@@ -31,7 +32,7 @@ ipsec ()
           else
             printf 'Ajout des proxies parisiens\n'
             sudo bash -c "printf 'Acquire {\n  http {\n    Proxy \"http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380\";\n    Timeout \"120\";\n    Pipeline-Depth \"5\";\n\n    No-Cache \"false\";\n    Max-Age \"86400\";        // 1 Day age on index files\n    No-Store \"false\";       // Prevent the cache from storing archives\n  }\n};\n' > /etc/apt/apt.conf.d/99proxy"
-            printf 'function FindProxyForURL(url, host){\n  if (dnsDomainIs(host, "gitlab.edcs.fr")) {return "SOCKS5 localhost:3128";}\n  if (dnsDomainIs(host, ".edcs.fr")) {return "DIRECT";}\n  if (shExpMatch(host, "172.22.0.0/16")) {return "DIRECT";}\n  return "PROXY ha1-cspx-astreinte.sen.centre-serveur.i2:8380";\n}\n' > "${HOME}"/.proxy.pac
+            printf 'function FindProxyForURL(url, host){\n  if (dnsDomainIs(host, "gitlab.edcs.fr")) {return "SOCKS5 localhost:3129";}\n  if (dnsDomainIs(host, ".edcs.fr")) {return "DIRECT";}\n  if (shExpMatch(host, "172.22.0.0/16")) {return "DIRECT";}\n  return "PROXY ha1-cspx-astreinte.sen.centre-serveur.i2:8380";\n}\n' > "${HOME}"/.proxy.pac
             chmod 0644 "${HOME}"/.proxy.pac
             printf 'Démarrage du service Strongswan\n'
             sudo systemctl restart strongswan
