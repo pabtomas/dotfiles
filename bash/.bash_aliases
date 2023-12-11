@@ -38,7 +38,8 @@ ipsec ()
             sudo systemctl restart strongswan
             printf '\nEntrez votre code PIN de carte agent aux 2 demandes de mot de passe qui vont suivre\n\nDéblocage de la carte agent pour le tunnel\n'
             sudo swanctl --load-creds 1> /dev/null
-            if ! sudo swanctl --initiate --child safita_ipsec_child 1> /dev/null
+            # if ! sudo swanctl --initiate --child safita_ipsec_child > /dev/null
+            if ! sudo swanctl --initiate --child ecureuil_child > /dev/null
             then
               printf '\nProblème lors de l'"'"'établissement du tunnel - ABANDON\n'
               sudo systemctl stop strongswan
@@ -56,9 +57,9 @@ ipsec ()
             printf "\nAjout des proxies dans l'environnment\n"
             export http_proxy='http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380'
             export https_proxy='http://ha1-cspx-astreinte.sen.centre-serveur.i2:8380'
-            set -- '1400'
-            printf '\nPassage du MTU a %s\n' "${1}"
-            sudo ifconfig wlo1 mtu "${1}" up
+            # set -- '1400'
+            # printf '\nPassage du MTU a %s\n' "${1}"
+            # sudo ifconfig wlo1 mtu "${1}" up
           fi
           printf '\nRedémarrage du service DOCKER\n'
           sudo systemctl daemon-reload
@@ -67,7 +68,8 @@ ipsec ()
     'down') if ! command ip route show dev eno1 | grep -E '172.22.68.' > /dev/null
             then
               printf 'Disconnect through IPSEC\n'
-              sudo swanctl -t --ike safita_ipsec 1>/dev/null
+              # sudo swanctl -t --ike safita_ipsec >/dev/null
+              sudo swanctl -t --ike ecureuil >/dev/null
 
               pkill -f proxycs
             fi
@@ -92,7 +94,8 @@ ipsec ()
             git config --global --unset https.proxy
             git config --global --unset http.proxy
             ;;
-    *) ssh ptomas@bdx.bastion"${1}".edcs.fr ;;
+    *) ssh ptomas@bastion"${1}".edcs.fr ;;
+    # *) ssh ptomas@bdx.bastion"${1}".edcs.fr ;;
   esac
 }
 
