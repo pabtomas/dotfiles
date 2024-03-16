@@ -100,6 +100,7 @@ set shell=/bin/bash
 set matchpairs+=<:>
 
 let g:zig_fmt_autosave = 0
+let g:loaded_netrwPlugin = 1
 
 "     Performance {{{3
 
@@ -650,7 +651,7 @@ endfunction
 
 function! s:SetCommentString()
   if (&filetype == "c") || (&filetype == "cpp") || (&filetype == "glsl")
-    \ || (&filetype == "rust")
+    \ || (&filetype == "rust") || (&filetype == "zig")
       setlocal commentstring=//%s
   elseif (&filetype == "conf") || (&filetype == "make")
     \ || (&filetype == "tmux") || (&filetype == "sh")
@@ -1577,330 +1578,6 @@ endfunction
 
 "     }}}
 "   }}}
-"   Tig {{{2
-"     Variables & constants {{{3
-
-let s:tig = #{
-\   git_root: '',
-\   popup_id: -1,
-\   term_buf: -1,
-\   diff_file_buf: -1,
-\   diff_linecount: 0,
-\ }
-
-"     }}}
-"     Functions {{{3
-
-function! s:IsTigUsable()
-  if empty(getcmdwintype())
-    if executable('git') && executable('tig') && has('terminal')
-      let s:tig.git_root = trim(system('cd ' . expand('%:p:h')
-        \ . ' && git rev-parse --show-toplevel 2> /dev/null'))
-      if !empty(s:tig.git_root)
-        return v:true
-      else
-        echohl ErrorMsg
-        echomsg 'Personal Error Message: Tig plugin needs to be in a git'
-          \ . ' project.'
-        echohl NONE
-      endif
-    else
-      echohl ErrorMsg
-      echomsg 'Personal Error Message: Tig plugin needs git executable, tig'
-        \ . ' executable and terminal Vim feature'
-      echohl NONE
-    endif
-  endif
-  return v:false
-endfunction
-
-function! s:Tig(command, env, conf_tigrc, term_options)
-  if empty(v:servername)
-    let l:id = 1
-    if !empty(serverlist())
-      let l:id = max(map(split(serverlist(), s:SERVER_PREFIX),
-        \ "trim(v:val)")) + 1
-    endif
-    call s:StartServer('tig', l:id)
-  else
-    call s:UnlockServer('tig')
-  endif
-
-  let l:tmp_tigrc = tempname()
-  if !filereadable($TIGRC_USER)
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: ' . $TIGRC_USER . ' not readable.'
-    echohl NONE
-    return
-  endif
-  let l:tmp_tigrc_content = readfile($TIGRC_USER)
-  if empty(l:tmp_tigrc_content)
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not read ' . $TIGRC_USER
-    echohl NONE
-    return
-  endif
-
-  let l:conf_tigrc = extend([ "bind generic e @vim --remote-expr"
-    \ . " 'TigEdit(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
-    \ . "' --servername " . v:servername, "bind generic E @vim --remote-expr"
-    \ . " 'TigBadd(" . '"%(file)", %(lineno), %(lineno_old), "%(text)")'
-    \ . "' --servername " . v:servername, "bind blob e @vim --remote-expr"
-    \ . " 'TigEdit(" . '"%(file)", %(lineno), 0, "+")'
-    \ . "' --servername " . v:servername, "bind blob E @vim --remote-expr"
-    \ . " 'TigBadd(" . '"%(file)", %(lineno), 0, "+")'
-    \ . "' --servername " . v:servername ], a:conf_tigrc)
-  call extend(l:tmp_tigrc_content, l:conf_tigrc)
-
-  if writefile(l:tmp_tigrc_content, l:tmp_tigrc) == -1
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not write to temp tigrc file: '
-      \ . l:tmp_tigrc
-    echohl NONE
-    return
-  endif
-
-  let s:tig.term_buf = term_start(a:command, extend(#{
-    \ term_name: 'tig',
-    \ term_finish: 'close',
-    \ hidden: v:true,
-    \ cwd: s:tig.git_root,
-    \ env: extend(#{ TIGRC_USER: l:tmp_tigrc }, a:env),
-  \ }, a:term_options))
-
-  let s:tig.popup_id = popup_create(s:tig.term_buf, #{
-    \ pos: 'topleft',
-    \ line: win_screenpos(0)[0],
-    \ col: win_screenpos(0)[1],
-    \ zindex: 2,
-    \ minwidth: winwidth(0),
-    \ maxwidth: winwidth(0),
-    \ minheight: winheight(0),
-    \ maxheight: winheight(0),
-    \ wrap: v:false,
-    \ fixed: v:true,
-    \ mapping: v:false,
-    \ scrollbar: v:false,
-  \ })
-
-  setlocal nobuflisted
-
-  call s:LockServer('tig')
-endfunction
-
-function! s:TigLog()
-  if s:IsTigUsable()
-    call s:Tig('tig', #{}, [], #{})
-  endif
-endfunction
-
-function! s:TigLogCurrentFile()
-  if s:IsTigUsable()
-    call s:Tig('tig ' . expand('%:p'), #{}, [], #{})
-  endif
-endfunction
-
-function! s:TigStatus()
-  if s:IsTigUsable()
-    call s:Tig('tig status', #{}, [], #{})
-  endif
-endfunction
-
-function! s:TigDiff()
-  if s:IsTigUsable()
-    if !empty(system('cd ' . s:tig.git_root . ' && git diff --name-only'))
-      let l:startup_tig = tempname()
-      let l:startup_script = ['<Enter>', ':maximize']
-
-      if !empty(system('cd ' . s:tig.git_root
-        \ . ' && git ls-files --others --exclude-standard'))
-          let l:startup_script = [':move-down'] + l:startup_script
-      endif
-
-      if writefile(l:startup_script, l:startup_tig) == -1
-        echohl ErrorMsg
-        echomsg 'Personal Error Message: Can not write to startup tig temp'
-          \ . ' file: ' . l:startup_tig
-        echohl NONE
-        return
-      endif
-      call s:Tig('tig', #{ TIG_SCRIPT: l:startup_tig },
-        \ ['bind generic q quit'], #{})
-    else
-      echohl ErrorMsg
-      echomsg 'Personal Error Message: No change detected'
-      echohl NONE
-      return
-    endif
-  endif
-endfunction
-
-function! s:TigDiffCurrentFileHandler(diff_job, status)
-  let s:tig.diff_file_buf = ch_getbufnr(job_getchannel(a:diff_job), 'out')
-  while filter(getbufinfo(), 'v:val.bufnr=='
-    \ . s:tig.diff_file_buf)[0].linecount < s:tig.diff_linecount
-      sleep 1m
-  endwhile
-  call s:Tig('tig', #{},
-    \ ["bind pager q @vim --remote-expr 'TigDiffCurrentFileClose()'"
-      \ . " --servername " . v:servername, "bind pager Q @vim --remote-expr"
-      \ . " 'TigDiffCurrentFileClose()' --servername " . v:servername],
-    \ #{ in_io: 'buffer', in_buf: s:tig.diff_file_buf })
-endfunction
-
-function! s:TigDiffCurrentFile()
-  if s:IsTigUsable()
-    let l:file = expand('%:p')
-    let s:tig.diff_linecount =
-      \ len(systemlist('cd ' . s:tig.git_root . ' && git diff ' . l:file))
-    if s:tig.diff_linecount > 0
-      call job_start(['/bin/bash', '-c', 'cd ' . s:tig.git_root
-        \ . ' && git diff ' . l:file], #{ out_io: "buffer",
-        \ out_msg: v:false,
-        \ exit_cb: expand('<SID>') . 'TigDiffCurrentFileHandler' })
-    else
-      echohl ErrorMsg
-      echomsg 'Personal Error Message: No change detected for ' . l:file
-      echohl NONE
-      return
-    endif
-  endif
-endfunction
-
-function! s:TigBlame()
-  if s:IsTigUsable()
-    let l:startup_tig = tempname()
-    let l:startup_script = [':' . line('w0')]
-
-    for l:each in range(1, line('w$') - line('w0') - 2)
-      call add(l:startup_script, ':move-down')
-    endfor
-
-    if line('.') < line('w$') - 1
-      for l:each in range(1, line('w$') - 2 - line('.'))
-        call add(l:startup_script, ':move-up')
-      endfor
-    else
-      for l:each in range(1, abs(line('w$') - 2 - line('.')))
-        call add(l:startup_script, ':move-down')
-      endfor
-    endif
-
-    if writefile(l:startup_script, l:startup_tig) == -1
-      echohl ErrorMsg
-      echomsg 'Personal Error Message: Can not write to startup tig temp file: '
-        \ . l:startup_tig
-      echohl NONE
-      return
-    endif
-    call s:Tig('tig blame ' . expand('%:p'), #{ TIG_SCRIPT: l:startup_tig },
-      \ ["bind blame q @vim --remote-expr 'TigBlameSyncCursors(%(lineno))'"
-        \ . " --servername " . v:servername, "bind blame Q @vim --remote-expr"
-        \ . " 'TigBlameSyncCursors(%(lineno))' --servername " . v:servername],
-        \ #{})
-  endif
-endfunction
-
-function! s:TigGrep(pattern)
-  if s:IsTigUsable()
-    call s:Tig('tig grep ' . a:pattern, #{}, [], #{})
-  endif
-endfunction
-
-function! s:TigFinder()
-  if s:IsTigUsable()
-    let l:startup_tig = tempname()
-    let l:startup_script = [':view-blob']
-
-    if writefile(l:startup_script, l:startup_tig) == -1
-      echohl ErrorMsg
-      echomsg 'Personal Error Message: Can not write to startup tig temp file: '
-        \ . l:startup_tig
-      echohl NONE
-      return
-    endif
-    call s:Tig('tig', #{ TIG_SCRIPT: l:startup_tig }, [], #{})
-  endif
-endfunction
-
-function! s:TigBaddSyncCursors()
-  if exists('b:tig_line')
-    call cursor(b:tig_line, 0)
-    normal! zz
-    unlet b:tig_line
-  endif
-endfunction
-
-function! TigDiffCurrentFileClose()
-  call popup_close(s:tig.popup_id)
-  execute 'silent bdelete! ' . s:tig.diff_file_buf
-endfunction
-
-function! TigBlameSyncCursors(lineno)
-  let l:first_line = matchstr(matchstr(
-    \ term_getline(s:tig.term_buf, '1'), '[0-9]\+│'), '[0-9]\+')
-  call popup_close(s:tig.popup_id)
-  call cursor(l:first_line, 0)
-  normal! zt
-  call cursor(a:lineno, 0)
-endfunction
-
-function! TigEdit(file, lineno, lineno_old, text)
-  let l:filename = s:tig.git_root . '/' . a:file
-  if filereadable(l:filename)
-
-    call popup_close(s:tig.popup_id)
-
-    let l:command = 'view'
-    if filewritable(l:filename)
-      let l:command = 'edit'
-    endif
-
-    execute l:command . ' ' . l:filename
-
-    if ((a:text[0] == '+') && (a:lineno > 0))
-      \ || ((a:text[0] == '-') && (a:lineno_old > 0))
-        call cursor((a:text[0] == '+') ? a:lineno : a:lineno_old, 0)
-    endif
-  else
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: ' . l:filename . ' is not a file or is'
-      \ . ' not readable.'
-    echohl NONE
-  endif
-endfunction
-
-function! TigBadd(file, lineno, lineno_old, text)
-  let l:filename = s:tig.git_root . '/' . a:file
-  if !empty(glob(l:file_name)) && !isdirectory(l:file_name)
-
-    execute 'badd ' . l:filename
-
-    echohl OpenedDirPath
-    echo l:filename
-    echohl NONE
-    echon ' added to buffers list'
-
-    if ((a:text[0] == '+') && (a:lineno > 0))
-      \ || ((a:text[0] == '-') && (a:lineno_old > 0))
-        let l:buf = bufnr(l:filename)
-        call setbufvar(l:buf, 'tig_line',
-          \ (a:text[0] == '+') ? a:lineno : a:lineno_old)
-    endif
-  else
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: ' . l:filename . ' is not a file.'
-    echohl NONE
-  endif
-endfunction
-
-"     }}}
-"     Commands {{{3
-
-command! -nargs=1 TigGrep call <SID>TigGrep(<args>)
-
-"     }}}
-"   }}}
 " }}}
 " Filetype specific {{{1
 "   Bash {{{2
@@ -1913,12 +1590,11 @@ function! s:PrefillShFile()
 endfunction
 
 "   }}}
-"   YAML {{{2
+"   Zig {{{2
 
-function! s:PrefillYamlFile()
+function! s:PrefillZigFile()
   call append(0, [
-  \                '---',
-  \                '# Standards: 0.3',
+  \                'const std = @import ("std");',
   \                '',
   \              ])
 endfunction
@@ -2139,56 +1815,6 @@ const s:MAPPINGS = {
 \       keys: 'ù',
 \       mode: 'v',
 \       command: 'o',
-\     },
-\   ],
-\   'TIG': [
-\     #{
-\       description: 'Tig main view',
-\       keys: s:LEADERS.tig . 'l',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TigLog()<CR>',
-\     },
-\     #{
-\       description: 'Tig blame view',
-\       keys: s:LEADERS.tig . 'b',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TigBlame()<CR>',
-\     },
-\     #{
-\       description: 'Tig blob view',
-\       keys: s:LEADERS.tig . 'f',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TigFinder()<CR>',
-\     },
-\     #{
-\       description: 'Tig status view',
-\       keys: s:LEADERS.tig . 's',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TigStatus()<CR>',
-\     },
-\     #{
-\       description: 'Tig main view for current file',
-\       keys: s:LEADERS.tig_shift . 'L',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TigLogCurrentFile()<CR>',
-\     },
-\     #{
-\       description: 'Tig grep view',
-\       keys: s:LEADERS.tig . 'g',
-\       mode: 'n',
-\       command: ':TigGrep ""<Left>',
-\     },
-\     #{
-\       description: 'Tig stage view',
-\       keys: s:LEADERS.tig . 'd',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TigDiff()<CR>',
-\     },
-\     #{
-\       description: 'Tig stage view for current file',
-\       keys: s:LEADERS.tig_shift . 'D',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>TigDiffCurrentFile()<CR>',
 \     },
 \   ],
 \   'UNCLASSIFIED': [
@@ -2458,11 +2084,6 @@ augroup vimrc_autocomands
   autocmd BufEnter,CmdwinEnter * :silent call <SID>RefreshRainbow()
 
 "     }}}
-"     Tig autocommands {{{3
-
-  autocmd BufEnter * :silent call <SID>TigBaddSyncCursors()
-
-"     }}}
 "   }}}
 "   Filetype specific autocommands {{{2
 "     Bash autocommands {{{3
@@ -2470,9 +2091,9 @@ augroup vimrc_autocomands
   autocmd BufNewFile *.sh :call <SID>PrefillShFile()
 
 "     }}}
-"     Yaml autocommands {{{3
+"     Zig autocommands {{{3
 
-  autocmd BufNewFile *.yml,*.yaml :call <SID>PrefillYamlFile()
+  autocmd BufNewFile *.zig :call <SID>PrefillZigFile()
 
 "     }}}
 "   }}}
