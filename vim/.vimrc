@@ -123,37 +123,6 @@ const s:MODES = {
 \ }
 
 "   }}}
-"   User autocommand {{{2
-"     Variables {{{3
-
-let s:user_events = #{
-  \ lines: &lines,
-  \ columns: &columns,
-  \ buffers: [],
-\ }
-
-"     }}}
-"     Functions {{{3
-
-function! s:TriggerUserEvents(timer_id)
-  let l:buffers_nr = sort(map(getbufinfo(#{ buflisted: 1 }), { _, val -> val.bufnr }), 'N')
-  let l:buffers = map(l:buffers_nr, { nr -> #{ name: bufname(nr), nr: nr, hidden: empty(win_findbuf(nr)) } })
-  if s:user_events.buffers != l:buffers
-    doautocmd User BuffersListChanged
-    let s:user_events.buffers = l:buffers
-  endif
-  if s:user_events.lines != &lines
-    doautocmd User Resized
-    let s:user_events.lines = &lines
-  endif
-  if s:user_events.columns != &columns
-    doautocmd User Resized
-    let s:user_events.columns = &columns
-  endif
-endfunction
-
-"     }}}
-"   }}}
 "   Search {{{2
 "     Variables & constants {{{3
 
@@ -263,14 +232,12 @@ function! s:SetTmuxBuffer()
   endif
 endfunction
 
-function! s:GetTmuxPaneID()
-  if exists('${TMUX}')
-    let s:tmux_pane_id = systemlist('tmux -S "/tmp/tmux-${UID}/default" display-message -p "#S:#I.#P"')[0]
-  endif
-endfunction
-
 function! s:UpdateTmuxPaneLine()
   if exists('${TMUX}')
+    if !exists('s:tmux_pane_id')
+      let s:tmux_pane_id = systemlist('tmux -S "/tmp/tmux-${UID}/default" display-message -p "#S:#I.#P"')[0]
+    endif
+
     let l:tmux_pane_border = ''
 
     const l:COLORS = #{
@@ -290,7 +257,7 @@ function! s:UpdateTmuxPaneLine()
       \ { _, nr -> { 'nr': nr, 'name': bufname(nr) }})
 
     if len(l:bufs) > 1
-      while l:bufs[1].nr != bufnr('%')
+      while l:bufs[0].nr != bufnr('%')
         let l:bufs = add(l:bufs, remove(l:bufs, 0))
       endwhile
     endif
@@ -303,8 +270,7 @@ function! s:UpdateTmuxPaneLine()
           call remove(l:bufs, 0)
       endwhile
 
-      let l:tmux_pane_border = l:COLORS.buf . ' ... #[none]'
-        \ . l:tmux_pane_border . l:COLORS.buf . ' ... #[none]'
+      let l:tmux_pane_border .= l:COLORS.buf . ' ... #[none]'
     else
       while !empty(join(mapnew(l:bufs, { _, buf -> buf.nr }), ''))
         let l:tmux_pane_border .= s:BuildTmuxPaneLine(l:bufs[0], l:COLORS)
@@ -2026,11 +1992,6 @@ cnoreabbrev <expr> help (getcmdtype() == ':' ? "top help" : "help")
 
 augroup vimrc_autocomands
   autocmd!
-"   User autocommands {{{2
-
-  autocmd VimEnter * :silent call timer_start(200, function('s:TriggerUserEvents'), {'repeat': -1})
-
-"   }}}
 "   Dependencies autocommands {{{2
 
   autocmd VimEnter * :call <SID>CheckDependencies()
@@ -2064,10 +2025,8 @@ augroup vimrc_autocomands
 "   }}}
 "   Tmux autocommands {{{2
 
-  autocmd VimEnter * :silent call <SID>GetTmuxPaneID()
-  autocmd VimResized :doautocmd User Resized
-  autocmd User BuffersListChanged :silent call <SID>UpdateTmuxPaneLine()
-  autocmd User Resized :silent call <SID>UpdateTmuxPaneLine()
+  autocmd BufEnter,BufNew,BufDelete,BufWipeOut * :silent call <SID>UpdateTmuxPaneLine()
+  autocmd VimResized,WinResized * :silent call <SID>UpdateTmuxPaneLine()
   autocmd VimResume * :silent call <SID>UpdateTmuxPaneLine()
   autocmd VimSuspend,VimLeavePre * :silent call <SID>ResetTmuxPaneLine()
   autocmd TextYankPost * :silent call <SID>SetTmuxBuffer()

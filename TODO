@@ -1,5 +1,14 @@
+- .bash_aliases: remove unused aliases
+- .bash_aliases: show aliases + description
+- .vimrc: use systemd.path
+- .vimrc: autodetect KB layout and choose LEADERS
+- .vimrc: unsource .vimrc
+- .vimrc: toggle set paste
+- .vimrc: toggle hightlight search
+- .vimrc: remap
+- .vimrc: search and replace: use "%V" 2 times
 - .vimrc: vim9script
-- .vimrc + .tmux.conf: mapping to open/close tree pane
+- .vimrc + .tmux.conf + NERDtree: mapping to open/close tree pane
 - .tmux.conf: save & restore bash history for each pane
 - .tmux.conf: fix pane title between sessions
 - .tmux.conf: add keybinding to change color theme
