@@ -539,6 +539,17 @@ version_fonts ()
   return 0
 }
 
+version_xkblayout ()
+{
+  if [ -d "${setup_localsrc}/xkblayout" ]
+  then
+    printf 'xkblayout 1'
+  else
+    printf 'xkblayout %s' "${setup_noversion}"
+  fi
+  return 0
+}
+
 sumup ()
 {
   printf '\n'
@@ -671,8 +682,7 @@ main ()
   install gtk2-engines-murrine gtk2-engines-pixbuf
 
   # for spaceporn
-  install libpng-dev libvulkan-dev vulkan-validationlayers-dev spirv-tools \
-    libglfw3-dev libxxf86vm-dev libxi-dev imagemagick dconf-cli
+  install libpng-dev libxxf86vm-dev libxi-dev imagemagick dconf-cli
 
   # for password-store
   install xclip
@@ -744,6 +754,10 @@ main ()
   setup_needeval="NEEDEVAL${setup_sep}" git_install 'direnv' \
     'https://github.com/direnv/direnv' 'Installing direnv' \
     "cd ${setup_localsrc}/direnv && sudo bash install.sh && cd -"
+  git_install 'xkblayout' 'https://github.com/nonpop/xkblayout-state' \
+    'Compiling xkblayout-state' "make --directory ${setup_localsrc}/xkblayout" \
+    'Installing xkblayout-state' \
+    "cp ${setup_localsrc}/xkblayout/xkblayout-state ${setup_local}/bin"
   git_install 'vim' 'https://github.com/vim/vim' 'Compiling vim' \
     "make --directory ${setup_localsrc}/vim" 'Installing vim' \
     "${_sudo} make --directory ${setup_localsrc}/vim install"
@@ -827,7 +841,7 @@ main ()
       esac
 
       setup_needeval="NEEDEVAL${setup_sep}" run 'Changing terminal font to nerd font' \
-        "dconf write \"/org/gnome/terminal/legacy/profiles:/\$(dconf list /org/gnome/terminal/legacy/profiles:/)font\" \"'UbuntuMono Nerd Font 13'\""
+        "dconf write \"/org/gnome/terminal/legacy/profiles:/\$(dconf list /org/gnome/terminal/legacy/profiles:/)font\" \"'UbuntuMono Nerd Font 16'\""
 
       setup_notag='true' git_install 'chromethemes' 'https://github.com/rtlewis1/GTK' \
         'Moving to Chrome OS themes branch' \

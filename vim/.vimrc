@@ -1570,15 +1570,15 @@ endfunction
 " Mappings and Keys {{{1
 "   Variables & constants {{{2
 
-if exists('s:leaders') | unlet s:leaders | endif
-"\   global:    '²',
-"\   shift:     '³',
-const s:LEADERS = #{
-\   global:    '`',
-\   shift:     '~',
-\   tig:       '&',
-\   tig_shift: '1',
-\ }
+if exists('s:KB_LAYOUT') | unlet s:KB_LAYOUT | endif
+let s:KB_LAYOUT = systemlist('xkblayout-state print %s')[0]
+
+if exists('s:LEADERS') | unlet s:LEADERS | endif
+if s:KB_LAYOUT == 'us'
+  const s:LEADERS = #{ global: '`', shift: '~', }
+elseif s:KB_LAYOUT == 'fr'
+  const s:LEADERS = #{ global: '²', shift: '³', }
+endif
 
 if exists('s:MAPPINGS') | unlet s:MAPPINGS | endif
 const s:MAPPINGS = {

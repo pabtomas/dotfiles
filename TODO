@@ -1,7 +1,6 @@
 - .bash_aliases: remove unused aliases
 - .bash_aliases: show aliases + description
 - .vimrc: use systemd.path
-- .vimrc: autodetect KB layout and choose LEADERS
 - .vimrc: unsource .vimrc
 - .vimrc: toggle set paste
 - .vimrc: toggle hightlight search
