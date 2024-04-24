@@ -1,13 +1,96 @@
-- .bash_aliases: remove unused aliases
-- .bash_aliases: show aliases + description
-- .vimrc: use systemd.path
-- .vimrc: unsource .vimrc
-- .vimrc: toggle set paste
-- .vimrc: toggle hightlight search
-- .vimrc: remap
-- .vimrc: search and replace: use "%V" 2 times
-- .vimrc: vim9script
-- .vimrc + .tmux.conf + NERDtree: mapping to open/close tree pane
-- .tmux.conf: save & restore bash history for each pane
-- .tmux.conf: fix pane title between sessions
-- .tmux.conf: add keybinding to change color theme
+'-'   -> go for it
+'?'   -> go for it but adjust the need to the V2 proposition
+'??'  -> go for it but not now
+'???' -> obsolete
+
+V1:
+-   .bash_aliases: remove unused aliases
+??? .bash_aliases: show aliases + description
+??? .vimrc: use systemd.path
+-   .vimrc: unsource .vimrc
+-   .vimrc: toggle set paste
+-   .vimrc: toggle hightlight search
+-   .vimrc: remap
+-   .vimrc: search and replace: use "%V" 2 times
+??  .vimrc: vim9script
+?   .vimrc + .tmux.conf + NERDtree: mapping to open/close tree pane
+?   .tmux.conf: save & restore bash history for each pane
+??? .tmux.conf: fix pane title between sessions
+??  .tmux.conf: add keybinding to change color theme
+
+V2:
+rename dotfiles -> workspaces
+- rm deploy_setup.sh
+- prompt.sh:
+  - apt update,
+  - apt upgrade,
+  - apt automemove/purge
+  - if Docker not installed:
+    - install Docker
+  - else:
+    - stop all containers
+    - rm all containers
+    - prune system (& images)
+  - pull git image
+  - run git container
+  - pull workspace git repo
+  - pull latest workspace images from registry
+  - docker compose up into workspace git repo
+  - ssh connect into the workspace jump
+  - infinite loop: exit to kill the term after the loop (+ add a trap to exit)
+- new host/init.sh:
+  - load prompt.sh into .bashrc
+- new workspace dir (1 workspace = 1 Dockerfile):
+  - new Dockerfiles:
+    - jump:
+      - use ssh between containers
+      - TMUX is installed here
+    - workspace draft: manual installation & testing here
+    - workspace admin (dind): workspaces git repo is managed here
+    - workspace repo: aliases/packages for a managed git repository
+    - workspace pro: aliases/packages for pro usage
+    - gui: firefox, text editors, ...
+- update workspace Dockerfiles + images with bot
+  - templating for Dockerfiles
+
+proposition:
+  workspaces
+  ├── docker-compose.yml
+  ├── dotfiles
+  │   ├── .bashrc
+  │   ├── .tmux.conf
+  │   └── .vimrc
+  ├── .github
+  │   ├── actions
+  │   │   ├── bot
+  │   │   │   └── action.yml
+  │   │   └── ci
+  │   │       └── action.yml
+  │   └── workflows
+  │       ├── bot.yml
+  │       └── ci.yml
+  ├── gui
+  │   ├── Dockerfile
+  │   └── Dockerfile.in
+  ├── host
+  │   ├── .bashrc
+  │   ├── init.sh
+  │   └── prompt.sh
+  ├── jump
+  │   ├── Dockerfile
+  │   └── Dockerfile.in
+  ├── workspace_admin
+  │   ├── Dockerfile
+  │   └── Dockerfile.in
+  ├── workspace_draft
+  │   ├── Dockerfile
+  │   └── Dockerfile.in
+  ├── workspace_pro
+  │   ├── Dockerfile
+  │   └── Dockerfile.in
+  ├── workspace_safedeposit
+  │   ├── Dockerfile
+  │   └── Dockerfile.in
+  └── workspace_spaceporn
+      ├── Dockerfile
+      └── Dockerfile.in
