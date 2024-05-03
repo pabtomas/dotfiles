@@ -19,7 +19,7 @@ V1:
 ??  .tmux.conf: add keybinding to change color theme
 
 V2:
-rename dotfiles -> workspaces
+rename dotfiles -> workspace
 - rm deploy_setup.sh
 - prompt.sh:
   - apt update,
@@ -38,24 +38,31 @@ rename dotfiles -> workspaces
   - pull workspace git repo
   - pull latest workspace images from registry
   - docker compose up into workspace git repo
-  - ssh connect into the workspace jump
+  - ssh connect into the jumper
   - infinite loop: exit to kill the term after the loop (+ add a trap to exit)
 - new host/init.sh:
   - load prompt.sh into .bashrc
 - new docker-compose.yml file:
-  - run all our images
-  - jlesage/docker-firefox image
-- new workspace dir (1 workspace = 1 Dockerfile):
-  - new Dockerfiles:
-    - jump:
+  - 1 dir = 1 ALPINE Dockerfile = 1 service:
+    - jumper:
       - use ssh between containers
-      - TMUX is installed here
-    - workspace draft: manual installation & testing here
-    - workspace admin (dind): workspaces git repo is managed here
-    - workspace repo: aliases/packages for a managed git repository
-    - workspace pro: aliases/packages for pro usage
-    - gui_<component>: jlesage/docker-baseimage-gui based images working with min (text_editor ?)
-- update workspace Dockerfiles + images with bot
+      - TMUX
+    - proxy:
+      - use Tecnativa/docker-socket-proxy or linuxserver/docker-socket-proxy to filter admin requests
+    - admin:
+      - ask to the host to run new containers thanks to sibling:
+        - install docker CLI
+        - mount host docker socket
+    - editor:
+      - VIM + git
+      - everything is already cloned on a shared volume with host
+    - safedeposit:
+      - passwordstore + git + gpg
+      - exclusive clone on a volume
+    - jlesage/docker-firefox
+    - pro: aliases/packages for pro usage
+- jlesage/docker-baseimage-gui based images working with min
+- update Dockerfiles + images with bot
   - templating for Dockerfiles
   - templating for docker-compose.yml
 
@@ -76,28 +83,25 @@ proposition:
   │   └── workflows
   │       ├── bot.yml
   │       └── ci.yml
-  ├── gui_<component>
-  │   ├── Dockerfile
-  │   └── Dockerfile.in
   ├── host
   │   ├── .bashrc
   │   ├── init.sh
   │   └── prompt.sh
-  ├── jump
+  ├── jumper
   │   ├── Dockerfile
   │   └── Dockerfile.in
-  ├── workspace_admin
+  ├── admin
   │   ├── Dockerfile
   │   └── Dockerfile.in
-  ├── workspace_draft
+  ├── editor
   │   ├── Dockerfile
   │   └── Dockerfile.in
-  ├── workspace_pro
+  ├── safedeposit
   │   ├── Dockerfile
   │   └── Dockerfile.in
-  ├── workspace_safedeposit
+  ├── pro
   │   ├── Dockerfile
   │   └── Dockerfile.in
-  └── workspace_spaceporn
+  └── spaceporn
       ├── Dockerfile
       └── Dockerfile.in
