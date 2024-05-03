@@ -32,7 +32,7 @@ rename dotfiles -> workspace
     - update min (or another modern minimal web browser)
     - stop all containers
     - rm all containers
-    - prune system (& images)
+    - docker prune everything EXCEPT VOLUMES
   - pull git image
   - run git container
   - pull workspace git repo
@@ -48,14 +48,16 @@ rename dotfiles -> workspace
       - use ssh between containers
       - TMUX
     - proxy:
-      - use Tecnativa/docker-socket-proxy or linuxserver/docker-socket-proxy to filter admin requests
-    - admin:
+      - use Tecnativa/docker-socket-proxy or linuxserver/docker-socket-proxy to filter controller requests
+    - controller:
       - ask to the host to run new containers thanks to sibling:
         - install docker CLI
         - mount host docker socket
     - editor:
       - VIM + git
-      - everything is already cloned on a shared volume with host
+      - 2 volumes:
+        - 1 shared with host for workspace git repo
+        - 1 exclusive for all other git repos
     - safedeposit:
       - passwordstore + git + gpg
       - exclusive clone on a volume
@@ -90,7 +92,7 @@ proposition:
   ├── jumper
   │   ├── Dockerfile
   │   └── Dockerfile.in
-  ├── admin
+  ├── controller
   │   ├── Dockerfile
   │   └── Dockerfile.in
   ├── editor

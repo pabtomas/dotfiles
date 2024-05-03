@@ -33,22 +33,22 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - proxy_for_admin
+      - proxy_for_controller
     restart: unless-stopped
     read_only: true
     tmpfs:
       - /run
-  admin:
+  controller:
     build:
-      context: admin
-    container_name: admin
+      context: controller
+    container_name: controller
     environment:
       - DOCKER_HOST=tcp://proxy:2375
     networks:
-      - proxy_for_admin
+      - proxy_for_controller
 
 networks:
-  proxy_for_admin:
+  proxy_for_controller:
     driver: bridge
     ipam:
       driver: default
