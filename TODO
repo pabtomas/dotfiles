@@ -38,26 +38,27 @@ rename dotfiles -> workspace
   - pull workspace git repo
   - pull latest workspace images from registry
   - docker compose up into workspace git repo
-  - ssh connect into the jumper
+  - docker attach jumper (no ssh)
   - infinite loop: exit to kill the term after the loop (+ add a trap to exit)
 - new host/init.sh:
   - load prompt.sh into .bashrc
-- new docker-compose.yml file:
+- new compose.yaml file:
   - 1 dir = 1 ALPINE Dockerfile = 1 service:
     - jumper:
       - use ssh between containers
       - TMUX
+      - ssh volume
     - proxy:
       - use Tecnativa/docker-socket-proxy or linuxserver/docker-socket-proxy to filter controller requests
     - controller:
       - ask to the host to run new containers thanks to sibling:
         - install docker CLI
         - mount host docker socket
-    - editor:
-      - VIM + git
-      - 2 volumes:
+    - editor (& cloner ?):
+      - VIM + git + tig + ripgrep
+      - volumes:
         - 1 shared with host for workspace git repo
-        - 1 exclusive for all other git repos
+        - 1 each git repo shared with matching runner
     - safedeposit:
       - passwordstore + git + gpg
       - exclusive clone on a volume
@@ -66,44 +67,28 @@ rename dotfiles -> workspace
 - jlesage/docker-baseimage-gui based images working with min
 - update Dockerfiles + images with bot
   - templating for Dockerfiles
-  - templating for docker-compose.yml
+  - templating for compose.yaml
+- Add a directory for components: 1 Dockerfile = 1 component and use it for multistaging
+- Add a directory for runners: 1 Dockerfile = 1 runner
 
 proposition:
   workspaces
-  ├── docker-compose.yml
-  ├── docker-compose.yml.in
+  ├── compose.yaml/templated
   ├── dotfiles
   │   ├── .bashrc
   │   ├── .tmux.conf
   │   └── .vimrc
-  ├── .github
-  │   ├── actions
-  │   │   ├── bot
-  │   │   │   └── action.yml
-  │   │   └── ci
-  │   │       └── action.yml
-  │   └── workflows
-  │       ├── bot.yml
-  │       └── ci.yml
+  ├── .github/workflows/bot.yml
   ├── host
   │   ├── .bashrc
   │   ├── init.sh
   │   └── prompt.sh
-  ├── jumper
-  │   ├── Dockerfile
-  │   └── Dockerfile.in
-  ├── controller
-  │   ├── Dockerfile
-  │   └── Dockerfile.in
-  ├── editor
-  │   ├── Dockerfile
-  │   └── Dockerfile.in
-  ├── safedeposit
-  │   ├── Dockerfile
-  │   └── Dockerfile.in
-  ├── pro
-  │   ├── Dockerfile
-  │   └── Dockerfile.in
-  └── spaceporn
-      ├── Dockerfile
-      └── Dockerfile.in
+  ├── jumper/controller/editor/safedeposit/pro
+  │   └── Dockerfile/templated
+  ├── components
+  │   ├── compose.yaml/templated
+  │   └── git/tig/ripgrep/vim/tmux/zig
+  │       └── Dockerfile/templated
+  └── runners
+      └── spaceporn
+          └── Dockerfile/compose.yaml/templates

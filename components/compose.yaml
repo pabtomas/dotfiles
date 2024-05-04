@@ -1,0 +1,8 @@
+services:
+  zig:
+    build:
+      context: ./${ZIG}
+      args:
+        - OS=${OS}
+        - ZIG_TAG=${ZIG_TAG}
+    image: ${ZIG_IMG}
