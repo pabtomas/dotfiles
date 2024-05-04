@@ -11,45 +11,24 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - shared-ssh:/root/.ssh
+      - ${SSH_VOLUME}:${SSH_ROOT}
     networks:
       - ${JUMP_AREA}
   proxy:
+    build:
+      context: ./${PROXY}
+      args:
+        - DOCKER_IMG=${DOCKER_IMG}
+        - PROXY_PORT=${PROXY_PORT}
+        - OS=${OS}
+        - SOCKET_PATH=${SOCKET_PATH}
+        - VERSION=${TRUE}
     image: ${PROXY_IMG}
     container_name: ${PROXY}
-    environment:
-      - ALLOW_START=${FALSE} #optional
-      - ALLOW_STOP=${FALSE} #optional
-      - ALLOW_RESTARTS=${FALSE} #optional
-      - AUTH=${FALSE} #optional
-      - BUILD=${FALSE} #optional
-      - COMMIT=${FALSE} #optional
-      - CONFIGS=${FALSE} #optional
-      - CONTAINERS=${FALSE} #optional
-      - DISABLE_IPV6=${FALSE} #optional
-      - DISTRIBUTION=${FALSE} #optional
-      - EVENTS=${TRUE} #optional
-      - EXEC=${FALSE} #optional
-      - IMAGES=${FALSE} #optional
-      - INFO=${FALSE} #optional
-      - NETWORKS=${FALSE} #optional
-      - NODES=${FALSE} #optional
-      - PING=${TRUE} #optional
-      - POST=${FALSE} #optional
-      - PLUGINS=${FALSE} #optional
-      - SECRETS=${FALSE} #optional
-      - SERVICES=${FALSE} #optional
-      - SESSION=${FALSE} #optional
-      - SWARM=${FALSE} #optional
-      - SYSTEM=${FALSE} #optional
-      - TASKS=${FALSE} #optional
-      - TAG=${TRUE} #optional
-      - VOLUMES=${FALSE} #optional
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
     networks:
       - ${PROXIFIED_SOCKET}
-    restart: unless-stopped
     read_only: true
     tmpfs:
       - /run
@@ -58,16 +37,15 @@ services:
       context: ./${CONTROLLER}
       args:
         - BASH_IMG=${BASH_IMG}
+        - DOCKER_HOST=tcp://${PROXY}:${PROXY_PORT}
         - DOCKER_IMG=${DOCKER_IMG}
     image: ${CONTROLLER_IMG}
     container_name: ${CONTROLLER}
     hostname: ${CONTROLLER}
-    environment:
-      - DOCKER_HOST=tcp://${PROXY}:${PROXY_PORT}
     stdin_open: true
     tty: true
     volumes:
-      - shared-ssh:/root/.ssh
+      - ${SSH_VOLUME}:${SSH_ROOT}
     networks:
       - ${PROXIFIED_SOCKET}
       - ${JUMP_AREA}
@@ -86,4 +64,4 @@ networks:
 
 volumes:
   shared-ssh:
-    name: shared-ssh
+    name: ${SSH_VOLUME}
