@@ -56,12 +56,12 @@ services:
     image: ${JUMPER_IMG}
     container_name: ${JUMPER}
     hostname: ${JUMPER}
-    stdin_open: true
-    tty: true
     volumes:
       - ${SSH_VOLUME}:${OPT_SSH}
     networks:
       - ${JUMP_AREA}
+    stdin_open: true
+    tty: true
 
 networks:
   proxy_for_controller:
