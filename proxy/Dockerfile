@@ -30,16 +30,17 @@ RUN set -eux; \
           docker_varname="API_ENDPOINT_$(printf '%s\n' "${nginx_var}" | tr 'a-z' 'A-Z')"; \
           resolve_ref="$(eval "printf '%s' \"\${${docker_varname}:-0}\"")"; \
           printf '    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"; \
-          printf '    location ~* ^(/v[\d\.]+)?%s {if ($%s = 0){return 403;}proxy_pass http://unix:$dockersocket;}\n\n' "${regex}" "${nginx_var}"; \
+          printf '    location ~* ^(/v[\d\.]+)?%s {if ($%s = 0){return 403 "[403] Forbidden API endpoint: %s";}proxy_pass http://unix:$dockersocket;}\n\n' "${regex}" "${nginx_var}" "'${endpoint}'"; \
         fi; \
       done \
     )"; \
+    HEADER='    server_name _;'; \
     LISTEN="    listen ${PROXY_PORT} default_server;"; \
-    E403='    error_page 403 /403.html;\n    location = /403.html {root /var/www/html/;allow all;}'; \
+    TYPE='    default_type test/plain;'; \
     PROXY_CONF='    include /etc/nginx/proxy.conf;'; \
     SOCKET="    set \$dockersocket ${SOCKET_PATH};"; \
-    printf 'server {\n    server_name _;\n%s\n\n%b\n\n%s\n\n%s\n\n%s\n}\n' \
-      "${LISTEN}" "${E403}" "${PROXY_CONF}" "${SOCKET}" "${LOCATIONS}" > "${TMP_NGX}/default.conf"
+    printf 'server {\n%s\n%s\n%s\n\n%b\n\n%s\n\n%s\n\n%s\n}\n' "${HEADER}" "${LISTEN}"\
+      "${TYPE}" "${PROXY_CONF}" "${SOCKET}" "${LOCATIONS}" > "${TMP_NGX}/default.conf"
 
 FROM ${OS}
 
@@ -51,7 +52,6 @@ RUN set -eux; \
     HTML='/var/www/html'; \
     ENTRYPOINT='/docker_entrypoint.sh'; \
     mkdir -p "${HTML}"; \
-    printf '[403 Forbidden]\n' > "${HTML}/403.html"; \
     printf '#!/bin/sh\nmv /etc/nginx/default.conf /run/; exec /usr/sbin/nginx -e stderr\n' > "${ENTRYPOINT}"; \
     chmod 0700 "${ENTRYPOINT}"; \
     rm -f /etc/nginx/http.d/default.conf
