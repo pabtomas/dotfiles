@@ -47,22 +47,34 @@ END_OF_RUN
 
 FROM ${OS}
 
+ARG NET
 ARG ETC_NGX
 ARG TMP_NGX
 COPY --from=linuxserver_img ${ETC_NGX}/nginx.conf ${ETC_NGX}/
 COPY --from=linuxserver_img ${ETC_NGX}/proxy.conf ${ETC_NGX}/
-COPY --from=default_conf ${TMP_NGX}/default.conf ${ETC_NGX}/
+COPY --from=default_conf ${TMP_NGX}/default.conf ${TMP_NGX}/
 
 RUN <<END_OF_RUN
     set -eux
-    apk add --no-cache nginx
+    apk add --no-cache nginx openssh-server
     rm -f "${ETC_NGX}/http.d/default.conf"
     ENTRYPOINT='/docker_entrypoint.sh'
-    printf '#!/bin/sh\nmv %s/default.conf /run/; exec /usr/sbin/nginx -e stderr\n' "${ETC_NGX}" > "${ENTRYPOINT}"
+    cat << TEMPLATING > "/etc/ssh/sshd_config.d/${NET}.conf"
+PasswordAuthentication no
+TEMPLATING
+    ssh-keygen -A
+    cat << TEMPLATING > "${ENTRYPOINT}"
+#!/bin/sh
+mv "${TMP_NGX}/default.conf" /run/
+/usr/sbin/nginx -e stderr &
+/usr/sbin/sshd -D -e &
+wait
+TEMPLATING
     chmod 0700 "${ENTRYPOINT}"
 END_OF_RUN
 
+ENTRYPOINT ["/docker_entrypoint.sh"]
+
 ARG PROXY_PORT
 EXPOSE ${PROXY_PORT}
-
-ENTRYPOINT ["/docker_entrypoint.sh"]
+EXPOSE 22

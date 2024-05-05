@@ -8,16 +8,20 @@ services:
         - DOCKER_IMG=${DOCKER_IMG}
         - ETC_NGX=/etc/nginx
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
-        - PROXY_PORT=${PROXY_PORT}
+        - NET=${JUMP_AREA}
         - OS=${OS}
+        - PROXY_PORT=${PROXY_PORT}
         - TMP_NGX=/tmp/nginx
         - SOCKET_PATH=${SOCKET_PATH}
     image: ${PROXY_IMG}
     container_name: ${PROXY}
+    hostname: ${PROXY}
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
+      - ${SSH_VOLUME}:${SSH_ROOT}
     networks:
       - ${PROXIFIED_SOCKET}
+      - ${JUMP_AREA}
     read_only: true
     tmpfs:
       - /run
@@ -33,8 +37,6 @@ services:
     image: ${CONTROLLER_IMG}
     container_name: ${CONTROLLER}
     hostname: ${CONTROLLER}
-    stdin_open: true
-    tty: true
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT}
     networks:
@@ -50,14 +52,14 @@ services:
         - CONTROLLER=${CONTROLLER}
         - HOSTNAME=${JUMPER}
         - NET=${JUMP_AREA}
-        - SSH_ROOT=${SSH_ROOT}
+        - OPT_SSH=${OPT_SSH}
     image: ${JUMPER_IMG}
     container_name: ${JUMPER}
     hostname: ${JUMPER}
     stdin_open: true
     tty: true
     volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT}
+      - ${SSH_VOLUME}:${OPT_SSH}
     networks:
       - ${JUMP_AREA}
 

@@ -59,6 +59,8 @@ rename dotfiles -> workspace
       - volumes:
         - 1 shared with host for workspace git repo
         - 1 each git repo shared with matching runner
+    - drawer:
+      - figlet/lolcat/tui monitoring/xinetd + service network
     - safedeposit:
       - passwordstore + git + gpg
       - exclusive clone on a volume
@@ -83,7 +85,7 @@ proposition:
   │   ├── .bashrc
   │   ├── init.sh
   │   └── prompt.sh
-  ├── jumper/controller/editor/safedeposit/pro
+  ├── jumper/controller/editor/safedeposit/pro/drawer
   │   └── Dockerfile/templated
   ├── components
   │   ├── compose.yaml/templated
