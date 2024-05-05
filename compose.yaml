@@ -1,23 +1,9 @@
 services:
-  jumper:
-    build:
-      context: ./${JUMPER}
-      args:
-        - BASH_IMG=${BASH_IMG}
-        - SSH_ROOT=${SSH_ROOT}
-    image: ${JUMPER_IMG}
-    container_name: ${JUMPER}
-    hostname: ${JUMPER}
-    stdin_open: true
-    tty: true
-    volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT}
-    networks:
-      - ${JUMP_AREA}
   proxy:
     build:
       context: ./${PROXY}
       args:
+        - API_ENDPOINT_NETWORKS=${TRUE}
         - API_ENDPOINT_VERSION=${TRUE}
         - DOCKER_IMG=${DOCKER_IMG}
         - ETC_NGX=/etc/nginx
@@ -42,6 +28,8 @@ services:
         - BASH_IMG=${BASH_IMG}
         - DOCKER_HOST=tcp://${PROXY}:${PROXY_PORT}
         - DOCKER_IMG=${DOCKER_IMG}
+        - NET=${JUMP_AREA}
+        - SSH_ROOT=${SSH_ROOT}
     image: ${CONTROLLER_IMG}
     container_name: ${CONTROLLER}
     hostname: ${CONTROLLER}
@@ -51,6 +39,26 @@ services:
       - ${SSH_VOLUME}:${SSH_ROOT}
     networks:
       - ${PROXIFIED_SOCKET}
+      - ${JUMP_AREA}
+  jumper:
+    depends_on:
+      - ${CONTROLLER}
+    build:
+      context: ./${JUMPER}
+      args:
+        - BASH_IMG=${BASH_IMG}
+        - CONTROLLER=${CONTROLLER}
+        - HOSTNAME=${JUMPER}
+        - NET=${JUMP_AREA}
+        - SSH_ROOT=${SSH_ROOT}
+    image: ${JUMPER_IMG}
+    container_name: ${JUMPER}
+    hostname: ${JUMPER}
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT}
+    networks:
       - ${JUMP_AREA}
 
 networks:

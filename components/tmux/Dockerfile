@@ -1,2 +1,0 @@
-ARG ALPINE_TAG
-FROM alpine:${ALPINE_TAG}
