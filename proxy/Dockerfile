@@ -4,7 +4,7 @@ ARG LINUXSERVER_PROXY_IMG
 
 FROM ${LINUXSERVER_PROXY_IMG} as linuxserver_img
 FROM ${DOCKER_IMG} as docker_img
-FROM ${OS} as nginx_conf
+FROM ${OS} as default_conf
 
 COPY --from=docker_img /usr/local/bin/docker /usr/local/bin/
 
@@ -36,7 +36,7 @@ RUN set -eux; \
     )"; \
     HEADER='    server_name _;'; \
     LISTEN="    listen ${PROXY_PORT} default_server;"; \
-    TYPE='    default_type test/plain;'; \
+    TYPE='    default_type text/plain;'; \
     PROXY_CONF="    include ${ETC_NGX}/proxy.conf;"; \
     SOCKET="    set \$dockersocket ${SOCKET_PATH};"; \
     printf 'server {\n%s\n%s\n%s\n\n%b\n\n%s\n\n%s\n\n%s\n}\n' "${HEADER}" "${LISTEN}"\
@@ -48,7 +48,7 @@ ARG ETC_NGX
 ARG TMP_NGX
 COPY --from=linuxserver_img ${ETC_NGX}/nginx.conf ${ETC_NGX}/
 COPY --from=linuxserver_img ${ETC_NGX}/proxy.conf ${ETC_NGX}/
-COPY --from=nginx_conf ${TMP_NGX}/default.conf ${ETC_NGX}/
+COPY --from=default_conf ${TMP_NGX}/default.conf ${ETC_NGX}/
 
 RUN set -eux; \
     apk add --no-cache nginx; \
