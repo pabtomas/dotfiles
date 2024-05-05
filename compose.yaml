@@ -20,6 +20,8 @@ services:
       args:
         - API_ENDPOINT_VERSION=${TRUE}
         - DOCKER_IMG=${DOCKER_IMG}
+        - ETC_NGX=/etc/nginx
+        - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
         - PROXY_PORT=${PROXY_PORT}
         - OS=${OS}
         - TMP_NGX=/tmp/nginx
