@@ -50,13 +50,9 @@ FROM ${OS}
 ARG NET
 ARG ETC_NGX
 ARG TMP_NGX
-COPY --from=linuxserver_img ${ETC_NGX}/nginx.conf ${ETC_NGX}/
-COPY --from=linuxserver_img ${ETC_NGX}/proxy.conf ${ETC_NGX}/
-
 RUN <<END_OF_RUN
     set -eux
     apk add --no-cache nginx openssh-server
-    rm -f "${ETC_NGX}/http.d/default.conf"
     ENTRYPOINT='/docker_entrypoint.sh'
     cat << TEMPLATING > "/etc/ssh/sshd_config.d/${NET}.conf"
 PasswordAuthentication no
@@ -72,6 +68,8 @@ TEMPLATING
     chmod 0700 "${ENTRYPOINT}"
 END_OF_RUN
 
+COPY --from=linuxserver_img ${ETC_NGX}/nginx.conf ${ETC_NGX}/
+COPY --from=linuxserver_img ${ETC_NGX}/proxy.conf ${ETC_NGX}/
 COPY --from=default_conf ${TMP_NGX}/default.conf ${ETC_NGX}/http.d/
 
 ENTRYPOINT ["/docker_entrypoint.sh"]
