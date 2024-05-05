@@ -9,7 +9,7 @@ RUN set -eux; \
     mkdir -p "${SSH_ROOT}"; \
     KEY="${SSH_ROOT}/id_rsa"; \
     ssh-keygen -q -t rsa -N '' -f "${KEY}"; \
-    printf "alias ssh='ssh -o StrictHostKeyChecking=accept-new'\\n" > /etc/profile.d/ssh.sh; \
+    printf 'StrictHostKeyChecking accept-new\n' > /etc/ssh/ssh_config.d/jumper.conf; \
     cp "${KEY}.pub" "${SSH_ROOT}/authorized_keys"
 
 ENTRYPOINT ["bash", "-l"]
