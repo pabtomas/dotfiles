@@ -23,6 +23,7 @@ services:
         - OS=${OS}
         - SOCKET_PATH=${SOCKET_PATH}
         - VERSION=${TRUE}
+        - TMP_NGX=/tmp/nginx
     image: ${PROXY_IMG}
     container_name: ${PROXY}
     volumes:

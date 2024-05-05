@@ -9,6 +9,7 @@ RUN set -eux; \
     mkdir -p "${SSH_ROOT}"; \
     KEY="${SSH_ROOT}/id_rsa"; \
     ssh-keygen -q -t rsa -N '' -f "${KEY}"; \
-    cp "${KEY}.pub" ${SSH_ROOT}/authorized_keys
+    printf "alias ssh='ssh -o StrictHostKeyChecking=accept-new'\\n" > /etc/profile.d/ssh.sh; \
+    cp "${KEY}.pub" "${SSH_ROOT}/authorized_keys"
 
-ENTRYPOINT ["bash"]
+ENTRYPOINT ["bash", "-l"]
