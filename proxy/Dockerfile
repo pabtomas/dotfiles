@@ -10,7 +10,7 @@ ARG SOCKET_PATH
 ARG PROXY_PORT
 ARG TMP_NGX
 
-ARG VERSION
+ARG API_ENDPOINT_VERSION
 
 RUN set -eux; \
     apk --no-cache add curl yq; \
@@ -27,7 +27,7 @@ RUN set -eux; \
         then \
           nginx_var="$(printf '%s\n' "${endpoint}" | sed 's@^/@@;s@/{\|}/\|/@_@g')"; \
           regex="$(printf '%s\n' "${endpoint}" | sed 's@/{id}$\|/{name}$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"; \
-          docker_varname="$(printf '%s\n' "${nginx_var}" | tr 'a-z' 'A-Z')"; \
+          docker_varname="API_ENDPOINT_$(printf '%s\n' "${nginx_var}" | tr 'a-z' 'A-Z')"; \
           resolve_ref="$(eval "printf '%s' \"\${${docker_varname}:-0}\"")"; \
           printf '    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"; \
           printf '    location ~* ^(/v[\d\.]+)?%s {if ($%s = 0){return 403;}proxy_pass http://unix:$dockersocket;}\n\n' "${regex}" "${nginx_var}"; \
@@ -49,11 +49,14 @@ COPY --from=nginx_conf ${TMP_NGX}/* /etc/nginx/
 RUN set -eux; \
     apk add --no-cache nginx; \
     HTML='/var/www/html'; \
+    ENTRYPOINT='/docker_entrypoint.sh'; \
     mkdir -p "${HTML}"; \
     printf '[403 Forbidden]\n' > "${HTML}/403.html"; \
+    printf '#!/bin/sh\nmv /etc/nginx/default.conf /run/; exec /usr/sbin/nginx -e stderr\n' > "${ENTRYPOINT}"; \
+    chmod 0700 "${ENTRYPOINT}"; \
     rm -f /etc/nginx/http.d/default.conf
 
 ARG PROXY_PORT
 EXPOSE ${PROXY_PORT}
 
-ENTRYPOINT ["sh", "-c", "mv /etc/nginx/default.conf /run/; /usr/sbin/nginx -e stderr"]
+ENTRYPOINT ["/docker_entrypoint.sh"]

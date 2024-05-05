@@ -18,12 +18,12 @@ services:
     build:
       context: ./${PROXY}
       args:
+        - API_ENDPOINT_VERSION=${TRUE}
         - DOCKER_IMG=${DOCKER_IMG}
         - PROXY_PORT=${PROXY_PORT}
         - OS=${OS}
-        - SOCKET_PATH=${SOCKET_PATH}
-        - VERSION=${TRUE}
         - TMP_NGX=/tmp/nginx
+        - SOCKET_PATH=${SOCKET_PATH}
     image: ${PROXY_IMG}
     container_name: ${PROXY}
     volumes:

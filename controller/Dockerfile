@@ -12,8 +12,11 @@ RUN set -eux; \
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd; \
     printf 'export DOCKER_HOST=%s\n' "${DOCKER_HOST}" >> /etc/profile.d/env.sh; \
     printf 'PasswordAuthentication no\n' >> /etc/ssh/sshd_config; \
+    ENTRYPOINT='/docker_entrypoint.sh'; \
+    printf '#!/bin/sh\nexec /usr/sbin/sshd -D -e\n' > "${ENTRYPOINT}"; \
+    chmod 0700 "${ENTRYPOINT}"; \
     ssh-keygen -A
 
-ENTRYPOINT ["/usr/sbin/sshd", "-D", "-e"]
+ENTRYPOINT ["/docker_entrypoint.sh"]
 
 EXPOSE 22
