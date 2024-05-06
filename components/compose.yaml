@@ -5,4 +5,5 @@ services:
       args:
         - OS=${OS}
         - ZIG_TAG=${ZIG_TAG}
+        - USE_PROXY=${http_proxy:-}
     image: ${ZIG_IMG}

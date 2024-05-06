@@ -73,6 +73,18 @@ rename dotfiles -> workspace
 - Add a directory for components: 1 Dockerfile = 1 component and use it for multistaging
 - Add a directory for runners: 1 Dockerfile = 1 runner
 
+-------------------------------------------------------------------------------
+$ cat /etc/swanctl/conf.d/ecureuil.conf
+[...]
+        children {
+            exclusion {
+                remote_ts = 172.17.0.0/16
+                mode = pass
+                dpd_action = restart
+                start_action = trap
+            }
+-------------------------------------------------------------------------------
+
 proposition:
   workspaces
   ├── compose.yaml/templated

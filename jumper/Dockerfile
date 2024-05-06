@@ -6,10 +6,12 @@ ARG CONTROLLER
 ARG HOSTNAME
 ARG NET
 ARG OPT_SSH
+ARG USE_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    apk --no-cache add openssh-client
+    if [ -n "${USE_PROXY}" ]; then export http_proxy="${USE_PROXY}" https_proxy="${USE_PROXY}"; fi
+    apk add --no-cache openssh-client
     mkdir -p /root/.ssh "${OPT_SSH}"
     KEY='/root/.ssh/id_rsa'
     ssh-keygen -q -t rsa -N '' -f "${KEY}"
@@ -27,6 +29,7 @@ complete -F _ssh ssh\n' "\$(ssh '${CONTROLLER}' "docker network inspect -f '{{ r
 /usr/local/bin/bash -l
 TEMPLATING
     chmod 0700 "${ENTRYPOINT}"
+    if [ -n "${USE_PROXY}" ]; then unset http_proxy https_proxy; fi
 END_OF_RUN
 
 ENTRYPOINT ["/docker_entrypoint.sh"]
