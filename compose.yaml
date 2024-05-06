@@ -15,7 +15,8 @@ services:
         - SOCKET_PATH=${SOCKET_PATH}
         - TMP_NGX=/tmp/nginx
         - TMP_WARNING=/tmp/api/warning
-        - USE_PROXY=${http_proxy:-}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${PROXY_IMG}
     container_name: ${PROXY}
     hostname: ${PROXY}
@@ -37,7 +38,8 @@ services:
         - DOCKER_IMG=${DOCKER_IMG}
         - NET=${JUMP_AREA}
         - SSH_ROOT=${SSH_ROOT}
-        - USE_PROXY=${http_proxy:-}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${CONTROLLER_IMG}
     container_name: ${CONTROLLER}
     hostname: ${CONTROLLER}
@@ -57,7 +59,8 @@ services:
         - HOSTNAME=${JUMPER}
         - NET=${JUMP_AREA}
         - OPT_SSH=${OPT_SSH}
-        - USE_PROXY=${http_proxy:-}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${JUMPER_IMG}
     container_name: ${JUMPER}
     hostname: ${JUMPER}

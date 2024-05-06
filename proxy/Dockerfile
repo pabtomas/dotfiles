@@ -13,7 +13,8 @@ ARG PROXY_PORT
 ARG SOCKET_PATH
 ARG TMP_NGX
 ARG TMP_WARNING
-ARG USE_PROXY
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
 
 ARG API_SFX
 ARG ${API_SFX}NETWORKS
@@ -21,7 +22,8 @@ ARG ${API_SFX}VERSION
 
 RUN <<END_OF_RUN
     set -eux
-    if [ -n "${USE_PROXY}" ]; then export http_proxy="${USE_PROXY}" https_proxy="${USE_PROXY}"; fi
+    if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
+    if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
     apk add --no-cache curl yq
     mkdir -p "${TMP_NGX}" "$(dirname "${TMP_WARNING}")"
     GH_RAW='https://raw.githubusercontent.com'
@@ -74,7 +76,8 @@ $(for endpoint in ${ENDPOINTS}
       printf '\n    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"
       printf '    location ~* ^(/v[\d\.]+)?%s {if ($%s = 0){return 403 "[403] Forbidden API endpoint: %s (%s is 0)";}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "${nginx_var}" "'${endpoint}'" "'${docker_varname}'"
     fi
-    if [ -n "${USE_PROXY}" ]; then unset http_proxy https_proxy; fi
+    if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
+    if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
   done)
 }
 TEMPLATING
@@ -86,11 +89,13 @@ ARG NET
 ARG ETC_NGX
 ARG TMP_NGX
 ARG TMP_WARNING
-ARG USE_PROXY
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    if [ -n "${USE_PROXY}" ]; then export http_proxy="${USE_PROXY}" https_proxy="${USE_PROXY}"; fi
+    if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
+    if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
     apk add --no-cache nginx openssh-server
     ENTRYPOINT='/docker_entrypoint.sh'
     cat << TEMPLATING > "/etc/ssh/sshd_config.d/${NET}.conf"
@@ -107,7 +112,8 @@ cat ${TMP_WARNING}
 wait
 TEMPLATING
     chmod 0700 "${ENTRYPOINT}"
-    if [ -n "${USE_PROXY}" ]; then unset http_proxy https_proxy; fi
+    if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
+    if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
 END_OF_RUN
 
 COPY --from=linuxserver_img ${ETC_NGX}/nginx.conf ${ETC_NGX}/

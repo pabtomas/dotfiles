@@ -8,11 +8,13 @@ COPY --from=docker_img /usr/local/bin/docker /usr/local/bin/
 ARG NET
 ARG DOCKER_HOST
 ARG SSH_ROOT
-ARG USE_PROXY
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    if [ -n "${USE_PROXY}" ]; then export http_proxy="${USE_PROXY}" https_proxy="${USE_PROXY}"; fi
+    if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
+    if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
     apk add --no-cache openssh-server
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
     cat << TEMPLATING > /etc/profile.d/env.sh
@@ -30,7 +32,8 @@ printf 'DOCKER_HOST=${DOCKER_HOST}\n' >> ${SSH_ROOT}/environment
 exec /usr/sbin/sshd -D -e
 TEMPLATING
     chmod 0700 "${ENTRYPOINT}"
-    if [ -n "${USE_PROXY}" ]; then unset http_proxy https_proxy; fi
+    if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
+    if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
 END_OF_RUN
 
 ENTRYPOINT ["/docker_entrypoint.sh"]
