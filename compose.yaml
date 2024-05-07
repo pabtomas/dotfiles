@@ -50,8 +50,6 @@ services:
       - ${PROXIFIED_SOCKET_NET}
       - ${JUMP_AREA_NET}
   jumper:
-    depends_on:
-      - ${CONTROLLER_ID}
     build:
       context: ./${JUMPER_ID}
       args:

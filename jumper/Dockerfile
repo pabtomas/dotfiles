@@ -34,9 +34,17 @@ TEMPLATING
 _ssh ()
 {
   declare -a -g COMPREPLY
-  local docker_cmd
-  docker_cmd="docker network inspect -f '{{ range .Containers }}{{ printf \" %s \" .Name }}{{ end }}' '${NET}'"
-  COMPREPLY=( \$(compgen -W "\$(ssh '${CONTROLLER_ID}' "\${docker_cmd}" 2> /dev/null | sed 's@\s${HOSTNAME}\s@@')" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
+  local cache_dir cache docker_cmd
+  cache_dir='/root/.cache'
+  cache="\${cache_dir}/99completion"
+  readonly cache_dir cache
+  mkdir -p "\${cache_dir}"
+  if [[ \$(( "\$(date '+%s')" - "\$(stat -c '%Y' "\${cache}" 2> /dev/null || printf '0\n')" )) -gt 15 ]]
+  then
+    docker_cmd="docker network inspect -f '{{ range .Containers }}{{ printf \" %s \" .Name }}{{ end }}' '${NET}'"
+    ssh '${CONTROLLER_ID}' "\${docker_cmd}" 2> /dev/null | sed 's@\s${HOSTNAME}\s@@' > "\${cache}"
+  fi
+  COMPREPLY=( \$(compgen -W "\$(<"\${cache}")" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
 }
 complete -F _ssh ssh
 TEMPLATING
