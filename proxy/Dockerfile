@@ -89,6 +89,7 @@ ARG NET
 ARG ETC_NGX
 ARG TMP_NGX
 ARG TMP_WARNING
+ARG UNPRIVILEGED
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -97,12 +98,16 @@ RUN <<END_OF_RUN
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
     apk add --no-cache nginx openssh-server
-    ENTRYPOINT='/docker_entrypoint.sh'
+    adduser -D -g '' -s /bin/sh "${UNPRIVILEGED}"
+    echo "${UNPRIVILEGED}:" | chpasswd
     cat << TEMPLATING > "/etc/ssh/sshd_config.d/${NET}.conf"
 PasswordAuthentication no
+AllowUsers ${UNPRIVILEGED}
 TEMPLATING
     ssh-keygen -A
-    mkdir -p "$(dirname "${TMP_WARNING}")"
+    mkdir -p "$(dirname "${TMP_WARNING}")" "/home/${UNPRIVILEGED}/.ssh"
+    rm -rf /sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk
+    ENTRYPOINT='/docker_entrypoint.sh'
     cat << TEMPLATING > "${ENTRYPOINT}"
 #!/bin/sh
 printf 'include ${ETC_NGX}/http.d/*.conf;\n' > /run/default.conf

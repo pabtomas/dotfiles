@@ -15,6 +15,7 @@ services:
         - SOCKET_PATH=${SOCKET_PATH}
         - TMP_NGX=/tmp/nginx
         - TMP_WARNING=/tmp/api/warning
+        - UNPRIVILEGED=${UNPRIVILEGED}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${PROXY_IMG}
@@ -22,7 +23,7 @@ services:
     hostname: ${PROXY}
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
-      - ${SSH_VOLUME}:${SSH_ROOT}
+      - ${SSH_VOLUME}:/home/${UNPRIVILEGED}/.ssh
     networks:
       - ${PROXIFIED_SOCKET}
       - ${JUMP_AREA}
@@ -59,6 +60,8 @@ services:
         - HOSTNAME=${JUMPER}
         - NET=${JUMP_AREA}
         - OPT_SSH=${OPT_SSH}
+        - SSH_ROOT=${SSH_ROOT}
+        - UNPRIVILEGED=${UNPRIVILEGED}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${JUMPER_IMG}

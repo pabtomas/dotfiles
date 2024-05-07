@@ -6,6 +6,8 @@ ARG CONTROLLER
 ARG HOSTNAME
 ARG NET
 ARG OPT_SSH
+ARG SSH_ROOT
+ARG UNPRIVILEGED
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -14,10 +16,19 @@ RUN <<END_OF_RUN
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
     apk add --no-cache openssh-client
-    mkdir -p /root/.ssh "${OPT_SSH}"
-    KEY='/root/.ssh/id_rsa'
+    mkdir -p "${SSH_ROOT}" "${OPT_SSH}"
+    KEY="${SSH_ROOT}/id_rsa"
     ssh-keygen -q -t rsa -N '' -f "${KEY}"
-    printf 'StrictHostKeyChecking accept-new\n' > "/etc/ssh/ssh_config.d/${NET}.conf"
+    cat << TEMPLATING > "${SSH_ROOT}/config"
+HOST proxy
+  USER ${UNPRIVILEGED}
+
+HOST *
+  USER root
+TEMPLATING
+    cat << TEMPLATING > "/etc/ssh/ssh_config.d/${NET}.conf"
+StrictHostKeyChecking accept-new
+TEMPLATING
     cp "${KEY}.pub" "${OPT_SSH}/authorized_keys"
     ENTRYPOINT='/docker_entrypoint.sh'
     cat << TEMPLATING > "${ENTRYPOINT}"

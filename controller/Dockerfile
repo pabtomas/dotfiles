@@ -29,6 +29,7 @@ TEMPLATING
     cat << TEMPLATING > "${ENTRYPOINT}"
 #!/bin/sh
 printf 'DOCKER_HOST=${DOCKER_HOST}\n' >> ${SSH_ROOT}/environment
+chmod 0640 ${SSH_ROOT}/environment
 exec /usr/sbin/sshd -D -e
 TEMPLATING
     chmod 0700 "${ENTRYPOINT}"
