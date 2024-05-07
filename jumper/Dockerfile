@@ -2,7 +2,10 @@ ARG BASH_IMG
 
 FROM ${BASH_IMG}
 
+ARG CACHE_PATH
+ARG CACHE_COMPLETION_PATH
 ARG CONTROLLER_ID
+ARG DOCKER_HOST
 ARG HOSTNAME
 ARG NET
 ARG OPT_SSH_PATH
@@ -15,8 +18,8 @@ RUN <<END_OF_RUN
     set -eux
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
-    apk add --no-cache openssh-client
-    mkdir -p "${SSH_ROOT_PATH}" "${OPT_SSH_PATH}"
+    apk add --no-cache openssh-client tmux
+    mkdir -p "${SSH_ROOT_PATH}" "${OPT_SSH_PATH}" "${CACHE_PATH}"
     key_path="${SSH_ROOT_PATH}/id_rsa"
     ssh-keygen -q -t rsa -N '' -f "${key_path}"
     cat << TEMPLATING > "${SSH_ROOT_PATH}/config"
@@ -30,21 +33,16 @@ TEMPLATING
 StrictHostKeyChecking accept-new
 TEMPLATING
     cp "${key_path}.pub" "${OPT_SSH_PATH}/authorized_keys"
+    ssh_environment="${OPT_SSH_PATH}/environment"
+    cat << TEMPLATING > "${ssh_environment}"
+DOCKER_HOST=${DOCKER_HOST}
+TEMPLATING
+    chmod 0640 "${ssh_environment}"
     cat << TEMPLATING > /etc/profile.d/99completion.sh
 _ssh ()
 {
   declare -a -g COMPREPLY
-  local cache_dir cache docker_cmd
-  cache_dir='/root/.cache'
-  cache="\${cache_dir}/99completion"
-  readonly cache_dir cache
-  mkdir -p "\${cache_dir}"
-  if [[ \$(( "\$(date '+%s')" - "\$(stat -c '%Y' "\${cache}" 2> /dev/null || printf '0\n')" )) -gt 15 ]]
-  then
-    docker_cmd="docker network inspect -f '{{ range .Containers }}{{ printf \" %s \" .Name }}{{ end }}' '${NET}'"
-    ssh '${CONTROLLER_ID}' "\${docker_cmd}" 2> /dev/null | sed 's@\s${HOSTNAME}\s@@' > "\${cache}"
-  fi
-  COMPREPLY=( \$(compgen -W "\$(<"\${cache}")" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
+  COMPREPLY=( \$(compgen -W "\$(sed 's@\s${HOSTNAME}\s@@' '${CACHE_COMPLETION_PATH}')" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
 }
 complete -F _ssh ssh
 TEMPLATING

@@ -4,9 +4,11 @@ services:
       context: ./${PROXY_ID}
       args:
         - API_SFX=${API_SFX}
+        - API_URL=${API_URL}
         - ${API_SFX}NETWORKS=${TRUE}
         - ${API_SFX}VERSION=${TRUE}
         - DOCKER_IMG=${DOCKER_IMG}
+        - DOCKER_PATH=${DOCKER_PATH}
         - ETC_NGX_PATH=/etc/nginx
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
         - NET=${JUMP_AREA_NET}
@@ -23,7 +25,7 @@ services:
     hostname: ${PROXY_ID}
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
-      - ${SSH_VOLUME}:/home/${UNPRIVILEGED_USER}/.ssh
+      - ${SSH_VOLUME}:/home/${UNPRIVILEGED_USER}/.ssh:ro
     networks:
       - ${PROXIFIED_SOCKET_NET}
       - ${JUMP_AREA_NET}
@@ -31,12 +33,18 @@ services:
     tmpfs:
       - /run
   controller:
+    depends_on:
+      - ${PROXY_ID}
     build:
       context: ./${CONTROLLER_ID}
       args:
         - BASH_IMG=${BASH_IMG}
+        - CACHE_PATH=${CACHE_PATH}
+        - CACHE_COMPLETION_PATH=${CACHE_COMPLETION_PATH}
         - DOCKER_HOST=tcp://${PROXY_ID}:${PROXY_PORT}
         - DOCKER_IMG=${DOCKER_IMG}
+        - DOCKER_PATH=${DOCKER_PATH}
+        - MY_WHALE_FLEET_PATH=${MY_WHALE_FLEET_PATH}
         - NET=${JUMP_AREA_NET}
         - SSH_ROOT_PATH=${SSH_ROOT_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
@@ -45,7 +53,9 @@ services:
     container_name: ${CONTROLLER_ID}
     hostname: ${CONTROLLER_ID}
     volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT_PATH}
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${CACHE_VOLUME}:${CACHE_PATH}:rw
+      - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:ro
     networks:
       - ${PROXIFIED_SOCKET_NET}
       - ${JUMP_AREA_NET}
@@ -54,7 +64,10 @@ services:
       context: ./${JUMPER_ID}
       args:
         - BASH_IMG=${BASH_IMG}
+        - CACHE_PATH=${CACHE_PATH}
+        - CACHE_COMPLETION_PATH=${CACHE_COMPLETION_PATH}
         - CONTROLLER_ID=${CONTROLLER_ID}
+        - DOCKER_HOST=tcp://${PROXY_ID}:${PROXY_PORT}
         - HOSTNAME=${JUMPER_ID}
         - NET=${JUMP_AREA_NET}
         - OPT_SSH_PATH=${OPT_SSH_PATH}
@@ -66,7 +79,8 @@ services:
     container_name: ${JUMPER_ID}
     hostname: ${JUMPER_ID}
     volumes:
-      - ${SSH_VOLUME}:${OPT_SSH_PATH}
+      - ${SSH_VOLUME}:${OPT_SSH_PATH}:ro
+      - ${CACHE_VOLUME}:${CACHE_PATH}:ro
     networks:
       - ${JUMP_AREA_NET}
     stdin_open: true
@@ -76,6 +90,8 @@ services:
       context: ./${EDITOR_ID}
       args:
         - BASH_IMG=${BASH_IMG}
+        - MY_WHALE_FLEET_PATH=${MY_WHALE_FLEET_PATH}
+        - MY_WHALE_FLEET_URL=${MY_WHALE_FLEET_URL}
         - NET=${JUMP_AREA_NET}
         - WORKSPACES_PATH=${WORKSPACES_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
@@ -84,7 +100,8 @@ services:
     container_name: ${EDITOR_ID}
     hostname: ${EDITOR_ID}
     volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT_PATH}
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
 
@@ -103,3 +120,7 @@ networks:
 volumes:
   shared-ssh:
     name: ${SSH_VOLUME}
+  my-whale-fleet:
+    name: ${MY_WHALE_FLEET_VOLUME}
+  cache:
+    name: ${CACHE_VOLUME}

@@ -21,46 +21,34 @@ V1:
 V2:
 rename dotfiles -> workspace
 - rm deploy_setup.sh
-- prompt.sh:
-  - apt update,
-  - apt upgrade,
-  - apt automemove/purge
-  - if Docker not installed:
-    - install Docker
-    - install min (or another modern minimal web browser)
-  - else:
-    - update min (or another modern minimal web browser)
-    - stop all containers
+- process:
+  - wget the wget_me.sh script
+  - run the wget_me.sh script:
+    - update + upgrade + automemove/purge
+    - if Docker not installed:
+      - install Docker + min (or another modern minimal web browser)
+    - else:
+      - update Docker + min (or another modern minimal web browser)
+    - add host docker config
+    - pull docker-git image
+    - run docker-git container
+    - pull workspace git repo
+    - pull latest workspace images from registry
+    - docker compose create + start into workspace git repo
+    - remove workspace git repo
+    - docker attach jumper (no ssh)
+    - stop + rm all containers
     - rm all containers
     - docker prune everything EXCEPT VOLUMES
-  - pull git image
-  - run git container
-  - pull workspace git repo
-  - pull latest workspace images from registry
-  - docker compose up into workspace git repo
-  - docker attach jumper (no ssh)
-  - infinite loop: exit to kill the term after the loop (+ add a trap to exit)
-- new host/init.sh:
-  - load prompt.sh into .bashrc
 - new compose.yaml file:
   - 1 dir = 1 ALPINE Dockerfile = 1 service:
-    - jumper:
-      - use ssh between containers
-      - TMUX
-      - ssh volume
-    - proxy:
-      - use Tecnativa/docker-socket-proxy or linuxserver/docker-socket-proxy to filter controller requests
-    - controller:
-      - ask to the host to run new containers thanks to sibling:
-        - install docker CLI
-        - mount host docker socket
     - editor (& cloner ?):
-      - VIM + git + tig + ripgrep
+      - VIM + git + tig + ripgrep OK
       - volumes:
-        - 1 shared with host for workspace git repo
+        - 1 shared with controller for workspace git repo
         - 1 each git repo shared with matching runner
     - drawer:
-      - figlet/lolcat/tui monitoring/xinetd + service network
+      - figlet/lolcat/tui monitoring/xinetd/socat + service network
     - safedeposit:
       - passwordstore + git + gpg
       - exclusive clone on a volume
@@ -95,7 +83,7 @@ proposition:
   ├── .github/workflows/bot.yml
   ├── host
   │   ├── .bashrc
-  │   ├── init.sh
+  │   ├── wget_me.sh
   │   └── prompt.sh
   ├── jumper/controller/editor/safedeposit/pro/drawer
   │   └── Dockerfile/templated

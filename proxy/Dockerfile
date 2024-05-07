@@ -6,8 +6,10 @@ FROM ${LINUXSERVER_PROXY_IMG} as linuxserver_img
 FROM ${DOCKER_IMG} as docker_img
 FROM ${OS_IMG} as default_conf
 
-COPY --from=docker_img /usr/local/bin/docker /usr/local/bin/
+ARG DOCKER_PATH
+COPY --from=docker_img ${DOCKER_PATH}/docker ${DOCKER_PATH}/
 
+ARG API_URL
 ARG ETC_NGX_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
@@ -27,7 +29,7 @@ RUN <<END_OF_RUN
     apk add --no-cache curl yq
     mkdir -p "${TMP_NGX_PATH}" "$(dirname "${TMP_WARNING_PATH}")"
     api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
-    gh_url="https://raw.githubusercontent.com/moby/moby/master/docs/api/v${api_version}.yaml"
+    gh_url="${API_URL}/v${api_version}.yaml"
     endpoints="$(curl -s "${gh_url}" | yq '.paths | keys | .[]')"
     cat << TEMPLATING > "${TMP_WARNING_PATH}"
 -------------------------------------------------------------------------------

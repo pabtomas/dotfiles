@@ -2,3 +2,4 @@
 *.yaml linguist-generated=false
 *.yaml linguist-documentation=false
 *.yaml linguist-language=Dockerfile
+.env linguist-language=Dockerfile

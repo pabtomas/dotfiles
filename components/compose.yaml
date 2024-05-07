@@ -4,6 +4,7 @@ services:
       context: ./${ZIG_ID}
       args:
         - OS_IMG=${OS_IMG}
+        - ZIG_BUILDS_URL=${ZIG_BUILDS_URL}
         - ZIG_TAG=${ZIG_TAG}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}

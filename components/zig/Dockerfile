@@ -1,6 +1,7 @@
 ARG OS_IMG
 FROM ${OS_IMG}
 
+ARG ZIG_BUILDS_URL
 ARG ZIG_TAG
 
 ARG HTTP_PROXY
@@ -14,7 +15,7 @@ RUN <<END_OF_RUN
     xz="zig-linux-$(arch)-${ZIG_TAG}.tar.xz"
     tmp_xz="/tmp/${xz}"
     tmp_zig='/tmp/zig'
-    curl --output "${tmp_xz}" "https://ziglang.org/builds/${xz}"
+    curl --output "${tmp_xz}" "${ZIG_BUILDS_URL}/${xz}"
     mkdir -p "${tmp_zig}"
     tar -xvf "${tmp_xz}" --strip-component 1 -C "${tmp_zig}"
     mv -t /usr/local/bin/ "${tmp_zig}/lib/" "${tmp_zig}/zig"
