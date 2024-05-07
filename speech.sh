@@ -1,9 +1,9 @@
 #! /usr/bin/env bash
 
 set -e
-source .env
+source ./.env
 docker compose down || :
-docker volume rm shared-ssh || :
+docker volume rm "${SSH_VOLUME}" || :
 docker compose -f ./components/compose.yaml --env-file ./.env build
 docker compose build
 docker compose create

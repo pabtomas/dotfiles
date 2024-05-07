@@ -1,8 +1,8 @@
 ARG ZIG_IMG
-ARG OS
+ARG OS_IMG
 
 FROM ${ZIG_IMG} as zig_img
-FROM ${OS}
+FROM ${OS_IMG}
 
 COPY --from=zig_img /usr/local/bin/zig /usr/local/bin
 COPY --from=zig_img /usr/local/bin/lib /usr/local/bin

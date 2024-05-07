@@ -1,88 +1,104 @@
 services:
   proxy:
     build:
-      context: ./${PROXY}
+      context: ./${PROXY_ID}
       args:
         - API_SFX=${API_SFX}
         - ${API_SFX}NETWORKS=${TRUE}
         - ${API_SFX}VERSION=${TRUE}
         - DOCKER_IMG=${DOCKER_IMG}
-        - ETC_NGX=/etc/nginx
+        - ETC_NGX_PATH=/etc/nginx
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
-        - NET=${JUMP_AREA}
-        - OS=${OS}
+        - NET=${JUMP_AREA_NET}
+        - OS_IMG=${OS_IMG}
         - PROXY_PORT=${PROXY_PORT}
         - SOCKET_PATH=${SOCKET_PATH}
-        - TMP_NGX=/tmp/nginx
-        - TMP_WARNING=/tmp/api/warning
-        - UNPRIVILEGED=${UNPRIVILEGED}
+        - TMP_NGX_PATH=/tmp/nginx
+        - TMP_WARNING_PATH=/tmp/api/warning
+        - UNPRIVILEGED_USER=${UNPRIVILEGED_USER}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${PROXY_IMG}
-    container_name: ${PROXY}
-    hostname: ${PROXY}
+    container_name: ${PROXY_ID}
+    hostname: ${PROXY_ID}
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
-      - ${SSH_VOLUME}:/home/${UNPRIVILEGED}/.ssh
+      - ${SSH_VOLUME}:/home/${UNPRIVILEGED_USER}/.ssh
     networks:
-      - ${PROXIFIED_SOCKET}
-      - ${JUMP_AREA}
+      - ${PROXIFIED_SOCKET_NET}
+      - ${JUMP_AREA_NET}
     read_only: true
     tmpfs:
       - /run
   controller:
     build:
-      context: ./${CONTROLLER}
+      context: ./${CONTROLLER_ID}
       args:
         - BASH_IMG=${BASH_IMG}
-        - DOCKER_HOST=tcp://${PROXY}:${PROXY_PORT}
+        - DOCKER_HOST=tcp://${PROXY_ID}:${PROXY_PORT}
         - DOCKER_IMG=${DOCKER_IMG}
-        - NET=${JUMP_AREA}
-        - SSH_ROOT=${SSH_ROOT}
+        - NET=${JUMP_AREA_NET}
+        - SSH_ROOT_PATH=${SSH_ROOT_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${CONTROLLER_IMG}
-    container_name: ${CONTROLLER}
-    hostname: ${CONTROLLER}
+    container_name: ${CONTROLLER_ID}
+    hostname: ${CONTROLLER_ID}
     volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT}
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}
     networks:
-      - ${PROXIFIED_SOCKET}
-      - ${JUMP_AREA}
+      - ${PROXIFIED_SOCKET_NET}
+      - ${JUMP_AREA_NET}
   jumper:
     depends_on:
-      - ${CONTROLLER}
+      - ${CONTROLLER_ID}
     build:
-      context: ./${JUMPER}
+      context: ./${JUMPER_ID}
       args:
         - BASH_IMG=${BASH_IMG}
-        - CONTROLLER=${CONTROLLER}
-        - HOSTNAME=${JUMPER}
-        - NET=${JUMP_AREA}
-        - OPT_SSH=${OPT_SSH}
-        - SSH_ROOT=${SSH_ROOT}
-        - UNPRIVILEGED=${UNPRIVILEGED}
+        - CONTROLLER_ID=${CONTROLLER_ID}
+        - HOSTNAME=${JUMPER_ID}
+        - NET=${JUMP_AREA_NET}
+        - OPT_SSH_PATH=${OPT_SSH_PATH}
+        - SSH_ROOT_PATH=${SSH_ROOT_PATH}
+        - UNPRIVILEGED_USER=${UNPRIVILEGED_USER}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${JUMPER_IMG}
-    container_name: ${JUMPER}
-    hostname: ${JUMPER}
+    container_name: ${JUMPER_ID}
+    hostname: ${JUMPER_ID}
     volumes:
-      - ${SSH_VOLUME}:${OPT_SSH}
+      - ${SSH_VOLUME}:${OPT_SSH_PATH}
     networks:
-      - ${JUMP_AREA}
+      - ${JUMP_AREA_NET}
     stdin_open: true
     tty: true
+  editor:
+    build:
+      context: ./${EDITOR_ID}
+      args:
+        - BASH_IMG=${BASH_IMG}
+        - NET=${JUMP_AREA_NET}
+        - WORKSPACES_PATH=${WORKSPACES_PATH}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${EDITOR_IMG}
+    container_name: ${EDITOR_ID}
+    hostname: ${EDITOR_ID}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}
+    networks:
+      - ${JUMP_AREA_NET}
 
 networks:
   proxy_for_controller:
     driver: bridge
-    name: ${PROXIFIED_SOCKET}
+    name: ${PROXIFIED_SOCKET_NET}
     ipam:
       driver: default
   jump_area:
     driver: bridge
-    name: ${JUMP_AREA}
+    name: ${JUMP_AREA_NET}
     ipam:
       driver: default
 

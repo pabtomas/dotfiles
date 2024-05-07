@@ -1,18 +1,18 @@
-ARG OS
+ARG OS_IMG
 ARG DOCKER_IMG
 ARG LINUXSERVER_PROXY_IMG
 
 FROM ${LINUXSERVER_PROXY_IMG} as linuxserver_img
 FROM ${DOCKER_IMG} as docker_img
-FROM ${OS} as default_conf
+FROM ${OS_IMG} as default_conf
 
 COPY --from=docker_img /usr/local/bin/docker /usr/local/bin/
 
-ARG ETC_NGX
+ARG ETC_NGX_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
-ARG TMP_NGX
-ARG TMP_WARNING
+ARG TMP_NGX_PATH
+ARG TMP_WARNING_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -25,19 +25,20 @@ RUN <<END_OF_RUN
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
     apk add --no-cache curl yq
-    mkdir -p "${TMP_NGX}" "$(dirname "${TMP_WARNING}")"
-    GH_RAW='https://raw.githubusercontent.com'
-    ENDPOINTS="$(curl -s "${GH_RAW}/moby/moby/master/docs/api/v$(docker version --format '{{ .Client.APIVersion }}').yaml" | yq '.paths | keys | .[]')"
-    cat << TEMPLATING > "${TMP_WARNING}"
+    mkdir -p "${TMP_NGX_PATH}" "$(dirname "${TMP_WARNING_PATH}")"
+    api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
+    gh_url="https://raw.githubusercontent.com/moby/moby/master/docs/api/v${api_version}.yaml"
+    endpoints="$(curl -s "${gh_url}" | yq '.paths | keys | .[]')"
+    cat << TEMPLATING > "${TMP_WARNING_PATH}"
 -------------------------------------------------------------------------------
-API version: $(docker version --format '{{ .Client.APIVersion }}')$(
+API version: ${api_version}$(
   for arg in $(env | grep "^${API_SFX}")
   do
     if [ "${arg#"${arg%??}"}" != '=0' ]
     then
       arg="$(printf '%s\n' "${arg}" | cut -d'=' -f1)"
       flag=0
-      for endpoint in ${ENDPOINTS}
+      for endpoint in ${endpoints}
       do
         if [ "${endpoint#"${endpoint%?}"}" != '}' ]
         then
@@ -58,14 +59,14 @@ API version: $(docker version --format '{{ .Client.APIVersion }}')$(
   done)
 -------------------------------------------------------------------------------
 TEMPLATING
-    cat << TEMPLATING > "${TMP_NGX}/default.conf"
+    cat << TEMPLATING > "${TMP_NGX_PATH}/default.conf"
 server {
     server_name _;
     listen ${PROXY_PORT} default_server;
     default_type text/plain;
-    include ${ETC_NGX}/proxy.conf;
+    include ${ETC_NGX_PATH}/proxy.conf;
     set \$dockersocket ${SOCKET_PATH};
-$(for endpoint in ${ENDPOINTS}
+$(for endpoint in ${endpoints}
   do
     if [ "${endpoint#"${endpoint%?}"}" != '}' ]
     then
@@ -83,13 +84,13 @@ $(for endpoint in ${ENDPOINTS}
 TEMPLATING
 END_OF_RUN
 
-FROM ${OS}
+FROM ${OS_IMG}
 
 ARG NET
-ARG ETC_NGX
-ARG TMP_NGX
-ARG TMP_WARNING
-ARG UNPRIVILEGED
+ARG ETC_NGX_PATH
+ARG TMP_NGX_PATH
+ARG TMP_WARNING_PATH
+ARG UNPRIVILEGED_USER
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -98,33 +99,33 @@ RUN <<END_OF_RUN
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
     apk add --no-cache nginx openssh-server
-    adduser -D -g '' -s /bin/sh "${UNPRIVILEGED}"
-    echo "${UNPRIVILEGED}:" | chpasswd
+    adduser -D -g '' -s /bin/sh "${UNPRIVILEGED_USER}"
+    echo "${UNPRIVILEGED_USER}:" | chpasswd
     cat << TEMPLATING > "/etc/ssh/sshd_config.d/${NET}.conf"
 PasswordAuthentication no
-AllowUsers ${UNPRIVILEGED}
+AllowUsers ${UNPRIVILEGED_USER}
 TEMPLATING
     ssh-keygen -A
-    mkdir -p "$(dirname "${TMP_WARNING}")" "/home/${UNPRIVILEGED}/.ssh"
+    mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "/home/${UNPRIVILEGED_USER}/.ssh"
     rm -rf /sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk
-    ENTRYPOINT='/docker_entrypoint.sh'
-    cat << TEMPLATING > "${ENTRYPOINT}"
+    entrypoint='/docker_entrypoint.sh'
+    cat << TEMPLATING > "${entrypoint}"
 #!/bin/sh
-printf 'include ${ETC_NGX}/http.d/*.conf;\n' > /run/default.conf
+printf 'include ${ETC_NGX_PATH}/http.d/*.conf;\n' > /run/default.conf
 /usr/sbin/nginx -e stderr &
 /usr/sbin/sshd -D -e &
-cat ${TMP_WARNING}
+cat ${TMP_WARNING_PATH}
 wait
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT}"
+    chmod 0700 "${entrypoint}"
     if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
     if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
 END_OF_RUN
 
-COPY --from=linuxserver_img ${ETC_NGX}/nginx.conf ${ETC_NGX}/
-COPY --from=linuxserver_img ${ETC_NGX}/proxy.conf ${ETC_NGX}/
-COPY --from=default_conf ${TMP_NGX}/default.conf ${ETC_NGX}/http.d/
-COPY --from=default_conf ${TMP_WARNING} ${TMP_WARNING}
+COPY --from=linuxserver_img ${ETC_NGX_PATH}/nginx.conf ${ETC_NGX_PATH}/
+COPY --from=linuxserver_img ${ETC_NGX_PATH}/proxy.conf ${ETC_NGX_PATH}/
+COPY --from=default_conf ${TMP_NGX_PATH}/default.conf ${ETC_NGX_PATH}/http.d/
+COPY --from=default_conf ${TMP_WARNING_PATH} ${TMP_WARNING_PATH}
 
 ENTRYPOINT ["/docker_entrypoint.sh"]
 

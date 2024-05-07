@@ -3,9 +3,9 @@ services:
     build:
       context: .
       args:
-        - OS=${OS}
+        - OS_IMG=${OS_IMG}
         - ZIG_IMG=${ZIG_IMG}
-    container_name: ${SPACEPORN_RUNNER}
+    container_name: ${SPACEPORN_RUNNER_ID}
     image: ${SPACEPORN_RUNNER_IMG}
     stdin_open: true
     tty: true

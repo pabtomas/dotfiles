@@ -7,7 +7,7 @@ COPY --from=docker_img /usr/local/bin/docker /usr/local/bin/
 
 ARG NET
 ARG DOCKER_HOST
-ARG SSH_ROOT
+ARG SSH_ROOT_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -25,14 +25,14 @@ PasswordAuthentication no
 PermitUserEnvironment yes
 TEMPLATING
     ssh-keygen -A
-    ENTRYPOINT='/docker_entrypoint.sh'
-    cat << TEMPLATING > "${ENTRYPOINT}"
+    entrypoint='/docker_entrypoint.sh'
+    cat << TEMPLATING > "${entrypoint}"
 #!/bin/sh
-printf 'DOCKER_HOST=${DOCKER_HOST}\n' >> ${SSH_ROOT}/environment
-chmod 0640 ${SSH_ROOT}/environment
+printf 'DOCKER_HOST=${DOCKER_HOST}\n' >> ${SSH_ROOT_PATH}/environment
+chmod 0640 ${SSH_ROOT_PATH}/environment
 exec /usr/sbin/sshd -D -e
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT}"
+    chmod 0700 "${entrypoint}"
     if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
     if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
 END_OF_RUN

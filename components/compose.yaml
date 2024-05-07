@@ -1,9 +1,9 @@
 services:
   zig:
     build:
-      context: ./${ZIG}
+      context: ./${ZIG_ID}
       args:
-        - OS=${OS}
+        - OS_IMG=${OS_IMG}
         - ZIG_TAG=${ZIG_TAG}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}

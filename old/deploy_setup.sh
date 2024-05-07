@@ -258,48 +258,6 @@ git_install ()
     setup_needeval= run "Adding ${1} repository as a GIT safe repository" \
       "git config --global --add safe.directory ${setup_localsrc}/${1}"
     set -- '' '' '' '' "${@}"
-  else
-    setup_needeval= run "Adding ${1} repository as a GIT safe repository" \
-      "git config --global --add safe.directory ${setup_localsrc}/${1}"
-    setup_needeval="NEEDEVAL${setup_sep}" run \
-      "Moving to master/main branch into ${1} repository" \
-      "_git ${1} checkout master || _git ${1} checkout main"
-    setup_needeval= run \
-      "Checking ${1} remote and local master branches are Up-to-date" \
-      "_git ${1} remote update"
-
-    # $1=setup_local, $2=REMOTE, $3=BASE
-    set -- "$(_git "${1}" rev-parse @{0})" "$(_git "${1}" rev-parse @{u})" \
-      "$(_git "${1}" merge-base @{0} @{u})" "${@}"
-
-    if [ "${1}" = "${2}" ]
-    then
-      # Everything is Up-to-date -> Nothing to do
-      return 0
-    elif [ "${1}" = "${3}" ]
-    then
-      # Need to pull
-      shift 3
-      setup_needeval= run "Resetting ${1} repository" "_git ${1} reset --hard"
-      setup_needeval= run "Cleaning ${1} repository" "_git ${1} clean -f -x -d :/"
-      setup_needeval= run "Pulling ${1} repository" "_git ${1} pull"
-      set -- "$(_git "${1}" rev-list --tags --max-count=1)" "${@}"
-      set -- "$(_git "${2}" describe --tags "${1}" 2> /dev/null || :)" "${@}"
-      if [ -n "${1}" ] && [ -z "${setup_notag+x}${setup_notag-}" ]
-      then
-        setup_needeval= run "Moving to ${1} tag into ${3} repository" \
-          "_git ${3} checkout ${1}"
-      fi
-      set -- "${1#"${1%%[[:digit:]]*}"}" "${@}"
-      set -- "${1%"${1##[[:digit:]]*}"}" "${@}"
-    elif [ "${2}" = "${3}" ]
-    then
-      printf 'Local branch needs to push to remote branch\n' 1>&2
-      return 1
-    else
-      printf 'Local branch and remote branch diverged\n' 1>&2
-      return 1
-    fi
   fi
 
   set -- "$(eval "version_${5}")" "${@}"
