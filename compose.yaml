@@ -3,21 +3,23 @@ services:
     build:
       context: ./${PROXY_ID}
       args:
+        - APK_PATHS=${APK_PATHS}
         - API_SFX=${API_SFX}
         - API_URL=${API_URL}
         - ${API_SFX}NETWORKS=${TRUE}
         - ${API_SFX}VERSION=${TRUE}
         - DOCKER_IMG=${DOCKER_IMG}
         - DOCKER_PATH=${DOCKER_PATH}
-        - ETC_NGX_PATH=/etc/nginx
+        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
+        - ETC_NGX_PATH=${ETC_NGX_PATH}
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
         - NET=${JUMP_AREA_NET}
         - OS_IMG=${OS_IMG}
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - PROXY_PORT=${PROXY_PORT}
         - SOCKET_PATH=${SOCKET_PATH}
         - TMP_NGX_PATH=/tmp/nginx
         - TMP_WARNING_PATH=/tmp/api/warning
-        - UNPRIVILEGED_USER=${UNPRIVILEGED_USER}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${PROXY_IMG}
@@ -25,13 +27,42 @@ services:
     hostname: ${PROXY_ID}
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
-      - ${SSH_VOLUME}:/home/${UNPRIVILEGED_USER}/.ssh:ro
+      - ${PROXY_FS_VOLUME}:${ETC_NGX_PATH}:ro
     networks:
       - ${PROXIFIED_SOCKET_NET}
-      - ${JUMP_AREA_NET}
     read_only: true
     tmpfs:
       - /run
+  collector:
+    depends_on:
+      - ${PROXY_ID}
+    build:
+      context: ./${COLLECTOR_ID}
+      args:
+        - APK_PATHS=${APK_PATHS}
+        - COMPLETION_PATH=${COMPLETION_PATH}
+        - CRON_LOG_PATH=${CRON_LOG_PATH}
+        - CRONTABS_PATH=${CRONTABS_PATH}
+        - DATA_PATH=${DATA_PATH}
+        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
+        - HTTP_DOCKER_HOST=${HTTP_DOCKER_HOST}
+        - NET=${JUMP_AREA_NET}
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
+        - OS_IMG=${OS_IMG}
+        - PROXY_ID=${PROXY_ID}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${COLLECTOR_IMG}
+    container_name: ${COLLECTOR_ID}
+    hostname: ${COLLECTOR_ID}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${COLLECTOR_ETC_CRONTABS_VOLUME}:${CRONTABS_PATH}:ro
+      - ${COLLECTOR_OPT_DATA_VOLUME}:${DATA_PATH}:rw
+      - ${COLLECTOR_OPT_SCRIPTS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
+      - ${COLLECTOR_VAR_LOG_VOLUME}:${VAR_LOG_PATH}:rw
+    networks:
+      - ${PROXIFIED_SOCKET_NET}
   controller:
     depends_on:
       - ${PROXY_ID}
@@ -39,14 +70,12 @@ services:
       context: ./${CONTROLLER_ID}
       args:
         - BASH_IMG=${BASH_IMG}
-        - CACHE_PATH=${CACHE_PATH}
-        - CACHE_COMPLETION_PATH=${CACHE_COMPLETION_PATH}
-        - DOCKER_HOST=tcp://${PROXY_ID}:${PROXY_PORT}
         - DOCKER_IMG=${DOCKER_IMG}
         - DOCKER_PATH=${DOCKER_PATH}
-        - MY_WHALE_FLEET_PATH=${MY_WHALE_FLEET_PATH}
+        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - NET=${JUMP_AREA_NET}
-        - SSH_ROOT_PATH=${SSH_ROOT_PATH}
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
+        - TCP_DOCKER_HOST=${TCP_DOCKER_HOST}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${CONTROLLER_IMG}
@@ -54,25 +83,25 @@ services:
     hostname: ${CONTROLLER_ID}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-      - ${CACHE_VOLUME}:${CACHE_PATH}:rw
-      - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:ro
     networks:
       - ${PROXIFIED_SOCKET_NET}
       - ${JUMP_AREA_NET}
   jumper:
+    depends_on:
+      - ${COLLECTOR_ID}
     build:
       context: ./${JUMPER_ID}
       args:
         - BASH_IMG=${BASH_IMG}
-        - CACHE_PATH=${CACHE_PATH}
-        - CACHE_COMPLETION_PATH=${CACHE_COMPLETION_PATH}
+        - COMPLETION_PATH=/opt/${COLLECTOR_ID}${COMPLETION_PATH}
         - CONTROLLER_ID=${CONTROLLER_ID}
-        - DOCKER_HOST=tcp://${PROXY_ID}:${PROXY_PORT}
+        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - HOSTNAME=${JUMPER_ID}
         - NET=${JUMP_AREA_NET}
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - OPT_SSH_PATH=${OPT_SSH_PATH}
         - SSH_ROOT_PATH=${SSH_ROOT_PATH}
-        - UNPRIVILEGED_USER=${UNPRIVILEGED_USER}
+        - TCP_DOCKER_HOST=${TCP_DOCKER_HOST}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${JUMPER_IMG}
@@ -80,7 +109,11 @@ services:
     hostname: ${JUMPER_ID}
     volumes:
       - ${SSH_VOLUME}:${OPT_SSH_PATH}:ro
-      - ${CACHE_VOLUME}:${CACHE_PATH}:ro
+      - ${PROXY_FS_VOLUME}:/opt/${PROXY_ID}${ETC_NGX_PATH}:ro
+      - ${COLLECTOR_ETC_CRONTABS_VOLUME}:/opt/${COLLECTOR_ID}${CRONTABS_PATH}:ro
+      - ${COLLECTOR_OPT_DATA_VOLUME}:/opt/${COLLECTOR_ID}${DATA_PATH}:ro
+      - ${COLLECTOR_OPT_SCRIPTS_VOLUME}:/opt/${COLLECTOR_ID}${OPT_SCRIPTS_PATH}:ro
+      - ${COLLECTOR_VAR_LOG_VOLUME}:/opt/${COLLECTOR_ID}${VAR_LOG_PATH}:ro
     networks:
       - ${JUMP_AREA_NET}
     stdin_open: true
@@ -90,9 +123,9 @@ services:
       context: ./${EDITOR_ID}
       args:
         - BASH_IMG=${BASH_IMG}
-        - MY_WHALE_FLEET_PATH=${MY_WHALE_FLEET_PATH}
-        - MY_WHALE_FLEET_URL=${MY_WHALE_FLEET_URL}
+        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - NET=${JUMP_AREA_NET}
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - WORKSPACES_PATH=${WORKSPACES_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
@@ -122,5 +155,13 @@ volumes:
     name: ${SSH_VOLUME}
   my-whale-fleet:
     name: ${MY_WHALE_FLEET_VOLUME}
-  cache:
-    name: ${CACHE_VOLUME}
+  proxy-fs:
+    name: ${PROXY_FS_VOLUME}
+  collector-etc-crontabs-fs:
+    name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
+  collector-opt-data-fs:
+    name: ${COLLECTOR_OPT_DATA_VOLUME}
+  collector-opt-scripts-fs:
+    name: ${COLLECTOR_OPT_SCRIPTS_VOLUME}
+  collector-var-log-fs:
+    name: ${COLLECTOR_VAR_LOG_VOLUME}

@@ -88,11 +88,13 @@ END_OF_RUN
 
 FROM ${OS_IMG}
 
-ARG NET
+ARG APK_PATHS
+ARG ENTRYPOINT_PATH
 ARG ETC_NGX_PATH
+ARG NET
+ARG OPT_SCRIPTS_PATH
 ARG TMP_NGX_PATH
 ARG TMP_WARNING_PATH
-ARG UNPRIVILEGED_USER
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -100,26 +102,20 @@ RUN <<END_OF_RUN
     set -eux
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
-    apk add --no-cache nginx openssh-server
-    adduser -D -g '' -s /bin/sh "${UNPRIVILEGED_USER}"
-    echo "${UNPRIVILEGED_USER}:" | chpasswd
-    cat << TEMPLATING > "/etc/ssh/sshd_config.d/${NET}.conf"
-PasswordAuthentication no
-AllowUsers ${UNPRIVILEGED_USER}
-TEMPLATING
-    ssh-keygen -A
-    mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "/home/${UNPRIVILEGED_USER}/.ssh"
-    rm -rf /sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk
-    entrypoint='/docker_entrypoint.sh'
-    cat << TEMPLATING > "${entrypoint}"
+    apk add --no-cache nginx
+    rm -rf ${APK_PATHS}
+    mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "${OPT_SCRIPTS_PATH}"
+    _nginx="$(command -v nginx)"
+    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
-printf 'include ${ETC_NGX_PATH}/http.d/*.conf;\n' > /run/default.conf
-/usr/sbin/nginx -e stderr &
-/usr/sbin/sshd -D -e &
+cat << __TEMPLATING > /run/default.conf
+include ${ETC_NGX_PATH}/http.d/*.conf;
+__TEMPLATING
 cat ${TMP_WARNING_PATH}
+exec ${_nginx} -e stderr
 wait
 TEMPLATING
-    chmod 0700 "${entrypoint}"
+    chmod 0700 "${ENTRYPOINT_PATH}"
     if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
     if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
 END_OF_RUN
@@ -129,8 +125,8 @@ COPY --from=linuxserver_img ${ETC_NGX_PATH}/proxy.conf ${ETC_NGX_PATH}/
 COPY --from=default_conf ${TMP_NGX_PATH}/default.conf ${ETC_NGX_PATH}/http.d/
 COPY --from=default_conf ${TMP_WARNING_PATH} ${TMP_WARNING_PATH}
 
-ENTRYPOINT ["/docker_entrypoint.sh"]
+ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
+ENTRYPOINT ${ENTRYPOINT_PATH}
 
 ARG PROXY_PORT
 EXPOSE ${PROXY_PORT}
-EXPOSE 22
