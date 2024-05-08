@@ -19,20 +19,20 @@ RUN <<END_OF_RUN
     set -eux
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
-    apk add --no-cache curl jq
+    apk add --no-cache jq
     rm -rf ${APK_PATHS}
     mkdir -p "${OPT_SCRIPTS_PATH}" "${DATA_PATH}"
     _jq="$(command -v jq)"
-    _curl="$(command -v curl)"
-    read -r -d '' curl_script << TEMPLATING || :
-id="\$(${_curl} -s -X GET '${HTTP_DOCKER_HOST}/networks' | ${_jq} -r '.[] | select(.Name=="${NET}") | .Id')"
-${_curl} -s -X GET "${HTTP_DOCKER_HOST}/networks/\${id}" | ${_jq} -r '.Containers | to_entries[] | .value.Name' > '${COMPLETION_PATH}'
+    _wget="$(command -v wget)"
+    read -r -d '' wget_script << TEMPLATING || :
+id="\$(${_wget} -q -O- '${HTTP_DOCKER_HOST}/networks' | ${_jq} -r '.[] | select(.Name=="${NET}") | .Id')"
+${_wget} -q -O- "${HTTP_DOCKER_HOST}/networks/\${id}" | ${_jq} -r '.Containers | to_entries[] | .value.Name' > '${COMPLETION_PATH}'
 TEMPLATING
     completion_collector_script="${OPT_SCRIPTS_PATH}/completion_collector.sh"
     cat << TEMPLATING > "${completion_collector_script}"
 #!/bin/sh
 prefix="\$(date '+[%F %T] ${completion_collector_script}: ')"
-${curl_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
+${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
 TEMPLATING
     chmod 0700 "${completion_collector_script}"
     cat << TEMPLATING > "${CRONTABS_PATH}/root"
@@ -41,7 +41,7 @@ TEMPLATING
     _crond="$(command -v crond)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
-${curl_script}
+${wget_script}
 exec ${_crond} -f
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"

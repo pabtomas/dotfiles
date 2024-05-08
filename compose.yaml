@@ -63,6 +63,7 @@ services:
       - ${COLLECTOR_VAR_LOG_VOLUME}:${VAR_LOG_PATH}:rw
     networks:
       - ${PROXIFIED_SOCKET_NET}
+    read_only: true
   controller:
     depends_on:
       - ${PROXY_ID}
