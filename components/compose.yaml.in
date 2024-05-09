@@ -1,5 +1,5 @@
 services:
-  zig:
+  ${ZIG_ID}:
     build:
       context: ./${ZIG_ID}
       args:

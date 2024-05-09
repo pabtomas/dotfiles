@@ -1,6 +1,2 @@
-*.yaml linguist-vendored=false
-*.yaml linguist-generated=false
-*.yaml linguist-documentation=false
-*.yaml linguist-language=Dockerfile
 *.in linguist-language=Dockerfile
 .env linguist-language=Dockerfile
