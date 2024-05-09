@@ -1,5 +1,26 @@
 services:
-  ${ZIG_ID}:
+  ${SSHD_SERVICE}:
+    build:
+      context: ./${SSHD_ID}
+      args:
+        - BASH_IMG=${BASH_IMG}
+        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
+        - NET=${JUMP_AREA_NET}
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${SSHD_COMPONENT_IMG}
+  ${EXPLORER_SERVICE}:
+    depends_on:
+      - ${SSHD_SERVICE}
+    build:
+      context: ./${EXPLORER_ID}
+      args:
+        - SSHD_COMPONENT_IMG=${SSHD_COMPONENT_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${EXPLORER_COMPONENT_IMG}
+  ${ZIG_SERVICE}:
     build:
       context: ./${ZIG_ID}
       args:

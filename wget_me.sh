@@ -15,11 +15,10 @@ source_env_without_docker_host ()
 )
 
 set -eu
-source_env '
-  for template in $(find . -type f -name compose.yaml.in)
-  do
-    eval "printf \"$(cat "${template}")\n\"" > "${template%.*}"
-  done'
+for template in $(find . -type f -name compose.yaml.in)
+do
+  source_env "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
+done
 docker compose down --timeout 0 || :
 source_env_without_docker_host '
   docker volume rm "${COLLECTOR_ETC_CRONTABS_VOLUME}" \
