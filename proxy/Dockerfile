@@ -23,12 +23,11 @@ ARG HTTPS_PROXY
 ARG API_SFX
 ARG ${API_SFX}NETWORKS
 ARG ${API_SFX}VERSION
-ARG API_ENDPOINT_CONTAINERS_ID_START
 
 RUN <<END_OF_RUN
     set -eux
-    if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
-    if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
+    export http_proxy="${HTTP_PROXY}"
+    export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache yq
     mkdir -p "${TMP_NGX_PATH}" "$(dirname "${TMP_WARNING_PATH}")"
     api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
@@ -99,8 +98,7 @@ $(for endpoint in ${endpoints}
       printf '\n    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"
       printf '    location ~* ^(/v[\d\.]+)?%s {set $e403 "[403] Forbidden API endpoint: %s (%s is 0)";if ($return_403 = 1){return 403 $e403;}if ($%s = 0){return 403 $e403;}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "'${endpoint}'" "'${docker_var}'" "${nginx_var}"
     fi
-    if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
-    if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
+    unset http_proxy https_proxy
   done)
 }
 TEMPLATING
@@ -120,8 +118,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
-    if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
+    export http_proxy="${HTTP_PROXY}"
+    export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache nginx
     rm -rf ${APK_PATHS}
     mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "${OPT_SCRIPTS_PATH}"
@@ -136,8 +134,7 @@ exec ${_nginx} -e stderr
 wait
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
-    if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
-    if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
+    unset http_proxy https_proxy
 END_OF_RUN
 
 COPY --from=linuxserver_img ${ETC_NGX_PATH}/nginx.conf ${ETC_NGX_PATH}/

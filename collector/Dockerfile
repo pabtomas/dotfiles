@@ -17,8 +17,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
-    if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
+    export http_proxy="${HTTP_PROXY}"
+    export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache jq
     rm -rf ${APK_PATHS}
     mkdir -p "${OPT_SCRIPTS_PATH}" "${DATA_PATH}"
@@ -45,8 +45,7 @@ ${wget_script}
 exec ${_crond} -f
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
-    if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
-    if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
+    unset http_proxy https_proxy
 END_OF_RUN
 
 ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
