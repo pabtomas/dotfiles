@@ -26,11 +26,11 @@ RUN <<END_OF_RUN
     set -eux
     if [ -n "${HTTP_PROXY}" ]; then export http_proxy="${HTTP_PROXY}"; fi
     if [ -n "${HTTPS_PROXY}" ]; then export https_proxy="${HTTPS_PROXY}"; fi
-    apk add --no-cache curl yq
+    apk add --no-cache yq
     mkdir -p "${TMP_NGX_PATH}" "$(dirname "${TMP_WARNING_PATH}")"
     api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
     gh_url="${API_URL}/v${api_version}.yaml"
-    endpoints="$(curl -s "${gh_url}" | yq '.paths | keys | .[]')"
+    endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
     cat << TEMPLATING > "${TMP_WARNING_PATH}"
 -------------------------------------------------------------------------------
 API version: ${api_version}$(

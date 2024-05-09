@@ -1,7 +1,10 @@
-#! /usr/bin/env bash
+#!/bin/sh
 
 set -e
-source ./.env
+set -a
+. ./.env
+eval "printf \"$(cat ./compose.yaml.in)\"" > ./compose.yaml
+unset $(set | grep ^DOCKER | cut -d'=' -f1)
 docker compose down || :
 docker volume rm "${COLLECTOR_ETC_CRONTABS_VOLUME}" \
                  "${COLLECTOR_OPT_DATA_VOLUME}" \

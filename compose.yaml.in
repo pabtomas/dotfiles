@@ -1,5 +1,5 @@
 services:
-  proxy:
+  ${PROXY_ID}:
     build:
       context: ./${PROXY_ID}
       args:
@@ -33,7 +33,7 @@ services:
     read_only: true
     tmpfs:
       - /run
-  collector:
+  ${COLLECTOR_ID}:
     depends_on:
       - ${PROXY_ID}
     build:
@@ -62,9 +62,10 @@ services:
       - ${COLLECTOR_OPT_SCRIPTS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
       - ${COLLECTOR_VAR_LOG_VOLUME}:${VAR_LOG_PATH}:rw
     networks:
-      - ${PROXIFIED_SOCKET_NET}
+      ${PROXIFIED_SOCKET_NET}:
+        ipv4_address: 172.20.128.2
     read_only: true
-  controller:
+  ${CONTROLLER_ID}:
     depends_on:
       - ${PROXY_ID}
     build:
@@ -87,7 +88,7 @@ services:
     networks:
       - ${PROXIFIED_SOCKET_NET}
       - ${JUMP_AREA_NET}
-  jumper:
+  ${JUMPER_ID}:
     depends_on:
       - ${COLLECTOR_ID}
     build:
@@ -119,7 +120,7 @@ services:
       - ${JUMP_AREA_NET}
     stdin_open: true
     tty: true
-  editor:
+  ${EDITOR_ID}:
     build:
       context: ./${EDITOR_ID}
       args:
@@ -140,29 +141,32 @@ services:
       - ${JUMP_AREA_NET}
 
 networks:
-  proxy_for_controller:
+  ${PROXIFIED_SOCKET_NET}:
     driver: bridge
     name: ${PROXIFIED_SOCKET_NET}
     ipam:
       driver: default
-  jump_area:
+      config:
+        - subnet: 172.17.0.0/16
+          ip_range: 172.17.2.0/24
+  ${JUMP_AREA_NET}:
     driver: bridge
     name: ${JUMP_AREA_NET}
     ipam:
       driver: default
 
 volumes:
-  shared-ssh:
+  ${SSH_VOLUME}:
     name: ${SSH_VOLUME}
-  my-whale-fleet:
+  ${MY_WHALE_FLEET_VOLUME}:
     name: ${MY_WHALE_FLEET_VOLUME}
-  proxy-fs:
+  ${PROXY_FS_VOLUME}:
     name: ${PROXY_FS_VOLUME}
-  collector-etc-crontabs-fs:
+  ${COLLECTOR_ETC_CRONTABS_VOLUME}:
     name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
-  collector-opt-data-fs:
+  ${COLLECTOR_OPT_DATA_VOLUME}:
     name: ${COLLECTOR_OPT_DATA_VOLUME}
-  collector-opt-scripts-fs:
+  ${COLLECTOR_OPT_SCRIPTS_VOLUME}:
     name: ${COLLECTOR_OPT_SCRIPTS_VOLUME}
-  collector-var-log-fs:
+  ${COLLECTOR_VAR_LOG_VOLUME}:
     name: ${COLLECTOR_VAR_LOG_VOLUME}
