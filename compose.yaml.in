@@ -8,6 +8,8 @@ services:
         - API_URL=${API_URL}
         - ${API_SFX}NETWORKS=${TRUE}
         - ${API_SFX}VERSION=${TRUE}
+        - COLLECTOR_IP=${COLLECTOR_IP}
+        - CONTROLLER_IP=${CONTROLLER_IP}
         - DOCKER_IMG=${DOCKER_IMG}
         - DOCKER_PATH=${DOCKER_PATH}
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
@@ -29,7 +31,8 @@ services:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
       - ${PROXY_FS_VOLUME}:${ETC_NGX_PATH}:ro
     networks:
-      - ${PROXIFIED_SOCKET_NET}
+      ${PROXIFIED_SOCKET_NET}:
+        ipv4_address: ${PROXY_IP}
     read_only: true
     tmpfs:
       - /run
@@ -63,7 +66,7 @@ services:
       - ${COLLECTOR_VAR_LOG_VOLUME}:${VAR_LOG_PATH}:rw
     networks:
       ${PROXIFIED_SOCKET_NET}:
-        ipv4_address: 172.20.128.2
+        ipv4_address: ${COLLECTOR_IP}
     read_only: true
   ${CONTROLLER_ID}:
     depends_on:
@@ -86,8 +89,9 @@ services:
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
     networks:
-      - ${PROXIFIED_SOCKET_NET}
-      - ${JUMP_AREA_NET}
+      ${PROXIFIED_SOCKET_NET}:
+        ipv4_address: ${CONTROLLER_IP}
+      ${JUMP_AREA_NET}:
   ${JUMPER_ID}:
     depends_on:
       - ${COLLECTOR_ID}
@@ -147,13 +151,18 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.17.0.0/16
-          ip_range: 172.17.2.0/24
+        - subnet: ${PROXIFIED_SOCKET_SUB}
+          ip_range: ${PROXIFIED_SOCKET_SUB}
+          gateway: ${PROXIFIED_SOCKET_GATEWAY_IP}
   ${JUMP_AREA_NET}:
     driver: bridge
     name: ${JUMP_AREA_NET}
     ipam:
       driver: default
+      config:
+        - subnet: ${JUMP_AREA_SUB}
+          ip_range: ${JUMP_AREA_SUB}
+          gateway: ${JUMP_AREA_GATEWAY_IP}
 
 volumes:
   ${SSH_VOLUME}:

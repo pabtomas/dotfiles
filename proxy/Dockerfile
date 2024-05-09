@@ -10,6 +10,8 @@ ARG DOCKER_PATH
 COPY --from=docker_img ${DOCKER_PATH}/docker ${DOCKER_PATH}/
 
 ARG API_URL
+ARG COLLECTOR_IP
+ARG CONTROLLER_IP
 ARG ETC_NGX_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
@@ -21,6 +23,7 @@ ARG HTTPS_PROXY
 ARG API_SFX
 ARG ${API_SFX}NETWORKS
 ARG ${API_SFX}VERSION
+ARG API_ENDPOINT_CONTAINERS_ID_START
 
 RUN <<END_OF_RUN
     set -eux
@@ -31,12 +34,14 @@ RUN <<END_OF_RUN
     api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
     gh_url="${API_URL}/v${api_version}.yaml"
     endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
+    nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
+    docker_varname () { printf '%s%s\n' "${API_SFX}" "${1}" | tr 'a-z' 'A-Z'; }
     cat << TEMPLATING > "${TMP_WARNING_PATH}"
 -------------------------------------------------------------------------------
 API version: ${api_version}$(
-  for arg in $(env | grep "^${API_SFX}")
+  for arg in $(set | grep "^${API_SFX}")
   do
-    if [ "${arg#"${arg%??}"}" != '=0' ]
+    if [ "${arg#"${arg%????}"}" != "='0'" ]
     then
       arg="$(printf '%s\n' "${arg}" | cut -d'=' -f1)"
       flag=0
@@ -44,9 +49,7 @@ API version: ${api_version}$(
       do
         if [ "${endpoint#"${endpoint%?}"}" != '}' ]
         then
-          nginx_var="$(printf '%s\n' "${endpoint}" | sed 's@^/@@;s@/{\|}/\|/@_@g')"
-          docker_varname="${API_SFX}$(printf '%s\n' "${nginx_var}" | tr 'a-z' 'A-Z')"
-          if [ "${docker_varname}" == "${arg}" ]
+          if [ "$(docker_varname "$(nginx_varname "${endpoint}")")" == "${arg}" ]
           then
             flag=1
             break
@@ -62,9 +65,26 @@ API version: ${api_version}$(
 -------------------------------------------------------------------------------
 TEMPLATING
     cat << TEMPLATING > "${TMP_NGX_PATH}/default.conf"
+geo \$privileged {
+    default          0;
+    ${CONTROLLER_IP} 1;
+}
+map \$request_method \$readonly {
+    default  0;
+    GET      1;
+    HEAD     1;
+}
+map \$privileged:\$readonly \$return_403 {
+    default  0;
+    "0:0"    1;
+}
 server {
     server_name _;
     listen ${PROXY_PORT} default_server;
+    allow ${CONTROLLER_IP};
+    allow ${COLLECTOR_IP};
+    deny all;
+
     default_type text/plain;
     include ${ETC_NGX_PATH}/proxy.conf;
     set \$dockersocket ${SOCKET_PATH};
@@ -72,12 +92,12 @@ $(for endpoint in ${endpoints}
   do
     if [ "${endpoint#"${endpoint%?}"}" != '}' ]
     then
-      nginx_var="$(printf '%s\n' "${endpoint}" | sed 's@^/@@;s@/{\|}/\|/@_@g')"
+      nginx_var="$(nginx_varname "${endpoint}")"
       regex="$(printf '%s\n' "${endpoint}" | sed 's@/{id}$\|/{name}$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"
-      docker_varname="${API_SFX}$(printf '%s\n' "${nginx_var}" | tr 'a-z' 'A-Z')"
-      resolve_ref="$(eval "printf '%s' \"\${${docker_varname}:-0}\"")"
+      docker_var="$(docker_varname "${nginx_var}")"
+      resolve_ref="$(eval "printf '%s' \"\${${docker_var}:-0}\"")"
       printf '\n    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"
-      printf '    location ~* ^(/v[\d\.]+)?%s {if ($%s = 0){return 403 "[403] Forbidden API endpoint: %s (%s is 0)";}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "${nginx_var}" "'${endpoint}'" "'${docker_varname}'"
+      printf '    location ~* ^(/v[\d\.]+)?%s {set $e403 "[403] Forbidden API endpoint: %s (%s is 0)";if ($return_403 = 1){return 403 $e403;}if ($%s = 0){return 403 $e403;}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "'${endpoint}'" "'${docker_var}'" "${nginx_var}"
     fi
     if [ -n "${HTTP_PROXY}" ]; then unset http_proxy; fi
     if [ -n "${HTTPS_PROXY}" ]; then unset https_proxy; fi
