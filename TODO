@@ -49,6 +49,8 @@ rename dotfiles -> workspace
         - 1 each git repo shared with matching runner
     - drawer:
       - figlet/lolcat/tui monitoring/xinetd/socat + service network
+    - notetaker:
+      - hedgedoc
     - safedeposit:
       - passwordstore + git + gpg
       - exclusive clone on a volume
