@@ -3,7 +3,7 @@
 FALSE='0'
 TRUE='1'
 APK_PATHS='/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk'
-API_SFX='API_ENDPOINT_'
+API_PFX='API_ENDPOINT_'
 
 ### Ids ######################################################################
 COLLECTOR_ID='collector'
@@ -113,13 +113,14 @@ CRON_LOG_PATH="${VAR_LOG_PATH}/cron.log"
 MY_WHALE_FLEET_PATH="${WORKSPACES_PATH}/my-whale-fleet"
 
 ### Volumes ##################################################################
+DELETE_ME_SFX='-DELME'
 MY_WHALE_FLEET_VOLUME='my-whale-fleet'
-PROXY_FS_VOLUME="${PROXY_ID}-fs"
-COLLECTOR_VAR_LOG_VOLUME="${COLLECTOR_ID}-var-log-fs"
-COLLECTOR_ETC_CRONTABS_VOLUME="${COLLECTOR_ID}-etc-crontabs-fs"
-COLLECTOR_OPT_DATA_VOLUME="${COLLECTOR_ID}-opt-data-fs"
-COLLECTOR_OPT_SCRIPTS_VOLUME="${COLLECTOR_ID}-opt-scripts-fs"
-SSH_VOLUME='shared-ssh'
+PROXY_FS_VOLUME="${PROXY_ID}-fs${DELETE_ME_SFX}"
+COLLECTOR_VAR_LOG_VOLUME="${COLLECTOR_ID}-var-log-fs${DELETE_ME_SFX}"
+COLLECTOR_ETC_CRONTABS_VOLUME="${COLLECTOR_ID}-etc-crontabs-fs${DELETE_ME_SFX}"
+COLLECTOR_OPT_DATA_VOLUME="${COLLECTOR_ID}-opt-data-fs${DELETE_ME_SFX}"
+COLLECTOR_OPT_SCRIPTS_VOLUME="${COLLECTOR_ID}-opt-scripts-fs${DELETE_ME_SFX}"
+SSH_VOLUME="shared-ssh${DELETE_ME_SFX}"
 
 ### Networks #################################################################
 JUMP_AREA_NET='jump-area'

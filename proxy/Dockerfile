@@ -20,9 +20,9 @@ ARG TMP_WARNING_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
-ARG API_SFX
-ARG ${API_SFX}NETWORKS
-ARG ${API_SFX}VERSION
+ARG API_PFX
+ARG ${API_PFX}NETWORKS
+ARG ${API_PFX}VERSION
 
 RUN <<END_OF_RUN
     set -eux
@@ -34,11 +34,11 @@ RUN <<END_OF_RUN
     gh_url="${API_URL}/v${api_version}.yaml"
     endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
-    docker_varname () { printf '%s%s\n' "${API_SFX}" "${1}" | tr 'a-z' 'A-Z'; }
+    docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
     cat << TEMPLATING > "${TMP_WARNING_PATH}"
 -------------------------------------------------------------------------------
 API version: ${api_version}$(
-  for arg in $(set | grep "^${API_SFX}")
+  for arg in $(set | grep "^${API_PFX}")
   do
     if [ "${arg#"${arg%????}"}" != "='0'" ]
     then

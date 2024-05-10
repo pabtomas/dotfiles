@@ -4,10 +4,10 @@ services:
       context: ./${PROXY_ID}
       args:
         - APK_PATHS=${APK_PATHS}
-        - API_SFX=${API_SFX}
+        - API_PFX=${API_PFX}
         - API_URL=${API_URL}
-        - ${API_SFX}NETWORKS=${TRUE}
-        - ${API_SFX}VERSION=${TRUE}
+        - ${API_PFX}NETWORKS=${TRUE}
+        - ${API_PFX}VERSION=${TRUE}
         - COLLECTOR_IP=${COLLECTOR_IP}
         - CONTROLLER_IP=${CONTROLLER_IP}
         - DOCKER_IMG=${DOCKER_IMG}
