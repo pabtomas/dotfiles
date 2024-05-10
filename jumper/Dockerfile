@@ -1,8 +1,6 @@
-ARG BASH_IMG
-ARG TPM_COMPONENT_IMG
+ARG TMUX_COMPONENT_IMG
 
-FROM ${TPM_COMPONENT_IMG} as tpm_image
-FROM ${BASH_IMG}
+FROM ${TMUX_COMPONENT_IMG}
 
 ARG COMPLETION_PATH
 ARG CONTROLLER_ID
@@ -20,7 +18,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
-    apk add --no-cache openssh-client tmux
+    apk add --no-cache openssh-client
     mkdir -p "${SSH_ROOT_PATH}" "${OPT_SSH_PATH}" "${OPT_SCRIPTS_PATH}"
     key_path="${SSH_ROOT_PATH}/id_rsa"
     ssh-keygen -q -t rsa -N '' -f "${key_path}"
@@ -53,10 +51,6 @@ TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
-
-ARG TPM_PATH
-COPY --from=tpm_image ${TPM_PATH}/* ${TPM_PATH}/
-COPY .tmux.conf /root/
 
 ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
 ENTRYPOINT ${ENTRYPOINT_PATH}

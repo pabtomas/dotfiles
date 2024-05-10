@@ -1,9 +1,33 @@
 services:
+  ${BASH_SERVICE}:
+    build:
+      context: ./${BASH_ID}
+      args:
+        - BASH_IMG=${BASH_IMG}
+        - NET_PFX=${JUMP_AREA_PFX}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${BASH_COMPONENT_IMG}
+  ${TMUX_SERVICE}:
+    depends_on:
+      - ${BASH_SERVICE}
+    build:
+      context: ./${TMUX_ID}
+      args:
+        - BASH_COMPONENT_IMG=${BASH_COMPONENT_IMG}
+        - OS_IMG=${OS_IMG}
+        - TPM_PATH=${TPM_PATH}
+        - TPM_URL=${TPM_URL}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${TMUX_COMPONENT_IMG}
   ${SSHD_SERVICE}:
+    depends_on:
+      - ${BASH_SERVICE}
     build:
       context: ./${SSHD_ID}
       args:
-        - BASH_IMG=${BASH_IMG}
+        - BASH_COMPONENT_IMG=${BASH_COMPONENT_IMG}
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - NET=${JUMP_AREA_NET}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
@@ -20,16 +44,6 @@ services:
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${EXPLORER_COMPONENT_IMG}
-  ${TPM_SERVICE}:
-    build:
-      context: ./${TPM_ID}
-      args:
-        - OS_IMG=${OS_IMG}
-        - TPM_PATH=${TPM_PATH}
-        - TPM_URL=${TPM_URL}
-        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
-        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${TPM_COMPONENT_IMG}
   ${ZIG_SERVICE}:
     build:
       context: ./${ZIG_ID}

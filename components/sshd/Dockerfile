@@ -1,5 +1,5 @@
-ARG BASH_IMG
-FROM ${BASH_IMG}
+ARG BASH_COMPONENT_IMG
+FROM ${BASH_COMPONENT_IMG}
 
 ARG ENTRYPOINT_PATH
 ARG NET
@@ -13,7 +13,6 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache openssh-server
     mkdir -p "${OPT_SCRIPTS_PATH}"
-    sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
     cat << TEMPLATING > "/etc/ssh/sshd_config.d/${NET}.conf"
 PasswordAuthentication no
 TEMPLATING

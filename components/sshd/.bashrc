@@ -1,5 +1,8 @@
 git config --global core.editor vim 2> /dev/null
+git config merge.tool vimdiff 2> /dev/null
+git config merge.conflictstyle diff3 2> /dev/null
 git config mergetool.prompt false 2> /dev/null
+
 
 set -- '/tmp/tig'
 mkdir -p "${1}" > /dev/null
