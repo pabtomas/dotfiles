@@ -15,6 +15,8 @@ source_env_without_docker_host ()
 )
 
 set -eu
+TRASH_PATH="$(mktemp -d)"
+export TRASH_PATH
 for template in $(find . -type f -name compose.yaml.in)
 do
   source_env "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
@@ -32,3 +34,4 @@ source_env_without_docker_host '
   docker logs "${PROXY_ID}" 2> /dev/null | sed -n "/^-----/,/^-----/p"'
 docker image prune --all --force > /dev/null
 docker attach jumper
+rm -rf "${TRASH_PATH}"

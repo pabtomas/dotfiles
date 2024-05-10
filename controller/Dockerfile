@@ -9,6 +9,7 @@ COPY --from=docker_img ${DOCKER_PATH}/docker ${DOCKER_PATH}/
 
 ARG NET
 ARG TCP_DOCKER_HOST
+ARG TRASH_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -18,6 +19,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     cat << TEMPLATING > /etc/profile.d/env.sh
 export DOCKER_HOST=${TCP_DOCKER_HOST}
+export TRASH_PATH=${TRASH_PATH}
 TEMPLATING
     cat << TEMPLATING >> "/etc/ssh/sshd_config.d/${NET}.conf"
 PermitUserEnvironment yes
