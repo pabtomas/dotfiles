@@ -18,10 +18,12 @@ RUNNER_ID='runner'
 SHELL_ID='shell'
 SPACEPORN_ID='spaceporn'
 SSHD_ID='sshd'
+TPM_ID='tpm'
 ZIG_ID='zig'
 SPACEPORN_RUNNER_ID="${RUNNER_ID}/${SPACEPORN_ID}"
 EXPLORER_COMPONENT_ID="${COMPONENT_ID}/${EXPLORER_ID}"
 SSHD_COMPONENT_ID="${COMPONENT_ID}/${SSHD_ID}"
+TPM_COMPONENT_ID="${COMPONENT_ID}/${TPM_ID}"
 ZIG_COMPONENT_ID="${COMPONENT_ID}/${ZIG_ID}"
 SHELL_EXPLORER_ID="${EXPLORER_ID}/${SHELL_ID}"
 ZIG_EXPLORER_ID="${EXPLORER_ID}/${ZIG_ID}"
@@ -34,6 +36,7 @@ JUMPER_SERVICE="${JUMPER_ID}"
 PROXY_SERVICE="${PROXY_ID}"
 EXPLORER_SERVICE="${EXPLORER_ID}"
 SSHD_SERVICE="${SSHD_ID}"
+TPM_SERVICE="${TPM_ID}"
 ZIG_SERVICE="${ZIG_ID}"
 RUNNER_SERVICE="${RUNNER_ID}"
 SHELL_EXPLORER_SERVICE="$(printf '%s\n' "${SHELL_EXPLORER_ID}" | sed 's@/@.@')"
@@ -60,6 +63,7 @@ PROXY_TAG='latest'
 SPACEPORN_RUNNER_TAG='latest'
 SSHD_COMPONENT_TAG='latest'
 SHELL_EXPLORER_TAG='latest'
+TPM_COMPONENT_TAG='latest'
 ZIG_TAG='0.12.0'
 
 ### Extern Images ############################################################
@@ -93,6 +97,7 @@ ZIG_EXPLORER_IMG="${OWNER_ID}/${ZIG_EXPLORER_ID}:${ZIG_TAG}"
 ### Components Images ########################################################
 EXPLORER_COMPONENT_IMG="${OWNER_ID}/${EXPLORER_COMPONENT_ID}:${EXPLORER_COMPONENT_TAG}"
 SSHD_COMPONENT_IMG="${OWNER_ID}/${SSHD_COMPONENT_ID}:${SSHD_COMPONENT_TAG}"
+TPM_COMPONENT_IMG="${OWNER_ID}/${TPM_COMPONENT_ID}:${TPM_COMPONENT_TAG}"
 ZIG_COMPONENT_IMG="${OWNER_ID}/${ZIG_COMPONENT_ID}:${ZIG_TAG}"
 
 ### Paths ####################################################################
@@ -105,6 +110,7 @@ OPT_SCRIPTS_PATH='/opt/scripts'
 OPT_SSH_PATH='/opt/ssh'
 SOCKET_PATH='/var/run/docker.sock'
 SSH_ROOT_PATH='/root/.ssh'
+TPM_PATH='/root/.tmux/plugins/tpm'
 VAR_LOG_PATH='/var/log'
 WORKSPACES_PATH='/workspaces'
 COMPLETION_PATH="${DATA_PATH}/99completion"
@@ -150,6 +156,7 @@ UNPRIVILEGED_USER='visitor'
 ### URLs #####################################################################
 API_URL='https://raw.githubusercontent.com/moby/moby/master/docs/api'
 MY_WHALE_FLEET_URL='https://github.com/tiawl/my-whale-fleet'
+TPM_URL='https://github.com/tmux-plugins/tpm'
 ZIG_BUILDS_URL='https://ziglang.org/builds'
 
 ### Docker host ##############################################################

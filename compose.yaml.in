@@ -110,6 +110,8 @@ services:
         - OPT_SSH_PATH=${OPT_SSH_PATH}
         - SSH_ROOT_PATH=${SSH_ROOT_PATH}
         - TCP_DOCKER_HOST=${TCP_DOCKER_HOST}
+        - TPM_PATH=${TPM_PATH}
+        - TPM_COMPONENT_IMG=${TPM_COMPONENT_IMG}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${JUMPER_IMG}
