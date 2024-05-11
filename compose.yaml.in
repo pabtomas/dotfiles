@@ -129,14 +129,7 @@ services:
     tty: true
     # read_only: true
   ${EDITOR_SERVICE}:
-    build:
-      context: ./${EDITOR_ID}
-      args:
-        - SSHD_COMPONENT_IMG=${SSHD_COMPONENT_IMG}
-        - WORKSPACES_PATH=${WORKSPACES_PATH}
-        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
-        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${EDITOR_IMG}
+    image: ${VIM_COMPONENT_IMG}
     container_name: ${EDITOR_HOST}
     hostname: ${EDITOR_HOST}
     volumes:

@@ -35,17 +35,37 @@ services:
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${SSHD_COMPONENT_IMG}
-  ${GIT_SERVICE}:
+  ${WORKSPACES_SERVICE}:
     depends_on:
       - ${SSHD_SERVICE}
     build:
-      context: ./${GIT_ID}
+      context: ./${WORKSPACES_ID}
       args:
         - SSHD_COMPONENT_IMG=${SSHD_COMPONENT_IMG}
         - WORKSPACES_PATH=${WORKSPACES_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${WORKSPACES_COMPONENT_IMG}
+  ${GIT_SERVICE}:
+    depends_on:
+      - ${WORKSPACES_SERVICE}
+    build:
+      context: ./${GIT_ID}
+      args:
+        - WORKSPACES_COMPONENT_IMG=${WORKSPACES_COMPONENT_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${GIT_COMPONENT_IMG}
+  ${VIM_SERVICE}:
+    depends_on:
+      - ${WORKSPACES_SERVICE}
+    build:
+      context: ./${VIM_ID}
+      args:
+        - WORKSPACES_COMPONENT_IMG=${WORKSPACES_COMPONENT_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${VIM_COMPONENT_IMG}
   ${ZIG_SERVICE}:
     build:
       context: ./${ZIG_ID}
