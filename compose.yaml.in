@@ -62,7 +62,6 @@ services:
     container_name: ${COLLECTOR_HOST}
     hostname: ${COLLECTOR_HOST}
     volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
       - ${COLLECTOR_ETC_CRONTABS_VOLUME}:${CRONTABS_PATH}:ro
       - ${COLLECTOR_OPT_DATA_VOLUME}:${DATA_PATH}:rw
       - ${COLLECTOR_OPT_SCRIPTS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
