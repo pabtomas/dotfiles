@@ -23,7 +23,7 @@ do
 done
 docker compose down --timeout 0 || :
 source_env_without_docker_host '
-  docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}") || :'
+  docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
 docker network prune --force
 docker compose --file ./components/compose.yaml build
 docker compose build
