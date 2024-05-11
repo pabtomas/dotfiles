@@ -48,10 +48,19 @@ main ()
   docker attach jumper
 
   ## TODO: dry-run
-  #docker compose --file ./components/compose.yaml build --dry-run
-  #docker compose build --dry-run
-  #docker compose create --no-recreate --dry-run
-  #docker compose start --dry-run
+  #local tmp
+  #tmp="$(mktemp -d)"
+  #readonly tmp
+  #docker run -it --rm -v "${HOME}:/root" -v "${tmp}:/git" alpine/git:user clone --depth 1 https://github.com/tiawl/my-whale-fleet.git
+  #for template in $(find "${tmp}" -type f -name compose.yaml.in)
+  #do
+  #  source_env "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
+  #done
+  #docker compose --file "${tmp}/components/compose.yaml" build --dry-run
+  #docker compose --file "${tmp}/compose.yaml" build --dry-run
+  #docker compose --file "${tmp}/compose.yaml" create --no-recreate --dry-run
+  #docker compose --file "${tmp}/compose.yaml" start --dry-run
+  #rm -f "${tmp}"
 }
 
 main
