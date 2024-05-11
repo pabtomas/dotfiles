@@ -16,7 +16,6 @@ services:
       context: ./${TMUX_ID}
       args:
         - BASH_COMPONENT_IMG=${BASH_COMPONENT_IMG}
-        - OS_IMG=${OS_IMG}
         - TPM_PATH=${TPM_PATH}
         - TPM_URL=${TPM_URL}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
@@ -61,7 +60,6 @@ services:
     build:
       context: ./${VIM_ID}
       args:
-        - OS_IMG=${OS_IMG}
         - NERDTREE_URL=${NERDTREE_URL}
         - POLYGLOT_URL=${POLYGLOT_URL}
         - RAINBOW_URL=${RAINBOW_URL}
