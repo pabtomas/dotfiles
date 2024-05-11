@@ -30,7 +30,6 @@ services:
       args:
         - BASH_COMPONENT_IMG=${BASH_COMPONENT_IMG}
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
-        - NET=${JUMP_AREA_NET}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
@@ -62,6 +61,9 @@ services:
     build:
       context: ./${VIM_ID}
       args:
+        - OS_IMG=${OS_IMG}
+        - RAINBOW_URL=${RAINBOW_URL}
+        - UNDOTREE_URL=${UNDOTREE_URL}
         - WORKSPACES_COMPONENT_IMG=${WORKSPACES_COMPONENT_IMG}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}

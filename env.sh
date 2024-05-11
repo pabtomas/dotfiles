@@ -170,7 +170,9 @@ UNPRIVILEGED_USER='visitor'
 ### URLs #####################################################################
 API_URL='https://raw.githubusercontent.com/moby/moby/master/docs/api'
 FIGLET_FONTS_URL='https://github.com/xero/figlet-fonts'
+RAINBOW_URL='https://github.com/luochen1990/rainbow'
 TPM_URL='https://github.com/tmux-plugins/tpm'
+UNDOTREE_URL='https://github.com/mbbill/undotree'
 ZIG_BUILDS_URL='https://ziglang.org/builds'
 
 ### Docker host ##############################################################

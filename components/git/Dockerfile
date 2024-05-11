@@ -12,4 +12,4 @@ RUN <<END_OF_RUN
     unset http_proxy https_proxy
 END_OF_RUN
 
-COPY etc/profile.d/* /etc/profile.d/
+COPY etc/ /etc/

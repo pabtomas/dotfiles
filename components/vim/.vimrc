@@ -27,6 +27,8 @@ set nocompatible
 
 " Remove all bell
 set belloff=all
+set noerrorbells
+set visualbell
 
 " allow mouse use
 set mouse=a
@@ -89,12 +91,8 @@ set diffopt=vertical
 " use popup menu & additional info when completion is used
 set completeopt=menu,preview
 
-" stop beeping
-set noerrorbells
-set visualbell
-
 " specify which shell use with shell commands
-set shell=/bin/bash
+set shell=/usr/local/bin/bash
 
 " more pairs for % command and MatchParen highlight
 set matchpairs+=<:>
@@ -128,8 +126,8 @@ const s:MODES = {
 
 if exists('s:SEARCH') | unlet s:SEARCH | endif
 const s:SEARCH = #{
-\   sensitive_replace: ':s/\%V//g<Left><Left><Left>',
-\   insensitive_replace: ':s/\%V\c//g<Left><Left><Left>',
+\   sensitive_replace: ':s/\%V\%V//g<Left><Left><Left><Left><Left>',
+\   insensitive_replace: ':s/\%V\c\%V//g<Left><Left><Left><Left><Left>',
 \   insensitive: '/\c',
 \ }
 
@@ -208,83 +206,6 @@ function! s:PreviousBuffer()
   endif
 endfunction
 
-function! s:BuildTmuxPaneLine(buf, COLORS)
-  let l:res = ''
-  if a:buf.nr == bufnr('%')
-    let l:res = a:COLORS.current_buf
-  else
-    let l:res = a:COLORS.buf
-  endif
-  return l:res . ' ' . a:buf.name . ' #[none]'
-endfunction
-
-function! s:ResetTmuxPaneLine()
-  if exists('${TMUX}')
-    call systemlist('tmux -S "/tmp/tmux-${UID}/default" set-option -t '
-      \ . s:tmux_pane_id . ' -p pane-border-format " [#P] "')
-  endif
-endfunction
-
-function! s:SetTmuxBuffer()
-  if exists('${TMUX}')
-    call systemlist('tmux -S "/tmp/tmux-${UID}/default" set-buffer -b "vim" '
-      \ . shellescape(getreg("")))
-  endif
-endfunction
-
-function! s:UpdateTmuxPaneLine()
-  if exists('${TMUX}')
-    if !exists('s:tmux_pane_id')
-      let s:tmux_pane_id = systemlist('tmux -S "/tmp/tmux-${UID}/default" display-message -p "#S:#I.#P"')[0]
-    endif
-
-    let l:tmux_pane_border = ''
-
-    const l:COLORS = #{
-      \ current_buf: '#[fg=colour' . s:PALETTE.theme
-        \ . ',bold,bg=colour' . s:PALETTE.gray_900 . ']',
-      \ buf: '#[fg=colour' . s:PALETTE.theme
-        \ . ',underscore,bg=colour' . s:PALETTE.gray_700 . ']',
-    \ }
-
-    const l:max_len = &columns - 4
-
-    let l:bufs = map(
-        \ sort(
-          \ map(getbufinfo(#{ buflisted: 1 }),
-          \ { _, buf -> buf.bufnr }),
-        \ 'N'),
-      \ { _, nr -> { 'nr': nr, 'name': bufname(nr) }})
-
-    if len(l:bufs) > 1
-      while l:bufs[0].nr != bufnr('%')
-        let l:bufs = add(l:bufs, remove(l:bufs, 0))
-      endwhile
-    endif
-
-    if len(join(mapnew(l:bufs, { _, buf -> buf.name }), '  ')) + 2 >= l:max_len
-
-      while len(substitute(l:tmux_pane_border, '#\[.\{-}\]', '', 'g')
-        \ . l:bufs[0].name) + 10 + 2 <= l:max_len
-          let l:tmux_pane_border .= s:BuildTmuxPaneLine(l:bufs[0], l:COLORS)
-          call remove(l:bufs, 0)
-      endwhile
-
-      let l:tmux_pane_border .= l:COLORS.buf . ' ... #[none]'
-    else
-      while !empty(join(mapnew(l:bufs, { _, buf -> buf.nr }), ''))
-        let l:tmux_pane_border .= s:BuildTmuxPaneLine(l:bufs[0], l:COLORS)
-        call remove(l:bufs, 0)
-      endwhile
-    endif
-
-    let l:command = 'tmux -S "/tmp/tmux-${UID}/default" set-option -t '
-      \ . s:tmux_pane_id . ' -p pane-border-format "' . l:tmux_pane_border . '"'
-
-    call system(l:command)
-  endif
-endfunction
-
 "     }}}
 "   }}}
 "   Windows {{{2
@@ -342,21 +263,6 @@ function! s:VisualDown()
 endfunction
 
 "     }}}
-"   }}}
-"   Blank {{{2
-
-function! s:BlankUp()
-  if &modifiable
-    call append(line('.') - 1, repeat([''], v:count1))
-  endif
-endfunction
-
-function! s:BlankDown()
-  if &modifiable
-    call append(line('.'), repeat([''], v:count1))
-  endif
-endfunction
-
 "   }}}
 "   Redhighlight {{{2
 "     Variables & constants {{{3
@@ -585,21 +491,6 @@ function! s:PreviousTag()
     echohl NONE
   endtry
 endfunction
-
-"   }}}
-"   VimRC {{{2
-
-function! s:OpenVimRC()
-  vsplit $MYVIMRC
-endfunction
-
-if !exists("*s:SourceVimRC")
-  function! s:SourceVimRC()
-    execute 'source ' . $MYVIMRC
-    call s:HighlightStatusLines()
-    echomsg 'VimRC sourced !'
-  endfunction
-endif
 
 "   }}}
 "   Tmux {{{2
@@ -859,17 +750,6 @@ call prop_type_add('key',        #{ highlight: 'HelpKey'    })
 call prop_type_add('help',       #{ highlight: 'Help'       })
 call prop_type_add('mode',       #{ highlight: 'HelpMode'   })
 
-"     Undotree {{{3
-
-if index(prop_type_list(), 'button')     != -1 | call prop_type_delete('button')     | endif
-if index(prop_type_list(), 'diffadd')    != -1 | call prop_type_delete('diffadd')    | endif
-if index(prop_type_list(), 'diffdelete') != -1 | call prop_type_delete('diffdelete') | endif
-
-call prop_type_add('button',     #{ highlight: 'Button'     })
-call prop_type_add('diffadd',    #{ highlight: 'DiffAdd'    })
-call prop_type_add('diffdelete', #{ highlight: 'DiffDelete' })
-
-"     }}}
 "   }}}
 "   Folds {{{2
 "     Functions {{{3
@@ -946,457 +826,10 @@ if !isdirectory(&undodir)
 endif
 
 "     }}}
-"     Keys {{{3
-
-if exists('s:UNDO_KEY') | unlet s:UNDO_KEY | endif
-const s:UNDO_KEY = #{
-\   next:          "\<Up>",
-\   previous:    "\<Down>",
-\   first:             "g",
-\   last:              "G",
-\   scrollup:    "\<Left>",
-\   scrolldown: "\<Right>",
-\   select:     "\<Enter>",
-\   exit:         "\<Esc>",
-\   help:              "?",
-\ }
-
-"     }}}
-"     Help {{{3
-
-function! s:HelpUndotree()
-  let l:lines = [ '     ' . s:Key([s:UNDO_KEY.help]) . '   - Show this help',
-   \ '    ' . s:Key([s:UNDO_KEY.exit]) . '  - Exit undotree',
-   \ '   ' . s:Key([s:UNDO_KEY.next, s:UNDO_KEY.previous])
-     \ . ' - Next/Previous change',
-   \ '   ' . s:Key([s:UNDO_KEY.select]) . ' - Select change',
-   \ '   ' . s:Key([s:UNDO_KEY.first, s:UNDO_KEY.last])
-     \ . ' - First/Last change',
-   \ '   ' . s:Key([s:UNDO_KEY.scrollup, s:UNDO_KEY.scrolldown])
-     \ . ' - Scroll diff window',
-  \ ]
-  let l:text = []
-  for l:each in l:lines
-    let l:start = matchend(l:each, '^\s*< .\+ >\s* - \u')
-    let l:properties = [#{ type: 'key', col: 1, length: l:start - 1 }]
-    let l:properties = l:properties + [#{ type: 'statusline',
-      \ col: l:start - 2, length: 1 }]
-    let l:start = 0
-    while l:start > -1
-      let l:start = match(l:each,
-        \ '^\s*\zs< \| \zs> \s*- \u\| \zs| \|/\| .\zs-. ', l:start)
-      if l:start > -1
-        let l:start += 1
-        let l:properties = l:properties + [#{ type: 'statusline',
-          \ col: l:start, length: 1 }]
-      endif
-    endwhile
-    call add(l:text, #{ text: l:each, props: l:properties })
-  endfor
-  call popup_create(l:text,
-                  \ #{
-                  \   pos: 'topleft',
-                  \   line: win_screenpos(0)[0] + winheight(0)
-                  \     - len(l:text) - &cmdheight,
-                  \   col: win_screenpos(0)[1] + s:undo.max_length + 1,
-                  \   zindex: 4,
-                  \   wrap: v:false,
-                  \   fixed: v:true,
-                  \   minwidth: winwidth(0) - s:undo.max_length - 1,
-                  \   maxwidth: winwidth(0) - s:undo.max_length - 1,
-                  \   time: 10000,
-                  \   border: [1, 0, 0, 0],
-                  \   borderchars: ['━'],
-                  \   borderhighlight: ['StatusLine'],
-                  \   highlight: 'Help',
-                  \ })
-endfunction
-
-"     }}}
 "     Functions {{{3
 
-function! s:DiffHandler(job, status)
-  let l:eventignore_backup = &eventignore
-  set eventignore=all
-
-  let l:diffbuf = ch_getbufnr(a:job, 'out')
-  let l:text = getbufline(l:diffbuf, 1, '$')
-
-  execute 'silent bdelete! ' . l:diffbuf
-  if delete(s:undo.tmp[0]) != 0
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not delete temp file: '
-      \ . s:undo.tmp[0]
-    echohl NONE
-  endif
-  if delete(s:undo.tmp[1]) != 0
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not delete temp file: '
-      \ . s:undo.tmp[1]
-    echohl NONE
-  endif
-
-  for l:each in range(len(l:text))
-    let l:properties = [#{ type: 'diffadd', col: 1,
-      \ length: max([0, len(l:text[l:each]) - 1]) }]
-    if l:text[l:each][0] == '-'
-      let l:properties = [#{ type: 'diffdelete', col: 1,
-        \ length: max([0, len(l:text[l:each]) - 1]) }]
-    endif
-    let l:text[l:each] = #{ text: l:text[l:each][1:], props: l:properties }
-  endfor
-
-  call popup_settext(s:undo.diff_id, l:text)
-  unlet s:undo.job
-  let &eventignore = l:eventignore_backup
-endfunction
-
-function! s:Diff(treepopup_id)
-  call win_execute(a:treepopup_id, 'let s:undo.line = line(".")')
-  let l:newchange = changenr()
-  let l:oldchange = s:undo.meta[s:undo.line - 1]
-  unlet s:undo.line
-
-  let l:eventignore_backup = &eventignore
-  set eventignore=all
-  let l:savedview = winsaveview()
-  let l:new = getbufline(bufnr(), 1, '$')
-  execute 'silent undo ' . l:oldchange
-  let l:old = getbufline(bufnr(), 1, '$')
-  execute 'silent undo ' . l:newchange
-  call winrestview(l:savedview)
-
-  let l:diffcommand = 'diff --unchanged-line-format=""'
-    \ . ' --new-line-format="-%dn: %L" --old-line-format="+%dn: %L"'
-  while !empty(job_info())
-    sleep 1m
-  endwhile
-  let s:undo.tmp = [tempname(), tempname()]
-  if writefile(l:old, s:undo.tmp[0]) == -1
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not write to temp file: '
-      \ . s:undo.tmp[0]
-    echohl NONE
-  endif
-  if writefile(l:new, s:undo.tmp[1]) == -1
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Can not write to temp file: '
-      \ . s:undo.tmp[1]
-    echohl NONE
-  endif
-  let s:undo.job = job_start(['/bin/bash', '-c', l:diffcommand . ' '
-    \ . s:undo.tmp[0] . ' ' . s:undo.tmp[1]], #{ out_io: 'buffer',
-    \ out_msg: v:false, exit_cb: expand('<SID>') . 'DiffHandler' })
-
-  let &eventignore = l:eventignore_backup
-endfunction
-
-function! s:UndotreeFilter(winid, key)
-  if a:key == s:UNDO_KEY.exit
-    execute 'highlight PopupSelected ctermfg=' . s:PALETTE.gray_700
-      \ . ' ctermbg=' . s:PALETTE.zinc
-    call popup_clear()
-    unlet s:undo
-  elseif a:key == s:UNDO_KEY.next
-    call s:UpdateUndotree()
-    call win_execute(a:winid, 'while line(".") > 1'
-      \ . ' | call cursor(line(".") - 1, 0)'
-      \ . ' | if (line(".") < line("w0") + 1) && (line("w0") > 1)'
-      \ . ' | execute "normal! \<C-y>" | endif'
-      \ . ' | if s:undo.meta[line(".") - 1] > -1 | break | endif'
-      \ . ' | endwhile')
-    call s:Diff(a:winid)
-    call s:UndotreeButtons(a:winid)
-  elseif a:key == s:UNDO_KEY.previous
-    call s:UpdateUndotree()
-    call win_execute(a:winid, 'while line(".") < line("$")'
-      \ . ' | call cursor(line(".") + 1, 0)'
-      \ . ' | if (line(".") > line("w$") - 1) && (line("$") > line("w$"))'
-      \ . ' | execute "normal! \<C-e>" | endif'
-      \ . ' | if s:undo.meta[line(".") - 1] > -1 | break | endif'
-      \ . ' | endwhile')
-    call s:Diff(a:winid)
-    call s:UndotreeButtons(a:winid)
-  elseif a:key == s:UNDO_KEY.first
-    call s:UpdateUndotree()
-    call win_execute(a:winid, 'call cursor(1, 0)')
-    call s:Diff(a:winid)
-    call s:UndotreeButtons(a:winid)
-  elseif a:key == s:UNDO_KEY.last
-    call s:UpdateUndotree()
-    call win_execute(a:winid, 'call cursor(line("$"), 0)')
-    call s:Diff(a:winid)
-    call s:UndotreeButtons(a:winid)
-  elseif a:key == s:UNDO_KEY.scrollup
-    call win_execute(s:undo.diff_id,
-      \ 'call cursor(line("w0") - 1, 0) | redraw')
-  elseif a:key == s:UNDO_KEY.scrolldown
-    call win_execute(s:undo.diff_id,
-      \ 'call cursor(line("w$") + 1, 0) | redraw')
-  elseif a:key == s:UNDO_KEY.select
-    call win_execute(a:winid, 'let s:undo.line = line(".")')
-    execute 'silent undo ' . s:undo.meta[s:undo.line - 1]
-    unlet s:undo.line
-    call s:UpdateUndotree()
-    call popup_settext(a:winid, s:undo.text)
-    call s:Diff(a:winid)
-  elseif a:key == s:UNDO_KEY.help
-    call s:HelpUndotree()
-  endif
-  return v:true
-endfunction
-
-function! s:ParseNode(in, out)
-  if empty(a:in)
-    return
-  endif
-  let l:currentnode = a:out
-  for l:each in a:in
-    if has_key(l:each, 'alt')
-      call s:ParseNode(l:each.alt, l:currentnode)
-    endif
-    let l:newnode = #{ seq: l:each.seq, p: [] }
-    call extend(l:currentnode.p, [l:newnode])
-    let l:currentnode = l:newnode
-  endfor
-endfunction
-
-function! s:UpdateUndotree()
-  let l:rawtree = undotree().entries
-  let s:undo.tree = #{ seq: 0, p: [] }
-  let s:undo.text = []
-  let s:undo.meta = []
-  let l:maxlength = 0
-
-  call s:ParseNode(l:rawtree, s:undo.tree)
-
-  let l:slots = [s:undo.tree]
-  while l:slots != []
-    let l:foundstring = v:false
-    let l:index = 0
-
-    for l:each in range(len(l:slots))
-      if type(l:slots[l:each]) == v:t_string
-        let l:foundstring = v:true
-        let l:index = l:each
-        break
-      endif
-    endfor
-
-    let l:minseq = v:numbermax
-    let l:minnode = {}
-
-    if !l:foundstring
-      for l:each in range(len(l:slots))
-        if type(l:slots[l:each]) == v:t_dict
-          if l:slots[l:each].seq < l:minseq
-            let l:minseq = l:slots[l:each].seq
-            let l:index = l:each
-            let l:minnode = l:slots[l:each]
-            continue
-          endif
-        endif
-        if type(l:slots[l:each]) == v:t_list
-          for l:each2 in l:slots[l:each]
-            if l:each2.seq < l:minseq
-              let l:minseq = l:each2.seq
-              let l:index = l:each
-              let l:minnode = l:each2
-              continue
-            endif
-          endfor
-        endif
-      endfor
-    endif
-
-    let l:newline = " "
-    let l:newmeta = -1
-    let l:node = l:slots[l:index]
-    if type(l:node) == v:t_string
-      let l:newmeta = -1
-      if l:index + 1 != len(l:slots)
-        for l:each in range(len(l:slots))
-          if l:each < l:index
-            let l:newline = l:newline . '| '
-          endif
-          if l:each > l:index
-            let l:newline = l:newline . ' \'
-          endif
-        endfor
-      endif
-      call remove(l:slots, l:index)
-    endif
-
-    if type(l:node) == v:t_dict
-      let l:newmeta = l:node.seq
-      for l:each in range(len(l:slots))
-        if l:index == l:each
-          if l:node.seq == changenr()
-            let l:newline = l:newline . '◊ '
-          else
-            let l:newline = l:newline . '• '
-          endif
-        else
-          let l:newline = l:newline . '| '
-        endif
-      endfor
-      let l:newline = l:newline . '   ' . l:node.seq
-      if empty(l:node.p)
-        let l:slots[l:index] = 'x'
-      endif
-      if len(l:node.p) == 1
-        let l:slots[l:index] = l:node.p[0]
-      endif
-      if len(l:node.p) > 1
-        let l:slots[l:index] = l:node.p
-      endif
-      let l:node.p = []
-    endif
-
-    if type(l:node) == v:t_list
-      let l:newmeta = -1
-      for l:each in range(len(l:slots))
-        if l:each < l:index
-          let l:newline = l:newline . '| '
-        endif
-        if l:each == l:index
-          let l:newline = l:newline . '|/ '
-        endif
-        if l:each > l:index
-          let l:newline = l:newline . '/ '
-        endif
-      endfor
-      call remove(l:slots, l:index)
-      if len(l:node) == 2
-        if l:node[0].seq > l:node[1].seq
-          call insert(l:slots, l:node[1], l:index)
-          call insert(l:slots, l:node[0], l:index)
-        else
-          call insert(l:slots, l:node[0], l:index)
-          call insert(l:slots, l:node[1], l:index)
-        endif
-      endif
-      if len(l:node) > 2
-        call remove(l:node, index(l:node, l:minnode))
-        call insert(l:slots, l:minnode, l:index)
-        call insert(l:slots, l:node, l:index)
-      endif
-    endif
-    unlet l:node
-
-    if l:newline != " "
-      let l:newline = substitute(l:newline, '\s*$', '', 'g')
-      let l:maxlength = max([l:maxlength, len(split(l:newline, '\zs'))])
-      let l:properties =
-        \ [#{ type: 'statusline', col: 1, length: len(l:newline) }]
-      call insert(s:undo.text,
-        \ #{ text: l:newline, props: l:properties }, 0)
-      call insert(s:undo.meta, l:newmeta, 0)
-    endif
-
-  endwhile
-
-  let s:undo.max_length = l:maxlength + 1
-endfunction
-
-function! s:UndotreeButtons(winid)
-  let l:midlength = s:undo.max_length / 2
-  let l:modified = v:false
-  call win_execute(a:winid, 'let s:undo.first_line = line("w0")'
-    \ . ' | let s:undo.last_line = line("w$")')
-  if s:undo.first_line > 1
-    if l:midlength * 2 == s:undo.max_length
-      let s:undo.text[s:undo.first_line - 1].text =
-      \ repeat(' ', l:midlength - 1) . '▲' . repeat(' ', l:midlength)
-    else
-      let s:undo.text[s:undo.first_line - 1].text =
-      \ repeat(' ', l:midlength) . '▴' . repeat(' ', l:midlength)
-    endif
-    let s:undo.text[s:undo.first_line - 1].props =
-    \ [#{ type: 'button', col: 1,
-      \ length: len(s:undo.text[s:undo.first_line - 1].text) }]
-    let l:modified = v:true
-  endif
-  unlet s:undo.first_line
-  if s:undo.last_line < len(s:undo.text)
-    if l:midlength * 2 == s:undo.max_length
-      let s:undo.text[s:undo.last_line - 1].text =
-      \ repeat(' ', l:midlength - 1) . '▼' . repeat(' ', l:midlength)
-    else
-      let s:undo.text[s:undo.last_line - 1].text =
-      \ repeat(' ', l:midlength) . '▾' . repeat(' ', l:midlength)
-    endif
-    let s:undo.text[s:undo.last_line - 1].props =
-    \ [#{ type: 'button', col: 1,
-      \ length: len(s:undo.text[s:undo.last_line - 1].text) }]
-    let l:modified = v:true
-  endif
-  unlet s:undo.last_line
-  if l:modified
-    call popup_settext(a:winid, s:undo.text)
-  endif
-endfunction
-
-function! s:Undotree()
-  if !buflisted(bufnr()) || !bufloaded(bufnr())
-    echohl ErrorMsg
-    echomsg 'Personal Error Message: Unlisted or Unloaded current buffer.'
-      \ . ' Can not use Undotree.'
-    echohl NONE
-    return
-  endif
-
-  let s:undo = {}
-  call s:UpdateUndotree()
-  let s:undo.change_backup = changenr()
-  execute 'highlight PopupSelected ctermfg=' . s:PALETTE.gray_700
-    \ . ' ctermbg=' . s:PALETTE.zinc
-
-  let s:undo.diff_id = popup_create('',
-  \ #{
-    \ pos: 'topleft',
-    \ line: win_screenpos(0)[0],
-    \ col: win_screenpos(0)[1] + s:undo.max_length,
-    \ zindex: 2,
-    \ minwidth: winwidth(0) - s:undo.max_length - 1,
-    \ maxwidth: winwidth(0) - s:undo.max_length - 1,
-    \ minheight: winheight(0),
-    \ maxheight: winheight(0),
-    \ drag: v:false,
-    \ wrap: v:false,
-    \ fixed: v:true,
-    \ mapping: v:false,
-    \ scrollbar: v:true,
-    \ border: [0, 0, 0, 1],
-    \ borderchars: ['│'],
-    \ borderhighlight: ['VertSplit'],
-  \ })
-  call setwinvar(s:undo.diff_id, '&wincolor', 'UndoPopup')
-
-  let l:popup_id = popup_create(s:undo.text,
-  \ #{
-    \ pos: 'topleft',
-    \ line: win_screenpos(0)[0],
-    \ col: win_screenpos(0)[1],
-    \ zindex: 3,
-    \ minwidth: s:undo.max_length,
-    \ maxwidth: s:undo.max_length,
-    \ minheight: winheight(0),
-    \ maxheight: winheight(0),
-    \ drag: v:false,
-    \ wrap: v:false,
-    \ fixed: v:true,
-    \ filter: expand('<SID>') . 'UndotreeFilter',
-    \ mapping: v:false,
-    \ scrollbar: v:false,
-    \ cursorline: v:true,
-  \ })
-  call setwinvar(l:popup_id, '&wincolor', 'UndoPopup')
-  call win_execute(l:popup_id, 'let w:line = 1 | call cursor(w:line, 0)'
-  \ . ' | while s:undo.meta[line(".") - 1] != s:undo.change_backup'
-  \ . ' | let w:line += 1 | call cursor(w:line, 0) | endwhile')
-  call s:UndotreeButtons(l:popup_id)
-  call s:HelpUndotree()
+function! s:ToggleUndotree()
+  UndotreeToggle
 endfunction
 
 "     }}}
@@ -1404,142 +837,47 @@ endfunction
 "   Rainbow {{{2
 "     Variables & constants {{{3
 
-let s:rainbow = #{
-\   colors: [
-\      196, 208, 226, 40, 45, 33, 129, 201
-\   ],
-\   activated: v:false,
+let g:rainbow_active = 0
+let g:rainbow_conf = #{
+\   ctermfgs: [ 196, 208, 226, 40, 45, 33, 129, 201, ],
 \ }
 
 "     }}}
 "     Functions {{{3
 
-function! s:IsRainbowUsed()
-  return empty(filter(map(split(execute('syntax list'), '\n'),
-    \ 'matchstr(v:val, "^\[[:alnum:]_]*")'), 'match(v:val, "_Rainbow") > 0'))
-endfunction
-
 function! s:ActivateRainbow()
-  let l:buf_syntax = split(execute('syntax list'), '\n')[1:]
-  if !empty(l:buf_syntax) || empty(&filetype)
-    if s:IsRainbowUsed()
-      let l:max = len(s:rainbow.colors)
-      let l:index = 0
-
-      let l:contained_in = ''
-      let l:parentheses = ['start=/(/ end=/)/ fold',
-        \ 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold']
-      let l:string_syntax = '"^[^[:space:]]*String[^[:space:]]*"'
-
-      if &filetype == 'vim'
-        let l:parentheses = ['start=/(/ end=/)/', 'start=/\[/ end=/\]/',
-          \ 'start=/{/ end=/}/ fold']
-      elseif (&filetype == 'sh') || (&filetype == 'conf')
-        let l:string_syntax = '"shDoubleQuote"'
-        let l:contained_in = ",shDoubleQuote"
-      elseif &filetype == 'yaml'
-        let l:contained_in = ",yamlFlowString"
-      endif
-
-      " syntax list must not be cleared if the it is already empty
-      if !empty(l:buf_syntax)
-        execute 'syntax clear ' . join(filter(filter(filter(map(filter(
-          \ l:buf_syntax, 'match(v:val, "cluster") < 0'),
-          \ 'matchstr(v:val, "^[[:alnum:]_]*")'), '!empty(v:val)'),
-          \ 'match(v:val, "_Rainbow") < 0'),
-          \ 'match(v:val, ' . l:string_syntax . ') < 0'))
-      endif
-
-      for l:parenthesis in l:parentheses
-        for l:each in range(0, l:max - 1)
-          let l:fg = s:rainbow.colors[l:each % l:max]
-          execute 'syntax match ' . &filetype . '_Rainbow' . l:each
-            \ . '_Operator' . l:index . ' _,_ containedin=' . &filetype
-            \ . '_Rainbow' . l:each . '_Region' . l:index . ' contained'
-          execute 'syntax region ' . &filetype . '_Rainbow' . l:each
-            \ . '_Region' . l:index . ' matchgroup=' . &filetype . '_Rainbow'
-            \ . l:each . '_Parenthesis' . l:index
-            \ . ((l:each > 0) ? ' contained' : '') . ' ' . l:parenthesis
-            \ . ' containedin=@' . &filetype . '_RainbowRegions'
-            \ . ((l:each + l:max - 1) % l:max)
-            \ . ((l:each == 0) ? l:contained_in : '') . ' contains=TOP fold'
-          execute 'syntax cluster ' . &filetype . '_RainbowRegions' . l:each
-            \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Region' . l:index
-          execute 'syntax cluster ' . &filetype . '_RainbowParentheses'
-            \ . l:each . ' add=' . &filetype . '_Rainbow' . l:each
-            \ . '_Parenthesis' . l:index
-          execute 'syntax cluster ' . &filetype . '_RainbowOperators' . l:each
-            \ . ' add=' . &filetype . '_Rainbow' . l:each . '_Operator'
-            \ . l:index
-          execute 'highlight ' . &filetype . '_Rainbow' . l:each
-            \ . '_Operator' . l:index . ' cterm=bold ctermfg=' . l:fg
-          execute 'highlight ' . &filetype . '_Rainbow' . l:each
-            \ . '_Parenthesis' . l:index . ' cterm=bold ctermfg=' . l:fg
-        endfor
-        let l:index += 1
-      endfor
-
-      for l:each in range(0, l:max - 1)
-        execute 'syntax cluster ' . &filetype . '_RainbowRegions add=@'
-          \ . &filetype . '_RainbowRegions' . l:each
-        execute 'syntax cluster ' . &filetype . '_RainbowParentheses add=@'
-          \ . &filetype . '_RainbowParentheses' . l:each
-        execute 'syntax cluster ' . &filetype . '_RainbowOperators add=@'
-          \ . &filetype . '_RainbowOperators' . l:each
-      endfor
-
-      syntax sync fromstart
-    endif
-  endif
-endfunction
-
-function! s:InactivateRainbow()
-  let l:buf_backup = bufnr()
-  let l:savedview = winsaveview()
-  let l:eventignore_backup = &eventignore
-  set eventignore=all
-
-  for l:each in map(getbufinfo(), 'v:val.bufnr')
-    execute 'buffer ' . l:each
-    syntax clear
-  endfor
-
-  execute 'buffer ' . l:buf_backup
-  call winrestview(l:savedview)
-  let &eventignore = l:eventignore_backup
-
-  syntax enable
-  call s:LoadColorscheme()
+  syntax clear
+  RainbowToggleOn
 endfunction
 
 function! s:ToggleRainbow()
-  if empty(getcmdwintype())
-    if s:rainbow.activated
-      call s:InactivateRainbow()
-    else
-      let l:buf_backup = bufnr()
-      let l:savedview = winsaveview()
-      let l:eventignore_backup = &eventignore
-      set eventignore=all
-
-      for l:each in map(filter(getbufinfo(), 'v:val.listed || !v:val.hidden'),
-        \ 'v:val.bufnr')
-          execute 'buffer ' . l:each
-          call s:ActivateRainbow()
-      endfor
-
-      execute 'buffer ' . l:buf_backup
-      call winrestview(l:savedview)
-      let &eventignore = l:eventignore_backup
-    endif
-    let s:rainbow.activated = !s:rainbow.activated
+  if !exists("b:toggle_rainbow")
+    let b:toggle_rainbow = 0
   endif
-endfunction
-
-function! s:RefreshRainbow()
-  if s:rainbow.activated
+  if b:toggle_rainbow == 0
     call s:ActivateRainbow()
+  else
+    syntax enable
+    call s:LoadColorscheme()
+    let l:buf_backup = bufnr()
+    let l:savedview = winsaveview()
+    let l:eventignore_backup = &eventignore
+    set eventignore=all
+
+    for l:each in map(filter(getbufinfo(), 'v:val.listed || !v:val.hidden'), 'v:val.bufnr')
+      if l:each != l:buf_backup
+        execute 'buffer ' . l:each
+        if b:toggle_rainbow != 0
+          call s:ActivateRainbow()
+        endif
+      endif
+    endfor
+
+    execute 'buffer ' . l:buf_backup
+    call winrestview(l:savedview)
+    let &eventignore = l:eventignore_backup
   endif
+  let b:toggle_rainbow = 1 - b:toggle_rainbow
 endfunction
 
 "     }}}
@@ -1570,15 +908,8 @@ endfunction
 " Mappings and Keys {{{1
 "   Variables & constants {{{2
 
-if exists('s:KB_LAYOUT') | unlet s:KB_LAYOUT | endif
-let s:KB_LAYOUT = systemlist('xkblayout-state print %s')[0]
-
 if exists('s:LEADERS') | unlet s:LEADERS | endif
-if s:KB_LAYOUT == 'us'
-  const s:LEADERS = #{ global: '`', shift: '~', }
-elseif s:KB_LAYOUT == 'fr'
-  const s:LEADERS = #{ global: '²', shift: '³', }
-endif
+const s:LEADERS = #{ global: '²', shift: '³', }
 
 if exists('s:MAPPINGS') | unlet s:MAPPINGS | endif
 const s:MAPPINGS = {
@@ -1627,20 +958,6 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.shift . s:LEADERS.shift,
 \       mode: 'c',
 \       command: '\zs',
-\     },
-\   ],
-\   'VIMRC': [
-\     #{
-\       description: 'Open .vimrc in vertical split',
-\       keys: s:LEADERS.global . '&',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>OpenVimRC()<CR>',
-\     },
-\     #{
-\       description: 'Source .vimrc',
-\       keys: s:LEADERS.shift . '1',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>SourceVimRC()<CR>',
 \     },
 \   ],
 \   'HIGHLIGHT & COLORS': [
@@ -1739,10 +1056,10 @@ const s:MAPPINGS = {
 \   ],
 \   'POPUPS': [
 \     #{
-\       description: 'Open Undotree',
+\       description: 'Toggle Undotree',
 \       keys: s:LEADERS.shift . 'U',
 \       mode: 'n',
-\       command: '<Cmd>call <SID>Undotree()<CR>',
+\       command: '<Cmd>call <SID>ToggleUndotree()<CR>',
 \     },
 \   ],
 \   'VISUAL': [
@@ -1795,18 +1112,6 @@ const s:MAPPINGS = {
 \       keys: '<Space>',
 \       mode: 'v',
 \       command: ':foldopen!<CR>',
-\     },
-\     #{
-\       description: 'Blank line under current line',
-\       keys: '<CR>',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>BlankDown()<CR>',
-\     },
-\     #{
-\       description: 'Blank line above current line',
-\       keys: s:LEADERS.global . '<CR>',
-\       mode: 'n',
-\       command: '<Cmd>call <SID>BlankUp()<CR>',
 \     },
 \     #{
 \       description: 'Comment current line',
@@ -1971,10 +1276,6 @@ call s:DefineMappings()
 cnoreabbrev <expr> w (getcmdtype() == ':' ? "update" : "w")
 cnoreabbrev <expr> wq (getcmdtype() == ':' ? "update \| quit" : "wq")
 
-" save buffer as sudo user
-cnoreabbrev <expr> w!! (getcmdtype() == ':' ?
-  \ "silent write ! sudo tee % > /dev/null \| echo ''" : "w!!")
-
 " avoid intuitive tabpage usage
 cnoreabbrev <expr> tabe (getcmdtype() == ':' ? "silent tabonly" : "tabe")
 
@@ -1997,17 +1298,6 @@ augroup vimrc_autocomands
   autocmd VimEnter * :call <SID>CheckDependencies()
 
 "   }}}
-"   VimRC sourcing autocommands {{{2
-
-  autocmd BufWritePost $MYVIMRC :silent call <SID>SourceVimRC()
-
-"   }}}
-"   Save-as-sudo loading autocommands {{{2
-
-  " reload file automatically after sudo save command
-  autocmd FileChangedShell * let v:fcs_choice="reload"
-
-"   }}}
 "   Color autocommands {{{2
 
   autocmd WinEnter * set wincolor=NormalAlt
@@ -2023,24 +1313,10 @@ augroup vimrc_autocomands
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
 
 "   }}}
-"   Tmux autocommands {{{2
-
-  autocmd BufEnter,BufNew,BufDelete,BufWipeOut * :silent call <SID>UpdateTmuxPaneLine()
-  autocmd VimResized,WinResized * :silent call <SID>UpdateTmuxPaneLine()
-  autocmd VimResume * :silent call <SID>UpdateTmuxPaneLine()
-  autocmd VimSuspend,VimLeavePre * :silent call <SID>ResetTmuxPaneLine()
-  autocmd TextYankPost * :silent call <SID>SetTmuxBuffer()
-
-"   }}}
 "   Plugins autocommands {{{2
 "     Obsession autocommands {{{3
 
   autocmd VimEnter * nested :call <SID>SourceObsession()
-
-"     }}}
-"     Rainbow autocommands {{{3
-
-  autocmd BufEnter,CmdwinEnter * :silent call <SID>RefreshRainbow()
 
 "     }}}
 "   }}}

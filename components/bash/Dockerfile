@@ -1,7 +1,7 @@
 ARG BASH_IMG
 FROM ${BASH_IMG}
 
-COPY etc/profile.d/* /etc/profile.d/
+COPY etc/ /etc/
 
 ARG NET_PFX
 ARG HTTP_PROXY
@@ -12,6 +12,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache coreutils
+    mkdir -p /etc/profile.d/99aliases.d
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
     themes="$(yes "$(printf '%s\n' '21' '27' '33' '39' '45' '46' '47' '48' '49' '50' '51' '82' '93' '118' '129' '154' '165' '190' '196' '197' '198' '199' '200' '201' '202' '208' '214' '220' '244' '15' | shuf)" | head -n 256)"
     cat << TEMPLATING >> /etc/profile.d/10themes.sh

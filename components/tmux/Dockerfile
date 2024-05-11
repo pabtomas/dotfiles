@@ -1,6 +1,6 @@
 ARG BASH_COMPONENT_IMG
 ARG OS_IMG
-FROM ${OS_IMG} as tpm_image
+FROM ${OS_IMG} as plugins_image
 
 ARG TPM_PATH
 ARG TPM_URL
@@ -31,6 +31,6 @@ END_OF_RUN
 
 ARG TPM_PATH
 
-COPY --from=tpm_image ${TPM_PATH}/* ${TPM_PATH}/
+COPY --from=plugins_image ${TPM_PATH}/* ${TPM_PATH}/
 COPY .tmux.conf /root/
-COPY etc/profile.d/* /etc/profile.d/
+COPY etc/ /etc/

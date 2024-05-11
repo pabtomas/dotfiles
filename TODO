@@ -11,7 +11,6 @@ V1:
 -   .vimrc: toggle set paste
 -   .vimrc: toggle hightlight search
 -   .vimrc: remap
--   .vimrc: search and replace: use "%V" 2 times
 ??  .vimrc: vim9script
 ?   .vimrc + .tmux.conf + NERDtree: mapping to open/close tree pane
 ?   .tmux.conf: save & restore bash history for each pane
@@ -57,6 +56,8 @@ rename dotfiles -> workspace
   - templating for compose.yaml
 - Add a directory for components: 1 Dockerfile = 1 component and use it for multistaging
 - Add a directory for runners: 1 Dockerfile = 1 runner
+- Add a volume for bash_history of each container
+- When possible replace TEMPLATING with files
 
 -------------------------------------------------------------------------------
 $ cat /etc/swanctl/conf.d/ecureuil.conf
