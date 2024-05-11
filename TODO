@@ -1,29 +1,20 @@
 '-'   -> go for it
 '?'   -> go for it but adjust the need to the V2 proposition
 '??'  -> go for it but not now
-'???' -> obsolete
 
-V1:
--   .bash_aliases: remove unused aliases
-??? .bash_aliases: show aliases + description
-??? .vimrc: use systemd.path
--   .vimrc: unsource .vimrc
--   .vimrc: toggle set paste
--   .vimrc: toggle hightlight search
--   .vimrc: remap
-??  .vimrc: vim9script
-?   .vimrc + .tmux.conf + NERDtree: mapping to open/close tree pane
-?   .tmux.conf: save & restore bash history for each pane
-??? .tmux.conf: fix pane title between sessions
-??  .tmux.conf: add keybinding to change color theme
-
-V2:
-rename dotfiles -> workspace
-- rm deploy_setup.sh
+TODO:
+-  .vimrc: unsource .vimrc
+-  .vimrc: toggle set paste
+-  .vimrc: toggle hightlight search
+-  .vimrc: remap
+-  .vimrc + .tmux.conf + NERDtree: mapping to open/close tree pane
+?? .vimrc: vim9script
+?? .tmux.conf: add keybinding to change color theme
+-  Add a volume for bash_history of each container
+-  When possible replace TEMPLATING with files
 - process:
   - wget the wget_me.sh script
   - run the wget_me.sh script:
-    - update + upgrade + automemove/purge
     - if Docker not installed:
       - install Docker + min (or another modern minimal web browser)
     - else:
@@ -56,8 +47,6 @@ rename dotfiles -> workspace
   - templating for compose.yaml
 - Add a directory for components: 1 Dockerfile = 1 component and use it for multistaging
 - Add a directory for runners: 1 Dockerfile = 1 runner
-- Add a volume for bash_history of each container
-- When possible replace TEMPLATING with files
 
 -------------------------------------------------------------------------------
 $ cat /etc/swanctl/conf.d/ecureuil.conf
@@ -74,20 +63,18 @@ $ cat /etc/swanctl/conf.d/ecureuil.conf
 proposition:
   workspaces
   ├── compose.yaml/templated
-  ├── dotfiles
-  │   ├── .bashrc
-  │   ├── .tmux.conf
-  │   └── .vimrc
+  ├── wget_me.sh
   ├── .github/workflows/bot.yml
   ├── host
-  │   ├── .bashrc
-  │   ├── wget_me.sh
-  │   └── prompt.sh
   ├── jumper/controller/editor/safedeposit/pro/drawer
   │   └── Dockerfile/templated
   ├── components
   │   ├── compose.yaml/templated
   │   └── git/tig/ripgrep/vim/tmux/zig
+  │       └── Dockerfile/templated
+  ├── explorers
+  │   ├── compose.yaml/templated
+  │   └── zig/shell
   │       └── Dockerfile/templated
   └── runners
       └── spaceporn

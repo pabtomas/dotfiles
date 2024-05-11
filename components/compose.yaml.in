@@ -62,12 +62,22 @@ services:
       context: ./${VIM_ID}
       args:
         - OS_IMG=${OS_IMG}
+        - NERDTREE_URL=${NERDTREE_URL}
+        - POLYGLOT_URL=${POLYGLOT_URL}
         - RAINBOW_URL=${RAINBOW_URL}
         - UNDOTREE_URL=${UNDOTREE_URL}
         - WORKSPACES_COMPONENT_IMG=${WORKSPACES_COMPONENT_IMG}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${VIM_COMPONENT_IMG}
+  ${LINGUIST_SERVICE}:
+    build:
+      context: ./${LINGUIST_ID}
+      args:
+        - OS_IMG=${OS_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${LINGUIST_COMPONENT_IMG}
   ${ZIG_SERVICE}:
     build:
       context: ./${ZIG_ID}

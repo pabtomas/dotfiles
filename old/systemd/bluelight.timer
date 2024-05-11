@@ -1,9 +1,0 @@
-[Unit]
-Description=Runs the bluelight.service
-
-[Timer]
-OnCalendar=*:*:0,10,20,30,40,50
-Unit=bluelight.service
-
-[Install]
-WantedBy=timers.target

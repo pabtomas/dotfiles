@@ -888,7 +888,7 @@ endfunction
 
 function! s:PrefillShFile()
   call append(0, [
-  \                '#!/bin/sh',
+  \                '#!/usr/bin/env bash',
   \                '',
   \              ])
 endfunction
@@ -1132,22 +1132,10 @@ const s:MAPPINGS = {
 \       command: '<C-r><C-o>"',
 \     },
 \     #{
-\       description: 'Auto-completion',
-\       keys: '<S-Tab>',
-\       mode: 'i',
-\       command: '<C-n>',
-\     },
-\     #{
 \       description: 'Save session',
 \       keys: s:LEADERS.global . 'z',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>Obsession()<CR>',
-\     },
-\     #{
-\       description: 'Matchit',
-\       keys: 'ù',
-\       mode: 'n',
-\       command: '%',
 \     },
 \     #{
 \       description: 'Toggle number and list options',
@@ -1313,12 +1301,10 @@ augroup vimrc_autocomands
   autocmd BufEnter * :silent call <SID>CloseLonelyUnlistedBuffers()
 
 "   }}}
-"   Plugins autocommands {{{2
-"     Obsession autocommands {{{3
+"   Obsession autocommands {{{2
 
   autocmd VimEnter * nested :call <SID>SourceObsession()
 
-"     }}}
 "   }}}
 "   Filetype specific autocommands {{{2
 "     Bash autocommands {{{3

@@ -2,6 +2,8 @@ ARG WORKSPACES_COMPONENT_IMG
 ARG OS_IMG
 FROM ${OS_IMG} as plugins_image
 
+ARG NERDTREE_URL
+ARG POLYGLOT_URL
 ARG RAINBOW_URL
 ARG UNDOTREE_URL
 ARG HTTP_PROXY
@@ -12,8 +14,10 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache git
-    git clone --depth=1 "${RAINBOW_URL}" /rainbow
-    git clone --depth=1 "${UNDOTREE_URL}" /undotree
+    git clone --depth=1 "${NERDTREE_URL}" /root/.vim/pack/plugins/start/nerdtree
+    git clone --depth=1 "${POLYGLOT_URL}" /root/.vim/pack/plugins/start/vim-polyglot
+    git clone --depth=1 "${RAINBOW_URL}" /root/.vim/pack/plugins/start/rainbow
+    git clone --depth=1 "${UNDOTREE_URL}" /root/.vim/pack/plugins/start/undotree
     unset http_proxy https_proxy
 END_OF_RUN
 
@@ -27,14 +31,10 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache gvim
-    mkdir -p /root/.vim/plugin /root/.vim/autoload /root/.vim/syntax
+    mkdir -p /root/.vim/
     unset http_proxy https_proxy
 END_OF_RUN
 
-COPY --from=plugins_image /rainbow/plugin/ /root/.vim/plugin/
-COPY --from=plugins_image /rainbow/autoload/ /root/.vim/autoload/
-COPY --from=plugins_image /undotree/plugin/ /root/.vim/plugin/
-COPY --from=plugins_image /undotree/autoload/ /root/.vim/autoload/
-COPY --from=plugins_image /undotree/syntax/ /root/.vim/syntax/
+COPY --from=plugins_image /root/.vim/ /root/.vim/
 COPY .vimrc /root/
 COPY etc/ /etc/

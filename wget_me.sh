@@ -21,6 +21,7 @@ for template in $(find . -type f -name compose.yaml.in)
 do
   source_env "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
 done
+# TODO: remove docker compose down + docker volume rm
 docker compose down --timeout 0 || :
 source_env_without_docker_host '
   docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
