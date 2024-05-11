@@ -60,7 +60,7 @@ main ()
   #docker compose --file "${tmp}/compose.yaml" build --dry-run
   #docker compose --file "${tmp}/compose.yaml" create --no-recreate --dry-run
   #docker compose --file "${tmp}/compose.yaml" start --dry-run
-  #rm -f "${tmp}"
+  #rm -rf "${tmp}"
 }
 
 main
