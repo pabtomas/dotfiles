@@ -94,6 +94,7 @@ services:
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
       ${JUMP_AREA_NET}:
+    # read_only: true
   ${JUMPER_SERVICE}:
     depends_on:
       - ${COLLECTOR_SERVICE}
@@ -126,6 +127,7 @@ services:
       - ${JUMP_AREA_NET}
     stdin_open: true
     tty: true
+    # read_only: true
   ${EDITOR_SERVICE}:
     build:
       context: ./${EDITOR_ID}
@@ -142,12 +144,12 @@ services:
       - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
+    # read_only: true
   ${SHELL_EXPLORER_SERVICE}:
     build:
       context: ./${EXPLORER_ID}s/${SHELL_ID}
       args:
-        - EXPLORER_COMPONENT_IMG=${EXPLORER_COMPONENT_IMG}
-        - WORKSPACES_PATH=${WORKSPACES_PATH}
+        - GIT_COMPONENT_IMG=${GIT_COMPONENT_IMG}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${SHELL_EXPLORER_IMG}
@@ -158,6 +160,7 @@ services:
       - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
+    # read_only: true
 
 networks:
   ${PROXIFIED_SOCKET_NET}:

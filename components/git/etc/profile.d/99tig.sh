@@ -1,22 +1,9 @@
-git config --global core.editor vim 2> /dev/null
-git config merge.tool vimdiff 2> /dev/null
-git config merge.conflictstyle diff3 2> /dev/null
-git config mergetool.prompt false 2> /dev/null
-
-
-set -- '/tmp/tig'
-mkdir -p "${1}" > /dev/null
-set -- "$(mktemp "${1}/.tigrc.tmp.XXXXXXXXXXXXXXX")"
-
 # color line-number           1          $GRAY_900
 # color file                  69        $GRAY_900
 # color grep.file             69        $GRAY_900
 # color diff-add-highlight    42           ${GRAY_900}
 # color diff-del-highlight    203          ${GRAY_900}
-while read -r REPLY
-do
-  printf '%s\n' "${REPLY}" >> "${1}"
-done <<EOF
+cat << TEMPLATING >> /root/.tigrc
 color default        ${WHITE}     ${GRAY_900}
 color date           ${WHITE}     ${GRAY_900}  bold
 color graph-commit   ${THEME}     ${GRAY_900}
@@ -91,8 +78,4 @@ bind generic G  move-last-line
 set main-view-date = relative-compact
 set main-view-id = yes
 set blame-view-date = relative-compact
-EOF
-unset REPLY
-
-TIGRC_USER="${1}"
-export TIGRC_USER
+TEMPLATING
