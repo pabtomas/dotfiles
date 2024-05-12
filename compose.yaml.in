@@ -154,6 +154,16 @@ services:
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
+  ${SAFEDEPOSIT_SERVICE}:
+    image: ${PASS_COMPONENT_IMG}
+    container_name: ${SAFEDEPOSIT_HOST}
+    hostname: ${SAFEDEPOSIT_HOST}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${SAFEDEPOSIT_VOLUME}:${SAFEDEPOSIT_PATH}:rw
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
 
 networks:
   ${PROXIFIED_SOCKET_NET}:
@@ -180,6 +190,8 @@ volumes:
     name: ${SSH_VOLUME}
   ${MY_WHALE_FLEET_VOLUME}:
     name: ${MY_WHALE_FLEET_VOLUME}
+  ${SAFEDEPOSIT_VOLUME}:
+    name: ${SAFEDEPOSIT_VOLUME}
   ${PROXY_FS_VOLUME}:
     name: ${PROXY_FS_VOLUME}
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:
