@@ -1,1 +1,1 @@
-vi () { command vim "\${@}"; }
+vi () { command vim "${@}"; }
