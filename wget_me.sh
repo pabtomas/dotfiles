@@ -36,15 +36,15 @@ main ()
     clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
   docker rm --force 'git'
 
-  for template in $(find "${tmp}" -type f -name compose.yaml.in)
-  do
-    source_env "${tmp}" "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
-  done
-
   TRASH_PATH="$(mktemp --directory)"
   export TRASH_PATH
 
   trap "trap_me '${tmp}' '${TRASH_PATH}'" EXIT
+
+  for template in $(find "${tmp}" -type f -name compose.yaml.in)
+  do
+    source_env "${tmp}" "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
+  done
 
   docker network prune --force
   docker compose --file "${tmp}/components/compose.yaml" build
