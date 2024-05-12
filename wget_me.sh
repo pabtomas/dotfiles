@@ -16,7 +16,7 @@ source_env_without_docker_host ()
 
 trap_me ()
 {
-  docker compose down --timeout 0 || :
+  docker compose --file "${1}/compose.yaml" down --timeout 0 || :
   source_env_without_docker_host "${1}" \
     'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
   rm -rf "${1}" "${2}"
@@ -32,9 +32,8 @@ main ()
   base_tmp="$(basename "${tmp}")"
   readonly tmp dir_tmp base_tmp
 
-  docker run --name 'git' --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
+  docker run --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
-  docker rm --force 'git'
 
   TRASH_PATH="$(mktemp --directory)"
   export TRASH_PATH
