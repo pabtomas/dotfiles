@@ -125,8 +125,6 @@ services:
       - ${COLLECTOR_VAR_LOG_VOLUME}:/opt/${COLLECTOR_ID}${VAR_LOG_PATH}:ro
     networks:
       - ${JUMP_AREA_NET}
-    stdin_open: true
-    tty: true
     # read_only: true
   ${EDITOR_SERVICE}:
     image: ${VIM_COMPONENT_IMG}
