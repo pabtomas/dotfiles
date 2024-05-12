@@ -4,6 +4,8 @@ services:
       context: ./${BASH_ID}
       args:
         - BASH_IMG=${BASH_IMG}
+        - BASH_ALIASES_PATH=${BASH_ALIASES_PATH}
+        - BASH_COMPLETION_PATH=${BASH_COMPLETION_PATH}
         - NET_PFX=${JUMP_AREA_PFX}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
@@ -15,6 +17,7 @@ services:
     build:
       context: ./${TMUX_ID}
       args:
+        - BASH_COMPLETION_PATH=${BASH_COMPLETION_PATH}
         - BASH_COMPONENT_IMG=${BASH_COMPONENT_IMG}
         - TPM_PATH=${TPM_PATH}
         - TPM_URL=${TPM_URL}
@@ -33,6 +36,21 @@ services:
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${SSHD_COMPONENT_IMG}
+  ${DOCKER_SERVICE}:
+    depends_on:
+      - ${SSHD_SERVICE}
+    build:
+      context: ./${DOCKER_ID}
+      args:
+        - DOCKER_IMG=${DOCKER_IMG}
+        - DOCKER_PATH=${DOCKER_PATH}
+        - NET=${JUMP_AREA_NET}
+        - SSHD_COMPONENT_IMG=${SSHD_COMPONENT_IMG}
+        - TCP_DOCKER_HOST=${TCP_DOCKER_HOST}
+        - TRASH_PATH=${TRASH_PATH}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${DOCKER_COMPONENT_IMG}
   ${MAN_SERVICE}:
     depends_on:
       - ${SSHD_SERVICE}
@@ -70,6 +88,7 @@ services:
     build:
       context: ./${GIT_ID}
       args:
+        - BASH_COMPLETION_PATH=${BASH_COMPLETION_PATH}
         - WORKSPACES_COMPONENT_IMG=${WORKSPACES_COMPONENT_IMG}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}

@@ -1,17 +1,3 @@
-unalias -a
-
-if [[ -d /etc/profile.d/99aliases.d ]]
-then
-  for i in /etc/profile.d/99aliases.d/*.sh
-  do
-    if [[ -r "${i}" ]]
-    then
-      . "${i}"
-    fi
-  done
-  unset i
-fi
-
 colors () { command wget -q -O- https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash; }
 ls () { command ls --color "${@}"; }
 grep () { command grep --color "${@}"; }
