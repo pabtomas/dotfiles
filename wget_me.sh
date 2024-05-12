@@ -38,7 +38,7 @@ main ()
   TRASH_PATH="$(mktemp --directory)"
   export TRASH_PATH
 
-  trap "trap_me '${tmp}' '${TRASH_PATH}'" EXIT
+  trap "trap_me '${tmp}' '${TRASH_PATH}'" EXIT ERR
 
   for template in $(find "${tmp}" -type f -name compose.yaml.in)
   do

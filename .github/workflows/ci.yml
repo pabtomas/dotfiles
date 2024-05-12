@@ -12,4 +12,4 @@ jobs:
       - name: wget the repository
         shell: bash
         run: |
-          wget -q -O- "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh" | sh -s -- --no-attach
+          wget -q -O- "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh" | sh -x -s -- --no-attach
