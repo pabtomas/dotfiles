@@ -8,6 +8,7 @@ services:
         - API_PFX=${API_PFX}
         - API_URL=${API_URL}
         - ${API_PFX}NETWORKS=${TRUE}
+        - ${API_PFX}_PING=${TRUE}
         - ${API_PFX}VERSION=${TRUE}
         - COLLECTOR_IP=${COLLECTOR_IP}
         - CONTROLLER_IP=${CONTROLLER_IP}
