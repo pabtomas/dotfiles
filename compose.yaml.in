@@ -7,6 +7,7 @@ services:
         - APK_PATHS=${APK_PATHS}
         - API_PFX=${API_PFX}
         - API_URL=${API_URL}
+        - ${API_PFX}IMAGES_JSON=${TRUE}
         - ${API_PFX}NETWORKS=${TRUE}
         - ${API_PFX}_PING=${TRUE}
         - ${API_PFX}VERSION=${TRUE}
