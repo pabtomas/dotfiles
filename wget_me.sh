@@ -28,8 +28,8 @@ main ()
 
   local tmp dir_tmp base_tmp
   tmp="$(mktemp --directory)"
-  dir_tmp="$(dirname tmp)"
-  base_tmp="$(basename tmp)"
+  dir_tmp="$(dirname "${tmp}")"
+  base_tmp="$(basename "${tmp}")"
   readonly tmp dir_tmp base_tmp
 
   docker run --name 'git' --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
