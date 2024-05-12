@@ -126,8 +126,7 @@ const s:MODES = {
 
 if exists('s:SEARCH') | unlet s:SEARCH | endif
 const s:SEARCH = #{
-\   sensitive_replace: ':s/\%V\%V//g<Left><Left><Left><Left><Left>',
-\   insensitive_replace: ':s/\%V\c\%V//g<Left><Left><Left><Left><Left>',
+\   sensitive_replace: ':s/\%V\%V//g<Left><Left><Left><Left><Left><Left>',
 \   insensitive: '/\c',
 \ }
 
@@ -920,40 +919,29 @@ const s:MAPPINGS = {
 \       mode: 'n',
 \       command: '<Cmd>call <SID>NextSearch()<CR>',
 \       hidden: v:true,
-\     },
-\     #{
+\     }, #{
 \       description: 'Previous search',
 \       keys: 'N',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>PreviousSearch()<CR>',
 \       hidden: v:true,
-\     },
-\     #{
+\     }, #{
 \       description: 'Search and replace in visual area',
 \       keys: ':',
 \       mode: 'v',
 \       command: s:SEARCH.sensitive_replace,
 \       hidden: v:true,
-\     },
-\     #{
-\       description: 'Case-insensitive search and replace',
-\       keys: s:LEADERS.global . ':',
-\       mode: 'v',
-\       command: s:SEARCH.insensitive_replace,
-\     },
-\     #{
+\     }, #{
 \       description: 'Case-insensitive search',
 \       keys: s:LEADERS.global . '/',
 \       mode: 'n',
 \       command: s:SEARCH.insensitive,
-\     },
-\     #{
+\     }, #{
 \       description: 'Insert anti-slash character easier',
 \       keys: s:LEADERS.global . s:LEADERS.global,
 \       mode: 'c',
 \       command: '\',
-\     },
-\     #{
+\     }, #{
 \       description: 'Insert cursor sequence easier',
 \       keys: s:LEADERS.shift . s:LEADERS.shift,
 \       mode: 'c',
@@ -966,14 +954,12 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.global . 'é',
 \       mode: 'n',
 \       command: '<Cmd>nohlsearch<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Toggle Redhighlight',
 \       keys: s:LEADERS.global . '"',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>ToggleRedHighlight()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Toggle Rainbow',
 \       keys: s:LEADERS.global . '(',
 \       mode: 'n',
@@ -986,8 +972,7 @@ const s:MAPPINGS = {
 \       keys: 'gt',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>NextBuffer()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Previous buffer',
 \       keys: 'tg',
 \       mode: 'n',
@@ -1000,14 +985,12 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.global . '<Right>',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>NextWindow()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Previous window',
 \       keys: s:LEADERS.global . '<Left>',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>PreviousWindow()<CR>',
-\     },
-\     #{
+\     }, #{
 \       keys: s:LEADERS.global . '=',
 \       mode: 'n',
 \       command: '<C-w>=',
@@ -1020,14 +1003,12 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.global . 't',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>FollowTag()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Next tag',
 \       keys: 'TT',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>NextTag()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Previous tag',
 \       keys: 'tt',
 \       mode: 'n',
@@ -1040,14 +1021,12 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.global . 'l',
 \       mode: 'n',
 \       command: '<Cmd>messages<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Clear log',
 \       keys: s:LEADERS.shift . 'L',
 \       mode: 'n',
 \       command: '<Cmd>messages clear <Bar> messages<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'List mappings',
 \       keys: s:LEADERS.global . 'm',
 \       mode: 'n',
@@ -1068,32 +1047,27 @@ const s:MAPPINGS = {
 \       keys: s:LEADERS.global . 'v',
 \       mode: 'n',
 \       command: 'gv',
-\     },
-\     #{
+\     }, #{
 \       description: 'Move up visual block',
 \       keys: '<S-Up>',
 \       mode: 'v',
 \       command: ':<C-u>silent call <SID>VisualUp()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Move down visual block',
 \       keys: '<S-Down>',
 \       mode: 'v',
 \       command: ':<C-u>silent call <SID>VisualDown()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Comment visual area',
 \       keys: s:LEADERS.global . 'c',
 \       mode: 'v',
 \       command: ':<C-u>silent call <SID>Comment(v:true)<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Uncomment visual area',
 \       keys: s:LEADERS.shift . 'C',
 \       mode: 'v',
 \       command: ':<C-u>silent call <SID>Uncomment(v:true)<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Toggle start/end of visual area',
 \       keys: 'ù',
 \       mode: 'v',
@@ -1106,38 +1080,32 @@ const s:MAPPINGS = {
 \       keys: '<Space>',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>Unfold()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Deep unfold in visual area',
 \       keys: '<Space>',
 \       mode: 'v',
 \       command: ':foldopen!<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Comment current line',
 \       keys: s:LEADERS.global . 'c',
 \       mode: 'n',
 \       command: ':<C-u>silent call <SID>Comment(v:false)<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Uncomment current line',
 \       keys: s:LEADERS.shift . 'C',
 \       mode: 'n',
 \       command: ':<C-u>silent call <SID>Uncomment(v:false)<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Paste unnamed register in command-line',
 \       keys: s:LEADERS.global . 'p',
 \       mode: 'c',
 \       command: '<C-r><C-o>"',
-\     },
-\     #{
+\     }, #{
 \       description: 'Save session',
 \       keys: s:LEADERS.global . 'z',
 \       mode: 'n',
 \       command: '<Cmd>call <SID>Obsession()<CR>',
-\     },
-\     #{
+\     }, #{
 \       description: 'Toggle number and list options',
 \       keys: s:LEADERS.global . 'n',
 \       mode: 'n',
@@ -1153,48 +1121,27 @@ function! s:Key(keys)
   let l:text = '< '
   let l:index = 1
   for l:each in a:keys
-    if l:each == "\<Down>"
-      let l:text = l:text . '↓'
-    elseif l:each == "\<Up>"
-      let l:text = l:text . '↑'
-    elseif l:each == "\<Right>"
-      let l:text = l:text . '→'
-    elseif l:each == "\<Left>"
-      let l:text = l:text . '←'
-    elseif l:each == "\<S-Down>"
-      let l:text = l:text . 'S ↓'
-    elseif l:each == "\<S-Up>"
-      let l:text = l:text . 'S ↑'
-    elseif l:each == "\<S-Right>"
-      let l:text = l:text . 'S →'
-    elseif l:each == "\<S-Left>"
-      let l:text = l:text . 'S ←'
-    elseif l:each == "\<C-Down>"
-      let l:text = l:text . 'C ↓'
-    elseif l:each == "\<C-Up>"
-      let l:text = l:text . 'C ↑'
-    elseif l:each == "\<C-Right>"
-      let l:text = l:text . 'C →'
-    elseif l:each == "\<C-Left>"
-      let l:text = l:text . 'C ←'
-    elseif l:each == "\<Enter>"
-      let l:text = l:text . 'Enter'
-    elseif l:each == "\<Esc>"
-      let l:text = l:text . 'Esc'
-    elseif l:each == "\<BS>"
-      let l:text = l:text . 'BackSpace'
-    elseif l:each == "/"
-      let l:text = l:text . 'Slash'
-    elseif l:each == "\\"
-      let l:text = l:text . 'BackSlash'
-    elseif l:each == "|"
-      let l:text = l:text . 'Bar'
-    elseif l:each == "<"
-      let l:text = l:text . 'Less'
-    elseif l:each == ">"
-      let l:text = l:text . 'Greater'
-    else
-      let l:text = l:text . l:each
+    if l:each == "\<Down>" | let l:text = l:text . '↓'
+    elseif l:each == "\<Up>" | let l:text = l:text . '↑'
+    elseif l:each == "\<Right>" | let l:text = l:text . '→'
+    elseif l:each == "\<Left>" | let l:text = l:text . '←'
+    elseif l:each == "\<S-Down>" | let l:text = l:text . 'S ↓'
+    elseif l:each == "\<S-Up>" | let l:text = l:text . 'S ↑'
+    elseif l:each == "\<S-Right>" | let l:text = l:text . 'S →'
+    elseif l:each == "\<S-Left>" | let l:text = l:text . 'S ←'
+    elseif l:each == "\<C-Down>" | let l:text = l:text . 'C ↓'
+    elseif l:each == "\<C-Up>" | let l:text = l:text . 'C ↑'
+    elseif l:each == "\<C-Right>" | let l:text = l:text . 'C →'
+    elseif l:each == "\<C-Left>" | let l:text = l:text . 'C ←'
+    elseif l:each == "\<Enter>" | let l:text = l:text . 'Enter'
+    elseif l:each == "\<Esc>" | let l:text = l:text . 'Esc'
+    elseif l:each == "\<BS>" | let l:text = l:text . 'BackSpace'
+    elseif l:each == "/" | let l:text = l:text . 'Slash'
+    elseif l:each == "\\" | let l:text = l:text . 'BackSlash'
+    elseif l:each == "|" | let l:text = l:text . 'Bar'
+    elseif l:each == "<" | let l:text = l:text . 'Less'
+    elseif l:each == ">" | let l:text = l:text . 'Greater'
+    else | let l:text = l:text . l:each
     endif
 
     if l:index < len(a:keys)

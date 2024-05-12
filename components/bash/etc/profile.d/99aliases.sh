@@ -25,7 +25,6 @@ ln () { command ln -i -v "${@}"; }
 rl () { command readlink -m "${@}"; }
 mkdir () { command mkdir -p -v "${@}"; }
 cal () { command ncal -w -b -M "${@}"; }
-vi () { command vim "${@}"; }
 less () { command less -R "${@}"; }
 
 for i in 1 2 3 4
