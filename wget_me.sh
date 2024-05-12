@@ -32,6 +32,7 @@ main ()
   base_tmp="$(basename "${tmp}")"
   readonly tmp dir_tmp base_tmp
 
+  rm -rf "${tmp}"
   docker run --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
 
