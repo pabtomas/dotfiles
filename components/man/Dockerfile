@@ -9,7 +9,8 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache mandoc man-pages \
-      coreutils-doc bash-doc curl-doc jq-doc wget-doc \
+      coreutils-doc bash-doc dash-doc \
+      curl-doc wget-doc jq-doc \
       docker-doc \
       nginx-doc openssh-doc \
       git-doc tig-doc ripgrep-doc \
