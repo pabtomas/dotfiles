@@ -33,6 +33,16 @@ services:
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${SSHD_COMPONENT_IMG}
+  ${MAN_SERVICE}:
+    depends_on:
+      - ${SSHD_SERVICE}
+    build:
+      context: ./${MAN_ID}
+      args:
+        - SSHD_COMPONENT_IMG=${SSHD_COMPONENT_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${MAN_COMPONENT_IMG}
   ${PASS_SERVICE}:
     depends_on:
       - ${SSHD_SERVICE}

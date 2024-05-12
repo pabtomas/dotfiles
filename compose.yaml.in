@@ -164,6 +164,15 @@ services:
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
+  ${MAN_SERVICE}:
+    image: ${MAN_COMPONENT_IMG}
+    container_name: ${MAN_HOST}
+    hostname: ${MAN_HOST}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
 
 networks:
   ${PROXIFIED_SOCKET_NET}:
