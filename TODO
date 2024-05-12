@@ -12,9 +12,9 @@ TODO:
 ?? .tmux.conf: add keybinding to change color theme
 - Add a volume for bash_history of each container
 - When possible replace TEMPLATING with files
-- add completion
 - add permissions for controller
 - motd
+- wget_me.sh autoupdate
 - process:
   - wget the wget_me.sh script
   - run the wget_me.sh script:

@@ -2,11 +2,11 @@ ARG TMUX_COMPONENT_IMG
 
 FROM ${TMUX_COMPONENT_IMG}
 
+ARG BASH_COMPLETION_PATH
 ARG COMPLETION_PATH
 ARG CONTROLLER_ID
 ARG ENTRYPOINT_PATH
 ARG HOSTNAME
-ARG NET
 ARG OPT_SCRIPTS_PATH
 ARG OPT_SSH_PATH
 ARG SSH_ROOT_PATH
@@ -22,20 +22,13 @@ RUN <<END_OF_RUN
     mkdir -p "${SSH_ROOT_PATH}" "${OPT_SSH_PATH}" "${OPT_SCRIPTS_PATH}"
     key_path="${SSH_ROOT_PATH}/id_rsa"
     ssh-keygen -q -t rsa -N '' -f "${key_path}"
-    cat << TEMPLATING > "${SSH_ROOT_PATH}/config"
-HOST *
-  USER root
-TEMPLATING
-    cat << TEMPLATING > "/etc/ssh/ssh_config.d/${NET}.conf"
-StrictHostKeyChecking accept-new
-TEMPLATING
     cp "${key_path}.pub" "${OPT_SSH_PATH}/authorized_keys"
     ssh_environment="${OPT_SSH_PATH}/environment"
     cat << TEMPLATING > "${ssh_environment}"
 DOCKER_HOST=${TCP_DOCKER_HOST}
 TEMPLATING
     chmod 0640 "${ssh_environment}"
-    cat << TEMPLATING > /etc/profile.d/99completion.sh
+    cat << TEMPLATING > "${BASH_COMPLETION_PATH}/99ssh.sh"
 _ssh ()
 {
   declare -a -g COMPREPLY
@@ -51,6 +44,9 @@ TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
+
+COPY etc/ /etc/
+COPY root/ /root/
 
 ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
 ENTRYPOINT ${ENTRYPOINT_PATH}
