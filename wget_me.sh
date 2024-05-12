@@ -32,7 +32,7 @@ main ()
   base_tmp="$(basename tmp)"
   readonly tmp dir_tmp base_tmp
 
-  docker run --interactive --tty --name 'git' --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
+  docker run --name 'git' --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
   docker rm --force 'git'
 
