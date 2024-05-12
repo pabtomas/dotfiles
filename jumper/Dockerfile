@@ -45,8 +45,8 @@ TEMPLATING
     unset http_proxy https_proxy
 END_OF_RUN
 
-COPY etc/ /etc/
-COPY root/ /root/
+COPY --chmod=0644 etc/ /etc/
+COPY --chmod=0644 root/ /root/
 
 ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
 ENTRYPOINT ${ENTRYPOINT_PATH}
