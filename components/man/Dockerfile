@@ -20,3 +20,5 @@ RUN <<END_OF_RUN
       cronie-doc
     unset http_proxy https_proxy
 END_OF_RUN
+
+COPY etc/ /etc/
