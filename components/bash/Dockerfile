@@ -25,7 +25,7 @@ PROMPT_THEME="\${THEMES["\${ID##*.}"]}"
 THEME="\${THEMES[0]}"
 export THEMES PROMPT_THEME THEME
 TEMPLATING
-    cat << TEMPLATING
+    cat << TEMPLATING >> "$(dirname "${BASH_ALIASES_PATH}")/$(basename -s '.d' "${BASH_ALIASES_PATH}").sh"
 unalias -a
 
 if [[ -d ${BASH_ALIASES_PATH} ]]
@@ -40,7 +40,7 @@ then
   unset file
 fi
 TEMPLATING
-    cat << TEMPLATING
+    cat << TEMPLATING >> "$(dirname "${BASH_COMPLETION_PATH}")/$(basename -s '.d' "${BASH_COMPLETION_PATH}").sh"
 unalias -a
 
 if [[ -d ${BASH_COMPLETION_PATH} ]]

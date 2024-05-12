@@ -204,6 +204,8 @@ POLYGLOT_URL='https://github.com/sheerun/vim-polyglot'
 RAINBOW_URL='https://github.com/luochen1990/rainbow'
 TPM_URL='https://github.com/tmux-plugins/tpm'
 UNDOTREE_URL='https://github.com/mbbill/undotree'
+TIG_COMPLETION_URL='https://raw.githubusercontent.com/jonas/tig/master/contrib/tig-completion.bash'
+TMUX_COMPLETION_URL='https://raw.githubusercontent.com/imomaliev/tmux-bash-completion/master/completions/tmux'
 ZIG_BUILDS_URL='https://ziglang.org/builds'
 
 ### Docker host ##############################################################

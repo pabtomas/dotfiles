@@ -2,6 +2,7 @@ ARG BASH_COMPONENT_IMG
 FROM ${BASH_COMPONENT_IMG}
 
 ARG BASH_COMPLETION_PATH
+ARG TMUX_COMPLETION_URL
 ARG TPM_PATH
 ARG TPM_URL
 ARG HTTP_PROXY
@@ -15,7 +16,7 @@ RUN <<END_OF_RUN
     git clone --depth=1 "${TPM_URL}" "${TPM_PATH}"
     apk del __install_plugins
     apk add --no-cache tmux tmuxinator tmuxinator-bash-completion
-    wget -q -O "${BASH_COMPLETION_PATH}/99tmux.sh" https://raw.githubusercontent.com/Bash-it/bash-it/master/completion/available/tmux.completion.bash
+    wget -q -O "${BASH_COMPLETION_PATH}/99tmux.sh" "${TMUX_COMPLETION_URL}"
     unset http_proxy https_proxy
 END_OF_RUN
 
