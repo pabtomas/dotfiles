@@ -58,4 +58,4 @@ main ()
   if [ "${1:-}" != '--no-attach' ]; then docker attach jumper; fi
 }
 
-main
+main ${@}
