@@ -10,6 +10,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
+    apk update
     apk add --no-cache openssh-server
     mkdir -p "${OPT_SCRIPTS_PATH}"
     ssh-keygen -A
