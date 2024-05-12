@@ -3,64 +3,59 @@
 source_env ()
 (
   set -a
-  . ./env.sh
-  eval "${1}"
+  . "${1}/env.sh"
+  eval "${2}"
 )
 
 source_env_without_docker_host ()
 (
-  . ./env.sh
+  . "${1}/env.sh"
   unset DOCKER_HOST
-  eval "${1}"
+  eval "${2}"
 )
 
 trap_me ()
 {
   docker compose down --timeout 0 || :
-  source_env_without_docker_host '
-    docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
-  rm -rf "${1}"
+  source_env_without_docker_host "${1}" \
+    'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
+  rm -rf "${1}" "${2}"
 }
 
 main ()
 {
   set -eu
 
-  TRASH_PATH="$(mktemp -d)"
-  export TRASH_PATH
+  local tmp dir_tmp base_tmp
+  tmp="$(mktemp --directory)"
+  dir_tmp="$(dirname tmp)"
+  base_tmp="$(basename tmp)"
+  readonly tmp dir_tmp base_tmp
 
-  trap "trap_me '${TRASH_PATH}'" EXIT
+  docker run --interactive --tty --name 'git' --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
+    clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
+  docker rm --force 'git'
 
-  for template in $(find . -type f -name compose.yaml.in)
+  for template in $(find "${tmp}" -type f -name compose.yaml.in)
   do
-    source_env "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
+    source_env "${tmp}" "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
   done
 
-  docker network prune --force
-  docker compose --file ./components/compose.yaml build
-  docker compose build
-  docker compose create --no-recreate
-  docker compose start
-  docker volume prune --all --force
-  source_env_without_docker_host '
-    docker logs "${PROXY_ID}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
-  docker image prune --all --force > /dev/null
-  docker attach jumper
+  TRASH_PATH="$(mktemp --directory)"
+  export TRASH_PATH
 
-  ## TODO: dry-run
-  #local tmp
-  #tmp="$(mktemp -d)"
-  #readonly tmp
-  #docker run -it --rm -v "${HOME}:/root" -v "${tmp}:/git" alpine/git:user clone --depth 1 https://github.com/tiawl/my-whale-fleet.git
-  #for template in $(find "${tmp}" -type f -name compose.yaml.in)
-  #do
-  #  source_env "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
-  #done
-  #docker compose --file "${tmp}/components/compose.yaml" build --dry-run
-  #docker compose --file "${tmp}/compose.yaml" build --dry-run
-  #docker compose --file "${tmp}/compose.yaml" create --no-recreate --dry-run
-  #docker compose --file "${tmp}/compose.yaml" start --dry-run
-  #rm -rf "${tmp}"
+  trap "trap_me '${tmp}' '${TRASH_PATH}'" EXIT
+
+  docker network prune --force
+  docker compose --file "${tmp}/components/compose.yaml" build
+  docker compose --file "${tmp}/compose.yaml" build
+  docker compose --file "${tmp}/compose.yaml" create --no-recreate
+  docker compose --file "${tmp}/compose.yaml" start
+  docker volume prune --all --force
+  source_env_without_docker_host "${tmp}" \
+    'docker logs "${PROXY_ID}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
+  docker image prune --all --force > /dev/null
+  if [ "${1:-}" != '--no-attach' ]; then docker attach jumper; fi
 }
 
 main
