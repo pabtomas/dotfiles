@@ -27,7 +27,7 @@ main ()
   set -eu
 
   local tmp dir_tmp base_tmp
-  tmp="$(mktemp --directory)"
+  tmp="$(mktemp --tmpdir=. --directory)"
   dir_tmp="$(dirname "${tmp}")"
   base_tmp="$(basename "${tmp}")"
   readonly tmp dir_tmp base_tmp
@@ -35,7 +35,7 @@ main ()
   docker run --rm --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
 
-  TRASH_PATH="$(mktemp --directory)"
+  TRASH_PATH="$(mktemp --tmpdir=. --directory)"
   export TRASH_PATH
 
   trap "trap_me '${tmp}' '${TRASH_PATH}'" EXIT
