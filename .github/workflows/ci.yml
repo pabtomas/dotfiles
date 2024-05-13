@@ -9,7 +9,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: wget the repository
+      - name: check wget_me.sh
         shell: bash
         run: |
           script="$(mktemp).sh"
