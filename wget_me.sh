@@ -49,7 +49,7 @@ main ()
 
   if [ ! -e /etc/docker/daemon.json ] || ! diff /etc/docker/daemon.json "${tmp}/host/etc/docker/daemon.json" > /dev/null
   then
-    cp -f "${tmp}/host/etc/docker/daemon.json" /etc/docker/daemon.json
+    sudo cp -f "${tmp}/host/etc/docker/daemon.json" /etc/docker/daemon.json
     if command -v systemctl
     then
       sudo systemctl restart docker
