@@ -16,6 +16,7 @@ services:
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - ETC_NGX_PATH=${ETC_NGX_PATH}
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
+        - NGX_HTTPD_PATH=${NGX_HTTPD_PATH}
         - OS_IMG=${OS_IMG}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - PROXY_PORT=${PROXY_PORT}
@@ -34,6 +35,7 @@ services:
     read_only: true
     tmpfs:
       - /run
+      - ${NGX_HTTPD_PATH}
   ${COLLECTOR_SERVICE}:
     depends_on:
       - ${PROXY_SERVICE}
