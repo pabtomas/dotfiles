@@ -39,6 +39,7 @@ TEMPLATING
     _bash="$(command -v bash)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
+set -eux
 exec ${_bash} -l
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"

@@ -37,7 +37,8 @@ main ()
     clone --depth 1 --branch "${2:-trunk}" https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
 
   TRASH_PATH="$(mktemp --directory)"
-  export TRASH_PATH
+  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+  export TRASH_PATH API_TAG
 
   trap "trap_me '${tmp}' '${TRASH_PATH}'" EXIT
 
@@ -50,7 +51,7 @@ main ()
   docker compose --file "${tmp}/components/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
-  docker compose --file "${tmp}/compose.yaml" start
+  docker compose --file "${tmp}/compose.yaml" start #--abort-on-container-failure
   docker volume prune --all --force
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_ID}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'

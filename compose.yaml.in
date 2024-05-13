@@ -6,6 +6,7 @@ services:
       args:
         - APK_PATHS=${APK_PATHS}
         - API_PFX=${API_PFX}
+        - API_TAG=${API_TAG}
         - API_URL=${API_URL}
         - ${API_PFX}IMAGES_JSON=${TRUE}
         - ${API_PFX}NETWORKS=${TRUE}
@@ -19,7 +20,6 @@ services:
         - OS_IMG=${OS_IMG}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - PROXY_PORT=${PROXY_PORT}
-        - RUN_HTTPD_PATH=${RUN_HTTPD_PATH}
         - SOCKET_PATH=${SOCKET_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
@@ -29,7 +29,6 @@ services:
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
       - ${PROXY_NGX_FS_VOLUME}:${ETC_NGX_PATH}:ro
-      - ${PROXY_RUN_FS_VOLUME}:${RUN_HTTPD_PATH}:rw
       - ${PROXY_SCRIPTS_FS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
     networks:
       ${PROXIFIED_SOCKET_NET}:
@@ -42,6 +41,8 @@ services:
       - ${PROXY_SERVICE}
       - ${CONTROLLER_SERVICE}
       - ${EDITOR_SERVICE}
+      - ${SAFEDEPOSIT_SERVICE}
+      - ${SCHOLAR_SERVICE}
       - ${SHELL_EXPLORER_SERVICE}
     build:
       context: ./${COLLECTOR_ID}
@@ -108,7 +109,6 @@ services:
     volumes:
       - ${SSH_VOLUME}:${OPT_SSH_PATH}:ro
       - ${PROXY_NGX_FS_VOLUME}:/opt/${PROXY_ID}${ETC_NGX_PATH}:ro
-      - ${PROXY_RUN_FS_VOLUME}:/opt/${PROXY_ID}${RUN_HTTPD_PATH}:ro
       - ${PROXY_SCRIPTS_FS_VOLUME}:/opt/${PROXY_ID}${OPT_SCRIPTS_PATH}:ro
       - ${COLLECTOR_ETC_CRONTABS_VOLUME}:/opt/${COLLECTOR_ID}${CRONTABS_PATH}:ro
       - ${COLLECTOR_OPT_DATA_VOLUME}:/opt/${COLLECTOR_ID}${DATA_PATH}:ro
@@ -194,8 +194,6 @@ volumes:
     name: ${SAFEDEPOSIT_VOLUME}
   ${PROXY_NGX_FS_VOLUME}:
     name: ${PROXY_NGX_FS_VOLUME}
-  ${PROXY_RUN_FS_VOLUME}:
-    name: ${PROXY_RUN_FS_VOLUME}
   ${PROXY_SCRIPTS_FS_VOLUME}:
     name: ${PROXY_SCRIPTS_FS_VOLUME}
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:

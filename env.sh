@@ -152,7 +152,6 @@ ETC_NGX_PATH='/etc/nginx'
 DOCKER_PATH='/usr/local/bin'
 OPT_SCRIPTS_PATH='/opt/scripts'
 OPT_SSH_PATH='/opt/ssh'
-RUN_HTTPD_PATH='/run/http.d'
 SAFEDEPOSIT_PATH='/root/.password-store'
 SOCKET_PATH='/var/run/docker.sock'
 SSH_ROOT_PATH='/root/.ssh'
@@ -169,7 +168,6 @@ DELETE_ME_SFX='-DELME'
 MY_WHALE_FLEET_VOLUME="${COMPOSE_PROJECT_NAME}"
 SAFEDEPOSIT_VOLUME="${SAFEDEPOSIT_ID}"
 PROXY_NGX_FS_VOLUME="${PROXY_ID}-etc-nginx-fs${DELETE_ME_SFX}"
-PROXY_RUN_FS_VOLUME="${PROXY_ID}-run-httpd-fs${DELETE_ME_SFX}"
 PROXY_SCRIPTS_FS_VOLUME="${PROXY_ID}-opt-scripts-fs${DELETE_ME_SFX}"
 COLLECTOR_VAR_LOG_VOLUME="${COLLECTOR_ID}-var-log-fs${DELETE_ME_SFX}"
 COLLECTOR_ETC_CRONTABS_VOLUME="${COLLECTOR_ID}-etc-crontabs-fs${DELETE_ME_SFX}"
@@ -203,7 +201,7 @@ PROXY_PORT='2363'
 UNPRIVILEGED_USER='visitor'
 
 ### URLs #####################################################################
-API_URL='https://raw.githubusercontent.com/moby/moby/master/docs/api'
+API_URL="https://raw.githubusercontent.com/moby/moby/master/docs/api/v${API_TAG}.yaml"
 FIGLET_FONTS_URL='https://github.com/xero/figlet-fonts'
 NERDTREE_URL='https://github.com/preservim/nerdtree'
 POLYGLOT_URL='https://github.com/sheerun/vim-polyglot'

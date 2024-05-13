@@ -41,7 +41,9 @@ TEMPLATING
     _crond="$(command -v crond)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
-${wget_script}
+set -eux
+prefix="[init] ${completion_collector_script}: "
+${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
 exec ${_crond} -f
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
