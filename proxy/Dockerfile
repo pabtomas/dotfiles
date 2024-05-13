@@ -28,7 +28,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     mkdir -p "${OPT_SCRIPTS_PATH}"
     apk add --no-cache nginx yq curl jq
-    rm -rf ${APK_PATHS}
+    rm -rf ${APK_PATHS} "${ETC_NGX_PATH}/http.d/default.conf"
     _nginx="$(command -v nginx)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
@@ -65,7 +65,7 @@ API version: ${api_version}$(
   done)
 -------------------------------------------------------------------------------
 __TEMPLATING
-cat << __TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
+cat << __TEMPLATING > /run/default.conf
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -102,9 +102,6 @@ $(for endpoint in ${endpoints}
     fi
   done)
 }
-__TEMPLATING
-cat << __TEMPLATING > /run/default.conf
-include ${ETC_NGX_PATH}/http.d/*.conf;
 __TEMPLATING
 exec ${_nginx} -e stderr
 wait
