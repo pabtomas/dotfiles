@@ -68,16 +68,16 @@ API version: \${api_version}\$(
 __TEMPLATING
 mkdir '${RUN_HTTPD_PATH}'
 cat << __TEMPLATING > '${RUN_HTTPD_PATH}/default.conf'
-geo \$privileged {
+geo \\\$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
 }
-map \$request_method \$readonly {
+map \\\$request_method \\\$readonly {
     default  0;
     GET      1;
     HEAD     1;
 }
-map \$privileged:\$readonly \$return_403 {
+map \\\$privileged:\\\$readonly \\\$return_403 {
     default  0;
     "0:0"    1;
 }
@@ -90,7 +90,7 @@ server {
 
     default_type text/plain;
     include ${ETC_NGX_PATH}/proxy.conf;
-    set \$dockersocket ${SOCKET_PATH};
+    set \\\$dockersocket ${SOCKET_PATH};
 \$(for endpoint in \${endpoints}
    do
      if [ "\${endpoint#"\${endpoint%?}"}" != '}' ]
