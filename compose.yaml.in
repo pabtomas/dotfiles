@@ -18,12 +18,10 @@ services:
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - ETC_NGX_PATH=${ETC_NGX_PATH}
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
-        - NET=${JUMP_AREA_NET}
         - OS_IMG=${OS_IMG}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - PROXY_PORT=${PROXY_PORT}
         - SOCKET_PATH=${SOCKET_PATH}
-        - TMP_NGX_PATH=/tmp/nginx
         - TMP_WARNING_PATH=/tmp/api/warning
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
@@ -155,10 +153,10 @@ services:
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
-  ${MAN_SERVICE}:
+  ${SCHOLAR_SERVICE}:
     image: ${MAN_COMPONENT_IMG}
-    container_name: ${MAN_HOST}
-    hostname: ${MAN_HOST}
+    container_name: ${SCHOLAR_HOST}
+    hostname: ${SCHOLAR_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
     networks:

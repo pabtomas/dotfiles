@@ -4,7 +4,7 @@ ARG LINUXSERVER_PROXY_IMG
 
 FROM ${LINUXSERVER_PROXY_IMG} as linuxserver_img
 FROM ${DOCKER_IMG} as docker_img
-FROM ${OS_IMG} as default_conf
+FROM ${OS_IMG}
 
 ARG DOCKER_PATH
 COPY --from=docker_img ${DOCKER_PATH}/docker ${DOCKER_PATH}/
@@ -12,10 +12,11 @@ COPY --from=docker_img ${DOCKER_PATH}/docker ${DOCKER_PATH}/
 ARG API_URL
 ARG COLLECTOR_IP
 ARG CONTROLLER_IP
+ARG ENTRYPOINT_PATH
 ARG ETC_NGX_PATH
+ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
-ARG TMP_NGX_PATH
 ARG TMP_WARNING_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -30,10 +31,10 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
-    apk add --no-cache yq
-    mkdir -p "${TMP_NGX_PATH}" "$(dirname "${TMP_WARNING_PATH}")"
+    mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "${OPT_SCRIPTS_PATH}"
     api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
     gh_url="${API_URL}/v${api_version}.yaml"
+    apk add --no-cache --virtual __install_spec_parser yq
     endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
@@ -65,7 +66,10 @@ API version: ${api_version}$(
   done)
 -------------------------------------------------------------------------------
 TEMPLATING
-    cat << TEMPLATING > "${TMP_NGX_PATH}/default.conf"
+    apk del __install_spec_parser
+    apk add --no-cache nginx
+    rm -rf "${DOCKER_PATH}/docker" ${APK_PATHS}
+    cat << TEMPLATING > "${ETC_NGX_PATH}/default.conf"
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -100,31 +104,9 @@ $(for endpoint in ${endpoints}
       printf '\n    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"
       printf '    location ~* ^(/v[\d\.]+)?%s {set $e403 "[403] Forbidden API endpoint: %s (%s is 0)";if ($return_403 = 1){return 403 $e403;}if ($%s = 0){return 403 $e403;}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "'${endpoint}'" "'${docker_var}'" "${nginx_var}"
     fi
-    unset http_proxy https_proxy
   done)
 }
 TEMPLATING
-END_OF_RUN
-
-FROM ${OS_IMG}
-
-ARG APK_PATHS
-ARG ENTRYPOINT_PATH
-ARG ETC_NGX_PATH
-ARG NET
-ARG OPT_SCRIPTS_PATH
-ARG TMP_NGX_PATH
-ARG TMP_WARNING_PATH
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-
-RUN <<END_OF_RUN
-    set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
-    apk add --no-cache nginx
-    rm -rf ${APK_PATHS}
-    mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "${OPT_SCRIPTS_PATH}"
     _nginx="$(command -v nginx)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
@@ -141,8 +123,6 @@ END_OF_RUN
 
 COPY --from=linuxserver_img ${ETC_NGX_PATH}/nginx.conf ${ETC_NGX_PATH}/
 COPY --from=linuxserver_img ${ETC_NGX_PATH}/proxy.conf ${ETC_NGX_PATH}/
-COPY --from=default_conf ${TMP_NGX_PATH}/default.conf ${ETC_NGX_PATH}/http.d/
-COPY --from=default_conf ${TMP_WARNING_PATH} ${TMP_WARNING_PATH}
 
 ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
 ENTRYPOINT ${ENTRYPOINT_PATH}

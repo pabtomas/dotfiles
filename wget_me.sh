@@ -54,7 +54,7 @@ main ()
   docker volume prune --all --force
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_ID}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
-  docker image prune --all --force > /dev/null
+  docker image prune --force > /dev/null
   if [ "${1:-}" != '--no-attach' ]; then docker compose --file "${tmp}/compose.yaml" attach jumper; fi
 }
 
