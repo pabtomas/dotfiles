@@ -75,8 +75,7 @@ main ()
 
   docker network prune --force
   docker compose --file "${tmp}/components/compose.yaml" build
-  docker compose --file "${tmp}/compose.yaml" up \
-    $(. "${tmp}/env.sh"; set | grep _SERVICE= | cut -d'=' -f 2 | sed 's@^@--no-attach @' | tr '\n' ' ') \
+  docker compose --file "${tmp}/compose.yaml" up --detach --pull never \
     --no-recreate --abort-on-container-failure
   docker volume prune --all --force
   source_env_without_docker_host "${tmp}" \
