@@ -4,7 +4,7 @@ FALSE='0'
 TRUE='1'
 APK_PATHS='/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk'
 API_PFX='API_ENDPOINT_'
-COMPOSE_PROJECT_NAME='my-whale-fleet'
+COMPOSE_PROJECT_NAME='MyWhaleFleet'
 
 ### Ids ######################################################################
 COLLECTOR_ID='collector'

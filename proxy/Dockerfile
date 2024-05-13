@@ -1,13 +1,8 @@
 ARG OS_IMG
-ARG DOCKER_IMG
 ARG LINUXSERVER_PROXY_IMG
 
 FROM ${LINUXSERVER_PROXY_IMG} as linuxserver_img
-FROM ${DOCKER_IMG} as docker_img
 FROM ${OS_IMG}
-
-ARG DOCKER_PATH
-COPY --from=docker_img ${DOCKER_PATH}/docker ${DOCKER_PATH}/
 
 ARG APK_PATHS
 ARG API_URL
@@ -33,9 +28,9 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
     mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "${OPT_SCRIPTS_PATH}"
-    api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
+    apk add --no-cache --virtual __install_spec_parser yq curl jq
+    api_version="$(curl -s --unix-socket "${SOCKET_PATH}" http://localhost/version | jq -r '.ApiVersion')"
     gh_url="${API_URL}/v${api_version}.yaml"
-    apk add --no-cache --virtual __install_spec_parser yq
     endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
@@ -69,7 +64,7 @@ API version: ${api_version}$(
 TEMPLATING
     apk del __install_spec_parser
     apk add --no-cache nginx
-    rm -rf ${APK_PATHS} "${DOCKER_PATH}/docker"
+    rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
 geo \$privileged {
     default          0;
