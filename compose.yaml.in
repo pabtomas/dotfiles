@@ -29,7 +29,7 @@ services:
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
       - ${PROXY_NGX_FS_VOLUME}:${ETC_NGX_PATH}:ro
-      - ${PROXY_RUN_FS_VOLUME}:${RUN_HTTPD_PATH}:ro
+      - ${PROXY_RUN_FS_VOLUME}:${RUN_HTTPD_PATH}:rw
       - ${PROXY_SCRIPTS_FS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
     networks:
       ${PROXIFIED_SOCKET_NET}:
