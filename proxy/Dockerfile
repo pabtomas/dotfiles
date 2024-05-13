@@ -1,13 +1,8 @@
 ARG OS_IMG
-ARG DOCKER_IMG
 ARG LINUXSERVER_PROXY_IMG
 
 FROM ${LINUXSERVER_PROXY_IMG} as linuxserver_img
-FROM ${DOCKER_IMG} as docker_img
 FROM ${OS_IMG}
-
-ARG DOCKER_PATH
-COPY --from=docker_img ${DOCKER_PATH}/docker ${DOCKER_PATH}/
 
 ARG APK_PATHS
 ARG API_URL
@@ -18,7 +13,6 @@ ARG ETC_NGX_PATH
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
-ARG TMP_WARNING_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -32,45 +26,46 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
-    mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "${OPT_SCRIPTS_PATH}"
-    api_version="$(docker version --format '{{ .Client.APIVersion }}' 2> /dev/null || :)"
-    gh_url="${API_URL}/v${api_version}.yaml"
-    apk add --no-cache --virtual __install_spec_parser yq
-    endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
-    nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
-    docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
-    cat << TEMPLATING > "${TMP_WARNING_PATH}"
+    mkdir -p "${OPT_SCRIPTS_PATH}"
+    apk add --no-cache nginx yq curl jq
+    rm -rf ${APK_PATHS} "${ETC_NGX_PATH}/http.d/default.conf"
+    _nginx="$(command -v nginx)"
+    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
+#!/bin/sh
+api_version="\$(curl -s --unix-socket "${SOCKET_PATH}" http://localhost/version | jq -r '.ApiVersion')"
+gh_url="${API_URL}/v\${api_version}.yaml"
+endpoints="\$(wget -q -O- "\${gh_url}" | yq '.paths | keys | .[]')"
+nginx_varname () { printf '%s\n' "\${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
+docker_varname () { printf '${API_PFX}%s\n' "\${1}" | tr 'a-z' 'A-Z'; }
+cat << __TEMPLATING
 -------------------------------------------------------------------------------
-API version: ${api_version}$(
-  for arg in $(set | grep "^${API_PFX}")
+API version: \${api_version}\$(
+  for arg in \$(set | grep '^${API_PFX}')
   do
-    if [ "${arg#"${arg%????}"}" != "='0'" ]
+    if [ "\${arg#"\${arg%????}"}" != "='0'" ]
     then
-      arg="$(printf '%s\n' "${arg}" | cut -d'=' -f1)"
+      arg="\$(printf '%s\n' "\${arg}" | cut -d'=' -f1)"
       flag=0
-      for endpoint in ${endpoints}
+      for endpoint in \${endpoints}
       do
-        if [ "${endpoint#"${endpoint%?}"}" != '}' ]
+        if [ "\${endpoint#"\${endpoint%?}"}" != '}' ]
         then
-          if [ "$(docker_varname "$(nginx_varname "${endpoint}")")" == "${arg}" ]
+          if [ "\$(docker_varname "\$(nginx_varname "\${endpoint}")")" == "\${arg}" ]
           then
             flag=1
             break
           fi
         fi
       done
-      if [ "${flag}" == '0' ]
+      if [ "\${flag}" == '0' ]
       then
-        printf '\n[warning] %s does not match any API endpoint' "'${arg}'"
+        printf '\n[warning] %s does not match any API endpoint' "'\${arg}'"
       fi
     fi
   done)
 -------------------------------------------------------------------------------
-TEMPLATING
-    apk del __install_spec_parser
-    apk add --no-cache nginx
-    rm -rf ${APK_PATHS} "${DOCKER_PATH}/docker"
-    cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
+__TEMPLATING
+cat << __TEMPLATING > /run/default.conf
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -94,29 +89,21 @@ server {
     default_type text/plain;
     include ${ETC_NGX_PATH}/proxy.conf;
     set \$dockersocket ${SOCKET_PATH};
-$(for endpoint in ${endpoints}
-  do
-    if [ "${endpoint#"${endpoint%?}"}" != '}' ]
-    then
-      nginx_var="$(nginx_varname "${endpoint}")"
-      regex="$(printf '%s\n' "${endpoint}" | sed 's@/{id}$\|/{name}$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"
-      docker_var="$(docker_varname "${nginx_var}")"
-      resolve_ref="$(eval "printf '%s' \"\${${docker_var}:-0}\"")"
-      printf '\n    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"
-      printf '    location ~* ^(/v[\d\.]+)?%s {set $e403 "[403] Forbidden API endpoint: %s (%s is 0)";if ($return_403 = 1){return 403 $e403;}if ($%s = 0){return 403 $e403;}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "'${endpoint}'" "'${docker_var}'" "${nginx_var}"
-    fi
-  done)
+\$(for endpoint in \${endpoints}
+   do
+     if [ "\${endpoint#"\${endpoint%?}"}" != '}' ]
+     then
+       nginx_var="\$(nginx_varname "\${endpoint}")"
+       regex="\$(printf '%s\n' "\${endpoint}" | sed 's@/{id}$\|/{name}\$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"
+       docker_var="\$(docker_varname "\${nginx_var}")"
+       resolve_ref="\$(eval "printf '%s' \"\\\${\${docker_var}:-0}\"")"
+       printf '\n    set \$%s %d;\n' "\${nginx_var}" "\${resolve_ref}"
+       printf '    location ~* ^(/v[\d\.]+)?%s {set \$e403 "[403] Forbidden API endpoint: %s (%s is 0)";if (\$return_403 = 1){return 403 \$e403;}if (\$%s = 0){return 403 \$e403;}proxy_pass http://unix:\$dockersocket;}\n' "\${regex}" "'\${endpoint}'" "'\${docker_var}'" "\${nginx_var}"
+     fi
+   done)
 }
-TEMPLATING
-    _nginx="$(command -v nginx)"
-    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
-#!/bin/sh
-cat << __TEMPLATING > /run/default.conf
-include ${ETC_NGX_PATH}/http.d/*.conf;
 __TEMPLATING
-cat ${TMP_WARNING_PATH}
 exec ${_nginx} -e stderr
-wait
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
