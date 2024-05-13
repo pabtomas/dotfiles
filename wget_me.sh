@@ -75,8 +75,21 @@ main ()
 
   docker network prune --force
   docker compose --file "${tmp}/components/compose.yaml" build
-  docker compose --file "${tmp}/compose.yaml" up --detach --pull never \
-    --no-recreate --abort-on-container-failure
+  docker compose --file "${tmp}/compose.yaml" build
+  docker compose --file "${tmp}/compose.yaml" create --no-recreate
+  docker compose --file "${tmp}/compose.yaml" start
+
+  local services
+  services="$(docker compose --file "${tmp}/compose.yaml" ps \
+    --filter 'status=exited' --filter 'status=restarting' \
+    --filter 'status=removing' --filter 'status=paused' \
+    --filter 'status=dead' --filter 'status=created' --format json)"
+  readonly services
+  if [ -n "${services}" ]
+  then
+    printf 'A service did not starts correctly: %s\n' "${services}" >&2
+    return 1
+  fi
   docker volume prune --all --force
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
