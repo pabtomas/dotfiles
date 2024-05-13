@@ -76,15 +76,15 @@ main ()
   docker network prune --force
   docker compose --file "${tmp}/components/compose.yaml" build
   source_env_without_docker_host "${tmp}" \
-    'docker compose --file "${tmp}/compose.yaml" up --no-attach "${JUMPER_ID}" --no-recreate --abort-on-container-failure'
+    'docker compose --file "${tmp}/compose.yaml" up --no-attach "${JUMPER_SERVICE}" --no-recreate --abort-on-container-failure'
   docker volume prune --all --force
   source_env_without_docker_host "${tmp}" \
-    'docker logs "${PROXY_ID}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
+    'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
   docker image prune --force > /dev/null
   if [ "${1:-}" != '--no-attach' ]
   then
     source_env_without_docker_host "${tmp}" \
-      'docker compose --file "${tmp}/compose.yaml" attach "${JUMPER_ID}"'
+      'docker compose --file "${tmp}/compose.yaml" attach "${JUMPER_SERVICE}"'
   fi
 
   wget -q -O "$(cd -- "$(dirname -- "${0}")" &> /dev/null && pwd)/$(basename -- "${0}")" \
