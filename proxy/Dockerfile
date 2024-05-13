@@ -33,6 +33,13 @@ RUN <<END_OF_RUN
     _nginx="$(command -v nginx)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
+$(for arg in $(set | grep '^${API_PFX}')
+  do
+    if [ "${arg#"${arg%????}"}" != "='0'" ]
+    then
+      printf '%s\nexport %s\n' "${arg}" "$(printf '%s\n' "${arg}" | cut -d'=' -f1)"
+    fi
+  done)
 api_version="\$(curl -s --unix-socket "${SOCKET_PATH}" http://localhost/version | jq -r '.ApiVersion')"
 gh_url="${API_URL}/v\${api_version}.yaml"
 endpoints="\$(wget -q -O- "\${gh_url}" | yq '.paths | keys | .[]')"
