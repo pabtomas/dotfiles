@@ -54,6 +54,7 @@ main ()
     then
       sudo systemctl restart docker
     else if command -v service
+    then
       sudo service docker restart
     else
       printf 'Can not restart Dockerd: unknown service manager\n' >&2
