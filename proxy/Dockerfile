@@ -70,7 +70,7 @@ TEMPLATING
     apk del __install_spec_parser
     apk add --no-cache nginx
     rm -rf ${APK_PATHS} "${DOCKER_PATH}/docker"
-    cat << TEMPLATING > "${ETC_NGX_PATH}/default.conf"
+    cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
