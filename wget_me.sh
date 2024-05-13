@@ -32,9 +32,9 @@ main ()
   base_tmp="$(basename "${tmp}")"
   readonly tmp dir_tmp base_tmp
 
-  git clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${tmp}" || \
+  git clone --depth 1 --branch "${2:-trunk}" https://github.com/tiawl/my-whale-fleet.git "${tmp}" || \
   docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
-    clone --depth 1 https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
+    clone --depth 1 --branch "${2:-trunk}" https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
 
   TRASH_PATH="$(mktemp --directory)"
   export TRASH_PATH
