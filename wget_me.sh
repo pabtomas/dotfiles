@@ -75,8 +75,9 @@ main ()
 
   docker network prune --force
   docker compose --file "${tmp}/components/compose.yaml" build
-  source_env_without_docker_host "${tmp}" \
-    'docker compose --file "${tmp}/compose.yaml" up --no-attach "${JUMPER_SERVICE}" --no-recreate --abort-on-container-failure'
+  docker compose --file "${tmp}/compose.yaml" up \
+    $(. ./env.sh; set | grep _SERVICE= | cut -d'=' -f 2 | sed 's@^@--no-attach @' | tr '\n' ' ') \
+    --no-recreate --abort-on-container-failure
   docker volume prune --all --force
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
