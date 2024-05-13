@@ -9,9 +9,10 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: prepare (remove this task later: when a more recent docker version will be used into Github Actions images)
+      - name: prepare
         shell: bash
         run: |
+          # remove this task later (when a more recent docker version will be used into Github Actions images)
           rm -f "$(command -v docker)"
           wget -q -O- https://get.docker.com/ | sh
 
