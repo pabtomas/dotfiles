@@ -14,34 +14,32 @@ TODO:
 - When possible replace TEMPLATING with files
 - add permissions for controller
 - motd
-- wget_me.sh autoupdate
 - process:
   - wget the wget_me.sh script
   - run the wget_me.sh script:
     - if Docker not installed:
-      - install Docker + min (or another modern minimal web browser)
+      O install Docker
+      - min (or another modern minimal web browser)
     - else:
-      - update Docker + min (or another modern minimal web browser)
-    - add host docker config
-    - pull docker-git image
-    - run docker-git container
-    - pull workspace git repo
+      O update Docker
+      - min (or another modern minimal web browser)
+    O add host docker config
+    O pull docker-git image
+    O run docker-git container
+    O pull workspace git repo
     - pull latest workspace images from registry
-    - docker compose create + start into workspace git repo
-    - remove workspace git repo
-    - docker attach jumper (no ssh)
-    - stop + rm all containers
-    - rm all containers
-    - docker prune everything EXCEPT VOLUMES
+    O docker compose create + start into workspace git repo
+    O remove workspace git repo
+    O docker attach jumper (no ssh)
+    O stop + rm all containers
+    O rm all containers
+    O docker prune everything EXCEPT VOLUMES
 - new compose.yaml file:
   - 1 dir = 1 ALPINE Dockerfile = 1 service:
     - drawer:
       - figlet/lolcat/tui monitoring/xinetd/socat + service network
     - notetaker:
       - hedgedoc
-    - safedeposit:
-      - passwordstore + git + gpg
-      - exclusive clone on a volume
     - jlesage/docker-firefox
     - pro: aliases/packages for pro usage
 - jlesage/docker-baseimage-gui based images working with min
@@ -51,7 +49,7 @@ TODO:
 - Add a directory for runners: 1 Dockerfile = 1 runner
 
 -------------------------------------------------------------------------------
-$ cat /etc/swanctl/conf.d/ecureuil.conf
+$ cat /etc/swanctl/conf.d/my.conf
 [...]
         children {
             exclusion {
