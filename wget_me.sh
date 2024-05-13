@@ -53,7 +53,7 @@ main ()
     if command -v systemctl
     then
       sudo systemctl restart docker
-    else if command -v service
+    elif command -v service
     then
       sudo service docker restart
     else
