@@ -69,7 +69,7 @@ API version: ${api_version}$(
 TEMPLATING
     apk del __install_spec_parser
     apk add --no-cache nginx
-    rm -rf "${DOCKER_PATH}/docker" ${APK_PATHS}
+    rm -rf ${APK_PATHS} "${DOCKER_PATH}/docker"
     cat << TEMPLATING > "${ETC_NGX_PATH}/default.conf"
 geo \$privileged {
     default          0;
