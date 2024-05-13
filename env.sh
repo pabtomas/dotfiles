@@ -162,6 +162,7 @@ COMPLETION_PATH="${DATA_PATH}/99completion"
 ENTRYPOINT_PATH="${OPT_SCRIPTS_PATH}/docker_entrypoint.sh"
 CRON_LOG_PATH="${VAR_LOG_PATH}/cron.log"
 MY_WHALE_FLEET_PATH="${WORKSPACES_PATH}/${COMPOSE_PROJECT_NAME}"
+NGX_HTTPD_PATH="${ETC_NGX_PATH}/http.d"
 
 ### Volumes ##################################################################
 DELETE_ME_SFX='-DELME'

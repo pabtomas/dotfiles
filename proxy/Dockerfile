@@ -10,6 +10,7 @@ ARG COLLECTOR_IP
 ARG CONTROLLER_IP
 ARG ENTRYPOINT_PATH
 ARG ETC_NGX_PATH
+ARG NGX_HTTPD_PATH
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
@@ -28,7 +29,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     mkdir -p "${OPT_SCRIPTS_PATH}"
     apk add --no-cache nginx yq curl jq
-    rm -rf ${APK_PATHS} "${ETC_NGX_PATH}/http.d/default.conf"
+    rm -rf ${APK_PATHS}
     _nginx="$(command -v nginx)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
@@ -65,7 +66,7 @@ API version: \${api_version}\$(
   done)
 -------------------------------------------------------------------------------
 __TEMPLATING
-cat << __TEMPLATING > /run/default.conf
+cat << __TEMPLATING > "${NGX_HTTPD_PATH}/default.conf"
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -94,14 +95,17 @@ server {
      if [ "\${endpoint#"\${endpoint%?}"}" != '}' ]
      then
        nginx_var="\$(nginx_varname "\${endpoint}")"
-       regex="\$(printf '%s\n' "\${endpoint}" | sed 's@/{id}$\|/{name}\$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"
+       regex="\$(printf '%s\n' "\${endpoint}" | sed 's@/{id}\$\|/{name}\$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"
        docker_var="\$(docker_varname "\${nginx_var}")"
-       resolve_ref="\$(eval "printf '%s' \"\\\${\${docker_var}:-0}\"")"
+       resolve_ref="\$(eval "printf '%s' \\\"\\\${\${docker_var}:-0}\\\"")"
        printf '\n    set \$%s %d;\n' "\${nginx_var}" "\${resolve_ref}"
        printf '    location ~* ^(/v[\d\.]+)?%s {set \$e403 "[403] Forbidden API endpoint: %s (%s is 0)";if (\$return_403 = 1){return 403 \$e403;}if (\$%s = 0){return 403 \$e403;}proxy_pass http://unix:\$dockersocket;}\n' "\${regex}" "'\${endpoint}'" "'\${docker_var}'" "\${nginx_var}"
      fi
    done)
 }
+__TEMPLATING
+cat << __TEMPLATING > /run/default.conf
+include ${NGX_HTTPD_PATH}/default.conf
 __TEMPLATING
 exec ${_nginx} -e stderr
 TEMPLATING
