@@ -9,7 +9,13 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: wget the repository
+      - name: prepare (remove this task later: when a more recent docker version will be used into Github Actions images)
+        shell: bash
+        run: |
+          rm -f "$(command -v docker)"
+          wget -q -O- https://get.docker.com/ | sh
+
+      - name: check wget_me.sh
         shell: bash
         run: |
           script="$(mktemp).sh"
