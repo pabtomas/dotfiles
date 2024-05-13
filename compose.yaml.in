@@ -16,10 +16,10 @@ services:
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - ETC_NGX_PATH=${ETC_NGX_PATH}
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
-        - NGX_HTTPD_PATH=${NGX_HTTPD_PATH}
         - OS_IMG=${OS_IMG}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - PROXY_PORT=${PROXY_PORT}
+        - RUN_HTTPD_PATH=${RUN_HTTPD_PATH}
         - SOCKET_PATH=${SOCKET_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
@@ -28,7 +28,8 @@ services:
     hostname: ${PROXY_HOST}
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
-      - ${PROXY_NGX_FS_VOLUME}:${ETC_NGX_PATH}:rw
+      - ${PROXY_NGX_FS_VOLUME}:${ETC_NGX_PATH}:ro
+      - ${PROXY_RUN_FS_VOLUME}:${RUN_HTTPD_PATH}:ro
       - ${PROXY_SCRIPTS_FS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
     networks:
       ${PROXIFIED_SOCKET_NET}:
@@ -36,7 +37,6 @@ services:
     read_only: true
     tmpfs:
       - /run
-      - ${NGX_HTTPD_PATH}
   ${COLLECTOR_SERVICE}:
     depends_on:
       - ${PROXY_SERVICE}
@@ -108,6 +108,7 @@ services:
     volumes:
       - ${SSH_VOLUME}:${OPT_SSH_PATH}:ro
       - ${PROXY_NGX_FS_VOLUME}:/opt/${PROXY_ID}${ETC_NGX_PATH}:ro
+      - ${PROXY_RUN_FS_VOLUME}:/opt/${PROXY_ID}${RUN_HTTPD_PATH}:ro
       - ${PROXY_SCRIPTS_FS_VOLUME}:/opt/${PROXY_ID}${OPT_SCRIPTS_PATH}:ro
       - ${COLLECTOR_ETC_CRONTABS_VOLUME}:/opt/${COLLECTOR_ID}${CRONTABS_PATH}:ro
       - ${COLLECTOR_OPT_DATA_VOLUME}:/opt/${COLLECTOR_ID}${DATA_PATH}:ro
@@ -193,6 +194,8 @@ volumes:
     name: ${SAFEDEPOSIT_VOLUME}
   ${PROXY_NGX_FS_VOLUME}:
     name: ${PROXY_NGX_FS_VOLUME}
+  ${PROXY_RUN_FS_VOLUME}:
+    name: ${PROXY_RUN_FS_VOLUME}
   ${PROXY_SCRIPTS_FS_VOLUME}:
     name: ${PROXY_SCRIPTS_FS_VOLUME}
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:

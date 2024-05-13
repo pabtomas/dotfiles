@@ -10,9 +10,9 @@ ARG COLLECTOR_IP
 ARG CONTROLLER_IP
 ARG ENTRYPOINT_PATH
 ARG ETC_NGX_PATH
-ARG NGX_HTTPD_PATH
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
+ARG RUN_HTTPD_PATH
 ARG SOCKET_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -66,7 +66,8 @@ API version: \${api_version}\$(
   done)
 -------------------------------------------------------------------------------
 __TEMPLATING
-cat << __TEMPLATING > "${NGX_HTTPD_PATH}/default.conf"
+mkdir '${RUN_HTTPD_PATH}'
+cat << __TEMPLATING > '${RUN_HTTPD_PATH}/default.conf'
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -105,7 +106,7 @@ server {
 }
 __TEMPLATING
 cat << __TEMPLATING > /run/default.conf
-include ${NGX_HTTPD_PATH}/default.conf
+include ${RUN_HTTPD_PATH}/default.conf
 __TEMPLATING
 exec ${_nginx} -e stderr
 TEMPLATING
