@@ -28,7 +28,8 @@ services:
     hostname: ${PROXY_HOST}
     volumes:
       - ${SOCKET_PATH}:${SOCKET_PATH}:ro
-      - ${PROXY_FS_VOLUME}:${ETC_NGX_PATH}:ro
+      - ${PROXY_NGX_FS_VOLUME}:${ETC_NGX_PATH}:rw
+      - ${PROXY_SCRIPTS_FS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
     networks:
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${PROXY_IP}
@@ -106,7 +107,8 @@ services:
     hostname: ${JUMPER_HOST}
     volumes:
       - ${SSH_VOLUME}:${OPT_SSH_PATH}:ro
-      - ${PROXY_FS_VOLUME}:/opt/${PROXY_ID}${ETC_NGX_PATH}:ro
+      - ${PROXY_NGX_FS_VOLUME}:/opt/${PROXY_ID}${ETC_NGX_PATH}:ro
+      - ${PROXY_SCRIPTS_FS_VOLUME}:/opt/${PROXY_ID}${OPT_SCRIPTS_PATH}:ro
       - ${COLLECTOR_ETC_CRONTABS_VOLUME}:/opt/${COLLECTOR_ID}${CRONTABS_PATH}:ro
       - ${COLLECTOR_OPT_DATA_VOLUME}:/opt/${COLLECTOR_ID}${DATA_PATH}:ro
       - ${COLLECTOR_OPT_SCRIPTS_VOLUME}:/opt/${COLLECTOR_ID}${OPT_SCRIPTS_PATH}:ro
@@ -189,8 +191,10 @@ volumes:
     name: ${MY_WHALE_FLEET_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
-  ${PROXY_FS_VOLUME}:
-    name: ${PROXY_FS_VOLUME}
+  ${PROXY_NGX_FS_VOLUME}:
+    name: ${PROXY_NGX_FS_VOLUME}
+  ${PROXY_SCRIPTS_FS_VOLUME}:
+    name: ${PROXY_SCRIPTS_FS_VOLUME}
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:
     name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
   ${COLLECTOR_OPT_DATA_VOLUME}:
