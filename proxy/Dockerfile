@@ -13,7 +13,6 @@ ARG ETC_NGX_PATH
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
-ARG TMP_WARNING_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -27,14 +26,18 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
-    mkdir -p "$(dirname "${TMP_WARNING_PATH}")" "${OPT_SCRIPTS_PATH}"
-    apk add --no-cache --virtual __install_spec_parser yq curl jq
-    api_version="$(curl -s --unix-socket "${SOCKET_PATH}" http://localhost/version | jq -r '.ApiVersion')"
-    gh_url="${API_URL}/v${api_version}.yaml"
-    endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
-    nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
-    docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
-    cat << TEMPLATING > "${TMP_WARNING_PATH}"
+    mkdir -p "${OPT_SCRIPTS_PATH}"
+    apk add --no-cache nginx yq curl jq
+    rm -rf ${APK_PATHS}
+    _nginx="$(command -v nginx)"
+    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
+#!/bin/sh
+api_version="$(curl -s --unix-socket "${SOCKET_PATH}" http://localhost/version | jq -r '.ApiVersion')"
+gh_url="${API_URL}/v${api_version}.yaml"
+endpoints="$(wget -q -O- "${gh_url}" | yq '.paths | keys | .[]')"
+nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
+docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
+cat << __TEMPLATING
 -------------------------------------------------------------------------------
 API version: ${api_version}$(
   for arg in $(set | grep "^${API_PFX}")
@@ -61,11 +64,8 @@ API version: ${api_version}$(
     fi
   done)
 -------------------------------------------------------------------------------
-TEMPLATING
-    apk del __install_spec_parser
-    apk add --no-cache nginx
-    rm -rf ${APK_PATHS}
-    cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
+__TEMPLATING
+cat << __TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -102,14 +102,10 @@ $(for endpoint in ${endpoints}
     fi
   done)
 }
-TEMPLATING
-    _nginx="$(command -v nginx)"
-    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
-#!/bin/sh
+__TEMPLATING
 cat << __TEMPLATING > /run/default.conf
 include ${ETC_NGX_PATH}/http.d/*.conf;
 __TEMPLATING
-cat ${TMP_WARNING_PATH}
 exec ${_nginx} -e stderr
 wait
 TEMPLATING
