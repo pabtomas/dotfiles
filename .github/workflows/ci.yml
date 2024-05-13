@@ -9,12 +9,6 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: prepare
-        shell: bash
-        run: |
-          # remove this task later (when a more recent docker version will be used into Github Actions images)
-          sudo rm -f "$(command -v docker)"
-
       - name: check wget_me.sh
         shell: bash
         run: |
