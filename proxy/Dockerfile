@@ -106,7 +106,7 @@ server {
 }
 __TEMPLATING
 cat << __TEMPLATING > /run/default.conf
-include ${RUN_HTTPD_PATH}/default.conf
+include ${RUN_HTTPD_PATH}/default.conf;
 __TEMPLATING
 exec ${_nginx} -e stderr
 TEMPLATING
