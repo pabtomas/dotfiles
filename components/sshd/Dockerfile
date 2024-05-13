@@ -16,6 +16,7 @@ RUN <<END_OF_RUN
     _sshd="$(command -v sshd)"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #!/bin/sh
+set -eux
 exec ${_sshd} -D -e
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
