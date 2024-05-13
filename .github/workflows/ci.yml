@@ -13,8 +13,7 @@ jobs:
         shell: bash
         run: |
           # remove this task later (when a more recent docker version will be used into Github Actions images)
-          rm -f "$(command -v docker)"
-          wget -q -O- https://get.docker.com/ | sh
+          sudo rm -f "$(command -v docker)"
 
       - name: check wget_me.sh
         shell: bash
