@@ -16,7 +16,7 @@ RUN <<END_OF_RUN
     git clone --depth=1 "${TPM_URL}" "${TPM_PATH}"
     apk del __install_plugins
     apk add --no-cache tmux tmuxinator tmuxinator-bash-completion
-    wget -q -O "${BASH_COMPLETION_PATH}/99tmux.sh" "${TMUX_COMPLETION_URL}"
+    wget -O "${BASH_COMPLETION_PATH}/99tmux.sh" "${TMUX_COMPLETION_URL}"
     unset http_proxy https_proxy
 END_OF_RUN
 

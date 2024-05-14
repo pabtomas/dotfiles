@@ -1,5 +1,5 @@
-ARG BASH_IMG
-FROM ${BASH_IMG}
+ARG OS_IMG
+FROM ${OS_IMG}
 
 ARG ENTRYPOINT_PATH
 ARG ENTRYPOINTD_PATH
@@ -12,15 +12,15 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     mkdir -p "${ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
-#! /usr/bin/env bash
-set -eux
-if [[ -d ${ENTRYPOINTD_PATH} ]]
+#! /bin/sh -eux
+
+if [ -d ${ENTRYPOINTD_PATH} ]
 then
   for file in ${ENTRYPOINTD_PATH}/*.sh
   do
-    if [[ -r "\${file}" ]]
+    if [ -r "\${file}" ]
     then
-      source "\${file}"
+      . "\${file}"
     fi
   done
   unset file

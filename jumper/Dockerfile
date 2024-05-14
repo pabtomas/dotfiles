@@ -29,18 +29,21 @@ DOCKER_HOST=${TCP_DOCKER_HOST}
 TEMPLATING
     chmod 0640 "${ssh_environment}"
     cat << TEMPLATING > "${BASH_COMPLETION_PATH}/99ssh.sh"
+#! /usr/bin/env bash -eu
+
 _ssh ()
 {
   declare -a -g COMPREPLY
   COMPREPLY=( \$(compgen -W "\$(grep -v '^${HOSTNAME}$' '${COMPLETION_PATH}')" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
 }
+
 complete -F _ssh ssh
 TEMPLATING
     _bash="$(command -v bash)"
     login_entrypoint="${ENTRYPOINTD_PATH}/99login.sh"
     cat << TEMPLATING > "${login_entrypoint}"
-#!/bin/sh
-set -eux
+#! /bin/sh -eux
+
 exec ${_bash} -l
 TEMPLATING
     chmod 0700 "${login_entrypoint}"

@@ -44,6 +44,7 @@ GIT_COMPONENT_ID="$(component_id "${GIT_ID}")"
 LINGUIST_COMPONENT_ID="$(component_id "${LINGUIST_ID}")"
 MAN_COMPONENT_ID="$(component_id "${MAN_ID}")"
 PASS_COMPONENT_ID="$(component_id "${PASS_ID}")"
+SHELL_COMPONENT_ID="$(component_id "${SHELL_ID}")"
 SSHD_COMPONENT_ID="$(component_id "${SSHD_ID}")"
 TMUX_COMPONENT_ID="$(component_id "${TMUX_ID}")"
 VIM_COMPONENT_ID="$(component_id "${VIM_ID}")"
@@ -70,6 +71,7 @@ GIT_SERVICE="${GIT_ID}"
 LINGUIST_SERVICE="${LINGUIST_ID}"
 MAN_SERVICE="${MAN_ID}"
 PASS_SERVICE="${PASS_ID}"
+SHELL_SERVICE="${SHELL_ID}"
 SSHD_SERVICE="${SSHD_ID}"
 TMUX_SERVICE="${TMUX_ID}"
 VIM_SERVICE="${VIM_ID}"
@@ -110,12 +112,12 @@ GIT_COMPONENT_TAG='latest'
 LINGUIST_COMPONENT_TAG='latest'
 MAN_COMPONENT_TAG='latest'
 PASS_COMPONENT_TAG='latest'
+SHELL_COMPONENT_TAG='latest'
 SSHD_COMPONENT_TAG='latest'
-SHELL_EXPLORER_TAG='latest'
 TMUX_COMPONENT_TAG='latest'
 VIM_COMPONENT_TAG='latest'
 WORKSPACES_COMPONENT_TAG='latest'
-ZIG_TAG='0.12.0'
+ZIG_COMPONENT_TAG='0.12.0'
 
 ### Extern Images ############################################################
 image () { printf '%s/%s:%s\n' "${1}" "${2}" "${3}"; }
@@ -141,10 +143,6 @@ PROXY_IMG="$(image "${OWNER_ID}" "${PROXY_ID}" "${PROXY_TAG}")"
 ### Runners Images ###########################################################
 SPACEPORN_RUNNER_IMG="$(image "${OWNER_ID}" "${SPACEPORN_RUNNER_ID}" "${SPACEPORN_RUNNER_TAG}")"
 
-### Explorers Images #########################################################
-SHELL_EXPLORER_IMG="$(image "${OWNER_ID}" "${SHELL_EXPLORER_ID}" "${SHELL_EXPLORER_TAG}")"
-ZIG_EXPLORER_IMG="$(image "${OWNER_ID}" "${ZIG_EXPLORER_ID}" "${ZIG_TAG}")"
-
 ### Components Images ########################################################
 BASH_COMPONENT_IMG="$(image "${OWNER_ID}" "${BASH_COMPONENT_ID}" "${BASH_COMPONENT_TAG}")"
 DOCKER_COMPONENT_IMG="$(image "${OWNER_ID}" "${DOCKER_COMPONENT_ID}" "${DOCKER_COMPONENT_TAG}")"
@@ -153,11 +151,12 @@ GIT_COMPONENT_IMG="$(image "${OWNER_ID}" "${GIT_COMPONENT_ID}" "${GIT_COMPONENT_
 LINGUIST_COMPONENT_IMG="$(image "${OWNER_ID}" "${LINGUIST_COMPONENT_ID}" "${LINGUIST_COMPONENT_TAG}")"
 MAN_COMPONENT_IMG="$(image "${OWNER_ID}" "${MAN_COMPONENT_ID}" "${MAN_COMPONENT_TAG}")"
 PASS_COMPONENT_IMG="$(image "${OWNER_ID}" "${PASS_COMPONENT_ID}" "${PASS_COMPONENT_TAG}")"
+SHELL_COMPONENT_IMG="$(image "${OWNER_ID}" "${SHELL_COMPONENT_ID}" "${SHELL_COMPONENT_TAG}")"
 SSHD_COMPONENT_IMG="$(image "${OWNER_ID}" "${SSHD_COMPONENT_ID}" "${SSHD_COMPONENT_TAG}")"
 TMUX_COMPONENT_IMG="$(image "${OWNER_ID}" "${TMUX_COMPONENT_ID}" "${TMUX_COMPONENT_TAG}")"
 VIM_COMPONENT_IMG="$(image "${OWNER_ID}" "${VIM_COMPONENT_ID}" "${VIM_COMPONENT_TAG}")"
 WORKSPACES_COMPONENT_IMG="$(image "${OWNER_ID}" "${WORKSPACES_COMPONENT_ID}" "${WORKSPACES_COMPONENT_TAG}")"
-ZIG_COMPONENT_IMG="$(image "${OWNER_ID}" "${ZIG_COMPONENT_ID}" "${ZIG_TAG}")"
+ZIG_COMPONENT_IMG="$(image "${OWNER_ID}" "${ZIG_COMPONENT_ID}" "${ZIG_COMPONENT_TAG}")"
 
 ### Paths ####################################################################
 BASH_ALIASES_PATH='/etc/profile.d/99aliases.d'
@@ -231,6 +230,7 @@ UNDOTREE_URL='https://github.com/mbbill/undotree'
 TIG_COMPLETION_URL='https://raw.githubusercontent.com/jonas/tig/master/contrib/tig-completion.bash'
 TMUX_COMPLETION_URL='https://raw.githubusercontent.com/imomaliev/tmux-bash-completion/master/completions/tmux'
 ZIG_BUILDS_URL='https://ziglang.org/builds'
+ZIG_COMPLETION_URL='https://raw.githubusercontent.com/ziglang/shell-completions/master/_zig.bash'
 
 ### Docker host ##############################################################
 DOCKER_HOST="${PROXY_ID}:${PROXY_PORT}"

@@ -3,7 +3,7 @@ services:
     build:
       context: ./${ENTRYPOINT_ID}
       args:
-        - BASH_IMG=${BASH_IMG}
+        - OS_IMG=${OS_IMG}
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - ENTRYPOINTD_PATH=${ENTRYPOINTD_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
@@ -15,10 +15,13 @@ services:
     build:
       context: ./${BASH_ID}
       args:
-        - ENTRYPOINT_COMPONENT_IMG=${ENTRYPOINT_COMPONENT_IMG}
         - BASH_ALIASES_PATH=${BASH_ALIASES_PATH}
         - BASH_COMPLETION_PATH=${BASH_COMPLETION_PATH}
+        - BASH_IMG=${BASH_IMG}
+        - ENTRYPOINT_COMPONENT_IMG=${ENTRYPOINT_COMPONENT_IMG}
+        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
         - NET_PFX=${JUMP_AREA_PFX}
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
       no_cache: true
@@ -120,6 +123,30 @@ services:
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${VIM_COMPONENT_IMG}
+  ${SHELL_SERVICE}:
+    depends_on:
+      - ${GIT_SERVICE}
+    build:
+      context: ./${SHELL_ID}
+      args:
+        - GIT_COMPONENT_IMG=${GIT_COMPONENT_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${SHELL_COMPONENT_IMG}
+  ${ZIG_SERVICE}:
+    depends_on:
+      - ${GIT_SERVICE}
+    build:
+      context: ./${ZIG_ID}
+      args:
+        - BASH_COMPLETION_PATH=${BASH_COMPLETION_PATH}
+        - GIT_COMPONENT_IMG=${GIT_COMPONENT_IMG}
+        - ZIG_BUILDS_URL=${ZIG_BUILDS_URL}
+        - ZIG_COMPLETION_URL=${ZIG_COMPLETION_URL}
+        - ZIG_COMPONENT_TAG=${ZIG_COMPONENT_TAG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${ZIG_COMPONENT_IMG}
   ${LINGUIST_SERVICE}:
     build:
       context: ./${LINGUIST_ID}
@@ -128,13 +155,3 @@ services:
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${LINGUIST_COMPONENT_IMG}
-  ${ZIG_SERVICE}:
-    build:
-      context: ./${ZIG_ID}
-      args:
-        - OS_IMG=${OS_IMG}
-        - ZIG_BUILDS_URL=${ZIG_BUILDS_URL}
-        - ZIG_TAG=${ZIG_TAG}
-        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
-        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${ZIG_COMPONENT_IMG}
