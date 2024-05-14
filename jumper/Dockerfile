@@ -33,7 +33,6 @@ TEMPLATING
 
 _ssh ()
 {
-  set -eu
   declare -a -g COMPREPLY
   COMPREPLY=( \$(compgen -W "\$(grep -v '^${HOSTNAME}$' '${COMPLETION_PATH}')" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
 }
