@@ -45,7 +45,7 @@ main ()
 
   for repo in 'vulkan' 'wayland' 'X11' 'glfw' 'cimgui' 'spirv' 'glslang' 'shaderc'
   do
-    repo='\${repo}.zig'
+    repo="\${repo}.zig"
     git clone "${OWNER_URL}/\${repo}.git" "\${bindings_dir}/\${repo}"
   done
   git clone '${OWNER_URL}/toolbox.git' "\${bindings_dir}/toolbox"
