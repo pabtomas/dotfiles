@@ -1,0 +1,11 @@
+services:
+  ${RUNNER_SERVICE}:
+    build:
+      context: .
+      args:
+        - OS_IMG=${OS_IMG}
+        - ZIG_EXPLORER_IMG=${ZIG_EXPLORER_IMG}
+    container_name: ${SPACEPORN_RUNNER_ID}
+    image: ${SPACEPORN_RUNNER_IMG}
+    stdin_open: true
+    tty: true
