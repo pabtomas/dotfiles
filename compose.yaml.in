@@ -8,9 +8,10 @@ services:
         - API_PFX=${API_PFX}
         - API_TAG=${API_TAG}
         - API_URL=${API_URL}
+        - ${API_PFX}_PING=${TRUE}
+        - ${API_PFX}CONTAINERS_ID_ARCHIVE=${TRUE}
         - ${API_PFX}IMAGES_JSON=${TRUE}
         - ${API_PFX}NETWORKS=${TRUE}
-        - ${API_PFX}_PING=${TRUE}
         - ${API_PFX}VERSION=${TRUE}
         - COLLECTOR_IP=${COLLECTOR_IP}
         - CONTROLLER_IP=${CONTROLLER_IP}
