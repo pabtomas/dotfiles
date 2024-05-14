@@ -29,6 +29,8 @@ DOCKER_HOST=${TCP_DOCKER_HOST}
 TEMPLATING
     chmod 0640 "${ssh_environment}"
     cat << TEMPLATING > "${BASH_COMPLETION_PATH}/99ssh.sh"
+#! /usr/bin/env bash
+
 _ssh ()
 {
   set -eu
