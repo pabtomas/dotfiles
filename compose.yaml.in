@@ -126,6 +126,7 @@ services:
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
       - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
+      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
