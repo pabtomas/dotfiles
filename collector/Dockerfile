@@ -1,13 +1,13 @@
-ARG OS_IMG
+ARG ENTRYPOINT_COMPONENT_IMG
 
-FROM ${OS_IMG}
+FROM ${ENTRYPOINT_COMPONENT_IMG}
 
 ARG APK_PATHS
 ARG COMPLETION_PATH
 ARG CRON_LOG_PATH
 ARG CRONTABS_PATH
 ARG DATA_PATH
-ARG ENTRYPOINT_PATH
+ARG ENTRYPOINTD_PATH
 ARG HTTP_DOCKER_HOST
 ARG NET
 ARG OPT_SCRIPTS_PATH
@@ -39,16 +39,14 @@ TEMPLATING
 * * * * * ${completion_collector_script}
 TEMPLATING
     _crond="$(command -v crond)"
-    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
+    crond_entrypoint="${ENTRYPOINTD_PATH}/99crond.sh"
+    cat << TEMPLATING > "${crond_entrypoint}"
 #!/bin/sh
 set -eux
 prefix="[init] ${completion_collector_script}: "
 ${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
 exec ${_crond} -f
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT_PATH}"
+    chmod 0700 "${crond_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
-
-ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
-ENTRYPOINT ${ENTRYPOINT_PATH}

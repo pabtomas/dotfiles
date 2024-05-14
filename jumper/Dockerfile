@@ -5,7 +5,7 @@ FROM ${TMUX_COMPONENT_IMG}
 ARG BASH_COMPLETION_PATH
 ARG COMPLETION_PATH
 ARG CONTROLLER_ID
-ARG ENTRYPOINT_PATH
+ARG ENTRYPOINTD_PATH
 ARG HOSTNAME
 ARG OPT_SCRIPTS_PATH
 ARG OPT_SSH_PATH
@@ -37,17 +37,15 @@ _ssh ()
 complete -F _ssh ssh
 TEMPLATING
     _bash="$(command -v bash)"
-    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
+    login_entrypoint="${ENTRYPOINTD_PATH}/99login.sh"
+    cat << TEMPLATING > "${login_entrypoint}"
 #!/bin/sh
 set -eux
 exec ${_bash} -l
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT_PATH}"
+    chmod 0700 "${login_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 
 COPY --chmod=0644 etc/ /etc/
 COPY --chmod=0644 root/ /root/
-
-ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
-ENTRYPOINT ${ENTRYPOINT_PATH}

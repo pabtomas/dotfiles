@@ -14,10 +14,10 @@ services:
         - ${API_PFX}VERSION=${TRUE}
         - COLLECTOR_IP=${COLLECTOR_IP}
         - CONTROLLER_IP=${CONTROLLER_IP}
-        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
+        - ENTRYPOINT_COMPONENT_IMG=${ENTRYPOINT_COMPONENT_IMG}
+        - ENTRYPOINTD_PATH=${ENTRYPOINTD_PATH}
         - ETC_NGX_PATH=${ETC_NGX_PATH}
         - LINUXSERVER_PROXY_IMG=${LINUXSERVER_PROXY_IMG}
-        - OS_IMG=${OS_IMG}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - PROXY_PORT=${PROXY_PORT}
         - SOCKET_PATH=${SOCKET_PATH}
@@ -52,11 +52,11 @@ services:
         - CRON_LOG_PATH=${CRON_LOG_PATH}
         - CRONTABS_PATH=${CRONTABS_PATH}
         - DATA_PATH=${DATA_PATH}
-        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
+        - ENTRYPOINT_COMPONENT_IMG=${ENTRYPOINT_COMPONENT_IMG}
+        - ENTRYPOINTD_PATH=${ENTRYPOINTD_PATH}
         - HTTP_DOCKER_HOST=${HTTP_DOCKER_HOST}
         - NET=${JUMP_AREA_NET}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
-        - OS_IMG=${OS_IMG}
         - PROXY_ID=${PROXY_ID}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
@@ -94,7 +94,7 @@ services:
         - BASH_COMPLETION_PATH=${BASH_COMPLETION_PATH}
         - COMPLETION_PATH=/opt/${COLLECTOR_ID}${COMPLETION_PATH}
         - CONTROLLER_ID=${CONTROLLER_ID}
-        - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
+        - ENTRYPOINTD_PATH=${ENTRYPOINTD_PATH}
         - HOSTNAME=${JUMPER_ID}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - OPT_SSH_PATH=${OPT_SSH_PATH}
@@ -126,6 +126,7 @@ services:
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
       - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
+      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
@@ -142,6 +143,23 @@ services:
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
       - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
+  ${ZIG_EXPLORER_SERVICE}:
+    build:
+      context: ./${EXPLORER_ID}s/${ZIG_ID}
+      args:
+        - GIT_COMPONENT_IMG=${GIT_COMPONENT_IMG}
+        - ZIG_COMPONENT_IMG=${ZIG_COMPONENT_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${ZIG_EXPLORER_IMG}
+    container_name: ${ZIG_EXPLORER_HOST}
+    hostname: ${ZIG_EXPLORER_HOST}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
@@ -190,6 +208,8 @@ volumes:
     name: ${SSH_VOLUME}
   ${MY_WHALE_FLEET_VOLUME}:
     name: ${MY_WHALE_FLEET_VOLUME}
+  ${SPACEPORN_VOLUME}:
+    name: ${SPACEPORN_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
   ${PROXY_NGX_FS_VOLUME}:

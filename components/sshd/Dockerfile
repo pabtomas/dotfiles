@@ -1,8 +1,7 @@
 ARG BASH_COMPONENT_IMG
 FROM ${BASH_COMPONENT_IMG}
 
-ARG ENTRYPOINT_PATH
-ARG OPT_SCRIPTS_PATH
+ARG ENTRYPOINTD_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -11,21 +10,18 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache openssh-server
-    mkdir -p "${OPT_SCRIPTS_PATH}"
     ssh-keygen -A
     _sshd="$(command -v sshd)"
-    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
+    sshd_entrypoint="${ENTRYPOINTD_PATH}/99sshd.sh"
+    cat << TEMPLATING > "${sshd_entrypoint}"
 #!/bin/sh
 set -eux
 exec ${_sshd} -D -e
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT_PATH}"
+    chmod 0700 "${sshd_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 
 COPY etc/ /etc/
-
-ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
-ENTRYPOINT ${ENTRYPOINT_PATH}
 
 EXPOSE 22

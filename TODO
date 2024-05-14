@@ -6,16 +6,20 @@ TODO:
 - .vimrc: unsource .vimrc
 - .vimrc: toggle set paste
 - .vimrc: toggle hightlight search
-- .vimrc: remap
-- .vimrc + .tmux.conf + NERDtree: mapping to open/close tree pane
+- .vimrc + NERDtree: mapping to open/close tree pane
 ?? .vimrc: vim9script
 ?? .tmux.conf: add keybinding to change color theme
-- Add a volume for bash_history of each container
-- When possible replace TEMPLATING with files
+- Add a cache volume to gather for container:
+  - bash_history
+  - vim sessions
+  - tmux resurrect files
+  - tmuxinator conf sessions
+- find a solution to split templates and Dockerfiles
+- jumper/proxy -> change them into components
 - add permissions for controller
-- motd
+- add aliases/remove old directory
 - process:
-  - wget the wget_me.sh script
+  O wget the wget_me.sh script
   - run the wget_me.sh script:
     - if Docker not installed:
       O install Docker
@@ -36,29 +40,17 @@ TODO:
     O docker prune everything EXCEPT VOLUMES
 - new compose.yaml file:
   - 1 dir = 1 ALPINE Dockerfile = 1 service:
-    - drawer:
+    - decorator:
       - figlet/lolcat/tui monitoring/xinetd/socat + service network
+      - motd
+    - drafter:
+      - tldraw/excalidraw/draw.io
     - notetaker:
       - hedgedoc
     - jlesage/docker-firefox
     - pro: aliases/packages for pro usage
 - jlesage/docker-baseimage-gui based images working with min
 - update Dockerfiles + images with bot
-  - templating for compose.yaml
-- Add a directory for components: 1 Dockerfile = 1 component and use it for multistaging
-- Add a directory for runners: 1 Dockerfile = 1 runner
-
--------------------------------------------------------------------------------
-$ cat /etc/swanctl/conf.d/my.conf
-[...]
-        children {
-            exclusion {
-                remote_ts = 172.17.0.0/16
-                mode = pass
-                dpd_action = restart
-                start_action = trap
-            }
--------------------------------------------------------------------------------
 
 proposition:
   workspaces
@@ -66,11 +58,11 @@ proposition:
   ├── wget_me.sh
   ├── .github/workflows/bot.yml
   ├── host
-  ├── jumper/controller/editor/safedeposit/pro/drawer
+  ├── proxy/jumper/collector
   │   └── Dockerfile/templated
   ├── components
   │   ├── compose.yaml/templated
-  │   └── git/tig/ripgrep/vim/tmux/zig
+  │   └── bash/sshd/docker/linguist/pass/git/vim/tmux/zig
   │       └── Dockerfile/templated
   ├── explorers
   │   ├── compose.yaml/templated

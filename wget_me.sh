@@ -33,7 +33,7 @@ main ()
   readonly dist
 
   case "${dist}" in
-  ( 'ubuntu'|'debian' ) sudo apt-get update; sudo apt-get upgrade ;;
+  ( 'ubuntu'|'debian' ) sudo apt-get update -y; sudo apt-get upgrade -y ;;
   ( * ) printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2; return 1 ;;
   esac
 
@@ -78,6 +78,7 @@ main ()
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
+  sleep 3
 
   local services
   services="$(docker compose --file "${tmp}/compose.yaml" ps \

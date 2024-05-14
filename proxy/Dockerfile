@@ -1,15 +1,15 @@
-ARG OS_IMG
+ARG ENTRYPOINT_COMPONENT_IMG
 ARG LINUXSERVER_PROXY_IMG
 
 FROM ${LINUXSERVER_PROXY_IMG} as linuxserver_img
-FROM ${OS_IMG}
+FROM ${ENTRYPOINT_COMPONENT_IMG}
 
 ARG APK_PATHS
 ARG API_TAG
 ARG API_URL
 ARG COLLECTOR_IP
 ARG CONTROLLER_IP
-ARG ENTRYPOINT_PATH
+ARG ENTRYPOINTD_PATH
 ARG ETC_NGX_PATH
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
@@ -102,7 +102,8 @@ $(for endpoint in ${endpoints}
 }
 TEMPLATING
     _nginx="$(command -v nginx)"
-    cat << TEMPLATING > "${ENTRYPOINT_PATH}"
+    nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
+    cat << TEMPLATING > "${nginx_entrypoint}"
 #!/bin/sh
 set -eux
 cat << __TEMPLATING > /run/default.conf
@@ -110,15 +111,12 @@ include ${ETC_NGX_PATH}/http.d/default.conf;
 __TEMPLATING
 exec ${_nginx} -e stderr
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT_PATH}"
+    chmod 0700 "${nginx_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 
 COPY --from=linuxserver_img ${ETC_NGX_PATH}/nginx.conf ${ETC_NGX_PATH}/
 COPY --from=linuxserver_img ${ETC_NGX_PATH}/proxy.conf ${ETC_NGX_PATH}/
-
-ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
-ENTRYPOINT ${ENTRYPOINT_PATH}
 
 ARG PROXY_PORT
 EXPOSE ${PROXY_PORT}
