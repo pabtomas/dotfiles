@@ -10,7 +10,6 @@ services:
         - API_URL=${API_URL}
         - ${API_PFX}_PING=${TRUE}
         - ${API_PFX}BUILD=${TRUE}
-        - ${API_PFX}CONTAINERS_ID_ARCHIVE=${TRUE}
         - ${API_PFX}IMAGES_JSON=${TRUE}
         - ${API_PFX}NETWORKS=${TRUE}
         - ${API_PFX}VERSION=${TRUE}
@@ -83,6 +82,7 @@ services:
     hostname: ${CONTROLLER_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${RUNNERS_VOLUME}:/runners:ro
     networks:
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
@@ -129,6 +129,7 @@ services:
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
       - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
+      - ${RUNNERS_VOLUME}:${MY_WHALE_FLEET_PATH}/runners:rw
       - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
@@ -198,6 +199,8 @@ volumes:
     name: ${SSH_VOLUME}
   ${MY_WHALE_FLEET_VOLUME}:
     name: ${MY_WHALE_FLEET_VOLUME}
+  ${RUNNERS_VOLUME}:
+    name: ${RUNNERS_VOLUME}
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
