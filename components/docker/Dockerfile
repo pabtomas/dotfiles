@@ -19,7 +19,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache docker-bash-completion
     cat << TEMPLATING > /etc/profile.d/99env.sh
-#! /usr/bin/env bash -eu
+#! /bin/sh -eu
 
 DOCKER_HOST='${TCP_DOCKER_HOST}'
 TRASH_PATH='${TRASH_PATH}'

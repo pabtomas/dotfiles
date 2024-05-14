@@ -104,7 +104,7 @@ TEMPLATING
     _nginx="$(command -v nginx)"
     nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
     cat << TEMPLATING > "${nginx_entrypoint}"
-#! /usr/bin/env bash -eux
+#! /bin/sh -eux
 
 cat << __TEMPLATING > /run/default.conf
 include ${ETC_NGX_PATH}/http.d/default.conf;

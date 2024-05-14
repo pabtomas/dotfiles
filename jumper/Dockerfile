@@ -42,7 +42,7 @@ TEMPLATING
     _bash="$(command -v bash)"
     login_entrypoint="${ENTRYPOINTD_PATH}/99login.sh"
     cat << TEMPLATING > "${login_entrypoint}"
-#! /usr/bin/env bash -eux
+#! /bin/sh -eux
 
 exec ${_bash} -l
 TEMPLATING

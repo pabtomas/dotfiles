@@ -30,7 +30,7 @@ ${_wget} -q -O- "${HTTP_DOCKER_HOST}/networks/\${id}" | ${_jq} -r '.Containers |
 TEMPLATING
     completion_collector_script="${OPT_SCRIPTS_PATH}/completion_collector.sh"
     cat << TEMPLATING > "${completion_collector_script}"
-#! /usr/bin/env bash -eux
+#! /bin/sh -eux
 
 prefix="\$(date '+[%F %T] ${completion_collector_script}: ')"
 ${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
@@ -42,7 +42,7 @@ TEMPLATING
     _crond="$(command -v crond)"
     crond_entrypoint="${ENTRYPOINTD_PATH}/99crond.sh"
     cat << TEMPLATING > "${crond_entrypoint}"
-#! /usr/bin/env bash -eux
+#! /bin/sh -eux
 
 prefix="[init] ${completion_collector_script}: "
 ${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'

@@ -11,7 +11,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     mkdir -p "${WORKSPACES_PATH}"
     cat << TEMPLATING >> /etc/profile.d/99default_dir.sh
-#! /usr/bin/env bash -eu
+#! /bin/sh -eu
 
 cd '${WORKSPACES_PATH}'
 TEMPLATING

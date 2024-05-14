@@ -14,7 +14,7 @@ RUN <<END_OF_RUN
     _sshd="$(command -v sshd)"
     sshd_entrypoint="${ENTRYPOINTD_PATH}/99sshd.sh"
     cat << TEMPLATING > "${sshd_entrypoint}"
-#! /usr/bin/env bash -eux
+#! /bin/sh -eux
 
 exec ${_sshd} -D -e
 TEMPLATING
