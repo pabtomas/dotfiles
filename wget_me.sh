@@ -19,7 +19,7 @@ trap_me ()
   docker compose --file "${1}/compose.yaml" down --timeout 0 || :
   source_env_without_docker_host "${1}" \
     'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
-  rm -rf "${1}" "${2}"
+  rm -rf "${1}"
 }
 
 main ()
@@ -85,11 +85,10 @@ main ()
     fi
   fi
 
-  TRASH_PATH="$(mktemp --directory)"
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-  export TRASH_PATH API_TAG
+  export API_TAG
 
-  trap "trap_me '${tmp}' '${TRASH_PATH}'" EXIT
+  trap "trap_me '${tmp}'" EXIT
 
   for template in $(find "${tmp}" -type f -name compose.yaml.in)
   do
