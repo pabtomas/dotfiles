@@ -1,5 +1,1 @@
-search ()
-{
-  set -eu
-  apk search "${1}" | grep "${2:-doc}"
-}
+search () { apk search "${1}" | grep "${2:-doc}"; }

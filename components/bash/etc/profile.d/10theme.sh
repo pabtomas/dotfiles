@@ -1,6 +1,5 @@
 main ()
 {
-  set -eu
   GREEN='42'
   GRAY_900='233'
   GRAY_800='239'
@@ -10,5 +9,6 @@ main ()
   GRAY_400='252'
   ZINC='59'
   WHITE='231'
+
   export GREEN GRAY_900 GRAY_800 GRAY_700 GRAY_600 GRAY_500 GRAY_400 ZINC WHITE
 }

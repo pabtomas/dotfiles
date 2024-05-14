@@ -17,8 +17,6 @@ RUN <<END_OF_RUN
     cat << TEMPLATING >> /etc/profile.d/99default_dir.sh
 main ()
 {
-  set -eu
-
   cd '${WORKSPACES_PATH}'
 }
 
