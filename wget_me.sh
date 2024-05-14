@@ -26,7 +26,24 @@ main ()
 {
   set -eu
 
-  if ! command -v docker; then wget -q -O- https://get.docker.com | sudo sh; fi
+  local branch runner bot
+  bot='bot'
+  readonly bot
+
+  while [ "${#}" != '0' ]
+  do
+    case "${1}" in
+    ( '--runner-is-a-bot' ) runner="${bot}"; shift 1 ;;
+    ( '--branch' ) branch="${2}"; shift 2 ;;
+    ( * ) printf 'Unknown flag: "%s"\n' "${1}" >&2; return 1 ;;
+    esac
+  done
+
+  branch="${branch:-trunk}"
+  runner="${runner:-someone}"
+  readonly branch runner
+
+  if ! command -v docker > /dev/null; then wget -q -O- https://get.docker.com | sudo sh; fi
 
   local dist
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
@@ -37,23 +54,29 @@ main ()
   ( * ) printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2; return 1 ;;
   esac
 
-  local tmp dir_tmp base_tmp
+  local tmp dir_tmp base_tmp repo repo_url
   tmp="$(mktemp --directory)"
   dir_tmp="$(dirname "${tmp}")"
   base_tmp="$(basename "${tmp}")"
-  readonly tmp dir_tmp base_tmp
+  repo='tiawl/MyWhaleFleet'
+  repo_url="https://github.com/${repo}.git"
+  readonly tmp dir_tmp base_tmp repo repo_url
 
-  git clone --depth 1 --branch "${2:-trunk}" https://github.com/tiawl/my-whale-fleet.git "${tmp}" || \
+  git clone --depth 1 --branch "${branch}" ${repo_url} "${tmp}" || \
   docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
-    clone --depth 1 --branch "${2:-trunk}" https://github.com/tiawl/my-whale-fleet.git "${base_tmp}"
+    clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
 
-  if [ ! -e /etc/docker/daemon.json ] || ! diff /etc/docker/daemon.json "${tmp}/host/etc/docker/daemon.json" > /dev/null
+  local daemon_json
+  daemon_json='/etc/docker/daemon.json'
+  readonly daemon_json
+
+  if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
   then
-    sudo cp -f "${tmp}/host/etc/docker/daemon.json" /etc/docker/daemon.json
-    if command -v systemctl
+    sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
+    if command -v systemctl > /dev/null
     then
       sudo systemctl restart docker
-    elif command -v service
+    elif command -v service > /dev/null
     then
       sudo service docker restart
     else
@@ -78,6 +101,7 @@ main ()
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
+  printf 'Sleeping ...\n'
   sleep 3
 
   local services
@@ -91,18 +115,19 @@ main ()
     printf 'A service did not starts correctly: %s\n' "${services}" >&2
     return 1
   fi
+
   docker volume prune --all --force
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
   docker image prune --force > /dev/null
-  if [ "${1:-}" != '--no-attach' ]
+  if [ "${runner}" != "${bot}" ]
   then
     source_env_without_docker_host "${tmp}" \
       'docker compose --file "${tmp}/compose.yaml" attach "${JUMPER_SERVICE}"'
   fi
 
   wget -q -O "$(cd -- "$(dirname -- "${0}")" &> /dev/null && pwd)/$(basename -- "${0}")" \
-    https://raw.githubusercontent.com/tiawl/MyWhaleFleet/trunk/wget_me.sh
+    "https://raw.githubusercontent.com/${repo}/${branch}/wget_me.sh"
 }
 
 main ${@}
