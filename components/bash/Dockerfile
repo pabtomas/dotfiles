@@ -36,7 +36,6 @@ TEMPLATING
     cat << TEMPLATING >> "$(dirname "${BASH_ALIASES_PATH}")/$(basename -s '.d' "${BASH_ALIASES_PATH}").sh"
 main ()
 {
-  set -eu
   unalias -a
 
   if [ -d ${BASH_ALIASES_PATH} ]
@@ -57,7 +56,6 @@ TEMPLATING
     cat << TEMPLATING >> "$(dirname "${BASH_COMPLETION_PATH}")/$(basename -s '.d' "${BASH_COMPLETION_PATH}").sh"
 main ()
 {
-  set -eu
   unalias -a
 
   if [ -d ${BASH_COMPLETION_PATH} ]
