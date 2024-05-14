@@ -29,10 +29,11 @@ DOCKER_HOST=${TCP_DOCKER_HOST}
 TEMPLATING
     chmod 0640 "${ssh_environment}"
     cat << TEMPLATING > "${BASH_COMPLETION_PATH}/99ssh.sh"
-#! /usr/bin/env bash -eu
+#! /usr/bin/env bash
 
 _ssh ()
 {
+  set -eu
   declare -a -g COMPREPLY
   COMPREPLY=( \$(compgen -W "\$(grep -v '^${HOSTNAME}$' '${COMPLETION_PATH}')" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
 }
@@ -42,9 +43,15 @@ TEMPLATING
     _bash="$(command -v bash)"
     login_entrypoint="${ENTRYPOINTD_PATH}/99login.sh"
     cat << TEMPLATING > "${login_entrypoint}"
-#! /bin/sh -eux
+#! /bin/sh
 
-exec ${_bash} -l
+main ()
+{
+  set -eux
+  exec ${_bash} -l
+}
+
+main
 TEMPLATING
     chmod 0700 "${login_entrypoint}"
     unset http_proxy https_proxy

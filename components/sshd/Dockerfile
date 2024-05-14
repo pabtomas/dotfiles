@@ -14,9 +14,15 @@ RUN <<END_OF_RUN
     _sshd="$(command -v sshd)"
     sshd_entrypoint="${ENTRYPOINTD_PATH}/99sshd.sh"
     cat << TEMPLATING > "${sshd_entrypoint}"
-#! /bin/sh -eux
+#! /bin/sh
 
-exec ${_sshd} -D -e
+main ()
+{
+  set -eux
+  exec ${_sshd} -D -e
+}
+
+main
 TEMPLATING
     chmod 0700 "${sshd_entrypoint}"
     unset http_proxy https_proxy

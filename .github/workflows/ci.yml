@@ -15,4 +15,4 @@ jobs:
           script="$(mktemp).sh"
           wget -q -O "${script}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
           chmod 0700 "${script}"
-          sh -x "${script}" --no-attach "${GITHUB_HEAD_REF}"
+          sh -x "${script}" --branch "${GITHUB_HEAD_REF}" --runner-is-a-bot 

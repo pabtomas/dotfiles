@@ -30,10 +30,17 @@ ${_wget} -q -O- "${HTTP_DOCKER_HOST}/networks/\${id}" | ${_jq} -r '.Containers |
 TEMPLATING
     completion_collector_script="${OPT_SCRIPTS_PATH}/completion_collector.sh"
     cat << TEMPLATING > "${completion_collector_script}"
-#! /bin/sh -eux
+#! /bin/sh
 
-prefix="\$(date '+[%F %T] ${completion_collector_script}: ')"
-${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
+main ()
+{
+  set -eux
+
+  prefix="\$(date '+[%F %T] ${completion_collector_script}: ')"
+  ${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
+}
+
+main
 TEMPLATING
     chmod 0700 "${completion_collector_script}"
     cat << TEMPLATING > "${CRONTABS_PATH}/root"
@@ -42,12 +49,19 @@ TEMPLATING
     _crond="$(command -v crond)"
     crond_entrypoint="${ENTRYPOINTD_PATH}/99crond.sh"
     cat << TEMPLATING > "${crond_entrypoint}"
-#! /bin/sh -eux
+#! /bin/sh
 
-prefix="[init] ${completion_collector_script}: "
-${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
+main ()
+{
+  set -eux
 
-exec ${_crond} -f
+  prefix="[init] ${completion_collector_script}: "
+  ${wget_script} 2>&1 && printf 'success\n' | sed "s@^@\${prefix}@" >> '${CRON_LOG_PATH}'
+
+  exec ${_crond} -f
+}
+
+main
 TEMPLATING
     chmod 0700 "${crond_entrypoint}"
     unset http_proxy https_proxy

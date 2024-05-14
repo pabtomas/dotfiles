@@ -19,12 +19,16 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     apk add --no-cache docker-bash-completion
     cat << TEMPLATING > /etc/profile.d/99env.sh
-#! /bin/sh -eu
+main ()
+{
+  set -eu
+  DOCKER_HOST='${TCP_DOCKER_HOST}'
+  TRASH_PATH='${TRASH_PATH}'
 
-DOCKER_HOST='${TCP_DOCKER_HOST}'
-TRASH_PATH='${TRASH_PATH}'
+  export DOCKER_HOST TRASH_PATH
+}
 
-export DOCKER_HOST TRASH_PATH
+main
 TEMPLATING
     unset http_proxy https_proxy
 END_OF_RUN
