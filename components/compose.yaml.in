@@ -92,6 +92,9 @@ services:
     build:
       context: ./${WORKSPACES_ID}
       args:
+        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
+        - OWNER_URL=${OWNER_URL}
+        - SPACEPORN_ID=${SPACEPORN_ID}
         - SSHD_COMPONENT_IMG=${SSHD_COMPONENT_IMG}
         - WORKSPACES_PATH=${WORKSPACES_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
