@@ -12,8 +12,8 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     mkdir -p "${ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
-#! /usr/bin/env bash
-set -eux
+#! /usr/bin/env bash -eux
+
 if [[ -d ${ENTRYPOINTD_PATH} ]]
 then
   for file in ${ENTRYPOINTD_PATH}/*.sh
