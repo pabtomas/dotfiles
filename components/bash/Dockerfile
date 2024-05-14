@@ -23,7 +23,6 @@ RUN <<END_OF_RUN
     cat << TEMPLATING >> /etc/profile.d/10themes.sh
 main ()
 {
-  set -eu
   THEMES=( ${themes} )
   ID="\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
   PROMPT_THEME="\${THEMES["\${ID##*.}"]}"

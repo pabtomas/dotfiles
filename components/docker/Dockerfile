@@ -21,7 +21,6 @@ RUN <<END_OF_RUN
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
-  set -eu
   DOCKER_HOST='${TCP_DOCKER_HOST}'
   TRASH_PATH='${TRASH_PATH}'
 

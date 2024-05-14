@@ -1,7 +1,5 @@
 main ()
 {
-  set -eu
-
   # color line-number           1          $GRAY_900
   # color file                  69        $GRAY_900
   # color grep.file             69        $GRAY_900
