@@ -22,6 +22,7 @@ SCHOLAR_ID='scholar'
 COMPONENT_ID='component'
 EXPLORER_ID='explorer'
 RUNNER_ID='runner'
+RUNNERS_ID="${RUNNER_ID}s"
 SHELL_ID='shell'
 SPACEPORN_ID='spaceporn'
 BASH_ID='bash'
