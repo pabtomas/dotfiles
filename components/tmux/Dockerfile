@@ -22,5 +22,3 @@ END_OF_RUN
 
 COPY .tmux.conf /root/
 COPY etc/ /etc/
-
-CMD ["tmux", "-V"]

@@ -1,5 +1,5 @@
-ARG BASH_IMG
-FROM ${BASH_IMG}
+ARG ENTRYPOINT_COMPONENT_IMG
+FROM ${ENTRYPOINT_COMPONENT_IMG}
 
 COPY etc/ /etc/
 
@@ -57,5 +57,3 @@ fi
 TEMPLATING
     unset http_proxy https_proxy
 END_OF_RUN
-
-CMD ["bash", "--version"]

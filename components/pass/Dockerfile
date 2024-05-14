@@ -11,5 +11,3 @@ RUN <<END_OF_RUN
     apk add --no-cache pass git gpg-agent git-bash-completion pass-bash-completion
     unset http_proxy https_proxy
 END_OF_RUN
-
-CMD ["pass", "version"]

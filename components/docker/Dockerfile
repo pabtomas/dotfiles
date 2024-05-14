@@ -27,5 +27,3 @@ TEMPLATING
 END_OF_RUN
 
 COPY etc/ /etc/
-
-CMD ["docker", "--version"]
