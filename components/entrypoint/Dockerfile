@@ -12,19 +12,25 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY}"
     mkdir -p "${ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
-#! /bin/sh -eux
+#! /bin/sh
 
-if [ -d ${ENTRYPOINTD_PATH} ]
-then
-  for file in ${ENTRYPOINTD_PATH}/*.sh
-  do
-    if [ -r "\${file}" ]
-    then
-      . "\${file}"
-    fi
-  done
-  unset file
-fi
+main ()
+{
+  set -eux
+  if [ -d ${ENTRYPOINTD_PATH} ]
+  then
+    for file in ${ENTRYPOINTD_PATH}/*.sh
+    do
+      if [ -r "\${file}" ]
+      then
+        . "\${file}"
+      fi
+    done
+    unset file
+  fi
+}
+
+main
 TEMPLATING
     chmod 0700 "${ENTRYPOINT_PATH}"
     unset http_proxy https_proxy

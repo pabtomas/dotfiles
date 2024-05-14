@@ -15,15 +15,22 @@ RUN <<END_OF_RUN
     spaceporn_scripts="${OPT_SCRIPTS_PATH}/${SPACEPORN_ID}"
     mkdir -p "${WORKSPACES_PATH}" "${spaceporn_scripts}"
     cat << TEMPLATING >> /etc/profile.d/99default_dir.sh
-#! /bin/sh -eu
+main ()
+{
+  set -eu
 
-cd '${WORKSPACES_PATH}'
+  cd '${WORKSPACES_PATH}'
+}
+
+main
 TEMPLATING
     cat << TEMPLATING >> "${spaceporn_scripts}/init.sh"
-#! /usr/bin/env bash -eux
+#! /usr/bin/env bash
 
 main ()
 {
+  set -eux
+
   local repo spaceporn_workspace bindings_dir actions_dir
   spaceporn_workspace='${WORKSPACES_PATH}/${SPACEPORN_ID}'
   bindings_dir="\${spaceporn_workspace}/bindings"

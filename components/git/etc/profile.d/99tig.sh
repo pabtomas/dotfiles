@@ -1,9 +1,13 @@
-# color line-number           1          $GRAY_900
-# color file                  69        $GRAY_900
-# color grep.file             69        $GRAY_900
-# color diff-add-highlight    42           ${GRAY_900}
-# color diff-del-highlight    203          ${GRAY_900}
-cat << TEMPLATING >> /root/.tigrc
+main ()
+{
+  set -eu
+
+  # color line-number           1          $GRAY_900
+  # color file                  69        $GRAY_900
+  # color grep.file             69        $GRAY_900
+  # color diff-add-highlight    42           ${GRAY_900}
+  # color diff-del-highlight    203          ${GRAY_900}
+  cat << TEMPLATING >> /root/.tigrc
 color default        ${WHITE}     ${GRAY_900}
 color date           ${WHITE}     ${GRAY_900}  bold
 color graph-commit   ${THEME}     ${GRAY_900}
@@ -79,3 +83,6 @@ set main-view-date = relative-compact
 set main-view-id = yes
 set blame-view-date = relative-compact
 TEMPLATING
+}
+
+main
