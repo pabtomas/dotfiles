@@ -78,6 +78,7 @@ main ()
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
+  sleep 3
 
   local services
   services="$(docker compose --file "${tmp}/compose.yaml" ps \
