@@ -145,6 +145,22 @@ services:
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
+  ${ZIG_EXPLORER_SERVICE}:
+    build:
+      context: ./${EXPLORER_ID}s/${ZIG_ID}
+      args:
+        - GIT_COMPONENT_IMG=${GIT_COMPONENT_IMG}
+        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
+        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
+    image: ${ZIG_EXPLORER_IMG}
+    container_name: ${ZIG_EXPLORER_HOST}
+    hostname: ${ZIG_EXPLORER_HOST}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
   ${SAFEDEPOSIT_SERVICE}:
     image: ${PASS_COMPONENT_IMG}
     container_name: ${SAFEDEPOSIT_HOST}
@@ -190,6 +206,8 @@ volumes:
     name: ${SSH_VOLUME}
   ${MY_WHALE_FLEET_VOLUME}:
     name: ${MY_WHALE_FLEET_VOLUME}
+  ${SPACEPORN_VOLUME}:
+    name: ${SPACEPORN_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
   ${PROXY_NGX_FS_VOLUME}:

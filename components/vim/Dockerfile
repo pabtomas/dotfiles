@@ -25,3 +25,5 @@ END_OF_RUN
 
 COPY .vimrc /root/
 COPY etc/ /etc/
+
+CMD ["vim", "--version"]

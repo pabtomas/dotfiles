@@ -22,5 +22,4 @@ RUN <<END_OF_RUN
     unset http_proxy https_proxy
 END_OF_RUN
 
-ENTRYPOINT ["zig"]
-CMD ["version"]
+CMD ["zig", "version"]

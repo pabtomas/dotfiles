@@ -16,3 +16,5 @@ RUN <<END_OF_RUN
 END_OF_RUN
 
 COPY etc/ /etc/
+
+CMD ["git", "--version"]

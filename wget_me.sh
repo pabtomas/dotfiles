@@ -33,7 +33,7 @@ main ()
   readonly dist
 
   case "${dist}" in
-  ( 'ubuntu'|'debian' ) sudo apt-get update; sudo apt-get upgrade ;;
+  ( 'ubuntu'|'debian' ) sudo apt-get update -y; sudo apt-get upgrade -y ;;
   ( * ) printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2; return 1 ;;
   esac
 

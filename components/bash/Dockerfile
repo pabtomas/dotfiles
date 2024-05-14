@@ -57,3 +57,5 @@ fi
 TEMPLATING
     unset http_proxy https_proxy
 END_OF_RUN
+
+CMD ["bash", "--version"]
