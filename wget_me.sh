@@ -123,7 +123,7 @@ main ()
   if [ "${runner}" != "${bot}" ]
   then
     source_env_without_docker_host "${tmp}" \
-      'docker compose --file "${tmp}/compose.yaml" attach "${JUMPER_SERVICE}"'
+      "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
 
   wget -q -O "$(cd -- "$(dirname -- "${0}")" &> /dev/null && pwd)/$(basename -- "${0}")" \
