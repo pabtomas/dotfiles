@@ -134,7 +134,7 @@ JUMPER_IMG="$(image "${OWNER_ID}" "${JUMPER_ID}" "${JUMPER_TAG}")"
 PROXY_IMG="$(image "${OWNER_ID}" "${PROXY_ID}" "${PROXY_TAG}")"
 
 ### Runners Images ###########################################################
-SPACEPORN_RUNNER_IMG="$(image "${OWNER_ID}" "${SPACEPORN_RUNNER_ID}:${SPACEPORN_RUNNER_TAG}")"
+SPACEPORN_RUNNER_IMG="$(image "${OWNER_ID}" "${SPACEPORN_RUNNER_ID}" "${SPACEPORN_RUNNER_TAG}")"
 
 ### Explorers Images #########################################################
 SHELL_EXPLORER_IMG="$(image "${OWNER_ID}" "${SHELL_EXPLORER_ID}" "${SHELL_EXPLORER_TAG}")"
