@@ -223,12 +223,13 @@ UNPRIVILEGED_USER='visitor'
 API_URL="https://raw.githubusercontent.com/moby/moby/master/docs/api/v${API_TAG}.yaml"
 FIGLET_FONTS_URL='https://github.com/xero/figlet-fonts'
 NERDTREE_URL='https://github.com/preservim/nerdtree'
+OWNER_URL="https://github.com/${OWNER_ID}"
 POLYGLOT_URL='https://github.com/sheerun/vim-polyglot'
 RAINBOW_URL='https://github.com/luochen1990/rainbow'
-TPM_URL='https://github.com/tmux-plugins/tpm'
-UNDOTREE_URL='https://github.com/mbbill/undotree'
 TIG_COMPLETION_URL='https://raw.githubusercontent.com/jonas/tig/master/contrib/tig-completion.bash'
 TMUX_COMPLETION_URL='https://raw.githubusercontent.com/imomaliev/tmux-bash-completion/master/completions/tmux'
+TPM_URL='https://github.com/tmux-plugins/tpm'
+UNDOTREE_URL='https://github.com/mbbill/undotree'
 ZIG_BUILDS_URL='https://ziglang.org/builds'
 ZIG_COMPLETION_URL='https://raw.githubusercontent.com/ziglang/shell-completions/master/_zig.bash'
 
