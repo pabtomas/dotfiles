@@ -2,14 +2,18 @@
 
 main ()
 {
-  if [ -d ./env.d ]
+  local env_d
+  env_d="$(cd -- "$(dirname -- "${0}")" &> /dev/null && pwd)/env.d"
+  readonly env_d
+
+  if [ -d "${env_d}" ]
   then
     local file
-    for file in ./env.d/*.sh
+    for file in "${env_d}"/*.sh
     do
-      if [ -r "\${file}" ]
+      if [ -r "${file}" ]
       then
-        . "\${file}"
+        . "${file}"
       fi
     done
   fi
