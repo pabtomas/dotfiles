@@ -61,7 +61,6 @@ main ()
   }
 
   harden basename
-  harden cd
   harden cp
   harden diff
   harden dirname
