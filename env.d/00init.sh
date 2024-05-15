@@ -4,7 +4,6 @@ FALSE='0'
 TRUE='1'
 APK_PATHS='/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk'
 COMPOSE_PROJECT_NAME='mywhalefleet'
-OS='alpine'
 UNPRIVILEGED_USER='visitor'
 
 API_PFX='API_ENDPOINT_'

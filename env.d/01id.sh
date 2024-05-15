@@ -1,5 +1,6 @@
 #! /bin/sh
 
+ID 'alpine'
 ID 'bash'
 ID 'collector'
 ID 'component'
@@ -24,6 +25,8 @@ ID 'tmux'
 ID 'vim'
 ID 'workspaces'
 ID 'zig'
+
+OS="${ALPINE_ID}"
 
 id 'OWNER' 'tiawl'
 
