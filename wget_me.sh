@@ -104,10 +104,11 @@ main ()
   printf 'Sleeping ...\n'
   sleep 3
 
-  local failed_services
-  failed_services="$(printf '%s\n' \
-    $(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}') \
-    $(docker compose --file "${tmp}/compose.yaml" config --services) | sort | uniq -u)"
+  local failed_services running_services services
+  running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
+  services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
+  readonly running_services services
+  failed_services="$(printf '%s\n' ${running_services} ${services} | sort | uniq -u)"
   readonly failed_services
 
   if [ -n "${failed_services}" ]
