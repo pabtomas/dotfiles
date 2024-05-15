@@ -68,6 +68,7 @@ main ()
   harden find
   harden mktemp
   harden rm
+  harden tr
   harden sed
   harden sleep
   harden sort
