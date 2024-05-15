@@ -3,7 +3,7 @@
 main ()
 {
   local env_d
-  env_d="$(CDPATH='' cd -- "$(dirname -- "${0}")" &> /dev/null && pwd)/env.d"
+  env_d="$(CDPATH='' cd -- "$(dirname -- "${0}")" &> /dev/null && pwd -P)/env.d"
   readonly env_d
 
   if [ -d "${env_d}" ]
