@@ -22,7 +22,7 @@ explorer_id () { id "$(upper "${1}")$(sfx "${EXPLORER_ID}")" "${EXPLORER_ID}${ID
 
 _img () { eval "$(upper "${1}")$(sfx 'img')='${2}/${3}:${4}'"; }
 intern_img () { _img "${1}" "${OWNER_ID}" "${1}" "${2}"; }
-component_img () { _img "$(printf '%s\n' "${1}" | tr "${ID_SEP}" '_')" "${OWNER_ID}" "${1}" "${2}"; }
+component_img () { _img "${COMPONENT_ID}$(sfx 'id')" "${OWNER_ID}" "${1}" "${2}"; }
 extern_img ()
 {
   _img "${1}" "${2}" "${3}" "${4}"
