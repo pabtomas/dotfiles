@@ -57,12 +57,11 @@ main ()
   cat << __TEMPLATING >> "\${themes_sh}"
 main ()
 {
-  THEMES=( \${themes} )
   ID="\\\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
-  PROMPT_THEME="\\\${THEMES["\\\${ID##*.}"]}"
-  THEME="\\\${THEMES[0]}"
+  PROMPT_THEME="\\\$(printf '%s\n' \${themes} | sed "\\\${ID##*.}q;d" )"
+  THEME="\\\$(printf '%s\n' \${themes} | sed '1q;d' )"
 
-  export THEMES PROMPT_THEME THEME
+  export PROMPT_THEME THEME
 }
 
 main
