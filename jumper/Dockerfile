@@ -70,7 +70,7 @@ __TEMPLATING
 
   for host in \$(grep -v '${HOSTNAME}' '/opt/collector/opt/data/99completion')
   do
-    scp "\${themes_sh}" "\${host}:\${themes_sh}"
+    until scp "\${themes_sh}" "\${host}:\${themes_sh}"; do :; done
   done
 
   exec ${_bash} -l
