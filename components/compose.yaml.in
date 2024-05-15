@@ -24,7 +24,6 @@ services:
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-      no_cache: true
     image: ${BASH_COMPONENT_IMG}
   ${TMUX_SERVICE}:
     depends_on:

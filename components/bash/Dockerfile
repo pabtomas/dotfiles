@@ -19,20 +19,6 @@ RUN <<END_OF_RUN
     apk add --no-cache coreutils bash-completion tree
     mkdir -p "${BASH_ALIASES_PATH}" "${BASH_COMPLETION_PATH}"
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
-    themes="$(yes "$(printf '%s\n' '21' '27' '33' '39' '45' '46' '47' '48' '49' '50' '51' '82' '93' '118' '129' '154' '165' '190' '196' '197' '198' '199' '200' '201' '202' '208' '214' '220' '244' '15' | shuf)" | head -n 256)"
-    cat << TEMPLATING >> /etc/profile.d/10themes.sh
-main ()
-{
-  THEMES=( ${themes} )
-  ID="\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
-  PROMPT_THEME="\${THEMES["\${ID##*.}"]}"
-  THEME="\${THEMES[0]}"
-
-  export THEMES PROMPT_THEME THEME
-}
-
-main
-TEMPLATING
     cat << TEMPLATING >> "$(dirname "${BASH_ALIASES_PATH}")/$(basename -s '.d' "${BASH_ALIASES_PATH}").sh"
 main ()
 {
