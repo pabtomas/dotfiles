@@ -19,4 +19,4 @@ main ()
   fi
 }
 
-main
+main ${@}
