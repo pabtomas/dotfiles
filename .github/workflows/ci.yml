@@ -7,12 +7,28 @@ on:
 
 jobs:
   ci:
+    strategy:
+      matrix:
+        shell:
+          - bash
+          - dash
+          - busybox
+          - yash
+          - zsh
+          - ksh93
+          - mksh
+          - posh
     runs-on: ubuntu-latest
     steps:
       - name: check wget_me.sh
+        env:
+          SH: ${{ matrix.shell }}
         shell: bash
         run: |
+          sudo apt-get update -y
+          sudo apt-get install -y "${SH}"
           script="$(mktemp).sh"
           wget -q -O "${script}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
           chmod 0700 "${script}"
-          sh -x "${script}" --branch "${GITHUB_HEAD_REF}" --runner-is-a-bot 
+          if [[ "${SH}" == 'busybox' ]]; then SH="${SH} sh"; fi
+          ${SH} -x "${script}" --branch "${GITHUB_HEAD_REF}" --runner-is-a-bot 
