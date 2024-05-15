@@ -82,7 +82,7 @@ services:
     hostname: ${CONTROLLER_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-      - ${MY_WHALE_FLEET_VOLUME}:/${MY_WHALE_FLEET_PATH}:ro
+      - ${MYWHALEFLEET_VOLUME}:/${MYWHALEFLEET_PATH}:ro
     networks:
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
@@ -129,7 +129,7 @@ services:
     hostname: ${EDITOR_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-      - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
+      - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
       - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
@@ -140,7 +140,7 @@ services:
     hostname: ${SHELL_EXPLORER_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-      - ${MY_WHALE_FLEET_VOLUME}:${MY_WHALE_FLEET_PATH}:rw
+      - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
@@ -197,8 +197,8 @@ networks:
 volumes:
   ${SSH_VOLUME}:
     name: ${SSH_VOLUME}
-  ${MY_WHALE_FLEET_VOLUME}:
-    name: ${MY_WHALE_FLEET_VOLUME}
+  ${MYWHALEFLEET_VOLUME}:
+    name: ${MYWHALEFLEET_VOLUME}
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:

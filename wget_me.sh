@@ -1,31 +1,81 @@
-#!/bin/sh
-
-source_env ()
-(
-  set -a
-  . "${1}/env.sh"
-  eval "${2}"
-)
-
-source_env_without_docker_host ()
-(
-  . "${1}/env.sh"
-  unset DOCKER_HOST
-  eval "${2}"
-)
-
-trap_me ()
-{
-  docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
-  docker compose --file "${1}/compose.yaml" rm --force || :
-  source_env_without_docker_host "${1}" \
-    'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
-  rm -rf "${1}"
-}
+#! /bin/sh
 
 main ()
 {
+  \command unalias -a
+  \command unset -f command
+  command unset -f unset
+  unset -f set
+
   set -eu
+
+  unset -f local
+  unset -f readonly
+
+  local old_ifs
+  old_ifs="${IFS}"
+  readonly old_ifs
+
+  IFS='
+'
+  for func in $(set)
+  do
+    func="${func#"${func%%[![:space:]]*}"}"
+    func="${func%"${func##*[![:space:]]}"}"
+    case "${func}" in
+    ( *' ()' ) unset -f "${func%' ()'}" ;;
+    esac
+  done
+  IFS="${old_ifs}"
+
+  harden ()
+  {
+    if [ ! -e "$(command -v "${1}")" ]
+    then
+      printf 'This script needs "%s" but can not find it\n' "${1}" >&2
+      return 1
+    fi
+  }
+
+  source_env ()
+  (
+    set -a
+    . "${1}/env.sh"
+    eval "${2}"
+  )
+
+  source_env_without_docker_host ()
+  (
+    . "${1}/env.sh"
+    unset DOCKER_HOST
+    eval "${2}"
+  )
+
+  trap_me ()
+  {
+    docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
+    docker compose --file "${1}/compose.yaml" rm --force || :
+    source_env_without_docker_host "${1}" \
+      'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
+    rm -rf "${1}"
+  }
+
+  harden basename
+  harden cd
+  harden cp
+  harden diff
+  harden dirname
+  harden grep
+  harden find
+  harden mktemp
+  harden pwd
+  harden rm
+  harden sed
+  harden sleep
+  harden sort
+  harden sudo
+  harden uniq
+  harden wget
 
   local branch runner bot
   bot='bot'
@@ -44,15 +94,28 @@ main ()
   runner="${runner:-someone}"
   readonly branch runner
 
+  if [ ! -f /etc/os-release ]
+  then
+    printf 'Can not find /etc/os-release. The OS where this script is running is probably not officialy supported by Docker.\n' >&2
+    return 1
+  fi
+
   if ! command -v docker > /dev/null; then wget -q -O- https://get.docker.com | sudo sh; fi
+
+  harden docker
 
   local dist
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
   readonly dist
 
   case "${dist}" in
-  ( 'ubuntu'|'debian' ) sudo apt-get update -y; sudo apt-get upgrade -y ;;
-  ( * ) printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2; return 1 ;;
+  ( 'ubuntu'|'debian' )
+    harden apt-get
+    sudo apt-get update -y
+    sudo apt-get upgrade -y ;;
+  ( * )
+    printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2
+    return 1 ;;
   esac
 
   local tmp dir_tmp base_tmp repo repo_url
@@ -76,9 +139,11 @@ main ()
     sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
     if command -v systemctl > /dev/null
     then
+      harden systemctl
       sudo systemctl restart docker
     elif command -v service > /dev/null
     then
+      harden service
       sudo service docker restart
     else
       printf 'Can not restart Dockerd: unknown service manager\n' >&2
@@ -97,6 +162,8 @@ main ()
   done
 
   docker network prune --force
+  #source_env_without_docker_host "${tmp}" \
+  #  'for var in $(set | grep =)'
   docker compose --file "${tmp}/components/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate

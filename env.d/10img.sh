@@ -1,0 +1,27 @@
+#! /bin/sh
+
+extern_img "${ALPINE_ID}" 'docker.io' "${ALPINE_ID}" "${ALPINE_TAG}"
+extern_img "${BASH_ID}" 'docker.io' "${BASH_ID}" "${BASH_TAG}"
+extern_img "${DOCKER_ID}" 'docker.io' "${DOCKER_ID}" "${DOCKER_TAG}"
+extern_img "${LINUXSERVER_PROXY_ID}" 'lscr.io/linuxserver' 'socket-proxy' "${LINUXSERVER_PROXY_TAG}"
+OS_IMG="${ALPINE_IMG}"
+OS_IMG_LOCAL="${ALPINE_IMG_LOCAL}"
+
+intern_img "${COLLECTOR_ID}" "${COLLECTOR_TAG}"
+intern_img "${CONTROLLER_ID}" "${CONTROLLER_TAG}"
+intern_img "${JUMPER_ID}" "${JUMPER_TAG}"
+intern_img "${PROXY_ID}" "${PROXY_TAG}"
+
+intern_img "${BASH_COMPONENT_ID}" "${BASH_COMPONENT_TAG}"
+intern_img "${DOCKER_COMPONENT_ID}" "${DOCKER_COMPONENT_TAG}"
+intern_img "${ENTRYPOINT_COMPONENT_ID}" "${ENTRYPOINT_COMPONENT_TAG}"
+intern_img "${GIT_COMPONENT_ID}" "${GIT_COMPONENT_TAG}"
+intern_img "${LINGUIST_COMPONENT_ID}" "${LINGUIST_COMPONENT_TAG}"
+intern_img "${MAN_COMPONENT_ID}" "${MAN_COMPONENT_TAG}"
+intern_img "${PASS_COMPONENT_ID}" "${PASS_COMPONENT_TAG}"
+intern_img "${SHELL_COMPONENT_ID}" "${SHELL_COMPONENT_TAG}"
+intern_img "${SSHD_COMPONENT_ID}" "${SSHD_COMPONENT_TAG}"
+intern_img "${TMUX_COMPONENT_ID}" "${TMUX_COMPONENT_TAG}"
+intern_img "${VIM_COMPONENT_ID}" "${VIM_COMPONENT_TAG}"
+intern_img "${WORKSPACES_COMPONENT_ID}" "${WORKSPACES_COMPONENT_TAG}"
+intern_img "${ZIG_COMPONENT_ID}" "${ZIG_COMPONENT_TAG}"
