@@ -121,16 +121,16 @@ ZIG_COMPONENT_TAG='0.12.0'
 
 ### Extern Images ############################################################
 image () { printf '%s/%s:%s\n' "${1}" "${2}" "${3}"; }
-# into the shell: export http_proxy='https://you.custom.proxy:<port>'
-#ALPINE_IMG='local_alpine'
-#BASH_IMG='local_bash'
-#DOCKER_IMG='local_docker'
-#LINUXSERVER_PROXY_IMG='local_proxy'
 ALPINE_IMG="$(image 'docker.io' 'alpine' "${ALPINE_TAG}")"
 BASH_IMG="$(image 'docker.io' 'bash' "${BASH_TAG}")"
 DOCKER_IMG="$(image 'docker.io' 'docker' "${DOCKER_TAG}")"
 LINUXSERVER_PROXY_IMG="$(image 'lscr.io/linuxserver' 'socket-proxy' "${LINUXSERVER_PROXY_TAG}")"
 OS_IMG="${ALPINE_IMG}"
+ALPINE_IMG_LOCAL="$(image "${OWNER_ID}" 'local_alpine' "${ALPINE_TAG}")"
+BASH_IMG_LOCAL="$(image "${OWNER_ID}" 'local_bash' "${BASH_TAG}")"
+DOCKER_IMG_LOCAL="$(image "${OWNER_ID}" 'local_docker' "${DOCKER_TAG}")"
+LINUXSERVER_PROXY_IMG_LOCAL="$(image "${OWNER_ID}" 'local_proxy' "${LINUXSERVER_PROXY_TAG}")"
+OS_IMG_LOCAL="${ALPINE_IMG_LOCAL}"
 
 ### Intern Images ############################################################
 

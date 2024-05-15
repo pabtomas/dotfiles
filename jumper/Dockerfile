@@ -9,6 +9,7 @@ ARG ENTRYPOINTD_PATH
 ARG HOSTNAME
 ARG OPT_SCRIPTS_PATH
 ARG OPT_SSH_PATH
+ARG NET_PFX
 ARG SSH_ROOT_PATH
 ARG TCP_DOCKER_HOST
 ARG HTTP_PROXY
@@ -47,6 +48,31 @@ TEMPLATING
 main ()
 {
   set -eux
+
+  local themes themes_sh host
+  themes="\$(yes "\$(printf '%s\n' '21' '27' '33' '39' '45' '46' '47' '48' '49' '50' '51' '82' '93' '118' '129' '154' '165' '190' '196' '197' '198' '199' '200' '201' '202' '208' '214' '220' '244' '15' | shuf)" | head -n 256)"
+  themes_sh='/etc/profile.d/10themes.sh'
+  readonly themes themes_sh
+
+  cat << __TEMPLATING >> "\${themes_sh}"
+main ()
+{
+  THEMES=( \${themes} )
+  ID="\\\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
+  PROMPT_THEME="\\\${THEMES["\\\${ID##*.}"]}"
+  THEME="\\\${THEMES[0]}"
+
+  export THEMES PROMPT_THEME THEME
+}
+
+main
+__TEMPLATING
+
+  for host in \$(grep -v '${HOSTNAME}' '/opt/collector/opt/data/99completion')
+  do
+    scp "\${themes_sh}" "\${host}:\${themes_sh}"
+  done
+
   exec ${_bash} -l
 }
 

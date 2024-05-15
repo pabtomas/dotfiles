@@ -20,11 +20,9 @@ services:
         - BASH_IMG=${BASH_IMG}
         - ENTRYPOINT_COMPONENT_IMG=${ENTRYPOINT_COMPONENT_IMG}
         - ENTRYPOINT_PATH=${ENTRYPOINT_PATH}
-        - NET_PFX=${JUMP_AREA_PFX}
         - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-      no_cache: true
     image: ${BASH_COMPONENT_IMG}
   ${TMUX_SERVICE}:
     depends_on:

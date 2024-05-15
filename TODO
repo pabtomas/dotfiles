@@ -9,7 +9,7 @@ TODO:
 - .vimrc + NERDtree: mapping to open/close tree pane
 ?? .vimrc: vim9script
 ?? .tmux.conf: add keybinding to change color theme
-- Add a cache volume to gather for container:
+- Add a cache volume to gather for container (find a way to sync it: git/docker secret/ backup ?):
   - bash_history
   - vim sessions
   - tmux resurrect files
@@ -17,6 +17,7 @@ TODO:
 - find a solution to split templates and Dockerfiles
 - jumper/proxy -> change them into components
 - add permissions for controller
+- logger alias for controller
 - add aliases/remove old directory
 - process:
   O wget the wget_me.sh script

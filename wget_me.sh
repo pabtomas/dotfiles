@@ -16,7 +16,8 @@ source_env_without_docker_host ()
 
 trap_me ()
 {
-  docker compose --file "${1}/compose.yaml" down --timeout 0 || :
+  docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
+  docker compose --file "${1}/compose.yaml" rm --force || :
   source_env_without_docker_host "${1}" \
     'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
   rm -rf "${1}"
@@ -116,9 +117,11 @@ main ()
   fi
 
   docker volume prune --all --force
+  docker image prune --force > /dev/null
+
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
-  docker image prune --force > /dev/null
+
   if [ "${runner}" != "${bot}" ]
   then
     source_env_without_docker_host "${tmp}" \
