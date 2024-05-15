@@ -67,7 +67,6 @@ main ()
   harden grep
   harden find
   harden mktemp
-  harden pwd
   harden rm
   harden sed
   harden sleep
