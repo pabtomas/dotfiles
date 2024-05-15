@@ -39,13 +39,14 @@ main ()
 
   source_env ()
   (
-    set -a
+    set -a -- "${1}"
     . "${1}/env.sh"
     eval "${2}"
   )
 
   source_env_without_docker_host ()
   (
+    set -- "${1}"
     . "${1}/env.sh"
     unset DOCKER_HOST
     eval "${2}"
