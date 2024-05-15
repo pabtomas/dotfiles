@@ -58,9 +58,9 @@ main ()
 main ()
 {
   THEMES=( \${themes} )
-  ID="\\\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
-  PROMPT_THEME="\\\${THEMES["\\\${ID##*.}"]}"
-  THEME="\\\${THEMES[0]}"
+  ID="\\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
+  PROMPT_THEME="\\${THEMES["\\${ID##*.}"]}"
+  THEME="\\${THEMES[0]}"
 
   export THEMES PROMPT_THEME THEME
 }
