@@ -3,7 +3,7 @@ main ()
   PROMPT_COMMAND='
     if git rev-parse --quiet --git-dir > /dev/null 2>&1
     then
-      GIT_BRANCH="(\[\033[01;38;5;93m\]$(git rev-parse --abbrev-ref HEAD)\[\033[m\])"
+      GIT_BRANCH="(\[\033[01;38;5;${PROMPT_THEME}m\]$(git rev-parse --abbrev-ref HEAD)\[\033[m\])"
     else
       GIT_BRANCH=""
     fi
