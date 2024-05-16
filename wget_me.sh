@@ -42,13 +42,6 @@ main ()
     fi
   }
 
-  source_env ()
-  (
-    set -a
-    . "${1}/env.sh"
-    eval "${2}"
-  )
-
   source_env_without_docker_host ()
   (
     . "${1}/env.sh"
@@ -158,10 +151,11 @@ main ()
 
   trap "trap_me '${tmp}'" EXIT
 
-  for template in $(find "${tmp}" -type f -name compose.yaml.in)
-  do
-    source_env "${tmp}" "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
-  done
+  find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
+      set -a
+      . "${1}/env.sh"
+      eval "printf \"%s\\n\" \"$(cat "${1}/${2}")\"" > "${2%.*}"
+    ' sh "${tmp}" {} \;
 
   docker network prune --force
   #source_env_without_docker_host "${tmp}" \
@@ -198,8 +192,8 @@ main ()
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
 
-  wget -q -O "$(cd -- "$(dirname -- "${0}")" &> /dev/null && pwd)/$(basename -- "${0}")" \
+  wget -q -O "$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)/$(basename -- "${0}")" \
     "https://raw.githubusercontent.com/${repo}/${branch}/wget_me.sh"
 }
 
-main ${@}
+main "${@}"

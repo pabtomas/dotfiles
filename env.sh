@@ -16,4 +16,4 @@ main ()
   fi
 }
 
-main ${@}
+main "${@}"
