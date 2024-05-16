@@ -2,10 +2,9 @@
 
 main ()
 {
-  set -- "${1}"/env.d/*.sh
-
   if [ -d "${1}" ]
   then
+    set -- "${1}"/env.d/*.sh
     while [ "${#}" != '0' ]
     do
       if [ -r "${1}" ]
