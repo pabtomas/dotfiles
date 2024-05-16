@@ -9,10 +9,8 @@ main ()
 
   set -eu
 
-  unset -f local
   unset -f readonly
 
-  local old_ifs
   old_ifs="${IFS}"
   readonly old_ifs
 
@@ -76,7 +74,6 @@ main ()
   harden uniq
   harden wget
 
-  local branch runner bot
   bot='bot'
   readonly bot
 
@@ -103,7 +100,6 @@ main ()
 
   harden docker
 
-  local dist
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
   readonly dist
 
@@ -117,7 +113,6 @@ main ()
     return 1 ;;
   esac
 
-  local tmp dir_tmp base_tmp repo repo_url
   tmp="$(mktemp --directory)"
   dir_tmp="$(dirname "${tmp}")"
   base_tmp="$(basename "${tmp}")"
@@ -129,7 +124,6 @@ main ()
   docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
 
-  local daemon_json
   daemon_json='/etc/docker/daemon.json'
   readonly daemon_json
 
@@ -170,10 +164,10 @@ main ()
   printf 'Sleeping ...\n'
   sleep 3
 
-  local failed_services running_services services
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
   readonly running_services services
+
   failed_services="$(printf '%s\n' ${running_services} ${services} | sort | uniq -u)"
   readonly failed_services
 
