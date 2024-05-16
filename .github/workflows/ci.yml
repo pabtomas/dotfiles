@@ -31,6 +31,6 @@ jobs:
           wget -q -O "${script}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
           chmod 0700 "${script}"
           if [[ "${SH}" == 'busybox' ]]; then SH="${SH} sh"
-          elif [[ "${SH}" == 'ksh93u+m' ]]; then SH='ksh93'; fi
+          elif [[ "${SH}" == 'ksh93u+m' ]]; then SH='ksh93'
           elif [[ "${SH}" == 'zsh' ]]; then SH='emulate sh'; fi
           ${SH} -x "${script}" --branch "${GITHUB_HEAD_REF}" --runner-is-a-bot 
