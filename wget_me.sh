@@ -154,7 +154,7 @@ main ()
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
       . "${1}/env.sh"
-      eval "printf \"%s\\n\" \"$(cat "${1}/${2}")\"" > "${2%.*}"
+      eval "printf \"%s\\n\" \"$(cat "${2}")\"" > "${2%.*}"
     ' sh "${tmp}" {} \;
 
   docker network prune --force
