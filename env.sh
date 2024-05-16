@@ -12,6 +12,7 @@ main ()
       then
         . "${1}"
       fi
+      shift
     done
   fi
 }
