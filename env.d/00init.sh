@@ -16,7 +16,7 @@ upper () { printf '%s\n' "${1}" | tr 'a-z' 'A-Z'; }
 sfx () { upper "_${1}"; }
 
 id () { eval "${1}$(sfx 'id')='${2}'"; }
-ID () { id "$(upper "${1}")" "${1}";}
+upper_id () { id "$(upper "${1}")" "${1}"; }
 component_id () { id "$(upper "${1}")$(sfx "${COMPONENT_ID}")" "${COMPONENT_ID}${ID_SEP}${1}"; }
 explorer_id () { id "$(upper "${1}")$(sfx "${EXPLORER_ID}")" "${EXPLORER_ID}${ID_SEP}${1}"; }
 
