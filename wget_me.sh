@@ -53,6 +53,7 @@ main ()
   {
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
+    # shellcheck disable=2016
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     rm -rf "${1}"
@@ -102,6 +103,7 @@ main ()
 
   harden docker
 
+  # shellcheck disable=1091
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
   readonly dist
 
@@ -149,7 +151,7 @@ main ()
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
-  trap "trap_me '${tmp}'" EXIT
+  trap 'trap_me "${tmp}"' EXIT
 
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
@@ -171,18 +173,25 @@ main ()
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
   readonly running_services services
 
+  set -f
+  # shellcheck disable=2086
   failed_services="$(printf '%s\n' ${running_services} ${services} | sort | uniq -u)"
   readonly failed_services
+  set +f
 
   if [ -n "${failed_services}" ]
   then
+    set -f
+    # shellcheck disable=2086
     printf 'This service failed: %s\n' ${failed_services} >&2
+    set +f
     return 1
   fi
 
   docker volume prune --all --force
   docker image prune --force > /dev/null
 
+  # shellcheck disable=2016
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
 

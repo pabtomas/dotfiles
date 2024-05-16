@@ -9,6 +9,7 @@ main ()
     do
       if [ -r "${1}" ]
       then
+        # shellcheck source=env.d
         . "${1}"
       fi
       shift
