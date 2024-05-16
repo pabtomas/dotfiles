@@ -44,4 +44,4 @@ jobs:
     - name: shellcheck
       shell: bash
       run: |
-        shellcheck --shell sh -x ./env.sh ./wget_me.sh
+        shellcheck --severity style --external-sources ./env.sh --external-sources ./env.d/*.sh wget_me.sh
