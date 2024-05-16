@@ -28,13 +28,18 @@ main ()
 
   harden ()
   {
-    if [ ! -e "$(command -v "${1}")" ] && ! which "${1}" > /dev/null
+    if [ ! -e "$(command -v "${1}")" ] && [ ! -e "$(which "${1}")" ]
     then
-      printf 'This script needs "%s" but can not find it\n' "${1}" >&2
-      return 1
+      if which -p "${1}" > /dev/null 2>&1
+      then
+        eval "${2:-"${1}"} () { ${3:+sudo} $(which -p "${1}") \${@}; }"
+      else
+        printf 'This script needs "%s" but can not find it\n' "${1}" >&2
+        return 1
+      fi
+    else
+      eval "${2:-"${1}"} () { ${3:+sudo} $(which "${1}") \${@}; }"
     fi
-
-    eval "${2:-"${1}"} () { ${3:+sudo} $(which "${1}") \${@}; }"
   }
 
   source_env ()
