@@ -34,7 +34,7 @@ main ()
       return 1
     fi
 
-    eval "${2:-"${1}"} () { $(which "${1}") \${@}; }"
+    eval "${2:-"${1}"} () { ${3:+sudo} $(which "${1}") \${@}; }"
   }
 
   source_env ()
@@ -109,9 +109,9 @@ main ()
 
   case "${dist}" in
   ( 'ubuntu'|'debian' )
-    harden apt-get apt_get
-    sudo apt_get update -y
-    sudo apt_get upgrade -y ;;
+    harden apt-get apt_get sudo
+    apt_get update -y
+    apt_get upgrade -y ;;
   ( * )
     printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2
     return 1 ;;
