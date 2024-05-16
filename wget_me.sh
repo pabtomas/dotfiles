@@ -28,11 +28,13 @@ main ()
 
   harden ()
   {
-    if [ ! -e "$(command -v "${1}")" ]
+    if [ ! -e "$(command -v "${1}")" ] && ! which "${1}" > /dev/null
     then
       printf 'This script needs "%s" but can not find it\n' "${1}" >&2
       return 1
     fi
+
+    eval "${1} () { $(which "${1}") \${@}; }"
   }
 
   source_env ()
@@ -57,6 +59,8 @@ main ()
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     rm -rf "${1}"
   }
+
+  harden which
 
   harden basename
   harden cp
