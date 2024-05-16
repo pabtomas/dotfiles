@@ -46,4 +46,4 @@ url () { eval "$(upper "${1}")$(sfx 'url')='${2}'"; }
 
 _volume () { eval "$(upper "${1}")$(sfx 'volume')='${2}'"; }
 volume () { _volume "${1}" "${1}"; }
-delme_volume () { _volume "${1}" "${2}{DELETE_ME_SFX}"; }
+delme_volume () { _volume "${1}" "${2}${DELETE_ME_SFX}"; }
