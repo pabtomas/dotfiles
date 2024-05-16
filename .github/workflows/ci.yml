@@ -15,7 +15,7 @@ jobs:
           - busybox
           - yash
           - zsh
-          - ksh93
+          - ksh93u+m
           - mksh
           - posh
     runs-on: ubuntu-latest
@@ -30,5 +30,6 @@ jobs:
           script="$(mktemp).sh"
           wget -q -O "${script}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
           chmod 0700 "${script}"
-          if [[ "${SH}" == 'busybox' ]]; then SH="${SH} sh"; fi
+          if [[ "${SH}" == 'busybox' ]]; then SH="${SH} sh"
+          elif [[ "${SH}" == 'ksh93u+m' ]]; then SH='ksh93'; fi
           ${SH} -x "${script}" --branch "${GITHUB_HEAD_REF}" --runner-is-a-bot 
