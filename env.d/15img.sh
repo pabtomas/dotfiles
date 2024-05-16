@@ -1,4 +1,7 @@
 #! /bin/sh
+# shellcheck disable=2034,2154
+# SC2034: VAR appears unused => VAR used for templating
+# SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
 extern_img "${ALPINE_ID}" 'docker.io' "${ALPINE_ID}" "${ALPINE_TAG}"
 extern_img "${BASH_ID}" 'docker.io' "${BASH_ID}" "${BASH_TAG}"
