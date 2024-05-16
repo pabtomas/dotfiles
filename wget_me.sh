@@ -28,7 +28,7 @@ main ()
   IFS="${old_ifs}"
 
   harden ()
-  (
+  {
     path="$(command -v "${1}")"
     if [ -e "${path}" ]
     then
@@ -43,7 +43,8 @@ main ()
         return 1
       fi
     fi
-  )
+    unset path
+  }
 
   source_env_without_docker_host ()
   (
