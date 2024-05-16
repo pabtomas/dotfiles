@@ -27,7 +27,7 @@ jobs:
         PKG: ${{ matrix.pkg }}
       shell: bash
       run: |
-        tmp="$(mktemp tmp.XXXXXXXXXX.sh)"
+        tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
         OPTS="-x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot"
         wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
         chmod 0700 "${tmp}"
