@@ -1,33 +1,81 @@
-#!/bin/sh
-
-source_env ()
-(
-  set -a
-  . "${1}/env.sh"
-  eval "${2}"
-)
-
-source_env_without_docker_host ()
-(
-  . "${1}/env.sh"
-  unset DOCKER_HOST
-  eval "${2}"
-)
-
-trap_me ()
-{
-  docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
-  docker compose --file "${1}/compose.yaml" rm --force || :
-  source_env_without_docker_host "${1}" \
-    'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
-  rm -rf "${1}"
-}
+#! /bin/sh
 
 main ()
 {
+  \command unalias -a
+  \command unset -f command
+  command unset -f unset
+  unset -f set
+
   set -eu
 
-  local branch runner bot
+  unset -f readonly
+
+  old_ifs="${IFS}"
+  readonly old_ifs
+
+  IFS='
+'
+  for func in $(set)
+  do
+    func="${func#"${func%%[![:space:]]*}"}"
+    func="${func%"${func##*[![:space:]]}"}"
+    case "${func}" in
+    ( *' ()' ) unset -f "${func%' ()'}" ;;
+    esac
+  done
+  IFS="${old_ifs}"
+
+  harden ()
+  {
+    if [ ! -e "$(command -v "${1}")" ] && [ ! -e "$(which "${1}")" ]
+    then
+      if which -p "${1}" > /dev/null 2>&1
+      then
+        eval "${2:-"${1}"} () { ${3:+sudo} $(which -p "${1}") \${@}; }"
+      else
+        printf 'This script needs "%s" but can not find it\n' "${1}" >&2
+        return 1
+      fi
+    else
+      eval "${2:-"${1}"} () { ${3:+sudo} $(which "${1}") \"\${@}\"; }"
+    fi
+  }
+
+  source_env_without_docker_host ()
+  (
+    . "${1}/env.sh"
+    unset DOCKER_HOST
+    eval "${2}"
+  )
+
+  trap_me ()
+  {
+    docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
+    docker compose --file "${1}/compose.yaml" rm --force || :
+    source_env_without_docker_host "${1}" \
+      'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
+    rm -rf "${1}"
+  }
+
+  harden which
+
+  harden basename
+  harden cp
+  harden diff
+  harden dirname
+  harden grep
+  harden find
+  harden mktemp
+  harden rm
+  harden tr
+  harden sed
+  harden sleep
+  harden sort
+  harden sudo
+  harden uniq
+  harden wget
+
   bot='bot'
   readonly bot
 
@@ -44,18 +92,29 @@ main ()
   runner="${runner:-someone}"
   readonly branch runner
 
+  if [ ! -f /etc/os-release ]
+  then
+    printf 'Can not find /etc/os-release. The OS where this script is running is probably not officialy supported by Docker.\n' >&2
+    return 1
+  fi
+
   if ! command -v docker > /dev/null; then wget -q -O- https://get.docker.com | sudo sh; fi
 
-  local dist
+  harden docker
+
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
   readonly dist
 
   case "${dist}" in
-  ( 'ubuntu'|'debian' ) sudo apt-get update -y; sudo apt-get upgrade -y ;;
-  ( * ) printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2; return 1 ;;
+  ( 'ubuntu'|'debian' )
+    harden apt-get apt_get sudo
+    apt_get update -y
+    apt_get upgrade -y ;;
+  ( * )
+    printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2
+    return 1 ;;
   esac
 
-  local tmp dir_tmp base_tmp repo repo_url
   tmp="$(mktemp --directory)"
   dir_tmp="$(dirname "${tmp}")"
   base_tmp="$(basename "${tmp}")"
@@ -67,7 +126,6 @@ main ()
   docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
 
-  local daemon_json
   daemon_json='/etc/docker/daemon.json'
   readonly daemon_json
 
@@ -76,9 +134,11 @@ main ()
     sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
     if command -v systemctl > /dev/null
     then
+      harden systemctl
       sudo systemctl restart docker
     elif command -v service > /dev/null
     then
+      harden service
       sudo service docker restart
     else
       printf 'Can not restart Dockerd: unknown service manager\n' >&2
@@ -91,12 +151,15 @@ main ()
 
   trap "trap_me '${tmp}'" EXIT
 
-  for template in $(find "${tmp}" -type f -name compose.yaml.in)
-  do
-    source_env "${tmp}" "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
-  done
+  find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
+      set -a
+      . "${1}/env.sh"
+      eval "printf \"%s\\n\" \"$(cat "${2}")\"" > "${2%.*}"
+    ' sh "${tmp}" {} \;
 
   docker network prune --force
+  #source_env_without_docker_host "${tmp}" \
+  #  'for var in $(set | grep =)'
   docker compose --file "${tmp}/components/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
@@ -104,10 +167,10 @@ main ()
   printf 'Sleeping ...\n'
   sleep 3
 
-  local failed_services running_services services
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
   readonly running_services services
+
   failed_services="$(printf '%s\n' ${running_services} ${services} | sort | uniq -u)"
   readonly failed_services
 
@@ -129,8 +192,8 @@ main ()
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
 
-  wget -q -O "$(cd -- "$(dirname -- "${0}")" &> /dev/null && pwd)/$(basename -- "${0}")" \
+  wget -q -O "$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)/$(basename -- "${0}")" \
     "https://raw.githubusercontent.com/${repo}/${branch}/wget_me.sh"
 }
 
-main ${@}
+main "${@}"
