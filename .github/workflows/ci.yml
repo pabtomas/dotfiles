@@ -27,18 +27,17 @@ jobs:
       shell: bash
       run: |
         script="$(mktemp).sh"
-        OPTS="${script} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot"
+        OPTS="-x ${script} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot"
         wget -q -O "${script}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
         chmod 0700 "${script}"
         sudo apt-get update -y
         if [[ -z "$(apt-cache search --names-only "^${SH}$")" ]]
         then
           case "${SH}" in
-          ( 'oksh' ) EXE='ksh' ;;
-          ( 'loksh' ) EXE='ksh' ;;
+          ( 'loksh' ) SH='ksh' ;;
           ( * ) ;;
           esac
-          docker run --rm --volume .:/root alpine:latest sh -c "apk add --no-cache ${SH}; ${EXE} -x /root/${OPTS}"
+          docker run --rm --volume /tmp:/tmp alpine:latest sh -c "apk add --no-cache ${SH}; ${SH} ${OPTS}"
         else
           sudo apt-get install -y "${SH}"
           case "${SH}" in
@@ -48,7 +47,7 @@ jobs:
           ( 'zsh' ) SH="${SH} --emulate sh" ;;
           ( * ) ;;
           esac
-          ${SH} -x ${OPTS}
+          ${SH} ${OPTS}
         fi
   shellcheck:
     runs-on: ubuntu-latest
