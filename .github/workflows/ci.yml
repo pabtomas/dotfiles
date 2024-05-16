@@ -17,6 +17,8 @@ jobs:
         - zsh
         - ksh93u+m
         - mksh
+        - oksh
+        - loksh
     runs-on: ubuntu-latest
     steps:
     - name: check wget_me.sh
@@ -24,19 +26,30 @@ jobs:
         SH: ${{ matrix.shell }}
       shell: bash
       run: |
-        sudo apt-get update -y
-        sudo apt-get install -y "${SH}"
         script="$(mktemp).sh"
+        OPTS="${script} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot"
         wget -q -O "${script}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
         chmod 0700 "${script}"
-        case "${SH}" in
-        ( 'bash' ) SH="${SH} --posix" ;;
-        ( 'busybox' ) SH="${SH} sh" ;;
-        ( 'ksh93u+m' ) SH='ksh93' ;;
-        ( 'zsh' ) SH="${SH} --emulate sh" ;;
-        ( * ) ;;
-        esac
-        ${SH} -x "${script}" --branch "${GITHUB_HEAD_REF}" --runner-is-a-bot 
+        sudo apt-get update -y
+        if [[ -z "$(apt-cache search --names-only "^${SH}$")" ]]
+        then
+          case "${SH}" in
+          ( 'oksh' ) EXE='ksh' ;;
+          ( 'loksh' ) EXE='ksh' ;;
+          ( * ) ;;
+          esac
+          docker run --rm --volume .:/root alpine:latest sh -c "apk add --no-cache ${SH}; ${EXE} -x /root/${OPTS}"
+        else
+          sudo apt-get install -y "${SH}"
+          case "${SH}" in
+          ( 'bash' ) SH="${SH} --posix" ;;
+          ( 'busybox' ) SH="${SH} sh" ;;
+          ( 'ksh93u+m' ) SH='ksh93' ;;
+          ( 'zsh' ) SH="${SH} --emulate sh" ;;
+          ( * ) ;;
+          esac
+          ${SH} -x ${OPTS}
+        fi
   shellcheck:
     runs-on: ubuntu-latest
     steps:
