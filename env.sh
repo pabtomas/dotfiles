@@ -1,20 +1,19 @@
-#!/bin/sh
+#! /bin/sh
 
 main ()
 {
-  env_d="${1}/env.d"
+  set -- "${1}"/env.d/*.sh
 
-  if [ -d "${env_d}" ]
+  if [ -d "${1}" ]
   then
-    for file in "${env_d}"/*.sh
+    while [ "${#}" != '0' ]
     do
-      if [ -r "${file}" ]
+      if [ -r "${1}" ]
       then
-        . "${file}"
+        . "${1}"
       fi
     done
   fi
-  unset file env_d
 }
 
 main ${@}
