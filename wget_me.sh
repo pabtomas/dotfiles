@@ -1,7 +1,7 @@
 #! /bin/sh
 
 main ()
-{
+(
   \command unalias -a
   \command unset -f command
   command unset -f unset
@@ -22,24 +22,28 @@ main ()
     func="${func%"${func##*[![:space:]]}"}"
     case "${func}" in
     ( *' ()' ) unset -f "${func%' ()'}" ;;
+    ( * ) ;;
     esac
   done
   IFS="${old_ifs}"
 
   harden ()
   {
-    if [ ! -e "$(command -v "${1}")" ] && [ ! -e "$(which "${1}")" ]
+    path="$(command -v "${1}")"
+    if [ -e "${path}" ]
     then
-      if which -p "${1}" > /dev/null 2>&1
+      eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
+    else
+      path="$(whence -p "${1}")"
+      if [ -e "${path}" ]
       then
-        eval "${2:-"${1}"} () { ${3:+sudo} $(which -p "${1}") \${@}; }"
+        eval "${2:-"${1}"} () { ${3:+sudo} ${path} \${@}; }"
       else
         printf 'This script needs "%s" but can not find it\n' "${1}" >&2
         return 1
       fi
-    else
-      eval "${2:-"${1}"} () { ${3:+sudo} $(which "${1}") \"\${@}\"; }"
     fi
+    unset path
   }
 
   source_env_without_docker_host ()
@@ -49,16 +53,30 @@ main ()
     eval "${2}"
   )
 
+  # shellcheck disable=2317
+  # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
+  update_me ()
+  (
+    CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
+    pwd="$(pwd)"
+    wget -q -O "${pwd}/$(basename -- "${0}")" \
+      "https://raw.githubusercontent.com/${repo}/${branch}/wget_me.sh"
+  )
+
+  # shellcheck disable=2317
+  # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
   trap_me ()
   {
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
+
+    # shellcheck disable=2016
+    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     rm -rf "${1}"
+    update_me
   }
-
-  harden which
 
   harden basename
   harden cp
@@ -122,7 +140,7 @@ main ()
   repo_url="https://github.com/${repo}.git"
   readonly tmp dir_tmp base_tmp repo repo_url
 
-  git clone --depth 1 --branch "${branch}" ${repo_url} "${tmp}" || \
+  git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}" || \
   docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
 
@@ -149,7 +167,7 @@ main ()
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
-  trap "trap_me '${tmp}'" EXIT
+  trap 'trap_me "${tmp}"' EXIT
 
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
@@ -171,18 +189,28 @@ main ()
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
   readonly running_services services
 
+  set -f
+  # shellcheck disable=2086
+  # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
   failed_services="$(printf '%s\n' ${running_services} ${services} | sort | uniq -u)"
+  set +f
   readonly failed_services
 
   if [ -n "${failed_services}" ]
   then
+    set -f
+    # shellcheck disable=2086
+    # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
     printf 'This service failed: %s\n' ${failed_services} >&2
+    set +f
     return 1
   fi
 
   docker volume prune --all --force
   docker image prune --force > /dev/null
 
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
 
@@ -191,9 +219,6 @@ main ()
     source_env_without_docker_host "${tmp}" \
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
-
-  wget -q -O "$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1 && pwd)/$(basename -- "${0}")" \
-    "https://raw.githubusercontent.com/${repo}/${branch}/wget_me.sh"
-}
+)
 
 main "${@}"

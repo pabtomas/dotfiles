@@ -9,6 +9,8 @@ main ()
     do
       if [ -r "${1}" ]
       then
+        # shellcheck disable=1090
+        # SC1090: ShellCheck can't follow non-constant source => specified in CLI
         . "${1}"
       fi
       shift
