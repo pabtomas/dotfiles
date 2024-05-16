@@ -27,12 +27,13 @@ jobs:
         PKG: ${{ matrix.pkg }}
       shell: bash
       run: |
+        set -eux
         tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
         OPTS="-x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot"
         wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
         chmod 0700 "${tmp}"
         dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get update -y
-        if [[ -z "$(apt-cache search --names-only "^${PKG}$")" ]]
+        if [[ -z "$(apt-cache search --names-only "^${PKG//+/[+]}$")" ]]
         then
           case "${PKG}" in
           ( 'loksh' ) EXE='ksh' ;;
