@@ -207,10 +207,13 @@ main ()
     'local_imgs="$(set | grep "^[^= ]\+${LOCAL_IMG_SFX}=")"
      for local_img in ${local_imgs}
      do
-       target="${local_img%%=*}"
-       src="${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}"
-       eval "if ! docker image inspect \"\${${src}}\" --format=\"Image found\"; then docker pull \"\${${src}}\"; fi"
-       eval "docker tag \"\${${src}}\" \"\${${target}}\""
+       target="$(eval "printf \"%s\n\" \"\${${local_img%%=*}}\"")"
+       src="$(eval "printf \"%s\n\" \"\${${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}}\"")"
+       if ! docker image inspect "${src}" --format="Image found"
+       then
+         docker pull "${src}"
+       fi
+       docker tag "${src}" "${target}"
      done'
 
   docker compose --file "${tmp}/components/compose.yaml" build
