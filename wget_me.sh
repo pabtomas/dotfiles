@@ -38,7 +38,7 @@ main ()
       path="$(whence -p "${1}")"
       if [ -e "${path}" ]
       then
-        eval "${2:-"${1}"} () { ${3:+sudo} ${path} \${@}; }"
+        eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
       else
         printf 'This script needs "%s" but can not find it\n' "${1}" >&2
         return 1
@@ -235,7 +235,7 @@ main ()
   fi
 )
 
-case "${-}" in ( *x* ) DEBUG=true; \command readonly DEBUG ;; ( * )  ;; esac
+case "${-}" in ( *x* ) DEBUG=true ;; ( * ) DEBUG='' ;; esac; \command readonly DEBUG 
 
 main "${@}"
 
