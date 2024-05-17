@@ -1,9 +1,15 @@
 #! /bin/sh
+## workaround to update shell script when executed: https://stackoverflow.com/a/2358432
 {
 
+## Posix shell: no local variables => subshell instead of braces
 main ()
 (
+  ## oksh/loksh: debugtrace does not follow in functions
   if [ -n "${DEBUG:-}" ]; then \command set -x; fi
+
+  ## shell scripting: always consider the worst env when your script is running
+  ## part 1: unalias everything
   \command set -eu
   \command unalias -a
   \command unset -f command
@@ -16,6 +22,9 @@ main ()
 
   IFS='
 '
+
+  ## shell scripting: always consider the worst env when your script is running
+  ## part 2: remove already defined functions
   for func in $(set)
   do
     func="${func#"${func%%[![:space:]]*}"}"
@@ -26,10 +35,20 @@ main ()
     esac
   done
   IFS="${old_ifs}"
+  unset func
 
+  ## cleanup done: now it is time to define needed functions
+
+  ## zsh has a which builtin. ksh93u+m has a sleep builtin.
+  ## this is a simple way to standardize external tools usage whatever the shell used to run this script:
+  ## 1) ignore shell builtins with the specified name
+  ## 2) fail if no external tool exists with the specified name
+  ## 3) wrap the external tool with the specified name
   harden ()
   {
+    ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
+
     path="$(command -v "${1}")"
     if [ -e "${path}" ]
     then
@@ -47,19 +66,27 @@ main ()
     unset path
   }
 
+  ## Posix shell: no local variables => subshell instead of braces
+  ## unset DOCKET_HOST after sourcing variables needed in templated to avoid conflicts with docker client
   source_env_without_docker_host ()
   (
+    ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
+
     . "${1}/env.sh"
     unset DOCKER_HOST
     eval "${2}"
   )
 
+  ## Posix shell: no local variables => subshell instead of braces
+  ## Update the script after execution
   # shellcheck disable=2317
   # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
   update_me ()
   (
+    ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
+
     CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
     pwd="$(pwd)"
     wget -q -O "${pwd}/$(basename -- "${0}")" \
@@ -70,7 +97,9 @@ main ()
   # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
   trap_me ()
   {
+    ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
+
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
@@ -82,6 +111,7 @@ main ()
     update_me "${2}/${3}"
   }
 
+  ## Check external tools before going further
   harden basename
   harden cp
   harden diff
@@ -103,6 +133,7 @@ main ()
   bot='bot'
   readonly bot
 
+  ## parse options
   while [ "${#}" != '0' ]
   do
     case "${1}" in
@@ -112,23 +143,28 @@ main ()
     esac
   done
 
+  ## options fallback
   branch="${branch:-trunk}"
   runner="${runner:-someone}"
   readonly branch runner
 
   if [ ! -f /etc/os-release ]
   then
+    ## get_distribution () comment into https://get.docker.com/ script
     printf 'Can not find /etc/os-release. The OS where this script is running is probably not officialy supported by Docker.\n' >&2
     return 1
   fi
 
+  # install docker
   if ! command -v docker > /dev/null; then wget -q -O- https://get.docker.com | sudo sh; fi
 
+  # check docker installation
   harden docker
 
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
   readonly dist
 
+  # update docker to the last version depending of the OS
   case "${dist}" in
   ( 'ubuntu'|'debian' )
     harden apt-get apt_get sudo
@@ -154,9 +190,21 @@ main ()
   docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
 
+  local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
+  readonly local_img_sfx
+
+  ## shell scripting: always consider the worst env when your script is running
+  ## part 3: make the script fail if it can not unset readonly env variables using the naming convention
+  for var in $(set | grep "^[^= ]\+${local_img_sfx}=")
+  do
+    unset "${var%%=*}"
+  done
+  unset var
+
   daemon_json='/etc/docker/daemon.json'
   readonly daemon_json
 
+  ## configure and restart docker daemon only if not running on sibling container
   if pidof dockerd
   then
     if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
@@ -178,11 +226,13 @@ main ()
     fi
   fi
 
+  ## needed for proxy templating: which API version is used by the docker daemon ?
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
+  ## generate templated files
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
       . "${1}/env.sh"
@@ -190,12 +240,29 @@ main ()
     ' sh "${tmp}" {} \;
 
   docker network prune --force
-  #source_env_without_docker_host "${tmp}" \
-  #  'for var in $(set | grep =)'
+
+  ## use local images if already downloaded: https://stackoverflow.com/a/70483395
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+  source_env_without_docker_host "${tmp}" \
+    'local_imgs="$(set | grep "^[^= ]\+${LOCAL_IMG_SFX}=")"
+     for local_img in ${local_imgs}
+     do
+       target="$(eval "printf \"%s\n\" \"\${${local_img%%=*}}\"")"
+       src="$(eval "printf \"%s\n\" \"\${${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}}\"")"
+       if ! docker image inspect "${src}" --format="Image found"
+       then
+         docker pull "${src}"
+       fi
+       docker tag "${src}" "${target}"
+     done'
+
   docker compose --file "${tmp}/components/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
+
+  ## let a short time before checking services status
   printf 'Sleeping ...\n'
   sleep 3
 
@@ -210,12 +277,13 @@ main ()
   set +f
   readonly failed_services
 
+  ## make the script fail if a service is not running
   if [ -n "${failed_services}" ]
   then
     set -f
     # shellcheck disable=2086
     # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
-    printf 'This service failed: %s\n' ${failed_services} >&2
+    printf 'These services failed: %s\n' ${failed_services} >&2
     set +f
     return 1
   fi
@@ -223,11 +291,13 @@ main ()
   docker volume prune --all --force
   docker image prune --force > /dev/null
 
+  ## Output the docker API used by the docker daemon
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env_without_docker_host "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
 
+  ## Attach to the workspace
   if [ "${runner}" != "${bot}" ]
   then
     source_env_without_docker_host "${tmp}" \
@@ -235,9 +305,11 @@ main ()
   fi
 )
 
-case "${-}" in ( *x* ) DEBUG=true ;; ( * ) DEBUG='' ;; esac; \command readonly DEBUG 
+## oksh/loksh: debugtrace does not follow in functions
+case "${-}" in ( *x* ) DEBUG='true' ;; ( * ) DEBUG='' ;; esac; \command readonly DEBUG 
 
 main "${@}"
 
+## workaround to update shell script when executed: https://stackoverflow.com/a/2358432
 exit
 }

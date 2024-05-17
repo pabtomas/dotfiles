@@ -3,14 +3,14 @@
 # SC2034: VAR appears unused => VAR used for templating
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
-host "${COLLECTOR_ID}"
-host "${CONTROLLER_ID}"
-host "${EDITOR_ID}"
-host "${JUMPER_ID}"
-host "${MAN_ID}"
-host "${PROXY_ID}"
-host "${SAFEDEPOSIT_ID}"
-host "${SCHOLAR_ID}"
+_host "${COLLECTOR_ID}"
+_host "${CONTROLLER_ID}"
+_host "${EDITOR_ID}"
+_host "${JUMPER_ID}"
+_host "${MAN_ID}"
+_host "${PROXY_ID}"
+_host "${SAFEDEPOSIT_ID}"
+_host "${SCHOLAR_ID}"
 
-explorer_host "${SHELL_ID}"
-explorer_host "${ZIG_ID}"
+_explorer_host "${SHELL_ID}"
+_explorer_host "${ZIG_ID}"
