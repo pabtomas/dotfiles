@@ -6,19 +6,43 @@ on:
       - trunk
 
 jobs:
-  wget_me:
+  wget_me.sh-alpine:
+    strategy:
+      matrix:
+        pkg:
+        - busybox
+        - oksh
+        - loksh
+    runs-on: ubuntu-latest
+    container:
+      image: docker/alpine:latest
+    steps:
+    - name: check wget_me.sh
+      env:
+        PKG: ${{ matrix.pkg }}
+      shell: bash
+      run: |
+        set -eux
+        tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
+        wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
+        chmod 0700 "${tmp}"
+        apk add --no-cache coreutils sudo git
+        case "${PKG}" in
+        ( 'busybox' ) EXE="${PKG} sh" ;;
+        ( 'loksh' ) apk add --no-cache "${PKG}"; EXE='ksh' ;;
+        ( * ) apk add --no-cache "${PKG}"; EXE="${PKG}" ;;
+        esac
+        ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
+  wget_me.sh-ubuntu:
     strategy:
       matrix:
         pkg:
         - bash
         - dash
-        - busybox
         - yash
         - zsh
         - ksh93u+m
         - mksh
-        - oksh
-        - loksh
     runs-on: ubuntu-latest
     steps:
     - name: check wget_me.sh
@@ -28,30 +52,17 @@ jobs:
       run: |
         set -eux
         tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
-        OPTS="-x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot"
         wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
         chmod 0700 "${tmp}"
         dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get update -y
-        if [[ -z "$(apt-cache search --names-only "^${PKG//+/[+]}$")" ]]
-        then
-          case "${PKG}" in
-          ( 'loksh' ) EXE='ksh' ;;
-          ( * ) EXE="${PKG}" ;;
-          esac
-          docker run --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-                     --volume "${tmp}:${tmp}:rw" --rm docker:dind \
-                     sh -c "apk add --no-cache coreutils sudo git ${PKG}; exec ${EXE} ${OPTS}"
-        else
-          dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}"
-          case "${PKG}" in
-          ( 'bash' ) EXE="${PKG} --posix" ;;
-          ( 'busybox' ) EXE="${PKG} sh" ;;
-          ( 'ksh93u+m' ) EXE='ksh93' ;;
-          ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
-          ( * ) EXE="${PKG}" ;;
-          esac
-          ${EXE} ${OPTS}
-        fi
+        dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}"
+        case "${PKG}" in
+        ( 'bash' ) EXE="${PKG} --posix" ;;
+        ( 'ksh93u+m' ) EXE='ksh93' ;;
+        ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
+        ( * ) EXE="${PKG}" ;;
+        esac
+        ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
   shellcheck:
     runs-on: ubuntu-latest
     steps:
