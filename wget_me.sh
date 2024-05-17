@@ -1,4 +1,5 @@
 #! /bin/sh
+{
 
 main ()
 (
@@ -237,3 +238,6 @@ main ()
 case "${-}" in ( *x* ) DEBUG=true; \command readonly DEBUG ;; ( * )  ;; esac
 
 main "${@}"
+
+exit
+}
