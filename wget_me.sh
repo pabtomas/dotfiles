@@ -1,14 +1,13 @@
 #! /bin/sh
 
 main ()
-(  
+(
+  if [ -n "${DEBUG:-}" ]; then \command set -x; fi
+  \command set -eu
   \command unalias -a
   \command unset -f command
   command unset -f unset
   unset -f set
-
-  set -eu
-
   unset -f readonly
 
   old_ifs="${IFS}"
@@ -29,6 +28,7 @@ main ()
 
   harden ()
   {
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     path="$(command -v "${1}")"
     if [ -e "${path}" ]
     then
@@ -48,6 +48,7 @@ main ()
 
   source_env_without_docker_host ()
   (
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     . "${1}/env.sh"
     unset DOCKER_HOST
     eval "${2}"
@@ -57,6 +58,7 @@ main ()
   # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
   update_me ()
   (
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
     pwd="$(pwd)"
     wget -q -O "${pwd}/$(basename -- "${0}")" \
@@ -67,6 +69,7 @@ main ()
   # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
   trap_me ()
   {
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
@@ -231,20 +234,6 @@ main ()
   fi
 )
 
-case "${-}" in
-( *x* )
-  # shellcheck disable=3044
-  # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
-  if \command typeset -ft > /dev/null 2>&1
-  then
-    \command set -f
-    # shellcheck disable=3044,2046
-    # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
-    # SC2046: Quote this to prevent word splitting => work splitting needed here
-    \command typeset -ft $(\command typeset +f)
-    \command set +f
-  fi ;;
-( * ) ;;
-esac
+case "${-}" in ( *x* ) DEBUG=true; \command readonly DEBUG ;; ( * )  ;; esac
 
 main "${@}"
