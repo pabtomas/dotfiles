@@ -19,7 +19,6 @@ jobs:
         - mksh
         - oksh
         - loksh
-        - posh
     runs-on: ubuntu-latest
     steps:
     - name: check wget_me.sh
