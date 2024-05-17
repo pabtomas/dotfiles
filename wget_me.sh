@@ -209,6 +209,7 @@ main ()
      do
        target="${local_img%%=*}"
        src="${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}"
+       eval "if ! docker image inspect \"\${${src}}\"; then docker pull \"\${${src}}\"; fi"
        eval "docker tag \"\${${src}}\" \"\${${target}}\""
      done'
 
