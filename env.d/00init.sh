@@ -29,14 +29,33 @@ sfx ()
   eval "${1}${SFX}='_${1}'"
 }
 
+sfx 'host'
 sfx 'id'
 sfx 'img'
-sfx 'host'
 sfx 'path'
 sfx 'service'
 sfx 'tag'
 sfx 'url'
 sfx 'volume'
+
+_host ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
+}
+
+host ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  _host "${1}" "${1}"
+}
+
+explorer_host ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${EXPLORER_HOST_SFX}" _host "${1}" "${EXPLORER_ID}${HOST_SEP}${1}"
+  unset SFX_OVERRIDE
+}
 
 _id ()
 {
@@ -87,26 +106,7 @@ extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   _img "${1}" "${2}" "${3}" "${4}"
-  SFX_OVERRIDE="${LOCAL_IMG_SFX}" _img "${1}" "${OWNER_ID}" "local/${3}" "${4}"
-  unset SFX_OVERRIDE
-}
-
-_host ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
-}
-
-host ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  _host "${1}" "${1}"
-}
-
-explorer_host ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${EXPLORER_HOST_SFX}" _host "${1}" "${EXPLORER_ID}${HOST_SEP}${1}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" _img "${1}" "${OWNER_ID}" "${LOCAL_ID}/${3}" "${4}"
   unset SFX_OVERRIDE
 }
 

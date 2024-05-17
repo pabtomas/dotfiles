@@ -26,6 +26,7 @@ main ()
     esac
   done
   IFS="${old_ifs}"
+  unset func
 
   harden ()
   {
@@ -181,11 +182,14 @@ main ()
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
-  #(
-  #  set -a
-  #  . "${tmp}/env.d/00init.sh"
-  #  for var in $(set | grep "${}=")
-  #)
+  local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
+  readonly local_img_sfx
+
+  for var in $(set | grep "^${local_img_sfx}='")
+  do
+    unset "${var%%=*}"
+  done
+  unset var
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
@@ -196,7 +200,16 @@ main ()
     ' sh "${tmp}" {} \;
 
   docker network prune --force
-  # TODO
+
+  source_env_without_docker_host "${tmp}" \
+    'for local_img in $(set | grep "^${LOCAL_IMG_SFX}='"'"'")
+     do
+       target="${local_img%%=*}"
+       src="${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}"
+       tag="${local_img%%"${LOCAL_IMG_SFX}"=*}${TAG_SFX}"
+       eval "docker tag \"\${${src}}:\${${tag}}\" \"\${${target}}:\${${tag}}\""
+     done'
+
   docker compose --file "${tmp}/components/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
