@@ -60,7 +60,7 @@ main ()
     CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
     pwd="$(pwd)"
     wget -q -O "${pwd}/$(basename -- "${0}")" \
-      "https://raw.githubusercontent.com/${repo}/${branch}/wget_me.sh"
+      "https://raw.githubusercontent.com/${1}/wget_me.sh"
   )
 
   # shellcheck disable=2317
@@ -75,7 +75,7 @@ main ()
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     rm -rf "${1}"
-    update_me
+    update_me "${2}/${3}"
   }
 
   harden basename
@@ -177,7 +177,7 @@ main ()
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
-  trap 'trap_me "${tmp}"' EXIT
+  trap 'trap_me "${tmp}" "${repo_url}" "${branch}"' EXIT
 
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
