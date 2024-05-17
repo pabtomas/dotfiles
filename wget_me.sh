@@ -220,7 +220,7 @@ main ()
   readonly local_img_sfx
 
   ## shell scripting: always consider the worst env when your script is running
-  ## part 3: fail if the script can not unset env variables using the naming convention
+  ## part 3: make the script fail if it can not unset readonly env variables using the naming convention
   for var in $(set | grep "^[^= ]\+${local_img_sfx}=")
   do
     unset "${var%%=*}"
