@@ -235,7 +235,7 @@ main ()
   fi
 )
 
-case "${-}" in ( *x* ) DEBUG=true; \command readonly DEBUG ;; ( * )  ;; esac
+case "${-}" in ( *x* ) DEBUG=true ;; ( * ) DEBUG='' ;; esac; \command readonly DEBUG 
 
 main "${@}"
 
