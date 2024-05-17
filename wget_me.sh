@@ -128,6 +128,10 @@ main ()
     harden apt-get apt_get sudo
     apt_get update -y
     apt_get upgrade -y ;;
+  ( 'alpine' )
+    harden apk apk sudo
+    apk update
+    apk upgrade ;;
   ( * )
     printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2
     return 1 ;;
