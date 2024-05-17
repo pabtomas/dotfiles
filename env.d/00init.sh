@@ -14,6 +14,7 @@ ID_SEP='/'
 HOST_SEP='.'
 SERVICE_SEP='.'
 DELETE_ME_SFX='-DELME'
+SFX='_SFX'
 
 upper ()
 {
@@ -24,37 +25,47 @@ upper ()
 sfx ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  upper "_${1}"
+  set -- "$(upper "${1}")"
+  eval "${1}${SFX}='_${1}'"
+}
+
+sfx 'id'
+sfx 'img'
+sfx 'host'
+sfx 'path'
+sfx 'service'
+sfx 'tag'
+sfx 'url'
+sfx 'volume'
+
+_id ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${ID_SFX}"}='${2}'"
 }
 
 id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "${1}$(sfx 'id' || :)='${2}'"
-}
-
-upper_id ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  id "$(upper "${1}" || :)" "${1}"
+  _id "${1}" "${1}"
 }
 
 component_id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  id "$(upper "${1}" || :)$(sfx "${COMPONENT_ID}" || :)" "${COMPONENT_ID}${ID_SEP}${1}"
+  SFX_OVERRIDE="${COMPONENT_ID_SFX}" _id "${1}" "${COMPONENT_ID}${ID_SEP}${1}"
 }
 
 explorer_id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  id "$(upper "${1}" || :)$(sfx "${EXPLORER_ID}" || :)" "${EXPLORER_ID}${ID_SEP}${1}"
+  SFX_OVERRIDE="${EXPLORER_ID_SFX}" _id "${1}" "${EXPLORER_ID}${ID_SEP}${1}"
 }
 
 _img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)$(sfx 'img' || :)='${2}/${3}:${4}'"
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}/${3}:${4}'"
 }
 
 intern_img ()
@@ -66,20 +77,20 @@ intern_img ()
 component_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  _img "${1}$(sfx "${COMPONENT_ID}" || :)" "${OWNER_ID}" "${1}" "${2}"
+  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" _img "${1}" "${OWNER_ID}" "${1}" "${2}"
 }
 
 extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   _img "${1}" "${2}" "${3}" "${4}"
-  _img "${1}$(sfx 'local' || :)" "${OWNER_ID}" "local/${3}" "${4}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" _img "${1}" "${OWNER_ID}" "local/${3}" "${4}"
 }
 
 _host ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)$(sfx 'host' || :)='${2}'"
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
 }
 
 host ()
@@ -91,19 +102,19 @@ host ()
 explorer_host ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  _host "$(upper "${1}" || :)$(sfx "${EXPLORER_ID}" || :)" "${EXPLORER_ID}${HOST_SEP}${1}"
+  SFX_OVERRIDE="${EXPLORER_HOST_SFX}" _host "${1}" "${EXPLORER_ID}${HOST_SEP}${1}"
 }
 
 path ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)$(sfx 'path' || :)='${2}'"
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${PATH_SFX}"}='${2}'"
 }
 
 _service ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)$(sfx 'service' || :)='${2}'"
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${SERVICE_SFX}"}='${2}'"
 }
 
 service ()
@@ -115,31 +126,31 @@ service ()
 explorer_service ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  _service "$(upper "${1}" || :)$(sfx "${EXPLORER_ID}" || :)" "${EXPLORER_ID}${SERVICE_SEP}${1}"
+  SFX_OVERRIDE="${EXPLORER_SERVICE_SFX}" _service "${1}" "${EXPLORER_ID}${SERVICE_SEP}${1}"
 }
 
 tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)$(sfx 'tag' || :)='${2}'"
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
 }
 
 component_tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  tag "${1}$(sfx "${COMPONENT_ID}" || :)" "${2}"
+  SFX_OVERRIDE="${TAG_COMPONENT_SFX}" tag "${1}" "${2}"
 }
 
 url ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)$(sfx 'url' || :)='${2}'"
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${URL_SFX}"}='${2}'"
 }
 
 _volume ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(upper "${1}" || :)$(sfx 'volume' || :)='${2}'"
+  eval "$(upper "${1}" || :)${SFX_OVERRIDE:-"${VOLUME_SFX}"}='${2}'"
 }
 
 volume ()

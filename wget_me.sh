@@ -181,6 +181,12 @@ main ()
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
+  #(
+  #  set -a
+  #  . "${tmp}/env.d/00init.sh"
+  #  for var in $(set | grep "${}=")
+  #)
+
   trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
@@ -190,8 +196,7 @@ main ()
     ' sh "${tmp}" {} \;
 
   docker network prune --force
-  #source_env_without_docker_host "${tmp}" \
-  #  'for var in $(set | grep =)'
+  # TODO
   docker compose --file "${tmp}/components/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
