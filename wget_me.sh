@@ -155,13 +155,16 @@ main ()
     return 1
   fi
 
+  # install docker
   if ! command -v docker > /dev/null; then wget -q -O- https://get.docker.com | sudo sh; fi
 
+  # check docker installation
   harden docker
 
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
   readonly dist
 
+  # update docker to the last version depending of the OS
   case "${dist}" in
   ( 'ubuntu'|'debian' )
     harden apt-get apt_get sudo
