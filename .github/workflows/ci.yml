@@ -19,7 +19,7 @@ jobs:
     - name: check wget_me.sh
       env:
         PKG: ${{ matrix.pkg }}
-      shell: bash
+      shell: sh
       run: |
         set -eux
         tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
