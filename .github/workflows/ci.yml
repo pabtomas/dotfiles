@@ -6,7 +6,7 @@ on:
       - trunk
 
 jobs:
-  wget_me.sh-alpine:
+  wget_me-alpine:
     strategy:
       matrix:
         pkg:
@@ -33,7 +33,7 @@ jobs:
         ( * ) apk add --no-cache "${PKG}"; EXE="${PKG}" ;;
         esac
         ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
-  wget_me.sh-ubuntu:
+  wget_me-ubuntu:
     strategy:
       matrix:
         pkg:
