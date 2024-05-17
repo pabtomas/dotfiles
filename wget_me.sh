@@ -86,6 +86,7 @@ main ()
   harden find
   harden mkdir
   harden mktemp
+  harden pidof
   harden rm
   harden tr
   harden sed
@@ -152,24 +153,27 @@ main ()
   daemon_json='/etc/docker/daemon.json'
   readonly daemon_json
 
-  if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
+  if pidof dockerd
   then
-    sudo mkdir -p "$(dirname "${daemon_json}")"
-    sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
-    if command -v systemctl > /dev/null
+    if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
     then
-      harden systemctl
-      sudo systemctl restart docker
-    elif command -v service > /dev/null
-    then
-      harden service
-      sudo service docker restart
-    else
-      printf 'Can not restart Dockerd: unknown service manager\n' >&2
-      return 1
+      sudo mkdir -p "$(dirname "${daemon_json}")"
+      sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
+      if command -v systemctl > /dev/null
+      then
+        harden systemctl
+        sudo systemctl restart docker
+      elif command -v service > /dev/null
+      then
+        harden service
+        sudo service docker restart
+      else
+        printf 'Can not restart Dockerd: unknown service manager\n' >&2
+        return 1
+      fi
     fi
   fi
-
+  
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
