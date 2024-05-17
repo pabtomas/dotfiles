@@ -177,7 +177,7 @@ main ()
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
-  trap 'trap_me "${tmp}" "${repo_url}" "${branch}"' EXIT
+  trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
