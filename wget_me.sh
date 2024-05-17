@@ -4,7 +4,7 @@ main ()
 (
   if [ -n "${DEBUG:-}" ]; then \command set -x; fi
   \command set -eu
-  \command unalias -a
+  \command unalias -a || :
   \command unset -f command
   command unset -f unset
   unset -f set
