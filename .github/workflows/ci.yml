@@ -39,7 +39,7 @@ jobs:
           ( * ) EXE="${PKG}" ;;
           esac
           docker run --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-                     --volume "${tmp}:${tmp}:ro" --rm docker:dind \
+                     --volume "${tmp}:${tmp}:rw" --rm docker:dind \
                      sh -c "apk add --no-cache coreutils sudo git ${PKG}; exec ${EXE} ${OPTS}"
         else
           dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}"
