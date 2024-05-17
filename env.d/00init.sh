@@ -138,7 +138,7 @@ tag ()
 component_tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${TAG_COMPONENT_SFX}" tag "${1}" "${2}"
+  SFX_OVERRIDE="${COMPONENT_TAG_SFX}" tag "${1}" "${2}"
 }
 
 url ()
