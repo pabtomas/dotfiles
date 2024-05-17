@@ -14,9 +14,10 @@ jobs:
         - oksh
         - loksh
     runs-on: ubuntu-latest
-    container: docker:dind
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+    container:
+      image: docker:dind
+      volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
     - name: check wget_me.sh
       env:
