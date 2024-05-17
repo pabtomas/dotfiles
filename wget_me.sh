@@ -209,8 +209,7 @@ main ()
      do
        target="${local_img%%=*}"
        src="${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}"
-       tag="${local_img%%"${LOCAL_IMG_SFX}"=*}${TAG_SFX}"
-       eval "docker tag \"\${${src}}:\${${tag}}\" \"\${${target}}:\${${tag}}\""
+       eval "docker tag \"\${${src}}\" \"\${${target}}\""
      done'
 
   docker compose --file "${tmp}/components/compose.yaml" build
