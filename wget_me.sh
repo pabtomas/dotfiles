@@ -185,7 +185,7 @@ main ()
   local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
   readonly local_img_sfx
 
-  for var in $(set | grep "^[^= ]\+${local_img_sfx}='")
+  for var in $(set | grep "^[^= ]\+${local_img_sfx}=")
   do
     unset "${var%%=*}"
   done
@@ -204,7 +204,7 @@ main ()
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env_without_docker_host "${tmp}" \
-    'local_imgs="$(set | grep "^[^= ]\+${LOCAL_IMG_SFX}='"'"'")"
+    'local_imgs="$(set | grep "^[^= ]\+${LOCAL_IMG_SFX}=")"
      for local_img in ${local_imgs}
      do
        target="${local_img%%=*}"
