@@ -3,13 +3,14 @@
 # SC2034: VAR appears unused => VAR used for templating
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
-volume "${COMPOSE_PROJECT_NAME}"
-volume "${SPACEPORN_ID}"
-volume "${SAFEDEPOSIT_ID}"
-delme_volume 'proxy_ngx_fs' "${PROXY_ID}-etc-nginx-fs"
-delme_volume 'proxy_scripts_fs' "${PROXY_ID}-opt-scripts-fs"
-delme_volume 'collector_var_log' "${COLLECTOR_ID}-var-log-fs"
-delme_volume 'collector_etc_crontabs' "${COLLECTOR_ID}-etc-crontabs-fs"
-delme_volume 'collector_opt_data' "${COLLECTOR_ID}-opt-data-fs"
-delme_volume 'collector_opt_scripts' "${COLLECTOR_ID}-opt-scripts-fs"
-delme_volume 'ssh' 'shared-ssh'
+_volume "${COMPOSE_PROJECT_NAME}"
+_volume "${SPACEPORN_ID}"
+_volume "${SAFEDEPOSIT_ID}"
+
+_delme_volume 'proxy_ngx_fs' "${PROXY_ID}-etc-nginx-fs"
+_delme_volume 'proxy_scripts_fs' "${PROXY_ID}-opt-scripts-fs"
+_delme_volume 'collector_var_log' "${COLLECTOR_ID}-var-log-fs"
+_delme_volume 'collector_etc_crontabs' "${COLLECTOR_ID}-etc-crontabs-fs"
+_delme_volume 'collector_opt_data' "${COLLECTOR_ID}-opt-data-fs"
+_delme_volume 'collector_opt_scripts' "${COLLECTOR_ID}-opt-scripts-fs"
+_delme_volume 'ssh' 'shared-ssh'

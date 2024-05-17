@@ -201,6 +201,8 @@ main ()
 
   docker network prune --force
 
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env_without_docker_host "${tmp}" \
     'for local_img in $(set | grep "^${LOCAL_IMG_SFX}='"'"'")
      do
