@@ -34,6 +34,14 @@ OS="${ALPINE_ID}"
 
 _id 'owner' 'tiawl'
 
+sfx "${COMPONENT_ID}${ID_SFX}"
+sfx "${EXPLORER_ID}${ID_SFX}"
+sfx "${COMPONENT_ID}${IMG_SFX}"
+sfx "${LOCAL_ID}${IMG_SFX}"
+sfx "${EXPLORER_ID}${HOST_SFX}"
+sfx "${EXPLORER_ID}${SERVICE_SFX}"
+sfx "${COMPONENT_ID}${TAG_SFX}"
+
 component_id "${BASH_ID}"
 component_id "${DOCKER_ID}"
 component_id "${ENTRYPOINT_ID}"
