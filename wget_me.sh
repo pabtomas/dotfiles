@@ -1,4 +1,5 @@
 #! /bin/sh
+{
 
 main ()
 (
@@ -61,11 +62,8 @@ main ()
     if [ -n "${DEBUG:-}" ]; then set -x; fi
     CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
     pwd="$(pwd)"
-    {
-      wget -q -O "${pwd}/$(basename -- "${0}")" \
-        "https://raw.githubusercontent.com/${1}/wget_me.sh"
-      exit
-    }
+    wget -q -O "${pwd}/$(basename -- "${0}")" \
+      "https://raw.githubusercontent.com/${1}/wget_me.sh"
   )
 
   # shellcheck disable=2317
@@ -240,3 +238,6 @@ main ()
 case "${-}" in ( *x* ) DEBUG=true; \command readonly DEBUG ;; ( * )  ;; esac
 
 main "${@}"
+
+exit
+}
