@@ -226,7 +226,7 @@ main ()
     fi
   fi
 
-  ## needed for proxy templating: which API version is use by the docker daemon ?
+  ## needed for proxy templating: which API version is used by the docker daemon ?
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
