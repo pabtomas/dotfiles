@@ -2,6 +2,22 @@
 
 main ()
 (
+  case "${-}" in
+  ( *x* )
+    # shellcheck disable=3044
+    # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
+    if \command typeset -ft > /dev/null 2>&1
+    then
+      \command set -f
+      # shellcheck disable=3044,2046
+      # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
+      # SC2046: Quote this to prevent word splitting => work splitting needed here
+      \command typeset -ft $(\command typeset +f)
+      \command set +f
+    fi ;;
+  ( * ) ;;
+  esac
+  
   \command unalias -a
   \command unset -f command
   command unset -f unset
@@ -230,21 +246,5 @@ main ()
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
 )
-
-case "${-}" in
-( *x* )
-  # shellcheck disable=3044
-  # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
-  if \command typeset -ft > /dev/null 2>&1
-  then
-    \command set -f
-    # shellcheck disable=3044,2046
-    # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
-    # SC2046: Quote this to prevent word splitting => work splitting needed here
-    \command typeset -ft $(\command typeset +f)
-    \command set +f
-  fi ;;
-( * ) ;;
-esac
 
 main "${@}"
