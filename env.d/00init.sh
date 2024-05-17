@@ -54,12 +54,14 @@ component_id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   SFX_OVERRIDE="${COMPONENT_ID_SFX}" _id "${1}" "${COMPONENT_ID}${ID_SEP}${1}"
+  unset SFX_OVERRIDE
 }
 
 explorer_id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   SFX_OVERRIDE="${EXPLORER_ID_SFX}" _id "${1}" "${EXPLORER_ID}${ID_SEP}${1}"
+  unset SFX_OVERRIDE
 }
 
 _img ()
@@ -78,6 +80,7 @@ component_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   SFX_OVERRIDE="${COMPONENT_IMG_SFX}" _img "${1}" "${OWNER_ID}" "${1}" "${2}"
+  unset SFX_OVERRIDE
 }
 
 extern_img ()
@@ -85,6 +88,7 @@ extern_img ()
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   _img "${1}" "${2}" "${3}" "${4}"
   SFX_OVERRIDE="${LOCAL_IMG_SFX}" _img "${1}" "${OWNER_ID}" "local/${3}" "${4}"
+  unset SFX_OVERRIDE
 }
 
 _host ()
@@ -103,6 +107,7 @@ explorer_host ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   SFX_OVERRIDE="${EXPLORER_HOST_SFX}" _host "${1}" "${EXPLORER_ID}${HOST_SEP}${1}"
+  unset SFX_OVERRIDE
 }
 
 path ()
@@ -127,6 +132,7 @@ explorer_service ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   SFX_OVERRIDE="${EXPLORER_SERVICE_SFX}" _service "${1}" "${EXPLORER_ID}${SERVICE_SEP}${1}"
+  unset SFX_OVERRIDE
 }
 
 tag ()
@@ -139,6 +145,7 @@ component_tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   SFX_OVERRIDE="${COMPONENT_TAG_SFX}" tag "${1}" "${2}"
+  unset SFX_OVERRIDE
 }
 
 url ()
