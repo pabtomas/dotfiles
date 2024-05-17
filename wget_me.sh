@@ -262,7 +262,7 @@ main ()
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
 
-  ## let short time before checking services status
+  ## let a short time before checking services status
   printf 'Sleeping ...\n'
   sleep 3
 
@@ -277,6 +277,7 @@ main ()
   set +f
   readonly failed_services
 
+  ## make the script fail if a service is not running
   if [ -n "${failed_services}" ]
   then
     set -f
