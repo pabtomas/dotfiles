@@ -25,7 +25,7 @@ upper ()
 sfx ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  set -- "$(upper "${1}")"
+  set -- "$(upper "${1}" || :)"
   eval "${1}${SFX}='_${1}'"
 }
 
