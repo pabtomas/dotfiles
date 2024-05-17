@@ -84,6 +84,7 @@ main ()
   harden dirname
   harden grep
   harden find
+  harden mkdir
   harden mktemp
   harden rm
   harden tr
@@ -153,6 +154,7 @@ main ()
 
   if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
   then
+    sudo mkdir -p "$(dirname "${daemon_json}")"
     sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
     if command -v systemctl > /dev/null
     then
@@ -224,5 +226,7 @@ main ()
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
 )
+
+if \command typeset -ft > /dev/null 2>&1; then \command typeset -ft $(\command typeset +f); fi
 
 main "${@}"
