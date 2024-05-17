@@ -22,10 +22,10 @@ jobs:
       shell: sh
       run: |
         set -eux
+        apk add --no-cache coreutils sudo git
         tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
         wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
         chmod 0700 "${tmp}"
-        apk add --no-cache coreutils sudo git
         case "${PKG}" in
         ( 'busybox' ) EXE="${PKG} sh" ;;
         ( 'loksh' ) apk add --no-cache "${PKG}"; EXE='ksh' ;;
