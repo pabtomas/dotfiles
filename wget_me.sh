@@ -2,13 +2,12 @@
 
 main ()
 (
+  if [ -n "${DEBUG:-}" ]; then \command set -x; fi
+  \command set -eu
   \command unalias -a
   \command unset -f command
   command unset -f unset
   unset -f set
-
-  set -eu
-
   unset -f readonly
 
   old_ifs="${IFS}"
@@ -29,6 +28,7 @@ main ()
 
   harden ()
   {
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     path="$(command -v "${1}")"
     if [ -e "${path}" ]
     then
@@ -48,6 +48,7 @@ main ()
 
   source_env_without_docker_host ()
   (
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     . "${1}/env.sh"
     unset DOCKER_HOST
     eval "${2}"
@@ -57,16 +58,18 @@ main ()
   # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
   update_me ()
   (
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
     pwd="$(pwd)"
     wget -q -O "${pwd}/$(basename -- "${0}")" \
-      "https://raw.githubusercontent.com/${repo}/${branch}/wget_me.sh"
+      "https://raw.githubusercontent.com/${1}/wget_me.sh"
   )
 
   # shellcheck disable=2317
   # SC2317: Command appears to be unreachable => reached indirectly into the trap statement
   trap_me ()
   {
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
@@ -75,7 +78,7 @@ main ()
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     rm -rf "${1}"
-    update_me
+    update_me "${2}/${3}"
   }
 
   harden basename
@@ -84,7 +87,9 @@ main ()
   harden dirname
   harden grep
   harden find
+  harden mkdir
   harden mktemp
+  harden pidof
   harden rm
   harden tr
   harden sed
@@ -128,6 +133,10 @@ main ()
     harden apt-get apt_get sudo
     apt_get update -y
     apt_get upgrade -y ;;
+  ( 'alpine' )
+    harden apk apk sudo
+    apk update
+    apk upgrade ;;
   ( * )
     printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2
     return 1 ;;
@@ -147,27 +156,31 @@ main ()
   daemon_json='/etc/docker/daemon.json'
   readonly daemon_json
 
-  if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
+  if pidof dockerd
   then
-    sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
-    if command -v systemctl > /dev/null
+    if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
     then
-      harden systemctl
-      sudo systemctl restart docker
-    elif command -v service > /dev/null
-    then
-      harden service
-      sudo service docker restart
-    else
-      printf 'Can not restart Dockerd: unknown service manager\n' >&2
-      return 1
+      sudo mkdir -p "$(dirname "${daemon_json}")"
+      sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
+      if command -v systemctl > /dev/null
+      then
+        harden systemctl
+        sudo systemctl restart docker
+      elif command -v service > /dev/null
+      then
+        harden service
+        sudo service docker restart
+      else
+        printf 'Can not restart Dockerd: unknown service manager\n' >&2
+        return 1
+      fi
     fi
   fi
 
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
-  trap 'trap_me "${tmp}"' EXIT
+  trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
   find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
@@ -220,5 +233,7 @@ main ()
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
 )
+
+case "${-}" in ( *x* ) DEBUG=true; \command readonly DEBUG ;; ( * )  ;; esac
 
 main "${@}"

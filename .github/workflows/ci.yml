@@ -6,13 +6,39 @@ on:
       - trunk
 
 jobs:
-  wget_me:
+  wget_me-alpine:
     strategy:
       matrix:
-        shell:
+        pkg:
+        - busybox
+        - oksh
+        - loksh
+    runs-on: ubuntu-latest
+    container:
+      image: docker:dind
+    steps:
+    - name: check wget_me.sh
+      env:
+        PKG: ${{ matrix.pkg }}
+      shell: sh
+      run: |
+        set -eux
+        apk add --no-cache coreutils sudo git
+        tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
+        wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
+        chmod 0700 "${tmp}"
+        case "${PKG}" in
+        ( 'busybox' ) EXE="${PKG} sh" ;;
+        ( 'loksh' ) apk add --no-cache "${PKG}"; EXE='ksh' ;;
+        ( * ) apk add --no-cache "${PKG}"; EXE="${PKG}" ;;
+        esac
+        ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
+  wget_me-ubuntu:
+    strategy:
+      matrix:
+        pkg:
         - bash
         - dash
-        - busybox
         - yash
         - zsh
         - ksh93u+m
@@ -21,22 +47,22 @@ jobs:
     steps:
     - name: check wget_me.sh
       env:
-        SH: ${{ matrix.shell }}
+        PKG: ${{ matrix.pkg }}
       shell: bash
       run: |
-        sudo apt-get update -y
-        sudo apt-get install -y "${SH}"
-        script="$(mktemp).sh"
-        wget -q -O "${script}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
-        chmod 0700 "${script}"
-        case "${SH}" in
-        ( 'bash' ) SH="${SH} --posix" ;;
-        ( 'busybox' ) SH="${SH} sh" ;;
-        ( 'ksh93u+m' ) SH='ksh93' ;;
-        ( 'zsh' ) SH="${SH} --emulate sh" ;;
-        ( * ) ;;
+        set -eux
+        tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
+        wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
+        chmod 0700 "${tmp}"
+        dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get update -y
+        dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}"
+        case "${PKG}" in
+        ( 'bash' ) EXE="${PKG} --posix" ;;
+        ( 'ksh93u+m' ) EXE='ksh93' ;;
+        ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
+        ( * ) EXE="${PKG}" ;;
         esac
-        ${SH} -x "${script}" --branch "${GITHUB_HEAD_REF}" --runner-is-a-bot 
+        ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
   shellcheck:
     runs-on: ubuntu-latest
     steps:
