@@ -144,7 +144,7 @@ _tag ()
 _component_tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_TAG_SFX}" tag "${1}" "${2}"
+  SFX_OVERRIDE="${COMPONENT_TAG_SFX}" _tag "${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
