@@ -14,8 +14,7 @@ jobs:
         - oksh
         - loksh
     runs-on: ubuntu-latest
-    container:
-      image: docker/alpine:latest
+    container: alpine:latest
     steps:
     - name: check wget_me.sh
       env:
