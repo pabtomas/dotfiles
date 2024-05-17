@@ -187,6 +187,17 @@ main ()
   docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
     clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
 
+  local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
+  readonly local_img_sfx
+
+  ## shell scripting: always consider the worst env when your script is running
+  ## part 3: make the script fail if it can not unset readonly env variables using the naming convention
+  for var in $(set | grep "^[^= ]\+${local_img_sfx}=")
+  do
+    unset "${var%%=*}"
+  done
+  unset var
+
   daemon_json='/etc/docker/daemon.json'
   readonly daemon_json
 
@@ -215,17 +226,6 @@ main ()
   ## needed for proxy templating: which API version is use by the docker daemon ?
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
-
-  local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
-  readonly local_img_sfx
-
-  ## shell scripting: always consider the worst env when your script is running
-  ## part 3: make the script fail if it can not unset readonly env variables using the naming convention
-  for var in $(set | grep "^[^= ]\+${local_img_sfx}=")
-  do
-    unset "${var%%=*}"
-  done
-  unset var
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
