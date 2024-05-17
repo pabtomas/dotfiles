@@ -173,7 +173,7 @@ main ()
       fi
     fi
   fi
-  
+
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   export API_TAG
 
@@ -237,12 +237,12 @@ case "${-}" in
   # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
   if \command typeset -ft > /dev/null 2>&1
   then
-    set -f
+    \command set -f
     # shellcheck disable=3044,2046
     # SC3044: In POSIX sh, 'typeset' is undefined => check typeset presence before using it
     # SC2046: Quote this to prevent word splitting => work splitting needed here
     \command typeset -ft $(\command typeset +f)
-    set +f
+    \command set +f
   fi ;;
 ( * ) ;;
 esac
