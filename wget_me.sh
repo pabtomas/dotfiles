@@ -49,11 +49,13 @@ main ()
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    if [ -e "$(command -v "${1}" 2> /dev/null || :)" ]
+    path="$(command -v "${1}" 2> /dev/null || :)"
+    if [ -e "${path}" ]
     then
       eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
     else
-      if [ -e "$(whence -p "${1}" 2> /dev/null || :)" ]
+      path="$(whence -p "${1}" 2> /dev/null || :)"
+      if [ -e "${path}" ]
       then
         eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
       else
