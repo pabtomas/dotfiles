@@ -49,13 +49,11 @@ main ()
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    path="$(command -v "${1}")"
-    if [ -e "${path}" ]
+    if [ -e "$(command -v "${1}" 2> /dev/null || :)" ]
     then
       eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
     else
-      path="$(whence -p "${1}")"
-      if [ -e "${path}" ]
+      if [ -e "$(whence -p "${1}" 2> /dev/null || :)" ]
       then
         eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
       else
@@ -154,7 +152,7 @@ main ()
   fi
 
   # install docker
-  if [ ! -e "$(command -v docker)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
+  if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
 
   # check docker installation
   harden docker
@@ -203,17 +201,17 @@ main ()
   readonly daemon_json
 
   ## configure and restart docker daemon only if not running into sibling container
-  if [ -e "$(command -v dockerd)" ]
+  if ! docker stats --no-stream > /dev/null
   then
     if [ ! -e "${daemon_json}" ] || grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
     then
       sudo mkdir -p "$(dirname "${daemon_json}")"
       sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
-      if [ -e "$(command -v systemctl)" ]
+      if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
       then
         harden systemctl
         sudo systemctl restart docker
-      elif [ -e "$(command -v service)" ]
+      elif [ -e "$(command -v service 2> /dev/null || :)" ]
       then
         harden service
         sudo service docker restart
