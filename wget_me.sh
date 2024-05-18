@@ -66,6 +66,35 @@ main ()
     unset path
   }
 
+  dockerize ()
+  {
+    ## oksh/loksh: debugtrace does not follow in functions
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
+
+    docker build --tag "tiawl/wget_me/${2}:latest" --file - . << EOF
+FROM ${1}
+
+RUN <<END_OF_RUN
+    ${3+"apk --no-cache add ${3}"}
+    mkdir -p /root/cwd/
+END_OF_RUN
+
+WORKDIR /root/cwd/
+
+ENTRYPOINT ["${2}"]
+EOF
+
+    unset -f "${2}"
+    eval "${2} ()
+      {
+        docker run \${cwd+\"--volume\"} \${cwd+\"\${cwd}:/root/cwd/\"} \
+                   \${match+\"--volume\"} \${match+\"\${match}:\${match}\"} \
+                   \${match2+\"--volume\"} \${match2+\"\${match2}:\${match2}\"} \
+                   --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
+        unset cwd match match2
+      }"
+  }
+
   ## Posix shell: no local variables => subshell instead of braces
   ## unset DOCKET_HOST after sourcing variables needed in templated to avoid conflicts with docker client
   source_env_without_docker_host ()
@@ -111,23 +140,6 @@ main ()
     update_me "${2}/${3}"
   }
 
-  ## Check external tools before going further
-  harden basename
-  harden cp
-  harden dirname
-  harden grep
-  harden find
-  harden mkdir
-  harden mktemp
-  harden rm
-  harden tr
-  harden sed
-  harden sleep
-  harden sort
-  harden sudo
-  harden uniq
-  harden wget
-
   bot='bot'
   readonly bot
 
@@ -153,6 +165,9 @@ main ()
     return 1
   fi
 
+  harden sudo
+  harden wget
+
   # install docker
   if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
 
@@ -177,16 +192,63 @@ main ()
     return 1 ;;
   esac
 
+  src_tag='3.19'
+  src_img="alpine:${src_tag}"
+  target="tiawl/local/${src_img}"
+  readonly src_tag src_img target
+
+  if ! docker image inspect "${src_img}" --format='Image found'
+  then
+    docker pull "${src_img}"
+  fi
+  docker tag "${src_img}" "${target}"
+
+  ## dockerize external tools to keep same behavior wherever the script is running
+  dockerize "${target}" basename # OK
+  dockerize "${target}" cp       #
+  dockerize "${target}" dirname  # OK
+  dockerize "${target}" find     #
+  dockerize "${target}" git git  #
+  dockerize "${target}" grep     #
+  dockerize "${target}" mkdir    #
+  dockerize "${target}" mktemp   #
+  dockerize "${target}" rm       #
+  dockerize "${target}" sed      #
+  dockerize "${target}" sleep    #
+  dockerize "${target}" sort     #
+  dockerize "${target}" tr       #
+  dockerize "${target}" uniq     #
+  dockerize "${target}" wget     #
+
+  #basename "${PWD}"
+  #dirname "${PWD}"
+  #printf '94\n63\n88\n5\21\n341\n' | sort -n
+  #printf '11\n11\n11\n' | uniq
+  #printf 'azertyuiop\n' | tr 'a-z' 'A-Z'
+  #cwd='.' sed 's@azerty@OK @' in
+  #printf 'azerty2uiop\n' | sed 's@azerty@OK @'
+  #cwd="${PWD}" mkdir -vp path/to/a/new/dir
+  #cwd="${PWD}" cp -rv path path2
+  #cwd="${PWD}" rm -vrf path path2
+  #tmp="$(match='/tmp/' mktemp)"
+  #match='/tmp/' rm -vf "${tmp}"
+  #cwd='/home/user/Workspace/MyWhaleFleet' find . -type f -name compose.yaml.in
+  #tmp_dir="$(match='/tmp/' mktemp -d)"
+  #match='/tmp/' git clone --depth 1 'https://github.com/tiawl/MyWhaleFleet' "${tmp_dir}"
+  #match='/tmp/' find "${tmp_dir}" -type f -name compose.yaml.in
+  #sleep 2
+
+
+  docker builder prune --force
+
   tmp="$(mktemp --directory)"
-  dir_tmp="$(dirname "${tmp}")"
-  base_tmp="$(basename "${tmp}")"
+  dir_tmp="$(dirname -- "${tmp}")"
+  base_tmp="$(basename -- "${tmp}")"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
   readonly tmp dir_tmp base_tmp repo repo_url
 
-  git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}" || \
-  docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
-    clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
+  git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
   local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
   readonly local_img_sfx
@@ -207,7 +269,7 @@ main ()
   then
     if [ ! -e "${daemon_json}" ] || grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
     then
-      sudo mkdir -p "$(dirname "${daemon_json}")"
+      sudo mkdir -p "$(dirname -- "${daemon_json}")"
       sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
       if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
       then
