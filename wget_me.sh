@@ -40,7 +40,7 @@ main ()
   ## cleanup done: now it is time to define needed functions
 
   ## zsh has a which builtin. ksh93u+m has a sleep builtin.
-  ## this is a simple way to standardize external tools usage whatever the shell used to run this script:
+  ## this is a simple way to standardize external tools usage the script can not dockerize whatever the shell used to run this script:
   ## 1) ignore shell builtins with the specified name
   ## 2) fail if no external tool exists with the specified name
   ## 3) wrap the external tool with the specified name
@@ -49,12 +49,12 @@ main ()
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    path="$(command -v "${1}")"
+    path="$(command -v "${1}" 2> /dev/null || :)"
     if [ -e "${path}" ]
     then
       eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
     else
-      path="$(whence -p "${1}")"
+      path="$(whence -p "${1}" 2> /dev/null || :)"
       if [ -e "${path}" ]
       then
         eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
@@ -114,13 +114,11 @@ main ()
   ## Check external tools before going further
   harden basename
   harden cp
-  harden diff
   harden dirname
   harden grep
   harden find
   harden mkdir
   harden mktemp
-  harden pidof
   harden rm
   harden tr
   harden sed
@@ -156,7 +154,7 @@ main ()
   fi
 
   # install docker
-  if ! command -v docker > /dev/null; then wget -q -O- https://get.docker.com | sudo sh; fi
+  if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
 
   # check docker installation
   harden docker
@@ -204,18 +202,18 @@ main ()
   daemon_json='/etc/docker/daemon.json'
   readonly daemon_json
 
-  ## configure and restart docker daemon only if not running on sibling container
-  if pidof dockerd
+  ## configure and restart docker daemon only if not running into sibling container
+  if [ ! -f /.dockerenv ]
   then
-    if [ ! -e "${daemon_json}" ] || ! diff "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
+    if [ ! -e "${daemon_json}" ] || grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
     then
       sudo mkdir -p "$(dirname "${daemon_json}")"
       sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
-      if command -v systemctl > /dev/null
+      if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
       then
         harden systemctl
         sudo systemctl restart docker
-      elif command -v service > /dev/null
+      elif [ -e "$(command -v service 2> /dev/null || :)" ]
       then
         harden service
         sudo service docker restart
