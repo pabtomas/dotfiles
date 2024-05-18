@@ -13,6 +13,7 @@ jobs:
         - busybox
         - oksh
         - loksh
+        - plan9port
     runs-on: ubuntu-latest
     container:
       image: docker:dind
@@ -30,6 +31,7 @@ jobs:
         case "${PKG}" in
         ( 'busybox' ) EXE="${PKG} sh" ;;
         ( 'loksh' ) apk add --no-cache "${PKG}"; EXE='ksh' ;;
+        ( 'plan9port' ) apk add --no-cache "${PKG}"; EXE='rc' ;;
         ( * ) apk add --no-cache "${PKG}"; EXE="${PKG}" ;;
         esac
         ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
