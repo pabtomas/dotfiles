@@ -203,7 +203,7 @@ main ()
   readonly daemon_json
 
   ## configure and restart docker daemon only if not running into sibling container
-  if ! docker stats --no-stream > /dev/null
+  if [ ! -f /.dockerenv ]
   then
     if [ ! -e "${daemon_json}" ] || grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
     then
