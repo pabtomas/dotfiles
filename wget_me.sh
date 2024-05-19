@@ -224,8 +224,6 @@ EOF
   dockerize "${target}" uniq
   dockerize "${target}" wget
 
-  docker builder prune --force
-
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
@@ -233,7 +231,12 @@ EOF
 
   match="$(dirname "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
-  local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
+  local_img_sfx="$(
+    set -a
+    . "${tmp}/env.d/00init.sh"
+    . "${tmp}/env.d/01id.sh"
+    printf '%s\n' "${LOCAL_IMG_SFX}"
+  )"
   readonly local_img_sfx
 
   ## shell scripting: always consider the worst env when your script is running
