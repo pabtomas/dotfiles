@@ -253,7 +253,7 @@ EOF
   unset var
 
   daemon_json='/etc/docker/daemon.json'
-  daemon_conf="${tmp}/host${daemon_json}"
+  daemon_conf="${tmp}/host/${daemon_json#/}"
   readonly daemon_json daemon_conf
 
   daemon_dir="$(dirname -- "${daemon_json}")"
