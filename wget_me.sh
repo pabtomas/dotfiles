@@ -66,6 +66,46 @@ main ()
     unset path
   }
 
+  dockerize ()
+  {
+    ## oksh/loksh: debugtrace does not follow in functions
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
+
+    new_user='visitor'
+    uid="$(id -u)"
+    docker build --tag "tiawl/wget_me/${2}:latest" --file - . << EOF
+FROM ${1}
+
+RUN <<END_OF_RUN
+    ${3+"apk --no-cache add ${3}
+    "}rm -rf /var/lib/apt/lists/* /var/cache/apk/*
+    adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
+END_OF_RUN
+
+USER ${new_user}
+
+WORKDIR /home/${new_user}
+
+ENTRYPOINT ["${2}"]
+EOF
+    unset -f "${2}"
+    eval "${2} ()
+      {
+        if ! docker run \${cwd:+\"--volume\"} \${cwd:+\"\${cwd}:/home/${new_user}/\"} \
+          \${match:+\"--volume\"} \${match:+\"\${match}:\${match}\"} \
+          \${match2:+\"--volume\"} \${match2:+\"\${match2}:\${match2}\"} \
+          \${sudo:+\"--user\"} \${sudo:+\"root\"} \
+          --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
+        then
+          unset cwd match match2 sudo
+          return 1
+        else
+          unset cwd match match2 sudo
+        fi
+      }"
+    unset new_user
+  }
+
   ## Posix shell: no local variables => subshell instead of braces
   ## unset DOCKET_HOST after sourcing variables needed in templated to avoid conflicts with docker client
   source_env_without_docker_host ()
@@ -73,6 +113,8 @@ main ()
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
+    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+    export API_TAG
     . "${1}/env.sh"
     unset DOCKER_HOST
     eval "${2}"
@@ -107,26 +149,9 @@ main ()
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
-    rm -rf "${1}"
+    match="$(dirname -- "${1}")" rm -rf "${1}"
     update_me "${2}/${3}"
   }
-
-  ## Check external tools before going further
-  harden basename
-  harden cp
-  harden dirname
-  harden grep
-  harden find
-  harden mkdir
-  harden mktemp
-  harden rm
-  harden tr
-  harden sed
-  harden sleep
-  harden sort
-  harden sudo
-  harden uniq
-  harden wget
 
   bot='bot'
   readonly bot
@@ -153,6 +178,10 @@ main ()
     return 1
   fi
 
+  harden sudo
+  harden wget
+  harden id
+
   # install docker
   if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
 
@@ -163,6 +192,7 @@ main ()
   readonly dist
 
   # update docker to the last version depending of the OS
+  set +e
   case "${dist}" in
   ( 'ubuntu'|'debian' )
     harden apt-get apt_get sudo
@@ -173,69 +203,97 @@ main ()
     apk update
     apk upgrade ;;
   ( * )
-    printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2
-    return 1 ;;
+    printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
+  set -e
 
-  tmp="$(mktemp --directory)"
-  dir_tmp="$(dirname "${tmp}")"
-  base_tmp="$(basename "${tmp}")"
+  src_tag='3.19'
+  src_img="alpine:${src_tag}"
+  target="tiawl/local/${src_img}"
+
+  if ! docker image inspect "${src_img}" --format='Image found'
+  then
+    docker pull "${src_img}"
+  fi
+  docker tag "${src_img}" "${target}"
+  unset src_tag src_img
+
+  ## dockerize external tools to keep same behavior wherever the script is running
+  dockerize "${target}" basename
+  dockerize "${target}" cp
+  dockerize "${target}" dirname
+  dockerize "${target}" find
+  dockerize "${target}" git git
+  dockerize "${target}" grep
+  dockerize "${target}" mkdir
+  dockerize "${target}" mktemp
+  dockerize "${target}" rm
+  dockerize "${target}" sed
+  dockerize "${target}" sleep
+  dockerize "${target}" sort
+  dockerize "${target}" uniq
+  dockerize "${target}" wget
+  unset target
+
+  tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
-  readonly tmp dir_tmp base_tmp repo repo_url
+  readonly tmp repo repo_url
 
-  git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}" || \
-  docker run --rm --volume "${HOME}:/root" --volume "${dir_tmp}:/git" 'alpine/git:user' \
-    clone --depth 1 --branch "${branch}" "${repo_url}" "${base_tmp}"
+  match="$(dirname -- "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
-  local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
+  local_img_sfx="$(
+    set -a
+    . "${tmp}/env.d/00init.sh"
+    . "${tmp}/env.d/01id.sh"
+    printf '%s\n' "${LOCAL_IMG_SFX}"
+  )"
   readonly local_img_sfx
 
   ## shell scripting: always consider the worst env when your script is running
   ## part 3: make the script fail if it can not unset readonly env variables using the naming convention
-  for var in $(set | grep "^[^= ]\+${local_img_sfx}=")
+  for var in $(set | grep "^[^=[:space:]]\+${local_img_sfx}=")
   do
     unset "${var%%=*}"
   done
   unset var
 
   daemon_json='/etc/docker/daemon.json'
-  readonly daemon_json
+  daemon_conf="${tmp}/host/${daemon_json#/}"
+  readonly daemon_json daemon_conf
 
-  ## configure and restart docker daemon only if not running into sibling container
-  if [ ! -f /.dockerenv ]
+  daemon_dir="$(dirname -- "${daemon_json}")"
+  conf_dir="$(dirname -- "${daemon_conf}")"
+  if [ ! -e "${daemon_json}" ] || match="${daemon_dir}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
   then
-    if [ ! -e "${daemon_json}" ] || grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
+    sudo='true' match="$(dirname -- "${daemon_dir}")" mkdir -p "${daemon_dir}"
+    sudo='true' match="${conf_dir}" match2="${daemon_dir}" cp -f "${daemon_conf}" "${daemon_json}"
+    if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
     then
-      sudo mkdir -p "$(dirname "${daemon_json}")"
-      sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
-      if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
-      then
-        harden systemctl
-        sudo systemctl restart docker
-      elif [ -e "$(command -v service 2> /dev/null || :)" ]
-      then
-        harden service
-        sudo service docker restart
-      else
-        printf 'Can not restart Dockerd: unknown service manager\n' >&2
-        return 1
-      fi
+      harden systemctl
+      sudo systemctl restart docker
+    elif [ -e "$(command -v service 2> /dev/null || :)" ]
+    then
+      harden service
+      sudo service docker restart
+    else
+      printf 'Can not restart Dockerd: unknown service manager\n' >&2
+      return 1
     fi
   fi
-
-  ## needed for proxy templating: which API version is used by the docker daemon ?
-  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-  export API_TAG
+  unset daemon_dir conf_dir
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
   ## generate templated files
-  find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
+  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+  match="${tmp}" find "${tmp}" -type f -name compose.yaml.in -exec sh -c "
       set -a
+      API_TAG='${API_TAG}'"'
       . "${1}/env.sh"
       eval "printf \"%s\\n\" \"$(cat "${2}")\"" > "${2%.*}"
     ' sh "${tmp}" {} \;
+  unset API_TAG
 
   docker network prune --force
 
