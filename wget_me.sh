@@ -94,10 +94,10 @@ EOF
         set -- \"\${cwd:-}\" \"\${match:-}\" \"\${match2:-}\" \"\${sudo:-}\"
         unset cwd match match2 sudo
 
-        if ! docker run \${1+\"--volume\"} \${1+\"\${1}:/home/${new_user}/\"} \
-          \${2+\"--volume\"} \${2+\"\${2}:\${2}\"} \
-          \${3+\"--volume\"} \${3+\"\${3}:\${3}\"} \
-          \${4+\"--user\"} \${4+\"root\"} \
+        if ! docker run \${1:+\"--volume\"} \${1:+\"\${1}:/home/${new_user}/\"} \
+          \${2:+\"--volume\"} \${2:+\"\${2}:\${2}\"} \
+          \${3:+\"--volume\"} \${3:+\"\${3}:\${3}\"} \
+          \${4:+\"--user\"} \${4:+\"root\"} \
           --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
         then
           return 1
