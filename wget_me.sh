@@ -71,14 +71,15 @@ main ()
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    new_user=visitor
+    new_user='visitor'
+    uid="$(id -u)"
     docker build --tag "tiawl/wget_me/${2}:latest" --file - . << EOF
 FROM ${1}
 
 RUN <<END_OF_RUN
     ${3+"apk --no-cache add ${3}
     "}rm -rf /var/lib/apt/lists/* /var/cache/apk/*
-    adduser -D -s /bin/sh -g '${new_user}' -u '$(id -u)' '${new_user}'
+    adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
 
 USER ${new_user}
