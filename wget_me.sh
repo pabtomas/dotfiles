@@ -72,7 +72,7 @@ main ()
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
     new_user='visitor'
-    uid="${UID:-"$(id -u)"}"
+    uid="$(id -u)"
     docker build --tag "tiawl/wget_me/${2}:latest" --file - . << EOF
 FROM ${1}
 
