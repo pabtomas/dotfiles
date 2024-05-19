@@ -231,7 +231,7 @@ EOF
 
   match="$(dirname "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
-  ls -la "${tmp}"
+  ls -la "/tmp"
 
   local_img_sfx="$(
     set -a
