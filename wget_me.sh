@@ -98,7 +98,7 @@ EOF
           \${2:+\"--volume\"} \${2:+\"\${2}:\${2}\"} \
           \${3:+\"--volume\"} \${3:+\"\${3}:\${3}\"} \
           \${4:+\"--user\"} \${4:+\"root\"} \
-          --rm --interactive 'tiawl/wget_me/${2}' \"\$(set -- \"\${@}\"; shift 4)\"
+          --rm --interactive 'tiawl/wget_me/${2}' \$(set -- \"\${@}\"; shift 4; printf '%s\n' \"\${@}\")
         then
           return 1
         fi
