@@ -131,7 +131,7 @@ EOF
 
     CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
     pwd="$(pwd)"
-    wget -q -O "${pwd}/$(basename -- "${0}")" \
+    match="${pwd}" wget -q -O "${pwd}/$(basename -- "${0}")" \
       "https://raw.githubusercontent.com/${1}/wget_me.sh"
   )
 
