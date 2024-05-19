@@ -80,9 +80,9 @@ RUN <<END_OF_RUN
     adduser -D -s /bin/sh -g "${new_user}" "${new_user}"
 END_OF_RUN
 
-WORKDIR /home/${new_user}
-
 USER ${new_user}
+
+WORKDIR /home/${new_user}
 
 ENTRYPOINT ["${2}"]
 EOF
