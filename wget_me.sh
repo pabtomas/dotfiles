@@ -78,7 +78,7 @@ FROM ${1}
 RUN <<END_OF_RUN
     ${3+"apk --no-cache add ${3}
     "}rm -rf /var/lib/apt/lists/* /var/cache/apk/*
-    adduser -D -s /bin/sh -g "${new_user}" "${new_user}"
+    adduser -D -s /bin/sh -g '${new_user}' -u '$(id -u)' '${new_user}'
 END_OF_RUN
 
 USER ${new_user}
@@ -179,6 +179,7 @@ EOF
 
   harden sudo
   harden wget
+  harden id
 
   # install docker
   if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
