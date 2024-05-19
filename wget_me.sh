@@ -95,6 +95,7 @@ EOF
         docker run \${cwd+\"--volume\"} \${cwd+\"\${cwd}:/root/cwd/\"} \
                    \${match+\"--volume\"} \${match+\"\${match}:\${match}\"} \
                    \${match2+\"--volume\"} \${match2+\"\${match2}:\${match2}\"} \
+                   \${sudo+\"--user\"} \${sudo+\"root\"} \
                    --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
         unset cwd match match2
       }"
@@ -107,6 +108,8 @@ EOF
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
+    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+    export API_TAG
     . "${1}/env.sh"
     unset DOCKER_HOST
     eval "${2}"
@@ -183,6 +186,7 @@ EOF
   readonly dist
 
   # update docker to the last version depending of the OS
+  set +e
   case "${dist}" in
   ( 'ubuntu'|'debian' )
     harden apt-get apt_get sudo
@@ -193,20 +197,20 @@ EOF
     apk update
     apk upgrade ;;
   ( * )
-    printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2
-    return 1 ;;
+    printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
+  set -e
 
   src_tag='3.19'
   src_img="alpine:${src_tag}"
   target="tiawl/local/${src_img}"
-  readonly src_tag src_img target
 
   if ! docker image inspect "${src_img}" --format='Image found'
   then
     docker pull "${src_img}"
   fi
   docker tag "${src_img}" "${target}"
+  unset src_tag src_img
 
   ## dockerize external tools to keep same behavior wherever the script is running
   dockerize "${target}" basename
@@ -221,18 +225,16 @@ EOF
   dockerize "${target}" sed
   dockerize "${target}" sleep
   dockerize "${target}" sort
-  dockerize "${target}" tr
   dockerize "${target}" uniq
   dockerize "${target}" wget
+  unset target
 
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
   readonly tmp repo repo_url
 
-  match="$(dirname "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
-
-  ls -la "/tmp"
+  match="$(dirname -- "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
   local_img_sfx="$(
     set -a
@@ -251,45 +253,41 @@ EOF
   unset var
 
   daemon_json='/etc/docker/daemon.json'
-  readonly daemon_json
+  daemon_conf="${tmp}/host${daemon_json}"
+  readonly daemon_json daemon_conf
 
-  ## configure and restart docker daemon only if not running into sibling container
-  if [ ! -f /.dockerenv ]
+  daemon_dir="$(dirname -- "${daemon_json}")"
+  conf_dir="$(dirname -- "${daemon_conf}")"
+  if [ ! -e "${daemon_json}" ] || match="${daemon_dir}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
   then
-    dj_dir="$(dirname -- "${daemon_json}")"
-    hdj_dir="$(dirname -- "${tmp}/host/${daemon_json}")"
-    if [ ! -e "${daemon_json}" ] || match="${dj_dir}" match2="${hdj_dir}" grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
+    sudo='true' match="$(dirname -- "${daemon_dir}")" mkdir -p "${daemon_dir}"
+    sudo='true' match="${conf_dir}" match2="${daemon_dir}" cp -f "${daemon_conf}" "${daemon_json}"
+    if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
     then
-      match="$(dirname -- "${dj_dir}")" mkdir -p "${dj_dir}"
-      match="${hdj_dir}" match2="${dj_dir}" cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
-      if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
-      then
-        harden systemctl
-        sudo systemctl restart docker
-      elif [ -e "$(command -v service 2> /dev/null || :)" ]
-      then
-        harden service
-        sudo service docker restart
-      else
-        printf 'Can not restart Dockerd: unknown service manager\n' >&2
-        return 1
-      fi
+      harden systemctl
+      sudo systemctl restart docker
+    elif [ -e "$(command -v service 2> /dev/null || :)" ]
+    then
+      harden service
+      sudo service docker restart
+    else
+      printf 'Can not restart Dockerd: unknown service manager\n' >&2
+      return 1
     fi
-    unset dj_dir hdj_dir
   fi
-
-  ## needed for proxy templating: which API version is used by the docker daemon ?
-  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-  export API_TAG
+  unset daemon_dir conf_dir
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
   ## generate templated files
-  match="${tmp}" find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
+  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+  match="${tmp}" find "${tmp}" -type f -name compose.yaml.in -exec sh -c "
       set -a
+      API_TAG='${API_TAG}'"'
       . "${1}/env.sh"
       eval "printf \"%s\\n\" \"$(cat "${2}")\"" > "${2%.*}"
     ' sh "${tmp}" {} \;
+  unset API_TAG
 
   docker network prune --force
 
