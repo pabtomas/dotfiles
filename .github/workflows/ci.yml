@@ -27,23 +27,24 @@ jobs:
       shell: bash
       run: |
         set -eux
-        tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
+        tmp="$(mktemp '/tmp/tmp.XXXXXXXXXX.sh')"
         wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
         chmod 0700 "${tmp}"
         dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get update -y
-        dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}"
         case "${PKG}" in
-        ( 'bash' ) EXE="${PKG} --posix" ;;
-        ( 'busybox' ) EXE="${PKG} sh" ;;
-        ( 'ksh93u+m' ) EXE='ksh93' ;;
-        ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
         ( 'oksh'|'loksh' )
           sudo apt-get install -y xz-utils
           sudo install -d -m755 -o "$(id -u)" -g "$(id -g)" /nix
           curl -L https://nixos.org/nix/install | sh
           . "${HOME}/.nix-profile/etc/profile.d/nix.sh"
-          nix-env -i "${PKG}"
-          EXE="${PKG}" ;;
+          nix-env -i "${PKG}" ;;
+        ( * ) dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}" ;;
+        esac
+        case "${PKG}" in
+        ( 'bash' ) EXE="${PKG} --posix" ;;
+        ( 'busybox' ) EXE="${PKG} sh" ;;
+        ( 'ksh93u+m' ) EXE='ksh93' ;;
+        ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
         ( * ) EXE="${PKG}" ;;
         esac
         ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
