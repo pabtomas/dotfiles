@@ -76,7 +76,8 @@ main ()
 FROM ${1}
 
 RUN <<END_OF_RUN
-    ${3+"apk --no-cache add ${3}; "}rm -rf /var/lib/apt/lists/* /var/cache/apk/*
+    ${3+"apk --no-cache add ${3}
+    "}rm -rf /var/lib/apt/lists/* /var/cache/apk/*
     adduser -D -s /bin/sh -g "${new_user}" "${new_user}"
 END_OF_RUN
 
