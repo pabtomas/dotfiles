@@ -136,7 +136,7 @@ EOF
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
-    rm -rf "${1}"
+    match="$(dirname -- "${1}")" rm -rf "${1}"
     update_me "${2}/${3}"
   }
 
@@ -204,51 +204,32 @@ EOF
   docker tag "${src_img}" "${target}"
 
   ## dockerize external tools to keep same behavior wherever the script is running
-  dockerize "${target}" basename # OK
-  dockerize "${target}" cp       #
-  dockerize "${target}" dirname  # OK
-  dockerize "${target}" find     #
-  dockerize "${target}" git git  #
-  dockerize "${target}" grep     #
-  dockerize "${target}" mkdir    #
-  dockerize "${target}" mktemp   #
-  dockerize "${target}" rm       #
-  dockerize "${target}" sed      #
-  dockerize "${target}" sleep    #
-  dockerize "${target}" sort     #
-  dockerize "${target}" tr       #
-  dockerize "${target}" uniq     #
-  dockerize "${target}" wget     #
-
-  #basename "${PWD}"
-  #dirname "${PWD}"
-  #printf '94\n63\n88\n5\21\n341\n' | sort -n
-  #printf '11\n11\n11\n' | uniq
-  #printf 'azertyuiop\n' | tr 'a-z' 'A-Z'
-  #cwd='.' sed 's@azerty@OK @' in
-  #printf 'azerty2uiop\n' | sed 's@azerty@OK @'
-  #cwd="${PWD}" mkdir -vp path/to/a/new/dir
-  #cwd="${PWD}" cp -rv path path2
-  #cwd="${PWD}" rm -vrf path path2
-  #tmp="$(match='/tmp/' mktemp)"
-  #match='/tmp/' rm -vf "${tmp}"
-  #cwd='/home/user/Workspace/MyWhaleFleet' find . -type f -name compose.yaml.in
-  #tmp_dir="$(match='/tmp/' mktemp -d)"
-  #match='/tmp/' git clone --depth 1 'https://github.com/tiawl/MyWhaleFleet' "${tmp_dir}"
-  #match='/tmp/' find "${tmp_dir}" -type f -name compose.yaml.in
-  #sleep 2
-
+  dockerize "${target}" basename
+  dockerize "${target}" cp
+  dockerize "${target}" dirname
+  dockerize "${target}" find
+  dockerize "${target}" git git
+  dockerize "${target}" grep
+  dockerize "${target}" mkdir
+  dockerize "${target}" mktemp
+  dockerize "${target}" rm
+  dockerize "${target}" sed
+  dockerize "${target}" sleep
+  dockerize "${target}" sort
+  dockerize "${target}" tr
+  dockerize "${target}" uniq
+  dockerize "${target}" wget
 
   docker builder prune --force
 
-  tmp="$(mktemp --directory)"
+  tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
   dir_tmp="$(dirname -- "${tmp}")"
   base_tmp="$(basename -- "${tmp}")"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
   readonly tmp dir_tmp base_tmp repo repo_url
 
-  git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
+  match="$(dirname "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
   local_img_sfx="$(set -a; . "${tmp}/env.d/00init.sh"; . "${tmp}/env.d/01id.sh"; printf '%s\n' "${LOCAL_IMG_SFX}")"
   readonly local_img_sfx
@@ -267,10 +248,12 @@ EOF
   ## configure and restart docker daemon only if not running into sibling container
   if [ ! -f /.dockerenv ]
   then
-    if [ ! -e "${daemon_json}" ] || grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
+    dj_dir="$(dirname -- "${daemon_json}")"
+    hdj_dir="$(dirname -- "${tmp}/host/${daemon_json}")"
+    if [ ! -e "${daemon_json}" ] || match="${dj_dir}" match2="${hdj_dir}" grep -Fxvf "${daemon_json}" "${tmp}/host/${daemon_json}" > /dev/null
     then
-      sudo mkdir -p "$(dirname -- "${daemon_json}")"
-      sudo cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
+      match="$(dirname -- "${dj_dir}")" mkdir -p "${dj_dir}"
+      match="${hdj_dir}" match2="${dj_dir}" cp -f "${tmp}/host/${daemon_json}" "${daemon_json}"
       if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
       then
         harden systemctl
@@ -284,6 +267,7 @@ EOF
         return 1
       fi
     fi
+    unset dj_dir hdj_dir
   fi
 
   ## needed for proxy templating: which API version is used by the docker daemon ?
@@ -293,7 +277,7 @@ EOF
   trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
 
   ## generate templated files
-  find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
+  match="${tmp}" find "${tmp}" -type f -name compose.yaml.in -exec sh -c '
       set -a
       . "${1}/env.sh"
       eval "printf \"%s\\n\" \"$(cat "${2}")\"" > "${2%.*}"
