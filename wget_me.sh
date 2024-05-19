@@ -252,7 +252,7 @@ EOF
 
   ## shell scripting: always consider the worst env when your script is running
   ## part 3: make the script fail if it can not unset readonly env variables using the naming convention
-  for var in $(set | grep "^[^= ]\+${local_img_sfx}=")
+  for var in $(set | grep "^[^=[:space:]]\+${local_img_sfx}=")
   do
     unset "${var%%=*}"
   done
