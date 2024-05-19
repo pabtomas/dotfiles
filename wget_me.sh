@@ -87,18 +87,22 @@ WORKDIR /home/${new_user}
 
 ENTRYPOINT ["${2}"]
 EOF
-    unset new_user
-
     unset -f "${2}"
     eval "${2} ()
       {
-        docker run \${cwd+\"--volume\"} \${cwd+\"\${cwd}:/root/cwd/\"} \
-                   \${match+\"--volume\"} \${match+\"\${match}:\${match}\"} \
-                   \${match2+\"--volume\"} \${match2+\"\${match2}:\${match2}\"} \
-                   \${sudo+\"--user\"} \${sudo+\"root\"} \
-                   --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
-        unset cwd match match2
+        set -- \"\${cwd:-}\" \"\${match:-}\" \"\${match2:-}\" \"\${sudo:-}\"
+        unset cwd match match2 sudo
+
+        if ! docker run \${1+\"--volume\"} \${1+\"\${1}:/home/${new_user}/\"} \
+          \${2+\"--volume\"} \${2+\"\${2}:\${2}\"} \
+          \${3+\"--volume\"} \${3+\"\${3}:\${3}\"} \
+          \${4+\"--user\"} \${4+\"root\"} \
+          --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
+        then
+          return 1
+        fi
       }"
+    unset new_user
   }
 
   ## Posix shell: no local variables => subshell instead of braces
