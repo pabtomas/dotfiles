@@ -223,11 +223,9 @@ EOF
   docker builder prune --force
 
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
-  dir_tmp="$(dirname -- "${tmp}")"
-  base_tmp="$(basename -- "${tmp}")"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
-  readonly tmp dir_tmp base_tmp repo repo_url
+  readonly tmp repo repo_url
 
   match="$(dirname "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
