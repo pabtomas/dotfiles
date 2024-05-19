@@ -91,16 +91,16 @@ EOF
     unset -f "${2}"
     eval "${2} ()
       {
-        set -- \"\${cwd:-}\" \"\${match:-}\" \"\${match2:-}\" \"\${sudo:-}\" \"\${@}\"
-        unset cwd match match2 sudo
-
-        if ! docker run \${1:+\"--volume\"} \${1:+\"\${1}:/home/${new_user}/\"} \
-          \${2:+\"--volume\"} \${2:+\"\${2}:\${2}\"} \
-          \${3:+\"--volume\"} \${3:+\"\${3}:\${3}\"} \
-          \${4:+\"--user\"} \${4:+\"root\"} \
-          --rm --interactive 'tiawl/wget_me/${2}' \$(set -- \"\${@}\"; shift 4; printf '%s\n' \"\${@}\")
+        if ! docker run \${cwd:+\"--volume\"} \${cwd:+\"\${cwd}:/home/${new_user}/\"} \
+          \${match:+\"--volume\"} \${match:+\"\${match}:\${match}\"} \
+          \${match2:+\"--volume\"} \${match2:+\"\${match2}:\${match2}\"} \
+          \${sudo:+\"--user\"} \${sudo:+\"root\"} \
+          --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
         then
+          unset cwd match match2 sudo
           return 1
+        else
+          unset cwd match match2 sudo
         fi
       }"
     unset new_user
