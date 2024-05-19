@@ -11,14 +11,14 @@ jobs:
       matrix:
         pkg:
         - bash
+        - busybox
         - dash
+        - ksh93u+m
+        - loksh
+        - mksh
+        - oksh
         - yash
         - zsh
-        - ksh93u+m
-        - mksh
-        - busybox
-        - oksh
-        - loksh
     runs-on: ubuntu-latest
     steps:
     - name: check wget_me.sh
@@ -32,11 +32,17 @@ jobs:
         chmod 0700 "${tmp}"
         dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get update -y
         case "${PKG}" in
-        ( 'oksh'|'loksh' )
+        ( 'bash' )
+        ( 'busybox' )
+        ( 'dash' )
+        ( 'loksh' )
+        ( 'oksh' )
+        ( 'yash' )
+        ( 'zsh' )
           sudo apt-get install -y xz-utils
           sudo install -d -m755 -o "$(id -u)" -g "$(id -g)" /nix
           curl -L https://nixos.org/nix/install | sh
-          . "${HOME}/.nix-profile/etc/profile.d/nix.sh"
+          source "${HOME}/.nix-profile/etc/profile.d/nix.sh"
           nix-env -i "${PKG}" ;;
         ( * ) dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}" ;;
         esac
