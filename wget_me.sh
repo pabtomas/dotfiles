@@ -74,14 +74,17 @@ main ()
     docker build --tag "tiawl/wget_me/${2}:latest" --file - . << EOF
 FROM ${1}
 
+ARG NEW_USER visitor
+
 RUN <<END_OF_RUN
     ${3+"apk --no-cache add ${3}"}
     rm -rf /var/lib/apt/lists/* /var/cache/apk/*
-    adduser -D -s /bin/sh -g 'visitor' visitor
+    adduser -D -s /bin/sh -g "${NEW_USER}" "${NEW_USER}"
 END_OF_RUN
 
-WORKDIR /home/visitor
-USER visitor
+WORKDIR /home/${NEW_USER}
+
+USER ${NEW_USER}
 
 ENTRYPOINT ["${2}"]
 EOF
