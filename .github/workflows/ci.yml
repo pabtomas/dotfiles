@@ -6,34 +6,7 @@ on:
       - trunk
 
 jobs:
-  wget_me-alpine:
-    strategy:
-      matrix:
-        pkg:
-        - busybox
-        - oksh
-        - loksh
-    runs-on: ubuntu-latest
-    container:
-      image: docker:dind
-    steps:
-    - name: check wget_me.sh
-      env:
-        PKG: ${{ matrix.pkg }}
-      shell: sh
-      run: |
-        set -eux
-        apk add --no-cache coreutils sudo git
-        tmp="$(mktemp /tmp/tmp.XXXXXXXXXX.sh)"
-        wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
-        chmod 0700 "${tmp}"
-        case "${PKG}" in
-        ( 'busybox' ) EXE="${PKG} sh" ;;
-        ( 'loksh' ) apk add --no-cache "${PKG}"; EXE='ksh' ;;
-        ( * ) apk add --no-cache "${PKG}"; EXE="${PKG}" ;;
-        esac
-        ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
-  wget_me-ubuntu:
+  wget_me:
     strategy:
       matrix:
         pkg:
@@ -43,6 +16,9 @@ jobs:
         - zsh
         - ksh93u+m
         - mksh
+        - busybox
+        - oksh
+        - loksh
     runs-on: ubuntu-latest
     steps:
     - name: check wget_me.sh
@@ -58,8 +34,16 @@ jobs:
         dpkg -s "${PKG}" > /dev/null 2>&1 || sudo apt-get install -y "${PKG}"
         case "${PKG}" in
         ( 'bash' ) EXE="${PKG} --posix" ;;
+        ( 'busybox' ) EXE="${PKG} sh" ;;
         ( 'ksh93u+m' ) EXE='ksh93' ;;
         ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
+        ( 'oksh'|'loksh' )
+          sudo apt-get install -y xz-utils
+          sudo install -d -m755 -o "$(id -u)" -g "$(id -g)" /nix
+          curl -L https://nixos.org/nix/install | sh
+          . "${HOME}/.nix-profile/etc/profile.d/nix.sh"
+          nix-env -i "${PKG}"
+          EXE="${PKG}" ;;
         ( * ) EXE="${PKG}" ;;
         esac
         ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
