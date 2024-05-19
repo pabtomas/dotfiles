@@ -72,7 +72,7 @@ main ()
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
     new_user='visitor'
-    uid="$(id -u)"
+    uid="${UID:-"$(id -u)"}"
     docker build --tag "tiawl/wget_me/${2}:latest" --file - . << EOF
 FROM ${1}
 
@@ -91,7 +91,7 @@ EOF
     unset -f "${2}"
     eval "${2} ()
       {
-        set -- \"\${cwd:-}\" \"\${match:-}\" \"\${match2:-}\" \"\${sudo:-}\" \"\{@}\"
+        set -- \"\${cwd:-}\" \"\${match:-}\" \"\${match2:-}\" \"\${sudo:-}\" \"\${@}\"
         unset cwd match match2 sudo
 
         if ! docker run \${1:+\"--volume\"} \${1:+\"\${1}:/home/${new_user}/\"} \
