@@ -76,10 +76,12 @@ FROM ${1}
 
 RUN <<END_OF_RUN
     ${3+"apk --no-cache add ${3}"}
-    mkdir -p /root/cwd/
+    rm -rf /var/lib/apt/lists/* /var/cache/apk/*
+    adduser -D -s /bin/sh -g 'visitor' visitor
 END_OF_RUN
 
-WORKDIR /root/cwd/
+WORKDIR /home/visitor
+USER visitor
 
 ENTRYPOINT ["${2}"]
 EOF
