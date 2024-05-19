@@ -79,12 +79,12 @@ ARG NEW_USER visitor
 RUN <<END_OF_RUN
     ${3+"apk --no-cache add ${3}"}
     rm -rf /var/lib/apt/lists/* /var/cache/apk/*
-    adduser -D -s /bin/sh -g "${NEW_USER}" "${NEW_USER}"
+    adduser -D -s /bin/sh -g "\${NEW_USER}" "\${NEW_USER}"
 END_OF_RUN
 
-WORKDIR /home/${NEW_USER}
+WORKDIR /home/\${NEW_USER}
 
-USER ${NEW_USER}
+USER \${NEW_USER}
 
 ENTRYPOINT ["${2}"]
 EOF
