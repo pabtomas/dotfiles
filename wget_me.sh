@@ -288,11 +288,12 @@ EOF
   ## generate templated files
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
   (
-    set -a
+    set -a -- "${tmp}"
     . "${tmp}/env.sh"
     for template in "${tmp}/compose.yaml.in" "${tmp}/components/compose.yaml.in"
     do
-      eval "printf '%s\\n' \"$(cat "${template}")\"" > "${template%.*}"
+      cat="$(while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
+      eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
     done
   )
   unset API_TAG
