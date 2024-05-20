@@ -80,7 +80,7 @@ services:
     image: ${DOCKER_COMPONENT_IMG}
     container_name: ${CONTROLLER_HOST}
     hostname: ${CONTROLLER_HOST}
-    env:
+    environment:
       - API_TAG=${API_TAG}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
