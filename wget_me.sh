@@ -287,12 +287,14 @@ EOF
 
   ## generate templated files
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-  match="${tmp}" find "${tmp}" -type f -name compose.yaml.in -exec sh -c "
-      set -a
-      API_TAG='${API_TAG}'"'
-      . "${1}/env.sh"
-      eval "printf \"%s\\n\" \"$(cat "${2}")\"" > "${2%.*}"
-    ' sh "${tmp}" {} \;
+  (
+    set -a
+    . "${tmp}/env.sh"
+    for template in "${tmp}/compose.yaml.in" "${tmp}/components/compose.yaml.in"
+    do
+      eval "printf '%s\\n' \"$(cat "${template}")\"" > "${template%.*}"
+    done
+  )
   unset API_TAG
 
   docker network prune --force
