@@ -16,7 +16,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY}"
     export https_proxy="${HTTPS_PROXY}"
-    apk add --no-cache docker-bash-completion
+    apk add --no-cache docker-cli-compose docker-bash-completion
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
