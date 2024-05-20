@@ -221,7 +221,6 @@ EOF
   dockerize "${target}" basename
   dockerize "${target}" cp
   dockerize "${target}" dirname
-  dockerize "${target}" find
   dockerize "${target}" git git
   dockerize "${target}" grep
   dockerize "${target}" mkdir
