@@ -77,12 +77,12 @@ services:
   ${CONTROLLER_SERVICE}:
     depends_on:
       - ${PROXY_SERVICE}
-    image: ${DOCKER_COMPONENT_IMG}
+    image: ${_DOCKER_COMPONENT_IMG}
     container_name: ${CONTROLLER_HOST}
     hostname: ${CONTROLLER_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-      - ${MYWHALEFLEET_VOLUME}:/${MYWHALEFLEET_PATH}:ro
+      - ${MYWHALEFLEET_VOLUME}:/${MYWHALEFLEET_PATH}:rw
     networks:
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}

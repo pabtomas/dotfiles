@@ -116,7 +116,6 @@ EOF
     API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
     export API_TAG
     . "${1}/env.sh"
-    unset DOCKER_HOST
     eval "${2}"
   )
 
@@ -287,12 +286,16 @@ EOF
 
   ## generate templated files
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-  match="${tmp}" find "${tmp}" -type f -name compose.yaml.in -exec sh -c "
-      set -a
-      API_TAG='${API_TAG}'"'
-      . "${1}/env.sh"
-      eval "printf \"%s\\n\" \"$(cat "${2}")\"" > "${2%.*}"
-    ' sh "${tmp}" {} \;
+  (
+    set -a -- "${tmp}"
+    . "${tmp}/env.sh"
+    for template in "${tmp}/components/compose.yaml.in" "${tmp}/compose.yaml.in"
+    do
+      cat="$(IFS='
+'; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
+      eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
+    done
+  )
   unset API_TAG
 
   docker network prune --force
@@ -319,8 +322,11 @@ EOF
   docker compose --file "${tmp}/compose.yaml" start
 
   ## let a short time before checking services status
-  printf 'Sleeping ...\n'
-  sleep 3
+  if [ "${runner}" = "${bot}" ]
+  then
+    printf 'Sleeping ...\n'
+    sleep 3
+  fi
 
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"

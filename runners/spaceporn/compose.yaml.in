@@ -1,0 +1,16 @@
+services:
+  ${SPACEPORN_SERVICE}:
+    build:
+      context: ./${SPACEPORN_ID}
+      args:
+    image: ${SPACEPORN_RUNNER_IMG}
+    container_name: ${SPACEPORN_RUNNER_ID}
+    ports:
+      - "5800:5800"
+      - "5900:5900"
+    volumes:
+      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:ro
+
+volumes:
+  ${SPACEPORN_VOLUME}:
+    name: ${SPACEPORN_VOLUME}

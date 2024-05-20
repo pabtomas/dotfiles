@@ -8,7 +8,6 @@ _id 'bash'
 _id 'collector'
 _id 'component'
 _id 'controller'
-_id 'docker'
 _id 'editor'
 _id 'entrypoint'
 _id 'explorer'
@@ -20,6 +19,7 @@ _id 'local'
 _id 'man'
 _id 'pass'
 _id 'proxy'
+_id 'runner'
 _id 'safedeposit'
 _id 'scholar'
 _id 'shell'
@@ -32,18 +32,22 @@ _id 'zig'
 
 OS="${ALPINE_ID}"
 
+__id '_docker' 'docker'
 __id 'owner' 'tiawl'
 
 _sfx "${COMPONENT_ID}${ID_SFX}"
 _sfx "${EXPLORER_ID}${ID_SFX}"
+_sfx "${RUNNER_ID}${ID_SFX}"
 _sfx "${COMPONENT_ID}${IMG_SFX}"
 _sfx "${LOCAL_ID}${IMG_SFX}"
+_sfx "${RUNNER_ID}${IMG_SFX}"
 _sfx "${EXPLORER_ID}${HOST_SFX}"
 _sfx "${EXPLORER_ID}${SERVICE_SFX}"
 _sfx "${COMPONENT_ID}${TAG_SFX}"
+_sfx "${RUNNER_ID}${TAG_SFX}"
 
 _component_id "${BASH_ID}"
-_component_id "${DOCKER_ID}"
+_component_id "${_DOCKER_ID}"
 _component_id "${ENTRYPOINT_ID}"
 _component_id "${GIT_ID}"
 _component_id "${LINGUIST_ID}"
@@ -58,3 +62,5 @@ _component_id "${ZIG_ID}"
 
 _explorer_id "${SHELL_ID}"
 _explorer_id "${ZIG_ID}"
+
+_runner_id "${SPACEPORN_ID}"
