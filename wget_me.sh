@@ -292,7 +292,8 @@ EOF
     . "${tmp}/env.sh"
     for template in "${tmp}/components/compose.yaml.in" "${tmp}/compose.yaml.in"
     do
-      cat="$(IFS=''; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
+      cat="$(IFS='
+'; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
       eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
     done
   )
