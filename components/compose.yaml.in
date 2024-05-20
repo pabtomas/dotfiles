@@ -49,20 +49,20 @@ services:
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
     image: ${SSHD_COMPONENT_IMG}
-  ${DOCKER_SERVICE}:
+  ${_DOCKER_SERVICE}:
     depends_on:
       - ${SSHD_SERVICE}
     build:
-      context: ./${DOCKER_ID}
+      context: ./${_DOCKER_ID}
       args:
-        - DOCKER_LOCAL_IMG=${DOCKER_LOCAL_IMG}
-        - DOCKER_PATH=${DOCKER_PATH}
+        - _DOCKER_LOCAL_IMG=${_DOCKER_LOCAL_IMG}
+        - _DOCKER_PATH=${_DOCKER_PATH}
         - NET=${JUMP_AREA_NET}
         - SSHD_COMPONENT_IMG=${SSHD_COMPONENT_IMG}
         - TCP_DOCKER_HOST=${TCP_DOCKER_HOST}
         - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
         - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${DOCKER_COMPONENT_IMG}
+    image: ${_DOCKER_COMPONENT_IMG}
   ${MAN_SERVICE}:
     depends_on:
       - ${SSHD_SERVICE}

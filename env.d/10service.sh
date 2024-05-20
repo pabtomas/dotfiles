@@ -6,7 +6,7 @@
 _service "${BASH_ID}"
 _service "${COLLECTOR_ID}"
 _service "${CONTROLLER_ID}"
-_service "${DOCKER_ID}"
+_service "${_DOCKER_ID}"
 _service "${EDITOR_ID}"
 _service "${ENTRYPOINT_ID}"
 _service "${GIT_ID}"

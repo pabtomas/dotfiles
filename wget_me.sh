@@ -116,7 +116,6 @@ EOF
     API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
     export API_TAG
     . "${1}/env.sh"
-    unset DOCKER_HOST
     eval "${2}"
   )
 
@@ -323,8 +322,11 @@ EOF
   docker compose --file "${tmp}/compose.yaml" start
 
   ## let a short time before checking services status
-  printf 'Sleeping ...\n'
-  sleep 3
+  if [ "${runner}" = "${bot}" ]
+  then
+    printf 'Sleeping ...\n'
+    sleep 3
+  fi
 
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"

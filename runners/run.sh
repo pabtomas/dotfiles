@@ -6,10 +6,9 @@ main ()
 
   if [[ "${#}" != '1' ]]; then printf '%s needs 1 parameter\n' "${0}" >&2; return 1; fi
 
-  local docker_host id runners
-  docker_host="${DOCKER_HOST}"
+  local id runners
   id="${1}"
-  readonly docker_host id
+  readonly id
 
   CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
   runners="$(pwd)"
@@ -17,6 +16,8 @@ main ()
 
   (
     set -- "${runners}/.."
+    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+    export API_TAG
     source "${1}/env.sh"
     eval "printf '%s\\n' \"$(cat "${runners}/${id}/compose.yaml.in")\"" > "${runners}/${id}/compose.yaml"
   )
