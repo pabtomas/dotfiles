@@ -33,38 +33,10 @@ RUN <<END_OF_RUN
     endpoints="$(wget -q -O- "${API_URL}" | yq '.paths | keys | .[]')"
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
-cat << TEMPLATING
--------------------------------------------------------------------------------
-API version: ${API_TAG}$(
-  for arg in $(set | grep "^${API_PFX}")
-  do
-    if [ "${arg#"${arg%????}"}" != "='0'" ]
-    then
-      arg="$(printf '%s\n' "${arg}" | cut -d'=' -f1)"
-      flag=0
-      for endpoint in ${endpoints}
-      do
-        if [ "${endpoint#"${endpoint%?}"}" != '}' ]
-        then
-          if [ "$(docker_varname "$(nginx_varname "${endpoint}")")" == "${arg}" ]
-          then
-            flag=1
-            break
-          fi
-        fi
-      done
-      if [ "${flag}" == '0' ]
-      then
-        printf '\n[warning] %s does not match any API endpoint' "'${arg}'"
-      fi
-    fi
-  done)
--------------------------------------------------------------------------------
-TEMPLATING
     apk del __install_spec_parser
     apk add --no-cache nginx
     rm -rf ${APK_PATHS}
-cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
+    cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -101,6 +73,45 @@ $(for endpoint in ${endpoints}
     fi
   done)
 }
+TEMPLATING
+    warning_entrypoint="${ENTRYPOINTD_PATH}/98warning.sh"
+    cat << TEMPLATING >> "${warning_entrypoint}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+  cat << EOF
+-------------------------------------------------------------------------------
+API version: ${API_TAG}$(
+  for arg in $(set | grep "^${API_PFX}")
+  do
+    if [ "${arg#"${arg%????}"}" != "='0'" ]
+    then
+      arg="$(printf '%s\n' "${arg}" | cut -d'=' -f1)"
+      flag=0
+      for endpoint in ${endpoints}
+      do
+        if [ "${endpoint#"${endpoint%?}"}" != '}' ]
+        then
+          if [ "$(docker_varname "$(nginx_varname "${endpoint}")")" == "${arg}" ]
+          then
+            flag=1
+            break
+          fi
+        fi
+      done
+      if [ "${flag}" == '0' ]
+      then
+        printf '\n[warning] %s does not match any API endpoint' "'${arg}'"
+      fi
+    fi
+  done)
+-------------------------------------------------------------------------------
+EOF
+}
+
+main
 TEMPLATING
     _nginx="$(command -v nginx)"
     nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
