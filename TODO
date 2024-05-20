@@ -19,26 +19,10 @@ TODO:
 - add permissions for controller
 - logger alias for controller
 - add aliases/remove old directory
-- process:
-  O wget the wget_me.sh script
-  - run the wget_me.sh script:
-    - if Docker not installed:
-      O install Docker
-      - min (or another modern minimal web browser)
-    - else:
-      O update Docker
-      - min (or another modern minimal web browser)
-    O add host docker config
-    O pull docker-git image
-    O run docker-git container
-    O pull workspace git repo
-    - pull latest workspace images from registry
-    O docker compose create + start into workspace git repo
-    O remove workspace git repo
-    O docker attach jumper (no ssh)
-    O stop + rm all containers
-    O rm all containers
-    O docker prune everything EXCEPT VOLUMES
+- wget_me.sh:
+  - install min (or another modern minimal web browser)
+  - pull latest workspace images from registry ??
+  - make the script works without internet (use cache)
 - new compose.yaml file:
   - 1 dir = 1 ALPINE Dockerfile = 1 service:
     - decorator:

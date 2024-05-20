@@ -1,8 +1,5 @@
-ARG ZIG_IMG
-ARG OS_LOCAL_IMG
+FROM jlesage/baseimage-gui:alpine-3.19
 
-FROM ${ZIG_IMG} as zig_img
-FROM ${OS_LOCAL_IMG}
+RUN set-cont-env APP_NAME 'spaceporn'
 
-COPY --from=zig_img /usr/local/bin/zig /usr/local/bin
-COPY --from=zig_img /usr/local/bin/lib /usr/local/bin
+ENTRYPOINT ["/workspaces/spaceporn/spaceporn/zig-out/bin/spaceporn"]

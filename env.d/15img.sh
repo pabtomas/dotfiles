@@ -28,3 +28,5 @@ _component_img "${TMUX_ID}" "${TMUX_COMPONENT_TAG}"
 _component_img "${VIM_ID}" "${VIM_COMPONENT_TAG}"
 _component_img "${WORKSPACES_ID}" "${WORKSPACES_COMPONENT_TAG}"
 _component_img "${ZIG_ID}" "${ZIG_COMPONENT_TAG}"
+
+_runner_img "${SPACEPORN_ID}" "${SPACEPORN_RUNNER_TAG}"

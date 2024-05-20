@@ -25,3 +25,5 @@ _component_tag "${TMUX_ID}" 'latest'
 _component_tag "${VIM_ID}" 'latest'
 _component_tag "${WORKSPACES_ID}" 'latest'
 _component_tag "${ZIG_ID}" '0.12.0'
+
+_runner_tag "${SPACEPORN_ID}" 'latest'

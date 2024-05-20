@@ -11,6 +11,8 @@ UNPRIVILEGED_USER='visitor'
 
 API_PFX='API_ENDPOINT_'
 ID_SEP='/'
+IMG_SEP='/'
+TAG_SEP=':'
 HOST_SEP='.'
 SERVICE_SEP='.'
 DELETE_ME_SFX='-DELME'
@@ -115,10 +117,17 @@ _explorer_id ()
   unset SFX_OVERRIDE
 }
 
+_runner_id ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${RUNNER_ID_SFX}" __id "${1}" "${RUNNER_ID}${ID_SEP}${1}"
+  unset SFX_OVERRIDE
+}
+
 __img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}/${3}:${4}'"
+  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${IMG_SEP}${3}${TAG_SEP}${4}'"
 }
 
 _intern_img ()
@@ -130,7 +139,14 @@ _intern_img ()
 _component_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${1}" "${2}"
+  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
+  unset SFX_OVERRIDE
+}
+
+_runner_img ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${RUNNER_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${RUNNER_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
@@ -138,7 +154,7 @@ _extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   __img "${1}" "${2}" "${3}" "${4}"
-  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${LOCAL_ID}/${3}" "${4}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${LOCAL_ID}${IMG_SEP}${3}" "${4}"
   unset SFX_OVERRIDE
 }
 
@@ -177,6 +193,13 @@ _component_tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   SFX_OVERRIDE="${COMPONENT_TAG_SFX}" _tag "${1}" "${2}"
+  unset SFX_OVERRIDE
+}
+
+_runner_tag ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${RUNNER_TAG_SFX}" _tag "${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
