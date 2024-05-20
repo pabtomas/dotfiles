@@ -75,7 +75,7 @@ _sfx 'volume'
 __host ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
 }
 
 _host ()
@@ -94,7 +94,7 @@ _explorer_host ()
 __id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${ID_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${ID_SFX}"}='${2}'"
 }
 
 _id ()
@@ -127,7 +127,7 @@ _runner_id ()
 __img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${IMG_SEP}${3}${TAG_SEP}${4}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${IMG_SEP}${3}${TAG_SEP}${4}'"
 }
 
 _intern_img ()
@@ -161,13 +161,13 @@ _extern_img ()
 _path ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${PATH_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${PATH_SFX}"}='${2}'"
 }
 
 __service ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${SERVICE_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${SERVICE_SFX}"}='${2}'"
 }
 
 _service ()
@@ -186,7 +186,7 @@ _explorer_service ()
 _tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
 }
 
 _component_tag ()
@@ -206,13 +206,13 @@ _runner_tag ()
 _url ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${URL_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${URL_SFX}"}='${2}'"
 }
 
 __volume ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(_upper "${1}" || :)${SFX_OVERRIDE:-"${VOLUME_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'docker'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${VOLUME_SFX}"}='${2}'"
 }
 
 _volume ()
