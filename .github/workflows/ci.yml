@@ -55,3 +55,10 @@ jobs:
       shell: bash
       run: |
         shellcheck --severity style --external-sources ./env.sh --external-sources ./env.d/*.sh wget_me.sh
+  lint_compose:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      shell: bash
+      run: |
