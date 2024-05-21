@@ -7,8 +7,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache openssh-server
     ssh-keygen -A
     _sshd="$(command -v sshd)"

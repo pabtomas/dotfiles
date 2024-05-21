@@ -8,8 +8,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     mkdir -p "${ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #! /bin/sh

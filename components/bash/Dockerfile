@@ -12,8 +12,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     apk update
     apk add --no-cache coreutils bash-completion tree
     mkdir -p "${BASH_ALIASES_PATH}" "${BASH_COMPLETION_PATH}"

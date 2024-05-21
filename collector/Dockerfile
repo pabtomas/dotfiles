@@ -17,8 +17,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache jq
     rm -rf ${APK_PATHS}
     mkdir -p "${OPT_SCRIPTS_PATH}" "${DATA_PATH}"

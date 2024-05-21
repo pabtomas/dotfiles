@@ -14,8 +14,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-cli-compose docker-bash-completion
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()

@@ -10,8 +10,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     spaceporn_scripts="${OPT_SCRIPTS_PATH}/${SPACEPORN_ID}"
     mkdir -p "${WORKSPACES_PATH}" "${spaceporn_scripts}"
     cat << TEMPLATING >> /etc/profile.d/99default_dir.sh

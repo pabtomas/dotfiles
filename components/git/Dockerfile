@@ -8,8 +8,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache git tig ripgrep git-bash-completion ripgrep-bash-completion
     wget -q -O "${BASH_COMPLETION_PATH}/99tig.sh" "${TIG_COMPLETION_URL}"
     unset http_proxy https_proxy
