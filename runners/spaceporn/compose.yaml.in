@@ -11,11 +11,11 @@ services:
     ports:
       - mode: ingress
         target: 5800
-        published: 5800
+        published: '"5800"'
         protocol: tcp
       - mode: ingress
         target: 5900
-        published: 5900
+        published: '"5900"'
         protocol: tcp
     volumes:
       - type: volume
