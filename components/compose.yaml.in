@@ -9,14 +9,16 @@ services:
         BASH_LOCAL_IMG: ${BASH_LOCAL_IMG}
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
     depends_on:
       ${ENTRYPOINT_SERVICE}:
         condition: service_started
         required: true
     image: ${BASH_COMPONENT_IMG}
+    networks:
+      default: null
   ${_DOCKER_SERVICE}:
     build:
       context: ./${_DOCKER_ID}
@@ -24,8 +26,8 @@ services:
       args:
         _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
         _DOCKER_PATH: ${_DOCKER_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
         TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
@@ -34,6 +36,8 @@ services:
         condition: service_started
         required: true
     image: ${_DOCKER_COMPONENT_IMG}
+    networks:
+      default: null
   ${ENTRYPOINT_SERVICE}:
     build:
       context: ./${ENTRYPOINT_ID}
@@ -41,18 +45,20 @@ services:
       args:
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         OS_LOCAL_IMG: ${OS_LOCAL_IMG}
     image: ${ENTRYPOINT_COMPONENT_IMG}
+    networks:
+      default: null
   ${GIT_SERVICE}:
     build:
       context: ./${GIT_ID}
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         TIG_COMPLETION_URL: ${TIG_COMPLETION_URL}
         WORKSPACES_COMPONENT_IMG: ${WORKSPACES_COMPONENT_IMG}
     depends_on:
@@ -60,54 +66,64 @@ services:
         condition: service_started
         required: true
     image: ${GIT_COMPONENT_IMG}
+    networks:
+      default: null
   ${LINGUIST_SERVICE}:
     build:
       context: ./${LINGUIST_ID}
       dockerfile: Dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         OS_LOCAL_IMG: ${OS_LOCAL_IMG}
     image: ${LINGUIST_COMPONENT_IMG}
+    networks:
+      default: null
   ${MAN_SERVICE}:
     build:
       context: ./${MAN_ID}
       dockerfile: Dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
     depends_on:
       ${SSHD_SERVICE}:
         condition: service_started
         required: true
     image: ${MAN_COMPONENT_IMG}
+    networks:
+      default: null
   ${PASS_SERVICE}:
     build:
       context: ./${PASS_ID}
       dockerfile: Dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
     depends_on:
       ${SSHD_SERVICE}:
         condition: service_started
         required: true
     image: ${PASS_COMPONENT_IMG}
+    networks:
+      default: null
   ${SHELL_SERVICE}:
     build:
       context: ./${SHELL_ID}
       dockerfile: Dockerfile
       args:
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
     depends_on:
       ${GIT_SERVICE}:
         condition: service_started
         required: true
     image: ${SHELL_COMPONENT_IMG}
+    networks:
+      default: null
   ${SSHD_SERVICE}:
     build:
       context: ./${SSHD_ID}
@@ -115,13 +131,15 @@ services:
       args:
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
     depends_on:
       ${BASH_SERVICE}:
         condition: service_started
         required: true
     image: ${SSHD_COMPONENT_IMG}
+    networks:
+      default: null
   ${TMUX_SERVICE}:
     build:
       context: ./${TMUX_ID}
@@ -129,8 +147,8 @@ services:
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         TMUX_COMPLETION_URL: ${TMUX_COMPLETION_URL}
         TPM_PATH: ${TPM_PATH}
         TPM_URL: ${TPM_URL}
@@ -139,13 +157,15 @@ services:
         condition: service_started
         required: true
     image: ${TMUX_COMPONENT_IMG}
+    networks:
+      default: null
   ${VIM_SERVICE}:
     build:
       context: ./${VIM_ID}
       dockerfile: Dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NERDTREE_URL: ${NERDTREE_URL}
         POLYGLOT_URL: ${POLYGLOT_URL}
         RAINBOW_URL: ${RAINBOW_URL}
@@ -156,13 +176,15 @@ services:
         condition: service_started
         required: true
     image: ${VIM_COMPONENT_IMG}
+    networks:
+      default: null
   ${WORKSPACES_SERVICE}:
     build:
       context: ./${WORKSPACES_ID}
       dockerfile: Dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OWNER_URL: ${OWNER_URL}
         SPACEPORN_ID: ${SPACEPORN_ID}
@@ -173,6 +195,8 @@ services:
         condition: service_started
         required: true
     image: ${WORKSPACES_COMPONENT_IMG}
+    networks:
+      default: null
   ${ZIG_SERVICE}:
     build:
       context: ./${ZIG_ID}
@@ -180,8 +204,8 @@ services:
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         ZIG_BUILDS_URL: ${ZIG_BUILDS_URL}
         ZIG_COMPLETION_URL: ${ZIG_COMPLETION_URL}
         ZIG_COMPONENT_TAG: ${ZIG_COMPONENT_TAG}
@@ -190,3 +214,5 @@ services:
         condition: service_started
         required: true
     image: ${ZIG_COMPONENT_IMG}
+    networks:
+      default: null
