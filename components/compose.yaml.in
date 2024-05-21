@@ -1,3 +1,4 @@
+name: ${COMPONENT_ID}s
 services:
   ${BASH_SERVICE}:
     build:
