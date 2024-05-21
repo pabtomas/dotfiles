@@ -41,8 +41,12 @@ services:
       ${SCHOLAR_SERVICE}:
         condition: service_started
         required: true
-    image: ${COLLECTOR_IMG}
     hostname: ${COLLECTOR_HOST}
+    image: ${COLLECTOR_IMG}
+    networks:
+      ${PROXIFIED_SOCKET_NET}:
+        ipv4_address: ${COLLECTOR_IP}
+    read_only: true
     volumes:
       - type: volume
         source: ${COLLECTOR_ETC_CRONTABS_VOLUME}
@@ -62,18 +66,19 @@ services:
         source: ${COLLECTOR_VAR_LOG_VOLUME}
         target: ${VAR_LOG_PATH}
         volume: {}
-    networks:
-      ${PROXIFIED_SOCKET_NET}:
-        ipv4_address: ${COLLECTOR_IP}
-    read_only: true
   ${CONTROLLER_SERVICE}:
     container_name: ${CONTROLLER_HOST}
     depends_on:
       ${PROXY_SERVICE}:
         condition: service_started
         required: true
-    image: ${_DOCKER_COMPONENT_IMG}
     hostname: ${CONTROLLER_HOST}
+    image: ${_DOCKER_COMPONENT_IMG}
+    networks:
+      ${PROXIFIED_SOCKET_NET}:
+        ipv4_address: ${CONTROLLER_IP}
+      ${JUMP_AREA_NET}:
+    # read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -84,11 +89,6 @@ services:
         source: ${MYWHALEFLEET_VOLUME}
         target: /${MYWHALEFLEET_PATH}
         volume: {}
-    networks:
-      ${PROXIFIED_SOCKET_NET}:
-        ipv4_address: ${CONTROLLER_IP}
-      ${JUMP_AREA_NET}:
-    # read_only: true
   ${JUMPER_SERVICE}:
     build:
       context: ./${JUMPER_ID}
@@ -112,8 +112,13 @@ services:
       ${COLLECTOR_SERVICE}:
         condition: service_started
         required: true
-    image: ${JUMPER_IMG}
     hostname: ${JUMPER_HOST}
+    image: ${JUMPER_IMG}
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
+    stdin_open: true
+    tty: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -150,15 +155,13 @@ services:
         target: /opt/${COLLECTOR_ID}${VAR_LOG_PATH}
         read_only: true
         volume: {}
-    networks:
-      - ${JUMP_AREA_NET}
-    stdin_open: true
-    tty: true
-    # read_only: true
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
-    image: ${VIM_COMPONENT_IMG}
     hostname: ${EDITOR_HOST}
+    image: ${VIM_COMPONENT_IMG}
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -173,9 +176,6 @@ services:
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
         volume: {}
-    networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
   ${PROXY_SERVICE}:
     build:
       context: ./${PROXY_ID}
@@ -202,8 +202,14 @@ services:
         PROXY_PORT: ${PROXY_PORT}
         SOCKET_PATH: ${SOCKET_PATH}
     container_name: ${PROXY_HOST}
-    image: ${PROXY_IMG}
     hostname: ${PROXY_HOST}
+    image: ${PROXY_IMG}
+    networks:
+      ${PROXIFIED_SOCKET_NET}:
+        ipv4_address: ${PROXY_IP}
+    read_only: true
+    tmpfs:
+      - /run
     volumes:
       - type: bind
         source: ${SOCKET_PATH}
@@ -221,16 +227,13 @@ services:
         target: ${OPT_SCRIPTS_PATH}
         read_only: true
         volume: {}
-    networks:
-      ${PROXIFIED_SOCKET_NET}:
-        ipv4_address: ${PROXY_IP}
-    read_only: true
-    tmpfs:
-      - /run
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
-    image: ${PASS_COMPONENT_IMG}
     hostname: ${SAFEDEPOSIT_HOST}
+    image: ${PASS_COMPONENT_IMG}
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -241,26 +244,26 @@ services:
         source: ${SAFEDEPOSIT_VOLUME}
         target: ${SAFEDEPOSIT_PATH}
         volume: {}
+  ${SCHOLAR_SERVICE}:
+    container_name: ${SCHOLAR_HOST}
+    hostname: ${SCHOLAR_HOST}
+    image: ${MAN_COMPONENT_IMG}
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
-  ${SCHOLAR_SERVICE}:
-    container_name: ${SCHOLAR_HOST}
-    image: ${MAN_COMPONENT_IMG}
-    hostname: ${SCHOLAR_HOST}
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
         read_only: true
         volume: {}
+  ${SHELL_EXPLORER_SERVICE}:
+    container_name: ${SHELL_EXPLORER_HOST}
+    hostname: ${SHELL_EXPLORER_HOST}
+    image: ${SHELL_COMPONENT_IMG}
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
-  ${SHELL_EXPLORER_SERVICE}:
-    container_name: ${SHELL_EXPLORER_HOST}
-    image: ${SHELL_COMPONENT_IMG}
-    hostname: ${SHELL_EXPLORER_HOST}
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -271,13 +274,13 @@ services:
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
         volume: {}
+  ${ZIG_EXPLORER_SERVICE}:
+    container_name: ${ZIG_EXPLORER_HOST}
+    hostname: ${ZIG_EXPLORER_HOST}
+    image: ${ZIG_COMPONENT_IMG}
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
-  ${ZIG_EXPLORER_SERVICE}:
-    container_name: ${ZIG_EXPLORER_HOST}
-    image: ${ZIG_COMPONENT_IMG}
-    hostname: ${ZIG_EXPLORER_HOST}
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -288,9 +291,6 @@ services:
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
         volume: {}
-    networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
 
 networks:
   ${PROXIFIED_SOCKET_NET}:
