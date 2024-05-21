@@ -1,69 +1,47 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
-  ${PROXY_SERVICE}:
-    build:
-      context: ./${PROXY_ID}
-      args:
-        - APK_PATHS=${APK_PATHS}
-        - API_PFX=${API_PFX}
-        - API_TAG=${API_TAG}
-        - API_URL=${API_URL}
-        - ${API_PFX}_PING=${TRUE}
-        - ${API_PFX}BUILD=${TRUE}
-        - ${API_PFX}IMAGES_JSON=${TRUE}
-        - ${API_PFX}NETWORKS=${TRUE}
-        - ${API_PFX}VERSION=${TRUE}
-        - COLLECTOR_IP=${COLLECTOR_IP}
-        - CONTROLLER_IP=${CONTROLLER_IP}
-        - ENTRYPOINT_COMPONENT_IMG=${ENTRYPOINT_COMPONENT_IMG}
-        - ENTRYPOINTD_PATH=${ENTRYPOINTD_PATH}
-        - ETC_NGX_PATH=${ETC_NGX_PATH}
-        - LINUXSERVER_PROXY_LOCAL_IMG=${LINUXSERVER_PROXY_LOCAL_IMG}
-        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
-        - PROXY_PORT=${PROXY_PORT}
-        - SOCKET_PATH=${SOCKET_PATH}
-        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
-        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${PROXY_IMG}
-    container_name: ${PROXY_HOST}
-    hostname: ${PROXY_HOST}
-    volumes:
-      - ${SOCKET_PATH}:${SOCKET_PATH}:ro
-      - ${PROXY_NGX_FS_VOLUME}:${ETC_NGX_PATH}:ro
-      - ${PROXY_SCRIPTS_FS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
-    networks:
-      ${PROXIFIED_SOCKET_NET}:
-        ipv4_address: ${PROXY_IP}
-    read_only: true
-    tmpfs:
-      - /run
   ${COLLECTOR_SERVICE}:
-    depends_on:
-      - ${PROXY_SERVICE}
-      - ${CONTROLLER_SERVICE}
-      - ${EDITOR_SERVICE}
-      - ${SAFEDEPOSIT_SERVICE}
-      - ${SCHOLAR_SERVICE}
-      - ${SHELL_EXPLORER_SERVICE}
-      - ${ZIG_EXPLORER_SERVICE}
     build:
       context: ./${COLLECTOR_ID}
+      dockerfile: Dockerfile
       args:
-        - APK_PATHS=${APK_PATHS}
-        - COMPLETION_PATH=${COMPLETION_PATH}
-        - CRON_LOG_PATH=${CRON_LOG_PATH}
-        - CRONTABS_PATH=${CRONTABS_PATH}
-        - DATA_PATH=${DATA_PATH}
-        - ENTRYPOINT_COMPONENT_IMG=${ENTRYPOINT_COMPONENT_IMG}
-        - ENTRYPOINTD_PATH=${ENTRYPOINTD_PATH}
-        - HTTP_DOCKER_HOST=${HTTP_DOCKER_HOST}
-        - NET=${JUMP_AREA_NET}
-        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
-        - PROXY_ID=${PROXY_ID}
-        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
-        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${COLLECTOR_IMG}
+        APK_PATHS: ${APK_PATHS}
+        COMPLETION_PATH: ${COMPLETION_PATH}
+        CRON_LOG_PATH: ${CRON_LOG_PATH}
+        CRONTABS_PATH: ${CRONTABS_PATH}
+        DATA_PATH: ${DATA_PATH}
+        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_DOCKER_HOST: ${HTTP_DOCKER_HOST}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        NET: ${JUMP_AREA_NET}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        PROXY_ID: ${PROXY_ID}
     container_name: ${COLLECTOR_HOST}
+    depends_on:
+      ${PROXY_SERVICE}:
+        condition: service_started
+        required: true
+      ${CONTROLLER_SERVICE}:
+        condition: service_started
+        required: true
+      ${EDITOR_SERVICE}:
+        condition: service_started
+        required: true
+      ${SAFEDEPOSIT_SERVICE}:
+        condition: service_started
+        required: true
+      ${SCHOLAR_SERVICE}:
+        condition: service_started
+        required: true
+      ${SHELL_EXPLORER_SERVICE}:
+        condition: service_started
+        required: true
+      ${ZIG_EXPLORER_SERVICE}:
+        condition: service_started
+        required: true
+    image: ${COLLECTOR_IMG}
     hostname: ${COLLECTOR_HOST}
     volumes:
       - ${COLLECTOR_ETC_CRONTABS_VOLUME}:${CRONTABS_PATH}:ro
@@ -75,10 +53,12 @@ services:
         ipv4_address: ${COLLECTOR_IP}
     read_only: true
   ${CONTROLLER_SERVICE}:
-    depends_on:
-      - ${PROXY_SERVICE}
-    image: ${_DOCKER_COMPONENT_IMG}
     container_name: ${CONTROLLER_HOST}
+    depends_on:
+      ${PROXY_SERVICE}:
+        condition: service_started
+        required: true
+    image: ${_DOCKER_COMPONENT_IMG}
     hostname: ${CONTROLLER_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
@@ -89,26 +69,29 @@ services:
       ${JUMP_AREA_NET}:
     # read_only: true
   ${JUMPER_SERVICE}:
-    depends_on:
-      - ${COLLECTOR_SERVICE}
     build:
       context: ./${JUMPER_ID}
+      dockerfile: Dockerfile
       args:
-        - BASH_COMPLETION_PATH=${BASH_COMPLETION_PATH}
-        - COMPLETION_PATH=/opt/${COLLECTOR_ID}${COMPLETION_PATH}
-        - CONTROLLER_ID=${CONTROLLER_ID}
-        - ENTRYPOINTD_PATH=${ENTRYPOINTD_PATH}
-        - HOSTNAME=${JUMPER_ID}
-        - OPT_SCRIPTS_PATH=${OPT_SCRIPTS_PATH}
-        - OPT_SSH_PATH=${OPT_SSH_PATH}
-        - NET_PFX=${JUMP_AREA_PFX}
-        - SSH_ROOT_PATH=${SSH_ROOT_PATH}
-        - TCP_DOCKER_HOST=${TCP_DOCKER_HOST}
-        - TMUX_COMPONENT_IMG=${TMUX_COMPONENT_IMG}
-        - HTTP_PROXY=${http_proxy:-${HTTP_PROXY:-}}
-        - HTTPS_PROXY=${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${JUMPER_IMG}
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        COMPLETION_PATH: /opt/${COLLECTOR_ID}${COMPLETION_PATH}
+        CONTROLLER_ID: ${CONTROLLER_ID}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HOSTNAME: ${JUMPER_ID}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        OPT_SSH_PATH: ${OPT_SSH_PATH}
+        NET_PFX: ${JUMP_AREA_PFX}
+        SSH_ROOT_PATH: ${SSH_ROOT_PATH}
+        TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
+        TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
     container_name: ${JUMPER_HOST}
+    depends_on:
+      ${COLLECTOR_SERVICE}:
+        condition: service_started
+        required: true
+    image: ${JUMPER_IMG}
     hostname: ${JUMPER_HOST}
     volumes:
       - ${SSH_VOLUME}:${OPT_SSH_PATH}:ro
@@ -124,8 +107,8 @@ services:
     tty: true
     # read_only: true
   ${EDITOR_SERVICE}:
-    image: ${VIM_COMPONENT_IMG}
     container_name: ${EDITOR_HOST}
+    image: ${VIM_COMPONENT_IMG}
     hostname: ${EDITOR_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
@@ -134,29 +117,47 @@ services:
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
-  ${SHELL_EXPLORER_SERVICE}:
-    image: ${SHELL_COMPONENT_IMG}
-    container_name: ${SHELL_EXPLORER_HOST}
-    hostname: ${SHELL_EXPLORER_HOST}
+  ${PROXY_SERVICE}:
+    build:
+      context: ./${PROXY_ID}
+      dockerfile: Dockerfile
+      args:
+        APK_PATHS: ${APK_PATHS}
+        API_PFX: ${API_PFX}
+        API_TAG: ${API_TAG}
+        API_URL: ${API_URL}
+        ${API_PFX}_PING: ${TRUE}
+        ${API_PFX}BUILD: ${TRUE}
+        ${API_PFX}IMAGES_JSON: ${TRUE}
+        ${API_PFX}NETWORKS: ${TRUE}
+        ${API_PFX}VERSION: ${TRUE}
+        COLLECTOR_IP: ${COLLECTOR_IP}
+        CONTROLLER_IP: ${CONTROLLER_IP}
+        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        ETC_NGX_PATH: ${ETC_NGX_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        PROXY_PORT: ${PROXY_PORT}
+        SOCKET_PATH: ${SOCKET_PATH}
+    container_name: ${PROXY_HOST}
+    image: ${PROXY_IMG}
+    hostname: ${PROXY_HOST}
     volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-      - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
+      - ${SOCKET_PATH}:${SOCKET_PATH}:ro
+      - ${PROXY_NGX_FS_VOLUME}:${ETC_NGX_PATH}:ro
+      - ${PROXY_SCRIPTS_FS_VOLUME}:${OPT_SCRIPTS_PATH}:ro
     networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
-  ${ZIG_EXPLORER_SERVICE}:
-    image: ${ZIG_COMPONENT_IMG}
-    container_name: ${ZIG_EXPLORER_HOST}
-    hostname: ${ZIG_EXPLORER_HOST}
-    volumes:
-      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
-    networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
+      ${PROXIFIED_SOCKET_NET}:
+        ipv4_address: ${PROXY_IP}
+    read_only: true
+    tmpfs:
+      - /run
   ${SAFEDEPOSIT_SERVICE}:
-    image: ${PASS_COMPONENT_IMG}
     container_name: ${SAFEDEPOSIT_HOST}
+    image: ${PASS_COMPONENT_IMG}
     hostname: ${SAFEDEPOSIT_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
@@ -165,11 +166,31 @@ services:
       - ${JUMP_AREA_NET}
     # read_only: true
   ${SCHOLAR_SERVICE}:
-    image: ${MAN_COMPONENT_IMG}
     container_name: ${SCHOLAR_HOST}
+    image: ${MAN_COMPONENT_IMG}
     hostname: ${SCHOLAR_HOST}
     volumes:
       - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
+  ${SHELL_EXPLORER_SERVICE}:
+    container_name: ${SHELL_EXPLORER_HOST}
+    image: ${SHELL_COMPONENT_IMG}
+    hostname: ${SHELL_EXPLORER_HOST}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
+    networks:
+      - ${JUMP_AREA_NET}
+    # read_only: true
+  ${ZIG_EXPLORER_SERVICE}:
+    container_name: ${ZIG_EXPLORER_HOST}
+    image: ${ZIG_COMPONENT_IMG}
+    hostname: ${ZIG_EXPLORER_HOST}
+    volumes:
+      - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
     networks:
       - ${JUMP_AREA_NET}
     # read_only: true
