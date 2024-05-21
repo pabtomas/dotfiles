@@ -2,7 +2,7 @@ name: ${COMPOSE_PROJECT_NAME}
 services:
   ${COLLECTOR_SERVICE}:
     build:
-      context: ./${COLLECTOR_ID}
+      context: ${CWD_PATH}/${COLLECTOR_ID}
       dockerfile: Dockerfile
       args:
         APK_PATHS: ${APK_PATHS}
@@ -78,7 +78,6 @@ services:
       ${JUMP_AREA_NET}: null
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
-#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -87,7 +86,7 @@ services:
         volume: {}
       - type: volume
         source: ${MYWHALEFLEET_VOLUME}
-        target: /${MYWHALEFLEET_PATH}
+        target: ${MYWHALEFLEET_PATH}
         volume: {}
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
@@ -95,7 +94,6 @@ services:
     image: ${VIM_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
-#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -116,7 +114,6 @@ services:
     image: ${SHELL_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
-#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -133,7 +130,6 @@ services:
     image: ${ZIG_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
-#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -146,7 +142,7 @@ services:
         volume: {}
   ${JUMPER_SERVICE}:
     build:
-      context: ./${JUMPER_ID}
+      context: ${CWD_PATH}/${JUMPER_ID}
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
@@ -171,7 +167,6 @@ services:
     image: ${JUMPER_IMG}
     networks:
       ${JUMP_AREA_NET}: null
-#   read_only: true
     stdin_open: true
     tty: true
     volumes:
@@ -212,7 +207,7 @@ services:
         volume: {}
   ${PROXY_SERVICE}:
     build:
-      context: ./${PROXY_ID}
+      context: ${CWD_PATH}/${PROXY_ID}
       dockerfile: Dockerfile
       args:
         ${API_PFX}_PING: "\"${TRUE}\""
@@ -267,7 +262,6 @@ services:
     image: ${PASS_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
-#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -284,7 +278,6 @@ services:
     image: ${MAN_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
-#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -293,8 +286,8 @@ services:
         volume: {}
 networks:
   ${JUMP_AREA_NET}:
-    driver: bridge
     name: ${JUMP_AREA_NET}
+    driver: bridge
     ipam:
       driver: default
       config:
@@ -302,8 +295,8 @@ networks:
           gateway: ${JUMP_AREA_GATEWAY_IP}
           ip_range: ${JUMP_AREA_SUB}
   ${PROXIFIED_SOCKET_NET}:
-    driver: bridge
     name: ${PROXIFIED_SOCKET_NET}
+    driver: bridge
     ipam:
       driver: default
       config:
