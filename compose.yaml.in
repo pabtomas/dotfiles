@@ -75,10 +75,10 @@ services:
     hostname: ${CONTROLLER_HOST}
     image: ${_DOCKER_COMPONENT_IMG}
     networks:
+      ${JUMP_AREA_NET}: null
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
-      ${JUMP_AREA_NET}:
-    # read_only: true
+#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -88,6 +88,40 @@ services:
       - type: volume
         source: ${MYWHALEFLEET_VOLUME}
         target: /${MYWHALEFLEET_PATH}
+        volume: {}
+  ${SHELL_EXPLORER_SERVICE}:
+    container_name: ${SHELL_EXPLORER_HOST}
+    hostname: ${SHELL_EXPLORER_HOST}
+    image: ${SHELL_COMPONENT_IMG}
+    networks:
+      ${JUMP_AREA_NET}: null
+#   read_only: true
+    volumes:
+      - type: volume
+        source: ${SSH_VOLUME}
+        target: ${SSH_ROOT_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${MYWHALEFLEET_VOLUME}
+        target: ${MYWHALEFLEET_PATH}
+        volume: {}
+  ${ZIG_EXPLORER_SERVICE}:
+    container_name: ${ZIG_EXPLORER_HOST}
+    hostname: ${ZIG_EXPLORER_HOST}
+    image: ${ZIG_COMPONENT_IMG}
+    networks:
+      ${JUMP_AREA_NET}: null
+#   read_only: true
+    volumes:
+      - type: volume
+        source: ${SSH_VOLUME}
+        target: ${SSH_ROOT_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${SPACEPORN_VOLUME}
+        target: ${SPACEPORN_PATH}
         volume: {}
   ${JUMPER_SERVICE}:
     build:
@@ -101,9 +135,9 @@ services:
         HOSTNAME: ${JUMPER_ID}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        NET_PFX: ${JUMP_AREA_PFX}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OPT_SSH_PATH: ${OPT_SSH_PATH}
-        NET_PFX: ${JUMP_AREA_PFX}
         SSH_ROOT_PATH: ${SSH_ROOT_PATH}
         TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
         TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
@@ -115,8 +149,8 @@ services:
     hostname: ${JUMPER_HOST}
     image: ${JUMPER_IMG}
     networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
+      ${JUMP_AREA_NET}: null
+#   read_only: true
     stdin_open: true
     tty: true
     volumes:
@@ -160,8 +194,8 @@ services:
     hostname: ${EDITOR_HOST}
     image: ${VIM_COMPONENT_IMG}
     networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
+      ${JUMP_AREA_NET}: null
+#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -182,14 +216,14 @@ services:
       dockerfile: Dockerfile
       args:
         APK_PATHS: ${APK_PATHS}
-        API_PFX: ${API_PFX}
-        API_TAG: ${API_TAG}
-        API_URL: ${API_URL}
         ${API_PFX}_PING: ${TRUE}
         ${API_PFX}BUILD: ${TRUE}
         ${API_PFX}IMAGES_JSON: ${TRUE}
         ${API_PFX}NETWORKS: ${TRUE}
         ${API_PFX}VERSION: ${TRUE}
+        API_PFX: ${API_PFX}
+        API_TAG: ${API_TAG}
+        API_URL: ${API_URL}
         COLLECTOR_IP: ${COLLECTOR_IP}
         CONTROLLER_IP: ${CONTROLLER_IP}
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
@@ -232,8 +266,8 @@ services:
     hostname: ${SAFEDEPOSIT_HOST}
     image: ${PASS_COMPONENT_IMG}
     networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
+      ${JUMP_AREA_NET}: null
+#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -249,49 +283,14 @@ services:
     hostname: ${SCHOLAR_HOST}
     image: ${MAN_COMPONENT_IMG}
     networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
+      ${JUMP_AREA_NET}: null
+#   read_only: true
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
         read_only: true
         volume: {}
-  ${SHELL_EXPLORER_SERVICE}:
-    container_name: ${SHELL_EXPLORER_HOST}
-    hostname: ${SHELL_EXPLORER_HOST}
-    image: ${SHELL_COMPONENT_IMG}
-    networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
-    volumes:
-      - type: volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
-        source: ${MYWHALEFLEET_VOLUME}
-        target: ${MYWHALEFLEET_PATH}
-        volume: {}
-  ${ZIG_EXPLORER_SERVICE}:
-    container_name: ${ZIG_EXPLORER_HOST}
-    hostname: ${ZIG_EXPLORER_HOST}
-    image: ${ZIG_COMPONENT_IMG}
-    networks:
-      - ${JUMP_AREA_NET}
-    # read_only: true
-    volumes:
-      - type: volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
-        source: ${SPACEPORN_VOLUME}
-        target: ${SPACEPORN_PATH}
-        volume: {}
-
 networks:
   ${PROXIFIED_SOCKET_NET}:
     driver: bridge
@@ -311,7 +310,6 @@ networks:
         - subnet: ${JUMP_AREA_SUB}
           ip_range: ${JUMP_AREA_SUB}
           gateway: ${JUMP_AREA_GATEWAY_IP}
-
 volumes:
   ${SSH_VOLUME}:
     name: ${SSH_VOLUME}
