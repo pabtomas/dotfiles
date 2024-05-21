@@ -6,8 +6,8 @@ main ()
 
   if [ -d "${1}" ]
   then
-    set -- "${1}"/env.d/*.sh
-    while [ "${#}" != '0' ]
+    set -- "${1}"/env.d/*.sh "${1}"
+    while [ "${#}" != '1' ]
     do
       if [ -r "${1}" ]
       then
