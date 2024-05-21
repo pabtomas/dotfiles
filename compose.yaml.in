@@ -205,11 +205,12 @@ services:
     image: ${PROXY_IMG}
     hostname: ${PROXY_HOST}
     volumes:
-      - type: volume
+      - type: bind
         source: ${SOCKET_PATH}
         target: ${SOCKET_PATH}
         read_only: true
-        volume: {}
+        bind:
+          create_host_path: true
       - type: volume
         source: ${PROXY_NGX_FS_VOLUME}
         target: ${ETC_NGX_PATH}
