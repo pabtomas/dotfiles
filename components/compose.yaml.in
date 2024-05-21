@@ -216,3 +216,6 @@ services:
     image: ${ZIG_COMPONENT_IMG}
     networks:
       default: null
+networks:
+  default:
+    name: default
