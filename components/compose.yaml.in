@@ -25,8 +25,6 @@ services:
       context: ${COMPONENTS_PATH}/${_DOCKER_ID}
       dockerfile: Dockerfile
       args:
-        _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
-        _DOCKER_PATH: ${_DOCKER_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}

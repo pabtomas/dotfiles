@@ -5,7 +5,6 @@
 
 _extern_img "${ALPINE_ID}" 'docker.io' "${ALPINE_ID}" "${ALPINE_TAG}"
 _extern_img "${BASH_ID}" 'docker.io' "${BASH_ID}" "${BASH_TAG}"
-_extern_img "${_DOCKER_ID}" 'docker.io' "${_DOCKER_ID}" "${_DOCKER_TAG}"
 _extern_img "${LINUXSERVER_PROXY_ID}" 'lscr.io/linuxserver' 'socket-proxy' "${LINUXSERVER_PROXY_TAG}"
 OS_IMG="${ALPINE_IMG}"
 OS_LOCAL_IMG="${ALPINE_LOCAL_IMG}"
