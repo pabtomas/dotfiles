@@ -1,7 +1,7 @@
 services:
   ${BASH_SERVICE}:
     build:
-      context: ./${BASH_ID}
+      context: ${COMPONENTS_PATH}/${BASH_ID}
       dockerfile: Dockerfile
       args:
         BASH_ALIASES_PATH: ${BASH_ALIASES_PATH}
@@ -21,7 +21,7 @@ services:
       default: null
   ${_DOCKER_SERVICE}:
     build:
-      context: ./${_DOCKER_ID}
+      context: ${COMPONENTS_PATH}/${_DOCKER_ID}
       dockerfile: Dockerfile
       args:
         _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
@@ -40,7 +40,7 @@ services:
       default: null
   ${ENTRYPOINT_SERVICE}:
     build:
-      context: ./${ENTRYPOINT_ID}
+      context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
       dockerfile: Dockerfile
       args:
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
@@ -53,7 +53,7 @@ services:
       default: null
   ${GIT_SERVICE}:
     build:
-      context: ./${GIT_ID}
+      context: ${COMPONENTS_PATH}/${GIT_ID}
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
@@ -70,7 +70,7 @@ services:
       default: null
   ${LINGUIST_SERVICE}:
     build:
-      context: ./${LINGUIST_ID}
+      context: ${COMPONENTS_PATH}/${LINGUIST_ID}
       dockerfile: Dockerfile
       args:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -81,7 +81,7 @@ services:
       default: null
   ${MAN_SERVICE}:
     build:
-      context: ./${MAN_ID}
+      context: ${COMPONENTS_PATH}/${MAN_ID}
       dockerfile: Dockerfile
       args:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -96,7 +96,7 @@ services:
       default: null
   ${PASS_SERVICE}:
     build:
-      context: ./${PASS_ID}
+      context: ${COMPONENTS_PATH}/${PASS_ID}
       dockerfile: Dockerfile
       args:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -111,7 +111,7 @@ services:
       default: null
   ${SHELL_SERVICE}:
     build:
-      context: ./${SHELL_ID}
+      context: ${COMPONENTS_PATH}/${SHELL_ID}
       dockerfile: Dockerfile
       args:
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
@@ -126,7 +126,7 @@ services:
       default: null
   ${SSHD_SERVICE}:
     build:
-      context: ./${SSHD_ID}
+      context: ${COMPONENTS_PATH}/${SSHD_ID}
       dockerfile: Dockerfile
       args:
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
@@ -142,7 +142,7 @@ services:
       default: null
   ${TMUX_SERVICE}:
     build:
-      context: ./${TMUX_ID}
+      context: ${COMPONENTS_PATH}/${TMUX_ID}
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
@@ -161,7 +161,7 @@ services:
       default: null
   ${VIM_SERVICE}:
     build:
-      context: ./${VIM_ID}
+      context: ${COMPONENTS_PATH}/${VIM_ID}
       dockerfile: Dockerfile
       args:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -180,7 +180,7 @@ services:
       default: null
   ${WORKSPACES_SERVICE}:
     build:
-      context: ./${WORKSPACES_ID}
+      context: ${COMPONENTS_PATH}/${WORKSPACES_ID}
       dockerfile: Dockerfile
       args:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -199,7 +199,7 @@ services:
       default: null
   ${ZIG_SERVICE}:
     build:
-      context: ./${ZIG_ID}
+      context: ${COMPONENTS_PATH}/${ZIG_ID}
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}

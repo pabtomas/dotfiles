@@ -24,3 +24,5 @@ _path 'entrypointd' "${ENTRYPOINT_PATH%/*}/$(set -- "${ENTRYPOINT_PATH##*/}"; pr
 _path 'cron_log' "${VAR_LOG_PATH}/cron.log"
 _path "${COMPOSE_PROJECT_NAME}" "${WORKSPACES_PATH}/${COMPOSE_PROJECT_NAME}"
 _path "${SPACEPORN_ID}" "${WORKSPACES_PATH}/${SPACEPORN_ID}"
+_path 'cwd' "$(CDPATH='' cd -- "$(dirname -- "${1}")")"
+_path 'components' "${CWD_PATH}/${COMPONENT_ID}s"
