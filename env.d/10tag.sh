@@ -12,6 +12,7 @@ _tag "${LINUXSERVER_PROXY_ID}" 'latest'
 _tag "${PROXY_ID}" 'latest'
 
 _component_tag "${BASH_ID}" 'latest'
+_component_tag "${_DOCKER_ID}" 'latest'
 _component_tag "${ENTRYPOINT_ID}" 'latest'
 _component_tag "${GIT_ID}" 'latest'
 _component_tag "${LINGUIST_ID}" 'latest'
