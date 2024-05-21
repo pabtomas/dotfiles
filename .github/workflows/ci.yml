@@ -69,9 +69,11 @@ jobs:
         for template in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
         do
           eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
-          if ! grep -Fxvf "${template%.*}" <(docker compose --file "${template%.*}" config) > /dev/null
+          canonical="${template%.*}.canonical"
+          docker compose --file "${template%.*}" config > "${canonical}"
+          if grep -Fxvf "${template%.*}" "${canonical}" > /dev/null
           then
-            diff -u "${template%.*}" <(docker compose --file "${template%.*}" config) || :
+            diff -u "${template%.*}" "${canonical}" || :
             return 1
           fi
         done
