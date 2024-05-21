@@ -55,10 +55,20 @@ jobs:
       shell: bash
       run: |
         shellcheck --severity style --external-sources ./env.sh --external-sources ./env.d/*.sh wget_me.sh
-  lint_compose:
+  canonical_compose:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: config
       shell: bash
       run: |
+        source ./env.sh
+        for template in $(find . -type f -name compose.yaml.in)
+        do
+          eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
+          if ! grep -Fxvf "${template%.*}" <(docker compose --file "${template%.*}" config) > /dev/null
+          then
+            diff -u "${template%.*}" <(docker compose --file "${template%.*}" config) || :
+            return 1
+          fi
+        done
