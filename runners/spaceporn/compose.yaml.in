@@ -1,16 +1,31 @@
+name: ${SPACEPORN_ID}
 services:
   ${SPACEPORN_SERVICE}:
     build:
-      context: ./${SPACEPORN_ID}
-      args:
+      context: ${RUNNERS_PATH}/${SPACEPORN_ID}
+      dockerfile: Dockerfile
+    container_name: ${SPACEPORN_RUNNER_HOST}
     image: ${SPACEPORN_RUNNER_IMG}
-    container_name: ${SPACEPORN_RUNNER_ID}
+    networks:
+      default: null
     ports:
-      - "5800:5800"
-      - "5900:5900"
+      - mode: ingress
+        target: 5800
+        published: "\"5800\""
+        protocol: tcp
+      - mode: ingress
+        target: 5900
+        published: "\"5900\""
+        protocol: tcp
     volumes:
-      - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:ro
-
+      - type: volume
+        source: ${SPACEPORN_VOLUME}
+        target: ${SPACEPORN_PATH}
+        read_only: true
+        volume: {}
+networks:
+  default:
+    name: default
 volumes:
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}

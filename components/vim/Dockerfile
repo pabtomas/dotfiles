@@ -10,8 +10,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --virtual __install_plugins git
     git clone --depth=1 "${NERDTREE_URL}" /root/.vim/pack/plugins/start/nerdtree
     git clone --depth=1 "${POLYGLOT_URL}" /root/.vim/pack/plugins/start/vim-polyglot

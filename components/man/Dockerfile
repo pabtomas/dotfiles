@@ -6,8 +6,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache mandoc man-pages \
       coreutils-doc bash-doc dash-doc \
       curl-doc wget-doc jq-doc \

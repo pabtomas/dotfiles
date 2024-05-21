@@ -26,8 +26,8 @@ ARG ${API_PFX}VERSION
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     mkdir -p "${OPT_SCRIPTS_PATH}"
     apk add --no-cache --virtual __install_spec_parser yq
     endpoints="$(wget -q -O- "${API_URL}" | yq '.paths | keys | .[]')"

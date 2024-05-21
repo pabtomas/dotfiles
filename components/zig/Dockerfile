@@ -11,8 +11,8 @@ ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
-    export http_proxy="${HTTP_PROXY}"
-    export https_proxy="${HTTPS_PROXY}"
+    export http_proxy="${HTTP_PROXY:-}"
+    export https_proxy="${HTTPS_PROXY:-}"
     xz="zig-linux-$(arch)-${ZIG_COMPONENT_TAG}.tar.xz"
     tmp_xz="/tmp/${xz}"
     tmp_zig='/tmp/zig'

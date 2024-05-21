@@ -55,3 +55,25 @@ jobs:
       shell: bash
       run: |
         shellcheck --severity style --external-sources ./env.sh --external-sources ./env.d/*.sh wget_me.sh
+  canonical_compose:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      shell: bash
+      run: |
+        set -eux -- "${GITHUB_WORKSPACE}"
+        API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+        export API_TAG
+        source "${GITHUB_WORKSPACE}/env.sh"
+        for template in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
+        do
+          eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
+          canonical="${template%.*}.canonical"
+          docker compose --file "${template%.*}" config > "${canonical}"
+          if grep -Fxvf "${template%.*}" "${canonical}" > /dev/null
+          then
+            diff -u "${template%.*}" "${canonical}" || :
+            return 1
+          fi
+        done
