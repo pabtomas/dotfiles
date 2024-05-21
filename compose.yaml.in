@@ -89,6 +89,27 @@ services:
         source: ${MYWHALEFLEET_VOLUME}
         target: /${MYWHALEFLEET_PATH}
         volume: {}
+  ${EDITOR_SERVICE}:
+    container_name: ${EDITOR_HOST}
+    hostname: ${EDITOR_HOST}
+    image: ${VIM_COMPONENT_IMG}
+    networks:
+      ${JUMP_AREA_NET}: null
+#   read_only: true
+    volumes:
+      - type: volume
+        source: ${SSH_VOLUME}
+        target: ${SSH_ROOT_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${MYWHALEFLEET_VOLUME}
+        target: ${MYWHALEFLEET_PATH}
+        volume: {}
+      - type: volume
+        source: ${SPACEPORN_VOLUME}
+        target: ${SPACEPORN_PATH}
+        volume: {}
   ${SHELL_EXPLORER_SERVICE}:
     container_name: ${SHELL_EXPLORER_HOST}
     hostname: ${SHELL_EXPLORER_HOST}
@@ -189,41 +210,20 @@ services:
         target: /opt/${COLLECTOR_ID}${VAR_LOG_PATH}
         read_only: true
         volume: {}
-  ${EDITOR_SERVICE}:
-    container_name: ${EDITOR_HOST}
-    hostname: ${EDITOR_HOST}
-    image: ${VIM_COMPONENT_IMG}
-    networks:
-      ${JUMP_AREA_NET}: null
-#   read_only: true
-    volumes:
-      - type: volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
-        source: ${MYWHALEFLEET_VOLUME}
-        target: ${MYWHALEFLEET_PATH}
-        volume: {}
-      - type: volume
-        source: ${SPACEPORN_VOLUME}
-        target: ${SPACEPORN_PATH}
-        volume: {}
   ${PROXY_SERVICE}:
     build:
       context: ./${PROXY_ID}
       dockerfile: Dockerfile
       args:
-        APK_PATHS: ${APK_PATHS}
-        ${API_PFX}_PING: ${TRUE}
-        ${API_PFX}BUILD: ${TRUE}
-        ${API_PFX}IMAGES_JSON: ${TRUE}
-        ${API_PFX}NETWORKS: ${TRUE}
-        ${API_PFX}VERSION: ${TRUE}
+        ${API_PFX}_PING: "\"${TRUE}\""
+        ${API_PFX}BUILD: "\"${TRUE}\""
+        ${API_PFX}IMAGES_JSON: "\"${TRUE}\""
+        ${API_PFX}NETWORKS: "\"${TRUE}\""
+        ${API_PFX}VERSION: "\"${TRUE}\""
         API_PFX: ${API_PFX}
-        API_TAG: ${API_TAG}
+        API_TAG: "\"${API_TAG}\""
         API_URL: ${API_URL}
+        APK_PATHS: ${APK_PATHS}
         COLLECTOR_IP: ${COLLECTOR_IP}
         CONTROLLER_IP: ${CONTROLLER_IP}
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
@@ -233,7 +233,7 @@ services:
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
-        PROXY_PORT: ${PROXY_PORT}
+        PROXY_PORT: "\"${PROXY_PORT}\""
         SOCKET_PATH: ${SOCKET_PATH}
     container_name: ${PROXY_HOST}
     hostname: ${PROXY_HOST}
@@ -292,15 +292,6 @@ services:
         read_only: true
         volume: {}
 networks:
-  ${PROXIFIED_SOCKET_NET}:
-    driver: bridge
-    name: ${PROXIFIED_SOCKET_NET}
-    ipam:
-      driver: default
-      config:
-        - subnet: ${PROXIFIED_SOCKET_SUB}
-          ip_range: ${PROXIFIED_SOCKET_SUB}
-          gateway: ${PROXIFIED_SOCKET_GATEWAY_IP}
   ${JUMP_AREA_NET}:
     driver: bridge
     name: ${JUMP_AREA_NET}
@@ -308,21 +299,18 @@ networks:
       driver: default
       config:
         - subnet: ${JUMP_AREA_SUB}
-          ip_range: ${JUMP_AREA_SUB}
           gateway: ${JUMP_AREA_GATEWAY_IP}
+          ip_range: ${JUMP_AREA_SUB}
+  ${PROXIFIED_SOCKET_NET}:
+    driver: bridge
+    name: ${PROXIFIED_SOCKET_NET}
+    ipam:
+      driver: default
+      config:
+        - subnet: ${PROXIFIED_SOCKET_SUB}
+          gateway: ${PROXIFIED_SOCKET_GATEWAY_IP}
+          ip_range: ${PROXIFIED_SOCKET_SUB}
 volumes:
-  ${SSH_VOLUME}:
-    name: ${SSH_VOLUME}
-  ${MYWHALEFLEET_VOLUME}:
-    name: ${MYWHALEFLEET_VOLUME}
-  ${SPACEPORN_VOLUME}:
-    name: ${SPACEPORN_VOLUME}
-  ${SAFEDEPOSIT_VOLUME}:
-    name: ${SAFEDEPOSIT_VOLUME}
-  ${PROXY_NGX_FS_VOLUME}:
-    name: ${PROXY_NGX_FS_VOLUME}
-  ${PROXY_SCRIPTS_FS_VOLUME}:
-    name: ${PROXY_SCRIPTS_FS_VOLUME}
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:
     name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
   ${COLLECTOR_OPT_DATA_VOLUME}:
@@ -331,3 +319,15 @@ volumes:
     name: ${COLLECTOR_OPT_SCRIPTS_VOLUME}
   ${COLLECTOR_VAR_LOG_VOLUME}:
     name: ${COLLECTOR_VAR_LOG_VOLUME}
+  ${MYWHALEFLEET_VOLUME}:
+    name: ${MYWHALEFLEET_VOLUME}
+  ${PROXY_NGX_FS_VOLUME}:
+    name: ${PROXY_NGX_FS_VOLUME}
+  ${PROXY_SCRIPTS_FS_VOLUME}:
+    name: ${PROXY_SCRIPTS_FS_VOLUME}
+  ${SAFEDEPOSIT_VOLUME}:
+    name: ${SAFEDEPOSIT_VOLUME}
+  ${SSH_VOLUME}:
+    name: ${SSH_VOLUME}
+  ${SPACEPORN_VOLUME}:
+    name: ${SPACEPORN_VOLUME}
