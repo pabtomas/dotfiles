@@ -1,179 +1,192 @@
 services:
   ${BASH_SERVICE}:
-    depends_on:
-      ${ENTRYPOINT_SERVICE}:
-        condition: service_started
-        required: true
     build:
       context: ./${BASH_ID}
+      dockerfile: Dockerfile
       args:
         BASH_ALIASES_PATH: ${BASH_ALIASES_PATH}
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         BASH_LOCAL_IMG: ${BASH_LOCAL_IMG}
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
-        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        condition: service_started
+        required: true
     image: ${BASH_COMPONENT_IMG}
   ${_DOCKER_SERVICE}:
+    build:
+      context: ./${_DOCKER_ID}
+      dockerfile: Dockerfile
+      args:
+        _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
+        _DOCKER_PATH: ${_DOCKER_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        NET: ${JUMP_AREA_NET}
+        SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
+        TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
     depends_on:
       ${SSHD_SERVICE}:
         condition: service_started
         required: true
-    build:
-      context: ./${_DOCKER_ID}
-      args:
-        _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
-        _DOCKER_PATH: ${_DOCKER_PATH}
-        NET: ${JUMP_AREA_NET}
-        SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
-        TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
     image: ${_DOCKER_COMPONENT_IMG}
   ${ENTRYPOINT_SERVICE}:
     build:
       context: ./${ENTRYPOINT_ID}
+      dockerfile: Dockerfile
       args:
-        OS_LOCAL_IMG: ${OS_LOCAL_IMG}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        OS_LOCAL_IMG: ${OS_LOCAL_IMG}
     image: ${ENTRYPOINT_COMPONENT_IMG}
   ${GIT_SERVICE}:
+    build:
+      context: ./${GIT_ID}
+      dockerfile: Dockerfile
+      args:
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        TIG_COMPLETION_URL: ${TIG_COMPLETION_URL}
+        WORKSPACES_COMPONENT_IMG: ${WORKSPACES_COMPONENT_IMG}
     depends_on:
       ${WORKSPACES_SERVICE}:
         condition: service_started
         required: true
-    build:
-      context: ./${GIT_ID}
-      args:
-        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        TIG_COMPLETION_URL: ${TIG_COMPLETION_URL}
-        WORKSPACES_COMPONENT_IMG: ${WORKSPACES_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
     image: ${GIT_COMPONENT_IMG}
   ${LINGUIST_SERVICE}:
     build:
       context: ./${LINGUIST_ID}
+      dockerfile: Dockerfile
       args:
-        OS_LOCAL_IMG: ${OS_LOCAL_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        OS_LOCAL_IMG: ${OS_LOCAL_IMG}
     image: ${LINGUIST_COMPONENT_IMG}
   ${MAN_SERVICE}:
-    depends_on:
-      ${SSHD_SERVICE}:
-        condition: service_started
-        required: true
     build:
       context: ./${MAN_ID}
+      dockerfile: Dockerfile
       args:
-        SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${MAN_COMPONENT_IMG}
-  ${PASS_SERVICE}:
+        SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
     depends_on:
       ${SSHD_SERVICE}:
         condition: service_started
         required: true
+    image: ${MAN_COMPONENT_IMG}
+  ${PASS_SERVICE}:
     build:
       context: ./${PASS_ID}
+      dockerfile: Dockerfile
       args:
-        SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${PASS_COMPONENT_IMG}
-  ${SHELL_SERVICE}:
+        SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
     depends_on:
-      ${GIT_SERVICE}:
+      ${SSHD_SERVICE}:
         condition: service_started
         required: true
+    image: ${PASS_COMPONENT_IMG}
+  ${SHELL_SERVICE}:
     build:
       context: ./${SHELL_ID}
+      dockerfile: Dockerfile
       args:
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${SHELL_COMPONENT_IMG}
-  ${SSHD_SERVICE}:
     depends_on:
-      ${BASH_SERVICE}:
+      ${GIT_SERVICE}:
         condition: service_started
         required: true
+    image: ${SHELL_COMPONENT_IMG}
+  ${SSHD_SERVICE}:
     build:
       context: ./${SSHD_ID}
+      dockerfile: Dockerfile
       args:
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${SSHD_COMPONENT_IMG}
-  ${TMUX_SERVICE}:
     depends_on:
       ${BASH_SERVICE}:
         condition: service_started
         required: true
+    image: ${SSHD_COMPONENT_IMG}
+  ${TMUX_SERVICE}:
     build:
       context: ./${TMUX_ID}
+      dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
         TMUX_COMPLETION_URL: ${TMUX_COMPLETION_URL}
         TPM_PATH: ${TPM_PATH}
         TPM_URL: ${TPM_URL}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${TMUX_COMPONENT_IMG}
-  ${VIM_SERVICE}:
     depends_on:
-      ${WORKSPACES_SERVICE}:
+      ${BASH_SERVICE}:
         condition: service_started
         required: true
+    image: ${TMUX_COMPONENT_IMG}
+  ${VIM_SERVICE}:
     build:
       context: ./${VIM_ID}
+      dockerfile: Dockerfile
       args:
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
         NERDTREE_URL: ${NERDTREE_URL}
         POLYGLOT_URL: ${POLYGLOT_URL}
         RAINBOW_URL: ${RAINBOW_URL}
         UNDOTREE_URL: ${UNDOTREE_URL}
         WORKSPACES_COMPONENT_IMG: ${WORKSPACES_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
-    image: ${VIM_COMPONENT_IMG}
-  ${WORKSPACES_SERVICE}:
     depends_on:
-      ${SSHD_SERVICE}:
+      ${WORKSPACES_SERVICE}:
         condition: service_started
         required: true
+    image: ${VIM_COMPONENT_IMG}
+  ${WORKSPACES_SERVICE}:
     build:
       context: ./${WORKSPACES_ID}
+      dockerfile: Dockerfile
       args:
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OWNER_URL: ${OWNER_URL}
         SPACEPORN_ID: ${SPACEPORN_ID}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
         WORKSPACES_PATH: ${WORKSPACES_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+    depends_on:
+      ${SSHD_SERVICE}:
+        condition: service_started
+        required: true
     image: ${WORKSPACES_COMPONENT_IMG}
   ${ZIG_SERVICE}:
+    build:
+      context: ./${ZIG_ID}
+      dockerfile: Dockerfile
+      args:
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+        ZIG_BUILDS_URL: ${ZIG_BUILDS_URL}
+        ZIG_COMPLETION_URL: ${ZIG_COMPLETION_URL}
+        ZIG_COMPONENT_TAG: ${ZIG_COMPONENT_TAG}
     depends_on:
       ${GIT_SERVICE}:
         condition: service_started
         required: true
-    build:
-      context: ./${ZIG_ID}
-      args:
-        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
-        ZIG_BUILDS_URL: ${ZIG_BUILDS_URL}
-        ZIG_COMPLETION_URL: ${ZIG_COMPLETION_URL}
-        ZIG_COMPONENT_TAG: ${ZIG_COMPONENT_TAG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
     image: ${ZIG_COMPONENT_IMG}
