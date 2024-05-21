@@ -62,8 +62,9 @@ jobs:
     - name: config
       shell: bash
       run: |
-        source ./env.sh
-        for template in $(find . -type f -name compose.yaml.in)
+        set -eu
+        source "${GITHUB_WORKSPACE}/env.sh"
+        for template in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
         do
           eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
           if ! grep -Fxvf "${template%.*}" <(docker compose --file "${template%.*}" config) > /dev/null
