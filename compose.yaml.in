@@ -212,6 +212,7 @@ services:
       args:
         ${API_PFX}_PING: "\"${TRUE}\""
         ${API_PFX}BUILD: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_JSON: "\"${TRUE}\""
         ${API_PFX}IMAGES_JSON: "\"${TRUE}\""
         ${API_PFX}NETWORKS: "\"${TRUE}\""
         ${API_PFX}VERSION: "\"${TRUE}\""
