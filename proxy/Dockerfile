@@ -69,15 +69,12 @@ server {
     set \$dockersocket ${SOCKET_PATH};
 $(for endpoint in ${endpoints}
   do
-    if [ "${endpoint#"${endpoint%?}"}" != '}' ]
-    then
-      nginx_var="$(nginx_varname "${endpoint}")"
-      regex="$(printf '%s\n' "${endpoint}" | sed 's@/{id}$\|/{name}$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"
-      docker_var="$(docker_varname "${nginx_var}")"
-      resolve_ref="$(eval "printf '%s' \"\${${docker_var}:-0}\"")"
-      printf '\n    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"
-      printf '    location ~* ^(/v[\d\.]+)?%s {set $e403 "[403] Forbidden API endpoint: %s (%s is 0)";if ($return_403 = 1){return 403 $e403;}if ($%s = 0){return 403 $e403;}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "'${endpoint}'" "'${docker_var}'" "${nginx_var}"
-    fi
+    nginx_var="$(nginx_varname "${endpoint}")"
+    regex="$(printf '%s\n' "${endpoint}" | sed 's@/{id}$\|/{name}$@@;s@/{id}/\|/{name}/@/[a-zA-Z0-9_.-]+/@')"
+    docker_var="$(docker_varname "${nginx_var}")"
+    resolve_ref="$(eval "printf '%s' \"\${${docker_var}:-0}\"")"
+    printf '\n    set $%s %d;\n' "${nginx_var}" "${resolve_ref}"
+    printf '    location ~* ^(/v[\d\.]+)?%s {set $e403 "[403] Forbidden API endpoint: %s (%s is 0)";if ($return_403 = 1){return 403 $e403;}if ($%s = 0){return 403 $e403;}proxy_pass http://unix:$dockersocket;}\n' "${regex}" "'${endpoint}'" "'${docker_var}'" "${nginx_var}"
   done)
 }
 TEMPLATING
@@ -99,13 +96,10 @@ API version: ${API_TAG}$(
       flag=0
       for endpoint in ${endpoints}
       do
-        if [ "${endpoint#"${endpoint%?}"}" != '}' ]
+        if [ "$(docker_varname "$(nginx_varname "${endpoint}")")" == "${arg}" ]
         then
-          if [ "$(docker_varname "$(nginx_varname "${endpoint}")")" == "${arg}" ]
-          then
-            flag=1
-            break
-          fi
+          flag=1
+          break
         fi
       done
       if [ "${flag}" == '0' ]
