@@ -37,7 +37,7 @@ RUN <<END_OF_RUN
     mkdir -p "${OPT_SCRIPTS_PATH}"
     apk add --no-cache --virtual __install_spec_parser yq
     endpoints="$(wget -q -O- "${API_URL}" | yq '.paths | keys | .[]')"
-    nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g'; }
+    nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g;s@}$@@'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
     apk del __install_spec_parser
     apk add --no-cache nginx
