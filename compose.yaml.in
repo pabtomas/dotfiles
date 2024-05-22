@@ -1,6 +1,9 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
   buildkit:
+    command:
+      - --addr
+      - tcp://0.0.0.0:1234
     container_name: buildkit
     image: moby/buildkit:buildx-stable-1
     networks:
@@ -82,11 +85,11 @@ services:
     hostname: ${CONTROLLER_HOST}
     image: ${_DOCKER_COMPONENT_IMG}
     networks:
+      buildkit_net:
+        ipv4_address: 172.17.3.3
       ${JUMP_AREA_NET}: null
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
-      buildkit_net:
-        ipv4_address: 172.17.3.3
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
