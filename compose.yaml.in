@@ -6,6 +6,7 @@ services:
     networks:
       buildkit_net:
         ipv4_address: 172.17.3.2
+    command: --addr tcp://0.0.0.0:1234
     privileged: true
   ${COLLECTOR_SERVICE}:
     build:
