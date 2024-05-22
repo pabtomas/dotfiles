@@ -62,6 +62,7 @@ server {
     allow ${CONTROLLER_IP};
     allow ${COLLECTOR_IP};
     deny all;
+    dav_methods PUT DELETE;
 
     default_type text/plain;
     include ${ETC_NGX_PATH}/proxy.conf;
