@@ -16,7 +16,6 @@ TODO:
   - tmuxinator conf sessions
 - find a solution to split templates and Dockerfiles
 - jumper/proxy -> change them into components
-- add permissions for controller
 - logger alias for controller
 - add aliases/remove old directory
 - wget_me.sh:
