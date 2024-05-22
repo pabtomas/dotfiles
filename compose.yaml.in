@@ -219,6 +219,7 @@ services:
         ${API_PFX}CONTAINERS_ID_START: "\"${TRUE}\""
         ${API_PFX}IMAGES_CREATE: "\"${TRUE}\""
         ${API_PFX}IMAGES_JSON: "\"${TRUE}\""
+        ${API_PFX}IMAGES_NAME: "\"${TRUE}\""
         ${API_PFX}NETWORKS: "\"${TRUE}\""
         ${API_PFX}VERSION: "\"${TRUE}\""
         API_PFX: ${API_PFX}
