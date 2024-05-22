@@ -1,6 +1,13 @@
 ARG SSHD_COMPONENT_IMG
+ARG _DOCKER_LOCAL_IMG
 
+FROM ${_DOCKER_LOCAL_IMG} as docker_img
 FROM ${SSHD_COMPONENT_IMG}
+
+ARG _DOCKER_BIN_PATH
+ARG _DOCKER_PLUGINS_PATH
+COPY --from=docker_img ${_DOCKER_BIN_PATH}/ ${_DOCKER_BIN_PATH}/
+COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
 ARG NET
 ARG TCP_DOCKER_HOST
@@ -11,7 +18,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-cli docker-cli-compose docker-bash-completion
+    apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-bash-completion
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
