@@ -77,7 +77,7 @@ server {
     dav_methods PUT DELETE;
 
     access_log ${VAR_LOG_NGX_PATH}/access.log custom;
-    error_log ${VAR_LOG_NGX_PATH}/error.log debug;
+    error_log ${VAR_LOG_NGX_PATH}/error.log info;
     error_log stderr;
 
     default_type text/plain;
