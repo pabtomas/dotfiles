@@ -206,7 +206,7 @@ EOF
   esac
   set -e
 
-  src_tag='3.19'
+  src_tag='3.20'
   src_img="alpine:${src_tag}"
   target="tiawl/local/${src_img}"
 

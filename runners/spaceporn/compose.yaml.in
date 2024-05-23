@@ -7,7 +7,7 @@ services:
     container_name: ${SPACEPORN_RUNNER_HOST}
     image: ${SPACEPORN_RUNNER_IMG}
     networks:
-      default: null
+      ${SPACEPORN_ID}_net: null
     ports:
       - mode: ingress
         target: 5800
@@ -24,8 +24,8 @@ services:
         read_only: true
         volume: {}
 networks:
-  default:
-    name: default
+  ${SPACEPORN_ID}_net:
+    name: ${SPACEPORN_ID}_net
 volumes:
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}

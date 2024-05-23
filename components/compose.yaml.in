@@ -19,7 +19,7 @@ services:
         required: true
     image: ${BASH_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${_DOCKER_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${_DOCKER_ID}
@@ -41,7 +41,7 @@ services:
         required: true
     image: ${_DOCKER_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${ENTRYPOINT_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
@@ -54,7 +54,7 @@ services:
         OS_LOCAL_IMG: ${OS_LOCAL_IMG}
     image: ${ENTRYPOINT_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${GIT_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${GIT_ID}
@@ -71,7 +71,7 @@ services:
         required: true
     image: ${GIT_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${LINGUIST_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${LINGUIST_ID}
@@ -82,7 +82,7 @@ services:
         OS_LOCAL_IMG: ${OS_LOCAL_IMG}
     image: ${LINGUIST_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${MAN_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${MAN_ID}
@@ -97,7 +97,7 @@ services:
         required: true
     image: ${MAN_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${PASS_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${PASS_ID}
@@ -112,7 +112,7 @@ services:
         required: true
     image: ${PASS_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${SHELL_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${SHELL_ID}
@@ -127,7 +127,7 @@ services:
         required: true
     image: ${SHELL_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${SSHD_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${SSHD_ID}
@@ -143,7 +143,7 @@ services:
         required: true
     image: ${SSHD_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${TMUX_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${TMUX_ID}
@@ -162,7 +162,7 @@ services:
         required: true
     image: ${TMUX_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${VIM_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${VIM_ID}
@@ -181,7 +181,7 @@ services:
         required: true
     image: ${VIM_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${WORKSPACES_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${WORKSPACES_ID}
@@ -200,7 +200,7 @@ services:
         required: true
     image: ${WORKSPACES_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
   ${ZIG_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${ZIG_ID}
@@ -219,7 +219,7 @@ services:
         required: true
     image: ${ZIG_COMPONENT_IMG}
     networks:
-      default: null
+      ${COMPONENT_ID}s_net: null
 networks:
-  default:
-    name: default
+  ${COMPONENT_ID}s_net:
+    name: ${COMPONENT_ID}s_net
