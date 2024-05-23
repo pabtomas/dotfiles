@@ -270,6 +270,7 @@ services:
     read_only: true
     tmpfs:
       - /run
+      - /tmp
     volumes:
       - type: bind
         source: ${SOCKET_PATH}

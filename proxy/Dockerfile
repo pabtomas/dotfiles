@@ -44,7 +44,7 @@ RUN <<END_OF_RUN
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g;s@}$@@'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
     apk del __install_spec_parser
-    apk add --no-cache nginx
+    apk add --no-cache nginx-debug
     rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
 log_format custom '\$remote_addr - \$remote_user [\$time_local] '
@@ -131,7 +131,7 @@ EOF
 main
 TEMPLATING
     chmod 0700 "${warning_entrypoint}"
-    _nginx="$(command -v nginx)"
+    _nginx="$(command -v nginx-debug)"
     nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
     cat << TEMPLATING > "${nginx_entrypoint}"
 #! /bin/sh
