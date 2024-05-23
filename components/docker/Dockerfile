@@ -23,6 +23,7 @@ RUN <<END_OF_RUN
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-bash-completion
     builder='remote-builder'
     docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_HOST}"
+    docker buildx use --global "${builder}"
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
@@ -33,18 +34,6 @@ main ()
 
 main
 TEMPLATING
-    builder_entrypoint="${ENTRYPOINTD_PATH}/98builder.sh"
-    cat << TEMPLATING >> "${builder_entrypoint}"
-#! /bin/sh
-
-main ()
-{
-  docker buildx use "${builder}"
-}
-
-main
-TEMPLATING
-    chmod 0700 "${builder_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 
