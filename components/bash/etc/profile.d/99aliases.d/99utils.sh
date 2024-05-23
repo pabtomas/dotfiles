@@ -12,6 +12,7 @@ rl () { command readlink -m "${@}"; }
 mkdir () { command mkdir -p -v "${@}"; }
 cal () { command ncal -w -b -M "${@}"; }
 less () { command less -R "${@}"; }
+exit () { command exit 0; }
 
 for i in 1 2 3 4
 do
