@@ -3,6 +3,7 @@
 # SC2034: VAR appears unused => VAR used for templating
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
+BUILDER_NET='builder'
 JUMP_AREA_NET='jump-area'
 PROXIFIED_SOCKET_NET='proxified-socket'
 
@@ -25,6 +26,9 @@ BUILDER_SUB="${BUILDER_PFX}.0${SUBNET_MASK}"
 _DOCKER_HOST="${PROXY_HOST}:${PROXY_PORT}"
 HTTP_DOCKER_HOST="http://${_DOCKER_HOST}"
 TCP_DOCKER_HOST="tcp://${_DOCKER_HOST}"
+#
+# shellcheck disable=2153
+# SC2153: Possible misspelling => it is not, we really want BUILDER_HOST here
 _BUILDKIT_HOST="${BUILDER_HOST}:${BUILDER_PORT}"
 TCP_BUILDKIT_HOST="tcp://${_BUILDKIT_HOST}"
 
