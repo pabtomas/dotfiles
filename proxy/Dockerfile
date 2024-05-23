@@ -47,19 +47,27 @@ RUN <<END_OF_RUN
     apk add --no-cache nginx
     rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
+log_format custom '\$remote_addr - \$remote_user [\$time_local] '
+                  '"\$request" \$status \$body_bytes_sent '
+                  '"\$http_referer" "\$http_user_agent"'
+                  'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
 }
+
 map \$request_method \$readonly {
     default  0;
     GET      1;
     HEAD     1;
 }
+
 map \$privileged:\$readonly \$return_403 {
     default  0;
     "0:0"    1;
 }
+
 server {
     server_name _;
     listen ${PROXY_PORT} default_server;
@@ -68,10 +76,6 @@ server {
     deny all;
     dav_methods PUT DELETE;
 
-    log_format custom '\$remote_addr - \$remote_user [\$time_local] '
-                      '"\$request" \$status \$body_bytes_sent '
-                      '"\$http_referer" "\$http_user_agent"'
-                      'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
     access_log ${VAR_LOG_NGX_PATH}/access.log custom;
     error_log ${VAR_LOG_NGX_PATH}/error.log debug;
     error_log stderr;
