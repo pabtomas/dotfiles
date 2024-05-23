@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
       args:
         _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}
-        BUILDER_PORT: ${BUILDER_PORT}
+        BUILDER_PORT: "\"${BUILDER_PORT}\""
     container_name: ${BUILDER_HOST}
     image: ${BUILDER_IMG}
     networks:
