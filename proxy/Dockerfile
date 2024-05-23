@@ -117,6 +117,7 @@ EOF
 
 main
 TEMPLATING
+    chmod 0700 "${warning_entrypoint}"
     _nginx="$(command -v nginx)"
     nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
     cat << TEMPLATING > "${nginx_entrypoint}"
