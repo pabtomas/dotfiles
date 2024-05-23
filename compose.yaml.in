@@ -1,15 +1,17 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
-  buildkit:
+  ${BUILDER_SERVICE}:
     command:
       - --addr
-      - tcp://0.0.0.0:1234
-    container_name: buildkit
-    image: moby/buildkit:buildx-stable-1
+      - tcp://0.0.0.0:${BUILDER_PORT}
+      - --oci-worker-no-process-sandbox
+    container_name: ${BUILDER_HOST}
+    image: ${_BUILDKIT_IMG}
     networks:
-      buildkit_net:
-        ipv4_address: 172.17.3.2
-    privileged: true
+      ${BUILDER_NET}: null
+    security_opt:
+      - apparmor:unconfined
+      - seccomp:unconfined
   ${COLLECTOR_SERVICE}:
     build:
       context: ${CWD_PATH}/${COLLECTOR_ID}
@@ -85,8 +87,7 @@ services:
     hostname: ${CONTROLLER_HOST}
     image: ${_DOCKER_COMPONENT_IMG}
     networks:
-      buildkit_net:
-        ipv4_address: 172.17.3.3
+      ${BUILDER_NET}: null
       ${JUMP_AREA_NET}: null
       ${PROXIFIED_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
@@ -306,15 +307,15 @@ services:
         read_only: true
         volume: {}
 networks:
-  buildkit_net:
-    name: buildkit_net
+  ${BUILDER_NET}:
+    name: ${BUILDER_NET}
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 172.17.3.0/24
-          gateway: 172.17.3.1
-          ip_range: 172.17.3.0/24
+        - subnet: ${BUILDER_SUB}
+          gateway: ${BUILDER_GATEWAY_IP}
+          ip_range: ${BUILDER_SUB}
   ${JUMP_AREA_NET}:
     name: ${JUMP_AREA_NET}
     driver: bridge
