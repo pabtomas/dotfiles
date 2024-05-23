@@ -9,6 +9,7 @@ ARG _DOCKER_PLUGINS_PATH
 COPY --from=docker_img ${_DOCKER_BIN_PATH}/ ${_DOCKER_BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
+ARG ENTRYPOINTD_PATH
 ARG NET
 ARG TCP_BUILDKIT_HOST
 ARG TCP_DOCKER_HOST
@@ -20,9 +21,19 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-bash-completion
-    builder='remote_builder'
+    builder='remote-builder'
     docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_HOST}"
-    docker buildx use "${builder}"
+    builder_entrypoint="${ENTRYPOINTD_PATH}/98builder.sh"
+    cat << TEMPLATING >> "${builder_entrypoint}"
+#! /bin/sh
+
+main ()
+{
+  docker buildx use "${builder}"
+}
+
+main
+TEMPLATING
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
