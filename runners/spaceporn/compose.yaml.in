@@ -29,3 +29,4 @@ networks:
 volumes:
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}
+    external: true
