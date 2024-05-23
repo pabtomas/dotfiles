@@ -6,7 +6,7 @@ services:
       - tcp://0.0.0.0:${BUILDER_PORT}
       - --oci-worker-no-process-sandbox
     container_name: ${BUILDER_HOST}
-    image: ${_BUILDKIT_IMG}
+    image: ${_BUILDKIT_LOCAL_IMG}
     networks:
       ${BUILDER_NET}: null
     security_opt:
@@ -81,6 +81,9 @@ services:
   ${CONTROLLER_SERVICE}:
     container_name: ${CONTROLLER_HOST}
     depends_on:
+      ${BUILDER_SERVICE}:
+        condition: service_started
+        required: true
       ${PROXY_SERVICE}:
         condition: service_started
         required: true

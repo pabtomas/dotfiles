@@ -20,7 +20,9 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-bash-completion
-    docker buildx create --name remote-builder --driver remote --use "${TCP_BUILDKIT_HOST}"
+    builder='remote_builder'
+    docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_HOST}"
+    docker buildx use "${builder}"
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
