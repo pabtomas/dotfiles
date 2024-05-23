@@ -245,6 +245,7 @@ services:
         ${API_PFX}IMAGES_NAME: "\"${TRUE}\""
         ${API_PFX}NETWORKS: "\"${TRUE}\""
         ${API_PFX}VERSION: "\"${TRUE}\""
+        ${API_PFX}VOLUMES: "\"${TRUE}\""
         API_PFX: ${API_PFX}
         API_TAG: "\"${API_TAG}\""
         API_URL: ${API_URL}
