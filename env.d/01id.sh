@@ -33,8 +33,7 @@ _id 'vim'
 _id 'workspaces'
 _id 'zig'
 
-OS="${ALPINE_ID}"
-
+__id 'os' "${ALPINE_ID}"
 __id 'owner' 'tiawl'
 
 _sfx "${COMPONENT_ID}${ID_SFX}"
