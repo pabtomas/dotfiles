@@ -11,6 +11,7 @@ _extern_img "${LINUXSERVER_PROXY_ID}" 'lscr.io/linuxserver' 'socket-proxy' "${LI
 OS_IMG="${ALPINE_IMG}"
 OS_LOCAL_IMG="${ALPINE_LOCAL_IMG}"
 
+_intern_img "${BUILDER_ID}" "${BUILDER_TAG}"
 _intern_img "${COLLECTOR_ID}" "${COLLECTOR_TAG}"
 _intern_img "${CONTROLLER_ID}" "${CONTROLLER_TAG}"
 _intern_img "${JUMPER_ID}" "${JUMPER_TAG}"

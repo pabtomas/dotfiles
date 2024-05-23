@@ -1,12 +1,18 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
   ${BUILDER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${BUILDER_ID}
+      dockerfile: Dockerfile
+      args:
+        _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}
+        BUILDER_PORT: "\"${BUILDER_PORT}\""
     command:
       - --addr
       - tcp://0.0.0.0:${BUILDER_PORT}
       - --oci-worker-no-process-sandbox
     container_name: ${BUILDER_HOST}
-    image: ${_BUILDKIT_LOCAL_IMG}
+    image: ${BUILDER_IMG}
     networks:
       ${BUILDER_NET}: null
     security_opt:

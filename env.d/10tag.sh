@@ -8,6 +8,7 @@ _tag 'os' "${ALPINE_TAG}"
 _tag "${BASH_ID}" "5.2-${OS_ID}${OS_TAG}"
 _tag "${_BUILDKIT_ID}" 'buildx-stable-1-rootless'
 _tag "${_DOCKER_ID}" 'cli'
+_tag "${BUILDER_ID}" 'latest'
 _tag "${COLLECTOR_ID}" 'latest'
 _tag "${CONTROLLER_ID}" 'latest'
 _tag "${JUMPER_ID}" 'latest'
