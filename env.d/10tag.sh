@@ -5,6 +5,7 @@
 
 _tag "${ALPINE_ID}" '3.19'
 _tag "${BASH_ID}" '5.2'
+_tag "${_BUILDKIT_ID}" 'buildx-stable-1-rootless'
 _tag "${_DOCKER_ID}" 'cli'
 _tag "${COLLECTOR_ID}" 'latest'
 _tag "${CONTROLLER_ID}" 'latest'

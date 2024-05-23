@@ -5,9 +5,12 @@
 
 _id 'alpine'
 _id 'bash'
+_id 'builder'
+_id 'buildkit'
 _id 'collector'
 _id 'component'
 _id 'controller'
+_id 'docker'
 _id 'editor'
 _id 'entrypoint'
 _id 'explorer'
@@ -32,7 +35,6 @@ _id 'zig'
 
 OS="${ALPINE_ID}"
 
-__id '_docker' 'docker'
 __id 'owner' 'tiawl'
 
 _sfx "${COMPONENT_ID}${ID_SFX}"

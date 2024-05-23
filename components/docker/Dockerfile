@@ -10,6 +10,7 @@ COPY --from=docker_img ${_DOCKER_BIN_PATH}/ ${_DOCKER_BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
 ARG NET
+ARG TCP_BUILDKIT_HOST
 ARG TCP_DOCKER_HOST
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -19,6 +20,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-bash-completion
+    docker buildx create --name remote-builder --driver remote --use "${TCP_BUILDKIT_HOST}"
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {

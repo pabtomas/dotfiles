@@ -32,6 +32,7 @@ services:
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
+        TCP_BUILDKIT_HOST: ${TCP_BUILDKIT_HOST}
         TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
     depends_on:
       ${SSHD_SERVICE}:
