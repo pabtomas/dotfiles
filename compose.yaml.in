@@ -192,13 +192,18 @@ services:
         read_only: true
         volume: {}
       - type: volume
-        source: ${PROXY_NGX_FS_VOLUME}
+        source: ${PROXY_ETC_NGX_VOLUME}
         target: /opt/${PROXY_ID}${ETC_NGX_PATH}
         read_only: true
         volume: {}
       - type: volume
-        source: ${PROXY_SCRIPTS_FS_VOLUME}
+        source: ${PROXY_OPT_SCRIPTS_VOLUME}
         target: /opt/${PROXY_ID}${OPT_SCRIPTS_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${PROXY_VAR_LOG_NGX_VOLUME}
+        target: /opt/${PROXY_ID}${VAR_LOG_NGX_PATH}
         read_only: true
         volume: {}
       - type: volume
@@ -272,14 +277,18 @@ services:
         bind:
           create_host_path: true
       - type: volume
-        source: ${PROXY_NGX_FS_VOLUME}
+        source: ${PROXY_ETC_NGX_VOLUME}
         target: ${ETC_NGX_PATH}
         read_only: true
         volume: {}
       - type: volume
-        source: ${PROXY_SCRIPTS_FS_VOLUME}
+        source: ${PROXY_OPT_SCRIPTS_VOLUME}
         target: ${OPT_SCRIPTS_PATH}
         read_only: true
+        volume: {}
+      - type: volume
+        source: ${PROXY_VAR_LOG_NGX_VOLUME}
+        target: ${VAR_LOG_NGX_PATH}
         volume: {}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
@@ -348,10 +357,12 @@ volumes:
     name: ${COLLECTOR_VAR_LOG_VOLUME}
   ${MYWHALEFLEET_VOLUME}:
     name: ${MYWHALEFLEET_VOLUME}
-  ${PROXY_NGX_FS_VOLUME}:
-    name: ${PROXY_NGX_FS_VOLUME}
-  ${PROXY_SCRIPTS_FS_VOLUME}:
-    name: ${PROXY_SCRIPTS_FS_VOLUME}
+  ${PROXY_ETC_NGX_VOLUME}:
+    name: ${PROXY_ETC_NGX_VOLUME}
+  ${PROXY_OPT_SCRIPTS_VOLUME}:
+    name: ${PROXY_OPT_SCRIPTS_VOLUME}
+  ${PROXY_VAR_LOG_NGX_VOLUME}:
+    name: ${PROXY_VAR_LOG_NGX_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
   ${SSH_VOLUME}:

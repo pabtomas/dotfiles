@@ -67,6 +67,14 @@ server {
     deny all;
     dav_methods PUT DELETE;
 
+    log_format custom '$remote_addr - $remote_user [$time_local] '
+                      '"$request" $status $body_bytes_sent '
+                      '"$http_referer" "$http_user_agent"'
+                      'rt=$request_time uct="$upstream_connect_time" uht="$upstream_header_time" urt="$upstream_response_time"';
+    access_log /var/log/nginx/access.log custom;
+    error_log /var/log/nginx/error.log debug;
+    error_log stderr;
+
     default_type text/plain;
     include ${ETC_NGX_PATH}/proxy.conf;
     set \$dockersocket ${SOCKET_PATH};
@@ -131,7 +139,7 @@ main ()
 include ${ETC_NGX_PATH}/http.d/default.conf;
 __TEMPLATING
 
-  exec ${_nginx} -e stderr
+  exec ${_nginx}
 }
 
 main
