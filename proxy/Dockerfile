@@ -12,6 +12,7 @@ ARG CONTROLLER_IP
 ARG ENTRYPOINTD_PATH
 ARG ETC_NGX_PATH
 ARG OPT_SCRIPTS_PATH
+ARG VAR_LOG_NGX_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
 ARG HTTP_PROXY
@@ -46,19 +47,27 @@ RUN <<END_OF_RUN
     apk add --no-cache nginx
     rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
+log_format custom '\$remote_addr - \$remote_user [\$time_local] '
+                  '"\$request" \$status \$body_bytes_sent '
+                  '"\$http_referer" "\$http_user_agent"'
+                  'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
 }
+
 map \$request_method \$readonly {
     default  0;
     GET      1;
     HEAD     1;
 }
+
 map \$privileged:\$readonly \$return_403 {
     default  0;
     "0:0"    1;
 }
+
 server {
     server_name _;
     listen ${PROXY_PORT} default_server;
@@ -66,6 +75,10 @@ server {
     allow ${COLLECTOR_IP};
     deny all;
     dav_methods PUT DELETE;
+
+    access_log ${VAR_LOG_NGX_PATH}/access.log custom;
+    error_log ${VAR_LOG_NGX_PATH}/error.log debug;
+    error_log stderr;
 
     default_type text/plain;
     include ${ETC_NGX_PATH}/proxy.conf;
@@ -131,7 +144,7 @@ main ()
 include ${ETC_NGX_PATH}/http.d/default.conf;
 __TEMPLATING
 
-  exec ${_nginx} -e stderr
+  exec ${_nginx}
 }
 
 main
