@@ -7,6 +7,10 @@ services:
       args:
         _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}
         BUILDER_PORT: "\"${BUILDER_PORT}\""
+    command:
+      - --addr
+      - tcp://0.0.0.0:${BUILDER_PORT}
+      - --oci-worker-no-process-sandbox
     container_name: ${BUILDER_HOST}
     image: ${BUILDER_IMG}
     networks:
