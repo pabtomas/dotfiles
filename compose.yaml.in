@@ -260,6 +260,7 @@ services:
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         PROXY_PORT: "\"${PROXY_PORT}\""
         SOCKET_PATH: ${SOCKET_PATH}
+        VAR_LOG_NGX_PATH: ${VAR_LOG_NGX_PATH}
     container_name: ${PROXY_HOST}
     hostname: ${PROXY_HOST}
     image: ${PROXY_IMG}
