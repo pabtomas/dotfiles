@@ -16,7 +16,6 @@ RUN <<END_OF_RUN
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/xserver.conf"
-access_log ${VAR_LOG_NGINX_PATH}/access.log combined;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 server {
