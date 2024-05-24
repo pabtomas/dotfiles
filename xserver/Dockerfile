@@ -16,6 +16,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
+    mkdir -p /var/lib/nginx/tmp/client_body
     cat << TEMPLATING > "${ETC_NGINX_PATH}/xserver.conf"
 user root;
 
@@ -34,13 +35,6 @@ log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_lo
 access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
-
-client_max_body_size 0;
-client_body_temp_path /tmp;
-proxy_temp_path /tmp;
-fastcgi_temp_path /tmp;
-uwsgi_temp_path /tmp;
-scgi_temp_path /tmp;
 
 stream {
     server {
