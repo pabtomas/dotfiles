@@ -198,8 +198,8 @@ services:
         read_only: true
         volume: {}
       - type: volume
-        source: ${PROXY_ETC_NGX_VOLUME}
-        target: /opt/${PROXY_ID}${ETC_NGX_PATH}
+        source: ${PROXY_ETC_NGINX_VOLUME}
+        target: /opt/${PROXY_ID}${ETC_NGINX_PATH}
         read_only: true
         volume: {}
       - type: volume
@@ -208,8 +208,8 @@ services:
         read_only: true
         volume: {}
       - type: volume
-        source: ${PROXY_VAR_LOG_NGX_VOLUME}
-        target: /opt/${PROXY_ID}${VAR_LOG_NGX_PATH}
+        source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+        target: /opt/${PROXY_ID}${VAR_LOG_NGINX_PATH}
         read_only: true
         volume: {}
       - type: volume
@@ -259,19 +259,17 @@ services:
         API_PFX: ${API_PFX}
         API_TAG: "\"${API_TAG}\""
         API_URL: ${API_URL}
-        APK_PATHS: ${APK_PATHS}
         COLLECTOR_IP: ${COLLECTOR_IP}
         CONTROLLER_IP: ${CONTROLLER_IP}
-        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        ETC_NGX_PATH: ${ETC_NGX_PATH}
+        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
+        NGINX_DEFAULT_CONF_PATH: ${NGINX_DEFAULT_CONF_PATH}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
         PROXY_PORT: "\"${PROXY_PORT}\""
         SOCKET_PATH: ${SOCKET_PATH}
-        VAR_LOG_NGX_PATH: ${VAR_LOG_NGX_PATH}
     container_name: ${PROXY_HOST}
     hostname: ${PROXY_HOST}
     image: ${PROXY_IMG}
@@ -290,8 +288,8 @@ services:
         bind:
           create_host_path: true
       - type: volume
-        source: ${PROXY_ETC_NGX_VOLUME}
-        target: ${ETC_NGX_PATH}
+        source: ${PROXY_ETC_NGINX_VOLUME}
+        target: ${ETC_NGINX_PATH}
         read_only: true
         volume: {}
       - type: volume
@@ -300,8 +298,8 @@ services:
         read_only: true
         volume: {}
       - type: volume
-        source: ${PROXY_VAR_LOG_NGX_VOLUME}
-        target: ${VAR_LOG_NGX_PATH}
+        source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+        target: ${VAR_LOG_NGINX_PATH}
         volume: {}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
@@ -370,12 +368,12 @@ volumes:
     name: ${COLLECTOR_VAR_LOG_VOLUME}
   ${MYWHALEFLEET_VOLUME}:
     name: ${MYWHALEFLEET_VOLUME}
-  ${PROXY_ETC_NGX_VOLUME}:
-    name: ${PROXY_ETC_NGX_VOLUME}
+  ${PROXY_ETC_NGINX_VOLUME}:
+    name: ${PROXY_ETC_NGINX_VOLUME}
   ${PROXY_OPT_SCRIPTS_VOLUME}:
     name: ${PROXY_OPT_SCRIPTS_VOLUME}
-  ${PROXY_VAR_LOG_NGX_VOLUME}:
-    name: ${PROXY_VAR_LOG_NGX_VOLUME}
+  ${PROXY_VAR_LOG_NGINX_VOLUME}:
+    name: ${PROXY_VAR_LOG_NGINX_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
   ${SSH_VOLUME}:

@@ -1,18 +1,14 @@
-ARG ENTRYPOINT_COMPONENT_IMG
-ARG LINUXSERVER_PROXY_LOCAL_IMG
+ARG PROXY_COMPONENT_IMG
+FROM ${PROXY_COMPONENT_IMG}
 
-FROM ${LINUXSERVER_PROXY_LOCAL_IMG} as linuxserver_img
-FROM ${ENTRYPOINT_COMPONENT_IMG}
-
-ARG APK_PATHS
 ARG API_TAG
 ARG API_URL
 ARG COLLECTOR_IP
 ARG CONTROLLER_IP
 ARG ENTRYPOINTD_PATH
-ARG ETC_NGX_PATH
+ARG ETC_NGINX_PATH
+ARG NGINX_DEFAULT_CONF_PATH
 ARG OPT_SCRIPTS_PATH
-ARG VAR_LOG_NGX_PATH
 ARG PROXY_PORT
 ARG SOCKET_PATH
 ARG HTTP_PROXY
@@ -49,14 +45,7 @@ RUN <<END_OF_RUN
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g;s@}$@@'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
     apk del __install_spec_parser
-    apk add --no-cache nginx-debug
-    rm -rf ${APK_PATHS}
-    cat << TEMPLATING > "${ETC_NGX_PATH}/http.d/default.conf"
-log_format custom '\$remote_addr - \$remote_user [\$time_local] '
-                  '"\$request" \$status \$body_bytes_sent '
-                  '"\$http_referer" "\$http_user_agent"'
-                  'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
-
+    cat << TEMPLATING > "${NGINX_DEFAULT_CONF_PATH}"
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;
@@ -81,12 +70,8 @@ server {
     deny all;
     dav_methods PUT DELETE;
 
-    access_log ${VAR_LOG_NGX_PATH}/access.log custom;
-    error_log ${VAR_LOG_NGX_PATH}/error.log info;
-    error_log stderr;
-
     default_type text/plain;
-    include ${ETC_NGX_PATH}/proxy.conf;
+    include ${ETC_NGINX_PATH}/proxy.conf;
     set \$dockersocket ${SOCKET_PATH};
 $(for endpoint in ${endpoints}
   do
@@ -136,30 +121,8 @@ EOF
 main
 TEMPLATING
     chmod 0700 "${warning_entrypoint}"
-    _nginx="$(command -v nginx-debug)"
-    nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
-    cat << TEMPLATING > "${nginx_entrypoint}"
-#! /bin/sh
-
-main ()
-{
-  set -eux
-
-  cat << __TEMPLATING > /run/default.conf
-include ${ETC_NGX_PATH}/http.d/default.conf;
-__TEMPLATING
-
-  exec ${_nginx}
-}
-
-main
-TEMPLATING
-    chmod 0700 "${nginx_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
-
-COPY --from=linuxserver_img ${ETC_NGX_PATH}/nginx.conf ${ETC_NGX_PATH}/
-COPY --from=linuxserver_img ${ETC_NGX_PATH}/proxy.conf ${ETC_NGX_PATH}/
 
 ARG PROXY_PORT
 EXPOSE ${PROXY_PORT}
