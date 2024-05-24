@@ -16,11 +16,7 @@ RUN <<END_OF_RUN
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/xserver.conf"
-log_format custom '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
-                  '\$status \$bytes_sent '
-                  'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
-
-access_log ${VAR_LOG_NGINX_PATH}/access.log custom;
+access_log ${VAR_LOG_NGINX_PATH}/access.log combined;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 server {
