@@ -10,7 +10,7 @@ services:
         reservations:
           devices:
             - capabilities:
-              - gpu
+                - gpu
               count: -1
     image: ${SPACEPORN_RUNNER_IMG}
     networks:
