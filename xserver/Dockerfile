@@ -20,7 +20,7 @@ server {
 
     set \$xserversocket ${XSERVER_SOCKET_PATH};
 
-    proxy_pass unix:\$xserversocket;
+    location / {proxy_pass unix:\$xserversocket;}
 }
 TEMPLATING
     unset http_proxy https_proxy
