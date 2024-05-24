@@ -15,12 +15,12 @@ RUN <<END_OF_RUN
     apk add --no-cache nginx-debug
     mkdir -p "${ETC_NGINX_CONFD_PATH}"
     cat << TEMPLATING > "${ETC_NGINX_HTTPD_PATH}/logging.conf"
-log_format custom '\$remote_addr - \$remote_user [\$time_local] '
-                  '"\$request" \$status \$body_bytes_sent '
-                  '"\$http_referer" "\$http_user_agent"'
-                  'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+log_format custom_http '\$remote_addr - \$remote_user [\$time_local] '
+                       '"\$request" \$status \$body_bytes_sent '
+                       '"\$http_referer" "\$http_user_agent"'
+                       'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
 
-access_log ${VAR_LOG_NGINX_PATH}/access.log custom;
+access_log ${VAR_LOG_NGINX_PATH}/access.log custom_http;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 TEMPLATING

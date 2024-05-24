@@ -16,15 +16,24 @@ RUN <<END_OF_RUN
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/xserver.conf"
-error_log ${VAR_LOG_NGINX_PATH}/error.log info;
-error_log stderr;
-server {
-    listen 127.0.0.1:${XSERVER_PORT};
-    proxy_pass xserver;
-}
+load_module /usr/lib/nginx/modules/ngx_stream_module.so;
 
-upstream xserver {
-    server unix:${XSERVER_SOCKET_PATH};
+stream {
+    log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
+                             '\$status \$bytes_sent '
+                             'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+
+    access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
+    error_log ${VAR_LOG_NGINX_PATH}/error.log info;
+    error_log stderr;
+    server {
+        listen 127.0.0.1:${XSERVER_PORT};
+        proxy_pass xserver;
+    }
+
+    upstream xserver {
+        server unix:${XSERVER_SOCKET_PATH};
+    }
 }
 TEMPLATING
     unset http_proxy https_proxy
