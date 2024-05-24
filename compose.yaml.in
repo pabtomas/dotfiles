@@ -248,6 +248,7 @@ services:
         ${API_PFX}CONTAINERS_ID_LOGS: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_ID_START: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_ID_STOP: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_WAIT: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_JSON: "\"${TRUE}\""
         ${API_PFX}IMAGES_CREATE: "\"${TRUE}\""
         ${API_PFX}IMAGES_JSON: "\"${TRUE}\""
