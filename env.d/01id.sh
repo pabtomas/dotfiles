@@ -15,6 +15,7 @@ _id 'editor'
 _id 'entrypoint'
 _id 'explorer'
 _id 'git'
+_id 'http'
 _id 'jumper'
 _id 'linguist'
 _id 'linuxserver_proxy'
@@ -48,22 +49,3 @@ _sfx "${EXPLORER_ID}${HOST_SFX}"
 _sfx "${RUNNER_ID}${HOST_SFX}"
 _sfx "${EXPLORER_ID}${SERVICE_SFX}"
 _sfx "${COMPONENT_ID}${TAG_SFX}"
-
-_component_id "${BASH_ID}"
-_component_id "${_DOCKER_ID}"
-_component_id "${ENTRYPOINT_ID}"
-_component_id "${GIT_ID}"
-_component_id "${LINGUIST_ID}"
-_component_id "${MAN_ID}"
-_component_id "${PASS_ID}"
-_component_id "${SHELL_ID}"
-_component_id "${SSHD_ID}"
-_component_id "${TMUX_ID}"
-_component_id "${VIM_ID}"
-_component_id "${WORKSPACES_ID}"
-_component_id "${ZIG_ID}"
-
-_explorer_id "${SHELL_ID}"
-_explorer_id "${ZIG_ID}"
-
-_runner_id "${SPACEPORN_ID}"

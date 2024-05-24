@@ -110,27 +110,6 @@ _id ()
   __id "${1}" "${1}"
 }
 
-_component_id ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_ID_SFX}" __id "${1}" "${COMPONENT_ID}${ID_SEP}${1}"
-  unset SFX_OVERRIDE
-}
-
-_explorer_id ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${EXPLORER_ID_SFX}" __id "${1}" "${EXPLORER_ID}${ID_SEP}${1}"
-  unset SFX_OVERRIDE
-}
-
-_runner_id ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RUNNER_ID_SFX}" __id "${1}" "${RUNNER_ID}${ID_SEP}${1}"
-  unset SFX_OVERRIDE
-}
-
 __img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi

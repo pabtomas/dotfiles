@@ -285,10 +285,10 @@ services:
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
+        HTTP_COMPONENT_IMG: ${HTTP_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
-        PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
         PROXY_PORT: "\"${PROXY_PORT}\""
     container_name: ${PROXY_HOST}
     hostname: ${PROXY_HOST}
@@ -358,7 +358,7 @@ services:
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
+        NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
         XSERVER_PORT: "\"${XSERVER_PORT}\""
         XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
