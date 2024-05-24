@@ -15,3 +15,6 @@ _delme_volume 'collector_etc_crontabs' "${COLLECTOR_ID}-etc-crontabs-fs"
 _delme_volume 'collector_opt_data' "${COLLECTOR_ID}-opt-data-fs"
 _delme_volume 'collector_opt_scripts' "${COLLECTOR_ID}-opt-scripts-fs"
 _delme_volume 'ssh' 'shared-ssh'
+_delme_volume 'xserver_etc_nginx' "${XSERVER_ID}-etc-nginx-fs"
+_delme_volume 'xserver_opt_scripts' "${XSERVER_ID}-opt-scripts-fs"
+_delme_volume 'xserver_var_log_nginx' "${XSERVER_ID}-var-log-nginx-fs"
