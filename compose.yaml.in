@@ -302,8 +302,7 @@ services:
         source: ${_DOCKER_SOCKET_PATH}
         target: ${_DOCKER_SOCKET_PATH}
         read_only: true
-        bind:
-          create_host_path: false
+        bind: {}
       - type: volume
         source: ${PROXY_ETC_NGINX_VOLUME}
         target: ${ETC_NGINX_PATH}
@@ -371,8 +370,7 @@ services:
         source: ${XSERVER_SOCKET_PATH}
         target: ${XSERVER_SOCKET_PATH}
         read_only: true
-        bind:
-          create_host_path: false
+        bind: {}
       - type: volume
         source: ${XSERVER_ETC_NGINX_VOLUME}
         target: ${ETC_NGINX_PATH}
