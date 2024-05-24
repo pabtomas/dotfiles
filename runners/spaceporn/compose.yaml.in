@@ -9,8 +9,9 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]
-              count: all
+            - capabilities:
+              - gpu
+              count: -1
     image: ${SPACEPORN_RUNNER_IMG}
     networks:
       ${SPACEPORN_ID}_net: null
