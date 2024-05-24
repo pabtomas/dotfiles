@@ -99,7 +99,7 @@ EOF
           \${match:+\"--volume\"} \${match:+\"\${match}:\${match}\"} \
           \${match2:+\"--volume\"} \${match2:+\"\${match2}:\${match2}\"} \
           \${sudo:+\"--user\"} \${sudo:+\"root\"} \
-          --rm --interactive 'tiawl/wget_me/busybox' \"\${@}\"
+          --rm --interactive 'tiawl/wget_me/busybox' ${1} \"\${@}\"
         then
           unset cwd match match2 sudo
           return 1
