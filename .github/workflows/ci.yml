@@ -46,7 +46,7 @@ jobs:
         ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
         ( * ) EXE="${PKG}" ;;
         esac
-        apt-get install xvfb -y
+        sudo apt-get install xvfb -y
         Xvfb :0 &
         ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
   shellcheck:
