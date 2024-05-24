@@ -137,6 +137,7 @@ services:
       context: ${COMPONENTS_PATH}/${PROXY_ID}
       dockerfile: Dockerfile
       args:
+        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
