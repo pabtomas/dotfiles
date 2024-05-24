@@ -35,6 +35,12 @@ access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 
+client_body_temp_path /tmp;
+proxy_temp_path /tmp;
+fastcgi_temp_path /tmp;
+uwsgi_temp_path /tmp;
+scgi_temp_path /tmp;
+
 stream {
     server {
         listen 127.0.0.1:${XSERVER_PORT};
