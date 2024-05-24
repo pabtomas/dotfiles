@@ -15,11 +15,7 @@ services:
     image: ${SPACEPORN_RUNNER_IMG}
     networks:
       ${SPACEPORN_ID}_net: null
-    ports:
-      - mode: ingress
-        target: 5800
-        published: "\"5800\""
-        protocol: tcp
+      ${PROXIFIED_XSERVER_SOCKET_NET}: null
     volumes:
       - type: volume
         source: ${SPACEPORN_VOLUME}
@@ -29,6 +25,9 @@ services:
 networks:
   ${SPACEPORN_ID}_net:
     name: ${SPACEPORN_ID}_net
+  ${PROXIFIED_XSERVER_SOCKET_NET}:
+    name: ${PROXIFIED_XSERVER_SOCKET_NET}
+    external: true
 volumes:
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}

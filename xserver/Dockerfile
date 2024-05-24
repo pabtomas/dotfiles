@@ -18,9 +18,14 @@ server {
     server_name _;
     listen ${XSERVER_PORT} default_server;
 
-    set \$xserversocket ${XSERVER_SOCKET_PATH};
+    location / {
+        proxy_pass http://xserver;
+    }
+}
 
-    location / {proxy_pass unix:\$xserversocket;}
+upstream xserver {
+    set \$xserversocket ${XSERVER_SOCKET_PATH};
+    server unix:\$xserversocket;
 }
 TEMPLATING
     unset http_proxy https_proxy
