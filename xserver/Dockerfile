@@ -24,8 +24,7 @@ server {
 }
 
 upstream xserver {
-    set \$xserversocket ${XSERVER_SOCKET_PATH};
-    server unix:\$xserversocket;
+    server unix:${XSERVER_SOCKET_PATH};
 }
 TEMPLATING
     unset http_proxy https_proxy
