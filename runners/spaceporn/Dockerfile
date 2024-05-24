@@ -1,5 +1,7 @@
-FROM jlesage/baseimage-gui:alpine-3.19-v4.5.3
+FROM alpine:3.20
 
-RUN set-cont-env APP_NAME 'spaceporn'
+RUN apk add --no-cache xterm
 
-ENTRYPOINT ["/workspaces/spaceporn/spaceporn/zig-out/bin/spaceporn"]
+ENV DISPLAY 172.17.3.2:2365
+
+ENTRYPOINT ["sh", "-c", "env; xterm"]
