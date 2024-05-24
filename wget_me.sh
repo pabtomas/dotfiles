@@ -344,8 +344,13 @@ EOF
     set -f
     # shellcheck disable=2086
     # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
-    printf 'These services failed: %s\n' ${failed_services} >&2
+    for failed in ${failed_services}
+    do
+      printf 'This service failed: %s\n' "${failed}" >&2
+      docker logs "${failed}"
+    done
     set +f
+    unset failed
     return 1
   fi
 

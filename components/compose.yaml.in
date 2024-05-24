@@ -98,6 +98,24 @@ services:
     image: ${MAN_COMPONENT_IMG}
     networks:
       ${COMPONENT_ID}s_net: null
+  ${NGINX_SERVICE}:
+    build:
+      context: ${COMPONENTS_PATH}/${NGINX_ID}
+      dockerfile: Dockerfile
+      args:
+        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        condition: service_started
+        required: true
+    image: ${NGINX_COMPONENT_IMG}
+    networks:
+      ${COMPONENT_ID}s_net: null
   ${PASS_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${PASS_ID}
@@ -111,6 +129,25 @@ services:
         condition: service_started
         required: true
     image: ${PASS_COMPONENT_IMG}
+    networks:
+      ${COMPONENT_ID}s_net: null
+  ${PROXY_SERVICE}:
+    build:
+      context: ${COMPONENTS_PATH}/${PROXY_ID}
+      dockerfile: Dockerfile
+      args:
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
+        NGINX_DEFAULT_CONF_PATH: ${NGINX_DEFAULT_CONF_PATH}
+        LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
+    depends_on:
+      ${NGINX_SERVICE}:
+        condition: service_started
+        required: true
+    image: ${PROXY_COMPONENT_IMG}
     networks:
       ${COMPONENT_ID}s_net: null
   ${SHELL_SERVICE}:

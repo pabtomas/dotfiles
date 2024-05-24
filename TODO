@@ -15,7 +15,7 @@ TODO:
   - tmux resurrect files
   - tmuxinator conf sessions
 - find a solution to split templates and Dockerfiles
-- jumper/proxy -> change them into components
+- jumper -> change into components
 - logger alias for controller
 - add aliases/remove old directory
 - wget_me.sh:
