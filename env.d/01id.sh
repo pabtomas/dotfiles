@@ -32,6 +32,7 @@ _id 'sshd'
 _id 'tmux'
 _id 'vim'
 _id 'workspaces'
+_id 'xserver'
 _id 'zig'
 
 __id 'os' "${ALPINE_ID}"
@@ -47,7 +48,6 @@ _sfx "${EXPLORER_ID}${HOST_SFX}"
 _sfx "${RUNNER_ID}${HOST_SFX}"
 _sfx "${EXPLORER_ID}${SERVICE_SFX}"
 _sfx "${COMPONENT_ID}${TAG_SFX}"
-_sfx "${RUNNER_ID}${TAG_SFX}"
 
 _component_id "${BASH_ID}"
 _component_id "${_DOCKER_ID}"

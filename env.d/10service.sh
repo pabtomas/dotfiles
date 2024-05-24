@@ -25,6 +25,7 @@ _service "${SSHD_ID}"
 _service "${TMUX_ID}"
 _service "${VIM_ID}"
 _service "${WORKSPACES_ID}"
+_service "${XSERVER_ID}"
 _service "${ZIG_ID}"
 
 _explorer_service "${SHELL_ID}"

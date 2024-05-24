@@ -6,12 +6,12 @@ ARG API_URL
 ARG APK_PATHS
 ARG COLLECTOR_IP
 ARG CONTROLLER_IP
+ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
 ARG ETC_NGINX_PATH
 ARG NGINX_DEFAULT_CONF_PATH
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
-ARG SOCKET_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -73,8 +73,7 @@ server {
     dav_methods PUT DELETE;
 
     default_type text/plain;
-    include ${ETC_NGINX_PATH}/proxy.conf;
-    set \$dockersocket ${SOCKET_PATH};
+    set \$dockersocket ${_DOCKER_SOCKET_PATH};
 $(for endpoint in ${endpoints}
   do
     nginx_var="$(nginx_varname "${endpoint}")"

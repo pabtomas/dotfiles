@@ -203,13 +203,6 @@ _component_tag ()
   unset SFX_OVERRIDE
 }
 
-_runner_tag ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RUNNER_TAG_SFX}" _tag "${1}" "${2}"
-  unset SFX_OVERRIDE
-}
-
 _url ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi

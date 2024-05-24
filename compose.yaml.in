@@ -12,6 +12,7 @@ services:
       - tcp://0.0.0.0:${BUILDER_PORT}
       - --oci-worker-no-process-sandbox
     container_name: ${BUILDER_HOST}
+    hostname: ${BUILDER_HOST}
     image: ${BUILDER_IMG}
     networks:
       ${BUILDER_NET}: null
@@ -62,7 +63,7 @@ services:
     hostname: ${COLLECTOR_HOST}
     image: ${COLLECTOR_IMG}
     networks:
-      ${PROXIFIED_SOCKET_NET}:
+      ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${COLLECTOR_IP}
     read_only: true
     volumes:
@@ -98,7 +99,7 @@ services:
     networks:
       ${BUILDER_NET}: null
       ${JUMP_AREA_NET}: null
-      ${PROXIFIED_SOCKET_NET}:
+      ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
     volumes:
       - type: volume
@@ -232,6 +233,21 @@ services:
         target: /opt/${COLLECTOR_ID}${VAR_LOG_PATH}
         read_only: true
         volume: {}
+      - type: volume
+        source: ${XSERVER_ETC_NGINX_VOLUME}
+        target: /opt/${XSERVER_ID}${ETC_NGINX_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+        target: /opt/${XSERVER_ID}${OPT_SCRIPTS_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+        target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
+        read_only: true
+        volume: {}
   ${PROXY_SERVICE}:
     build:
       context: ${CWD_PATH}/${PROXY_ID}
@@ -262,6 +278,7 @@ services:
         APK_PATHS: ${APK_PATHS}
         COLLECTOR_IP: ${COLLECTOR_IP}
         CONTROLLER_IP: ${CONTROLLER_IP}
+        _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -270,12 +287,11 @@ services:
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
         PROXY_PORT: "\"${PROXY_PORT}\""
-        SOCKET_PATH: ${SOCKET_PATH}
     container_name: ${PROXY_HOST}
     hostname: ${PROXY_HOST}
     image: ${PROXY_IMG}
     networks:
-      ${PROXIFIED_SOCKET_NET}:
+      ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${PROXY_IP}
     read_only: true
     tmpfs:
@@ -283,11 +299,10 @@ services:
       - /tmp
     volumes:
       - type: bind
-        source: ${SOCKET_PATH}
-        target: ${SOCKET_PATH}
+        source: ${_DOCKER_SOCKET_PATH}
+        target: ${_DOCKER_SOCKET_PATH}
         read_only: true
-        bind:
-          create_host_path: true
+        bind: {}
       - type: volume
         source: ${PROXY_ETC_NGINX_VOLUME}
         target: ${ETC_NGINX_PATH}
@@ -330,6 +345,47 @@ services:
         target: ${SSH_ROOT_PATH}
         read_only: true
         volume: {}
+  ${XSERVER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${XSERVER_ID}
+      dockerfile: Dockerfile
+      args:
+        APK_PATHS: ${APK_PATHS}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        NGINX_DEFAULT_CONF_PATH: ${NGINX_DEFAULT_CONF_PATH}
+        PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
+        XSERVER_PORT: "\"${XSERVER_PORT}\""
+        XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
+    container_name: ${XSERVER_HOST}
+    hostname: ${XSERVER_HOST}
+    image: ${XSERVER_IMG}
+    networks:
+      ${PROXIFIED_XSERVER_SOCKET_NET}:
+        ipv4_address: ${XSERVER_IP}
+    read_only: true
+    tmpfs:
+      - /run
+    volumes:
+      - type: bind
+        source: ${XSERVER_SOCKET_PATH}
+        target: ${XSERVER_SOCKET_PATH}
+        read_only: true
+        bind: {}
+      - type: volume
+        source: ${XSERVER_ETC_NGINX_VOLUME}
+        target: ${ETC_NGINX_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+        target: ${OPT_SCRIPTS_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+        target: ${VAR_LOG_NGINX_PATH}
+        volume: {}
 networks:
   ${BUILDER_NET}:
     name: ${BUILDER_NET}
@@ -349,15 +405,24 @@ networks:
         - subnet: ${JUMP_AREA_SUB}
           gateway: ${JUMP_AREA_GATEWAY_IP}
           ip_range: ${JUMP_AREA_SUB}
-  ${PROXIFIED_SOCKET_NET}:
-    name: ${PROXIFIED_SOCKET_NET}
+  ${PROXIFIED_DOCKER_SOCKET_NET}:
+    name: ${PROXIFIED_DOCKER_SOCKET_NET}
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: ${PROXIFIED_SOCKET_SUB}
-          gateway: ${PROXIFIED_SOCKET_GATEWAY_IP}
-          ip_range: ${PROXIFIED_SOCKET_SUB}
+        - subnet: ${PROXIFIED_DOCKER_SOCKET_SUB}
+          gateway: ${PROXIFIED_DOCKER_SOCKET_GATEWAY_IP}
+          ip_range: ${PROXIFIED_DOCKER_SOCKET_SUB}
+  ${PROXIFIED_XSERVER_SOCKET_NET}:
+    name: ${PROXIFIED_XSERVER_SOCKET_NET}
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${PROXIFIED_XSERVER_SOCKET_SUB}
+          gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
+          ip_range: ${PROXIFIED_XSERVER_SOCKET_SUB}
 volumes:
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:
     name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
@@ -381,3 +446,9 @@ volumes:
     name: ${SSH_VOLUME}
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}
+  ${XSERVER_ETC_NGINX_VOLUME}:
+    name: ${XSERVER_ETC_NGINX_VOLUME}
+  ${XSERVER_OPT_SCRIPTS_VOLUME}:
+    name: ${XSERVER_OPT_SCRIPTS_VOLUME}
+  ${XSERVER_VAR_LOG_NGINX_VOLUME}:
+    name: ${XSERVER_VAR_LOG_NGINX_VOLUME}

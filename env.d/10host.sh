@@ -12,6 +12,7 @@ _host "${MAN_ID}"
 _host "${PROXY_ID}"
 _host "${SAFEDEPOSIT_ID}"
 _host "${SCHOLAR_ID}"
+_host "${XSERVER_ID}"
 
 _explorer_host "${SHELL_ID}"
 _explorer_host "${ZIG_ID}"
