@@ -35,6 +35,7 @@ access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 
+client_max_body_size 0;
 client_body_temp_path /tmp;
 proxy_temp_path /tmp;
 fastcgi_temp_path /tmp;
