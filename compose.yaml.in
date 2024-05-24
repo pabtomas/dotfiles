@@ -358,6 +358,7 @@ services:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
+        VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
         XSERVER_PORT: "\"${XSERVER_PORT}\""
         XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
     container_name: ${XSERVER_HOST}

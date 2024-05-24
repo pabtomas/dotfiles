@@ -21,9 +21,6 @@ log_format custom '\$remote_addr - \$remote_user [\$time_local] '
                   'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
 
 access_log ${VAR_LOG_NGINX_PATH}/access.log custom;
-TEMPLATING
-    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/logging.conf"
-access_log ${VAR_LOG_NGINX_PATH}/access.log combined;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 TEMPLATING
