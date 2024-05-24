@@ -13,7 +13,6 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-debug
-    rm -rf ${APK_PATHS}
     httpd_path="${ETC_NGINX_PATH}/http.d"
     cat << TEMPLATING > "${httpd_path}/logging.conf"
 log_format custom '\$remote_addr - \$remote_user [\$time_local] '
@@ -37,6 +36,8 @@ main ()
   cat << __TEMPLATING > /run/default.conf
 include ${httpd_path}/*.conf;
 __TEMPLATING
+
+  rm -rf ${APK_PATHS}
 
   exec ${_nginx}
 }
