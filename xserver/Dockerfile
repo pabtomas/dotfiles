@@ -3,6 +3,7 @@ FROM ${PROXY_COMPONENT_IMG}
 
 ARG APK_PATHS
 ARG ETC_NGINX_CONFD_PATH
+ARG ETC_NGINX_PATH
 ARG VAR_LOG_NGINX_PATH
 ARG XSERVER_PORT
 ARG XSERVER_SOCKET_PATH
@@ -15,9 +16,10 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
-    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/xserver.conf"
+    cat << TEMPLATING > "${ETC_NGINX_PATH}/modules/stream.conf"
 load_module /usr/lib/nginx/modules/ngx_stream_module.so;
-
+TEMPLATING
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/xserver.conf"
 stream {
     log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
                              '\$status \$bytes_sent '
