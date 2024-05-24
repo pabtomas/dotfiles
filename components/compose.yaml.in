@@ -103,7 +103,6 @@ services:
       context: ${COMPONENTS_PATH}/${NGINX_ID}
       dockerfile: Dockerfile
       args:
-        APK_PATHS: ${APK_PATHS}
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}

@@ -259,6 +259,7 @@ services:
         API_PFX: ${API_PFX}
         API_TAG: "\"${API_TAG}\""
         API_URL: ${API_URL}
+        APK_PATHS: ${APK_PATHS}
         COLLECTOR_IP: ${COLLECTOR_IP}
         CONTROLLER_IP: ${CONTROLLER_IP}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}

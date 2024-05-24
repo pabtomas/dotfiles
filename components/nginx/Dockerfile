@@ -1,7 +1,6 @@
 ARG ENTRYPOINT_COMPONENT_IMG
 FROM ${ENTRYPOINT_COMPONENT_IMG}
 
-ARG APK_PATHS
 ARG ENTRYPOINTD_PATH
 ARG ETC_NGINX_PATH
 ARG VAR_LOG_NGINX_PATH
@@ -36,8 +35,6 @@ main ()
   cat << __TEMPLATING > /run/default.conf
 include ${httpd_path}/*.conf;
 __TEMPLATING
-
-  rm -rf ${APK_PATHS}
 
   exec ${_nginx}
 }
