@@ -143,7 +143,6 @@ services:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
-        NGINX_DEFAULT_CONF_PATH: ${NGINX_DEFAULT_CONF_PATH}
         LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
     depends_on:
       ${NGINX_SERVICE}:
