@@ -5,6 +5,13 @@ services:
       context: ${RUNNERS_PATH}/${SPACEPORN_ID}
       dockerfile: Dockerfile
     container_name: ${SPACEPORN_RUNNER_HOST}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities:
+                - gpu
+              count: -1
     image: ${SPACEPORN_RUNNER_IMG}
     networks:
       ${SPACEPORN_ID}_net: null
