@@ -16,7 +16,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
-    mkdir -p /var/lib/nginx/tmp/client_body
+    install -d -o nginx -g nginx -m 0700 /var/lib/nginx/tmp/client_body
     cat << TEMPLATING > "${ETC_NGINX_PATH}/xserver.conf"
 user root;
 
