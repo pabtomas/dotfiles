@@ -66,19 +66,18 @@ main ()
     unset path
   }
 
-  dockerize ()
+  build ()
   {
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    new_user='visitor'
     uid="$(id -u)"
-    docker build --tag "tiawl/wget_me/${2}:latest" --file - . << EOF
+    docker build --tag "tiawl/wget_me/busybox:latest" --file - . << EOF
 FROM ${1}
 
 RUN <<END_OF_RUN
-    ${3+"apk --no-cache add ${3}
-    "}rm -rf /var/lib/apt/lists/* /var/cache/apk/*
+    apk --no-cache add git
+    rm -rf /var/lib/apt/lists/* /var/cache/apk/*
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
 
@@ -86,16 +85,21 @@ USER ${new_user}
 
 WORKDIR /home/${new_user}
 
-ENTRYPOINT ["${2}"]
+CMD ["busybox", "sh"]
 EOF
-    unset -f "${2}"
-    eval "${2} ()
+  }
+
+  dockerize ()
+  {
+    ## oksh/loksh: debugtrace does not follow in functions
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
+    eval "${1} ()
       {
         if ! docker run \${cwd:+\"--volume\"} \${cwd:+\"\${cwd}:/home/${new_user}/\"} \
           \${match:+\"--volume\"} \${match:+\"\${match}:\${match}\"} \
           \${match2:+\"--volume\"} \${match2:+\"\${match2}:\${match2}\"} \
           \${sudo:+\"--user\"} \${sudo:+\"root\"} \
-          --rm --interactive 'tiawl/wget_me/${2}' \"\${@}\"
+          --rm --interactive 'tiawl/wget_me/busybox' ${1} \"\${@}\"
         then
           unset cwd match match2 sudo
           return 1
@@ -103,7 +107,6 @@ EOF
           unset cwd match match2 sudo
         fi
       }"
-    unset new_user
   }
 
   ## Posix shell: no local variables => subshell instead of braces
@@ -218,20 +221,24 @@ EOF
   unset src_tag src_img
 
   ## dockerize external tools to keep same behavior wherever the script is running
-  dockerize "${target}" basename
-  dockerize "${target}" cp
-  dockerize "${target}" dirname
-  dockerize "${target}" git git
-  dockerize "${target}" grep
-  dockerize "${target}" mkdir
-  dockerize "${target}" mktemp
-  dockerize "${target}" rm
-  dockerize "${target}" sed
-  dockerize "${target}" sleep
-  dockerize "${target}" sort
-  dockerize "${target}" uniq
-  dockerize "${target}" wget
+  new_user='visitor'
+  build "${target}"
   unset target
+
+  dockerize basename
+  dockerize cp
+  dockerize dirname
+  dockerize git git
+  dockerize grep
+  dockerize mkdir
+  dockerize mktemp
+  dockerize rm
+  dockerize sed
+  dockerize sleep
+  dockerize sort
+  dockerize uniq
+  dockerize wget
+  unset new_user
 
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
   repo='tiawl/MyWhaleFleet'
