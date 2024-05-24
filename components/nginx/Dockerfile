@@ -20,11 +20,9 @@ log_format custom '\$remote_addr - \$remote_user [\$time_local] '
                   '"\$http_referer" "\$http_user_agent"'
                   'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
 
-server {
-    access_log ${VAR_LOG_NGINX_PATH}/access.log custom;
-    error_log ${VAR_LOG_NGINX_PATH}/error.log info;
-    error_log stderr;
-}
+access_log ${VAR_LOG_NGINX_PATH}/access.log custom;
+error_log ${VAR_LOG_NGINX_PATH}/error.log info;
+error_log stderr;
 TEMPLATING
     _nginx="$(command -v nginx-debug)"
     nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
