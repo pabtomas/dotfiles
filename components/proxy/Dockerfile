@@ -4,8 +4,10 @@ ARG LINUXSERVER_PROXY_LOCAL_IMG
 FROM ${LINUXSERVER_PROXY_LOCAL_IMG} as linuxserver_img
 FROM ${NGINX_COMPONENT_IMG}
 
-ARG ETC_NGINX_PATH
+ARG ENTRYPOINTD_PATH
 ARG NGINX_DEFAULT_CONF_PATH
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
@@ -29,6 +31,8 @@ TEMPLATING
     chmod 0700 "${checkdefault_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
+
+ARG ETC_NGINX_PATH
 
 COPY --from=linuxserver_img ${ETC_NGINX_PATH}/nginx.conf ${ETC_NGINX_PATH}/
 COPY --from=linuxserver_img ${ETC_NGINX_PATH}/proxy.conf ${ETC_NGINX_PATH}/
