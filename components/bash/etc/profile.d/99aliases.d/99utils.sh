@@ -3,7 +3,6 @@ ls () { command ls --color "${@}"; }
 grep () { command grep --color "${@}"; }
 diff () { command diff -u --color "${@}"; }
 tree () { command tree -C "${@}"; }
-ps () { command ps -a -x "${@}"; }
 rm () { command rm -i -r -v "${@}"; }
 cp () { command cp -i -r -v "${@}"; }
 mv () { command mv -i -n -v "${@}"; }
