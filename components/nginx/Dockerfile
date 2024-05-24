@@ -14,13 +14,16 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-debug
     mkdir -p "${ETC_NGINX_CONFD_PATH}"
-    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/logging.conf"
+    cat << TEMPLATING > "${ETC_NGINX_HTTPD_PATH}/logging.conf"
 log_format custom '\$remote_addr - \$remote_user [\$time_local] '
                   '"\$request" \$status \$body_bytes_sent '
                   '"\$http_referer" "\$http_user_agent"'
                   'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
 
 access_log ${VAR_LOG_NGINX_PATH}/access.log custom;
+TEMPLATING
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/logging.conf"
+access_log ${VAR_LOG_NGINX_PATH}/access.log combined;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 TEMPLATING
