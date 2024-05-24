@@ -2,7 +2,7 @@ ARG PROXY_COMPONENT_IMG
 FROM ${PROXY_COMPONENT_IMG}
 
 ARG APK_PATHS
-ARG NGINX_DEFAULT_CONF_PATH
+ARG ETC_NGINX_CONFD_PATH
 ARG XSERVER_PORT
 ARG XSERVER_SOCKET_PATH
 ARG HTTP_PROXY
@@ -13,18 +13,16 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     rm -rf ${APK_PATHS}
-    cat << TEMPLATING > "${NGINX_DEFAULT_CONF_PATH}"
-server {
-    server_name _;
-    listen ${XSERVER_PORT} default_server;
-
-    location / {
-        proxy_pass http://xserver;
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/xserver.conf"
+stream {
+    server {
+        listen 127.0.0.1:${XSERVER_PORT};
+        proxy_pass xserver;
     }
-}
 
-upstream xserver {
-    server unix:${XSERVER_SOCKET_PATH};
+    upstream xserver {
+        server unix:${XSERVER_SOCKET_PATH};
+    }
 }
 TEMPLATING
     unset http_proxy https_proxy

@@ -2,7 +2,8 @@ ARG ENTRYPOINT_COMPONENT_IMG
 FROM ${ENTRYPOINT_COMPONENT_IMG}
 
 ARG ENTRYPOINTD_PATH
-ARG ETC_NGINX_PATH
+ARG ETC_NGINX_CONFD_PATH
+ARG ETC_NGINX_HTTPD_PATH
 ARG VAR_LOG_NGINX_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -12,8 +13,8 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-debug
-    httpd_path="${ETC_NGINX_PATH}/http.d"
-    cat << TEMPLATING > "${httpd_path}/logging.conf"
+    mkdir -p "${ETC_NGINX_CONFD_PATH}"
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/logging.conf"
 log_format custom '\$remote_addr - \$remote_user [\$time_local] '
                   '"\$request" \$status \$body_bytes_sent '
                   '"\$http_referer" "\$http_user_agent"'
@@ -33,7 +34,7 @@ main ()
   set -eux
 
   cat << __TEMPLATING > /run/default.conf
-include ${httpd_path}/*.conf;
+include ${ETC_NGINX_HTTPD_PATH}/*.conf;
 __TEMPLATING
 
   exec ${_nginx}

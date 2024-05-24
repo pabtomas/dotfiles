@@ -8,8 +8,7 @@ ARG COLLECTOR_IP
 ARG CONTROLLER_IP
 ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
-ARG ETC_NGINX_PATH
-ARG NGINX_DEFAULT_CONF_PATH
+ARG ETC_NGINX_HTTPD_PATH
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
 ARG HTTP_PROXY
@@ -48,7 +47,7 @@ RUN <<END_OF_RUN
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
     apk del __install_spec_parser
     rm -rf ${APK_PATHS}
-    cat << TEMPLATING > "${NGINX_DEFAULT_CONF_PATH}"
+    cat << TEMPLATING > "${ETC_NGINX_HTTPD_PATH}/default.conf"
 geo \$privileged {
     default          0;
     ${CONTROLLER_IP} 1;

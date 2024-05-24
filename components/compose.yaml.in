@@ -105,7 +105,8 @@ services:
       args:
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
+        ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
+        ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
@@ -137,6 +138,7 @@ services:
       dockerfile: Dockerfile
       args:
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
