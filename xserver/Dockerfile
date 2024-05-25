@@ -19,9 +19,6 @@ RUN <<END_OF_RUN
     cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
 user root;
 
-# Set number of worker processes automatically based on number of CPU cores.
-worker_processes auto;
-
 # Enables the use of JIT for regular expressions to speed-up their processing.
 pcre_jit on;
 
@@ -61,7 +58,7 @@ log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_lo
 access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 
 server {
-    listen 127.0.0.1:${XSERVER_PORT};
+    listen ${XSERVER_PORT};
     proxy_pass unix:${XSERVER_SOCKET_PATH};
 }
 TEMPLATING
