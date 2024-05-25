@@ -42,6 +42,7 @@ stream {
     include /etc/nginx/conf.d/stream/*.conf;
 }
 TEMPLATING
+    mkdir -p "${ETC_NGINX_CONFD_PATH}/stream"
     cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream/xserver.conf"
 log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
                          '\$status \$bytes_sent '
