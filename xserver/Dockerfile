@@ -16,6 +16,9 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
+    cat << TEMPLATING > "${ETC_NGINX_PATH}/modules/stream.conf"
+load_module /usr/lib/nginx/modules/ngx_stream_module.so;
+TEMPLATING
     cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
 user root;
 
@@ -27,6 +30,9 @@ events {
 
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
+
+# Includes files with directives to load dynamic modules.
+include /etc/nginx/modules/*.conf;
 
 stream {
     log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
