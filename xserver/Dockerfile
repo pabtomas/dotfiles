@@ -24,15 +24,18 @@ user root;
 
 pcre_jit on;
 
-events {
-    worker_connections  1024;
-}
-
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 
 # Includes files with directives to load dynamic modules.
 include /etc/nginx/modules/*.conf;
+
+# Include files with config snippets into the root context.
+include /etc/nginx/conf.d/*.conf;
+
+events {
+    worker_connections  1024;
+}
 
 stream {
     log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
