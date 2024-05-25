@@ -35,36 +35,36 @@ include /etc/nginx/modules/*.conf;
 include /etc/nginx/conf.d/*.conf;
 
 events {
-    worker_connections  1024;
+    worker_connections 1024;
 }
 
 http {
     client_body_temp_path /tmp;
-    proxy_temp_path /tmp;
-    fastcgi_temp_path /tmp;
-    uwsgi_temp_path /tmp;
-    scgi_temp_path /tmp;
+    proxy_temp_path       /tmp;
+    fastcgi_temp_path     /tmp;
+    uwsgi_temp_path       /tmp;
+    scgi_temp_path        /tmp;
 }
 
-stream {
-    include /etc/nginx/stream.d/*.conf;
-}
+include /etc/nginx/stream.d/*.conf;
 
 daemon off;
 pid /run/nginx.pid;
 TEMPLATING
     cat << TEMPLATING > "${ETC_NGINX_PATH}/stream.d/xserver.conf"
-log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
+stream {
+    log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
 
-access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
+    access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 
-server {
-    listen 127.0.0.1:${XSERVER_PORT};
-    proxy_pass xserver;
-}
+    server {
+        listen 127.0.0.1:${XSERVER_PORT};
+        proxy_pass xserver;
+    }
 
-upstream xserver {
-    server unix:${XSERVER_SOCKET_PATH};
+    upstream xserver {
+        server unix:${XSERVER_SOCKET_PATH};
+    }
 }
 TEMPLATING
     unset http_proxy https_proxy
