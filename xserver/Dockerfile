@@ -46,12 +46,12 @@ http {
     scgi_temp_path        /tmp;
 }
 
-include /etc/nginx/stream.d/*.conf;
+include /etc/nginx/stream.conf;
 
 daemon off;
 pid /run/nginx.pid;
 TEMPLATING
-    cat << TEMPLATING > "${ETC_NGINX_PATH}/stream.d/xserver.conf"
+    cat << TEMPLATING > "${ETC_NGINX_PATH}/stream.conf"
 stream {
     log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
 
