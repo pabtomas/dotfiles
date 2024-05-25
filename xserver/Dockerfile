@@ -16,10 +16,9 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
-    cat << TEMPLATING > "${ETC_NGINX_PATH}/modules/stream.conf"
-load_module /usr/lib/nginx/modules/ngx_stream_module.so;
-TEMPLATING
     cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
+load_module /usr/lib/nginx/modules/ngx_stream_module.so;
+
 user root;
 
 pcre_jit on;
