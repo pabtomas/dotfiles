@@ -371,6 +371,7 @@ services:
     read_only: true
     tmpfs:
       - /run
+      - /var/lib/nginx/tmp
     volumes:
       - type: bind
         source: ${XSERVER_SOCKET_PATH}
