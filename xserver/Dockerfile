@@ -25,15 +25,16 @@ events {
     worker_connections  1024;
 }
 
-log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
-                         '\$status \$bytes_sent '
-                         'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
-
-access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 
 stream {
+    log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
+                             '\$status \$bytes_sent '
+                             'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+
+    access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
+
     client_max_body_size 0;
     client_body_temp_path /tmp;
     proxy_temp_path /tmp;
