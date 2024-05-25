@@ -34,6 +34,11 @@ events {
     worker_connections  1024;
 }
 
+http {
+    client_max_body_size 0;
+    client_body_temp_path /tmp;
+}
+
 daemon off;
 pid /run/nginx.pid;
 TEMPLATING
@@ -50,7 +55,6 @@ log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_lo
 
 access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 
-client_body_temp_path /tmp;
 proxy_temp_path /tmp;
 fastcgi_temp_path /tmp;
 uwsgi_temp_path /tmp;
