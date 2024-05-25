@@ -23,8 +23,6 @@ services:
       ${PROXIFIED_XSERVER_SOCKET_NET}:
         ipv4_address: ${BRIDGE_IP}
     read_only: true
-    tmpfs:
-      - /tmp
     volumes:
       - type: volume
         source: ${BRIDGE_XSERVER_SOCKET_VOLUME}
