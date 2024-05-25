@@ -16,7 +16,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
-    cat << TEMPLATING > "${ETC_NGINX_PATH}/xserver.conf"
+    cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
 user root;
 
 pcre_jit on;
@@ -34,9 +34,17 @@ error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 
 stream {
+    client_max_body_size 0;
+    client_body_temp_path /tmp;
+    proxy_temp_path /tmp;
+    fastcgi_temp_path /tmp;
+    uwsgi_temp_path /tmp;
+    scgi_temp_path /tmp;
+
     server {
         listen 127.0.0.1:${XSERVER_PORT};
         proxy_pass xserver;
+
     }
 
     upstream xserver {
