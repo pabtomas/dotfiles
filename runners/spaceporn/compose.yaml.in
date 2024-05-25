@@ -32,3 +32,6 @@ volumes:
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}
     external: true
+  ${BRIDGE_XSERVER_SOCKET_VOLUME}:
+    name: ${BRIDGE_XSERVER_SOCKET_VOLUME}
+    external: true
