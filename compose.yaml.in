@@ -390,8 +390,6 @@ services:
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
         XSERVER_PORT: "\"${XSERVER_PORT}\""
         XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
-    cap_drop:
-      - ALL
     container_name: ${XSERVER_HOST}
     hostname: ${XSERVER_HOST}
     image: ${XSERVER_IMG}
