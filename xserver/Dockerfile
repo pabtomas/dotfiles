@@ -19,6 +19,10 @@ RUN <<END_OF_RUN
     cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
 user root;
 
+# Set number of worker processes automatically based on number of CPU cores.
+worker_processes auto;
+
+# Enables the use of JIT for regular expressions to speed-up their processing.
 pcre_jit on;
 
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
@@ -29,6 +33,8 @@ include /etc/nginx/modules/*.conf;
 
 # Include files with config snippets into the root context.
 include /etc/nginx/conf.d/*.conf;
+
+include /etc/nginx/stream.d/*.conf;
 
 events {
     worker_connections  1024;
@@ -45,25 +51,20 @@ http {
 daemon off;
 pid /run/nginx.pid;
 TEMPLATING
-    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream.conf"
+    cat << TEMPLATING > "${ETC_NGINX_PATH}/stream.d/xserver.conf"
 stream {
-    include /etc/nginx/conf.d/stream/*.conf;
-}
-TEMPLATING
-    mkdir -p "${ETC_NGINX_CONFD_PATH}/stream"
-    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream/xserver.conf"
-log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent ';
+    log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
 
-access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
+    access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 
-server {
-    listen 127.0.0.1:${XSERVER_PORT};
-    proxy_pass xserver;
+    server {
+        listen 127.0.0.1:${XSERVER_PORT};
+        proxy_pass xserver;
+    }
 
-}
-
-upstream xserver {
-    server unix:${XSERVER_SOCKET_PATH};
+    upstream xserver {
+        server unix:${XSERVER_SOCKET_PATH};
+    }
 }
 TEMPLATING
     unset http_proxy https_proxy
