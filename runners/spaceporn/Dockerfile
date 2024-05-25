@@ -6,4 +6,4 @@ ENV DISPLAY 172.17.3.2:2365
 
 USER visitor
 
-ENTRYPOINT ["sh", "-c", "env; hostname -i; xterm"]
+ENTRYPOINT ["sh"]
