@@ -284,12 +284,11 @@ services:
         CONTROLLER_IP: ${CONTROLLER_IP}
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
+        ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
+        HTTP_COMPONENT_IMG: ${HTTP_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        NGINX_DEFAULT_CONF_PATH: ${NGINX_DEFAULT_CONF_PATH}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
-        PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
         PROXY_PORT: "\"${PROXY_PORT}\""
     container_name: ${PROXY_HOST}
     hostname: ${PROXY_HOST}
@@ -355,10 +354,12 @@ services:
       dockerfile: Dockerfile
       args:
         APK_PATHS: ${APK_PATHS}
+        ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
+        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        NGINX_DEFAULT_CONF_PATH: ${NGINX_DEFAULT_CONF_PATH}
-        PROXY_COMPONENT_IMG: ${PROXY_COMPONENT_IMG}
+        NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
+        VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
         XSERVER_PORT: "\"${XSERVER_PORT}\""
         XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
     container_name: ${XSERVER_HOST}
@@ -370,6 +371,7 @@ services:
     read_only: true
     tmpfs:
       - /run
+      - /var/lib/nginx/tmp
     volumes:
       - type: bind
         source: ${XSERVER_SOCKET_PATH}

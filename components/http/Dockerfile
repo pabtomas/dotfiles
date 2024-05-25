@@ -5,8 +5,8 @@ FROM ${LINUXSERVER_PROXY_LOCAL_IMG} as linuxserver_img
 FROM ${NGINX_COMPONENT_IMG}
 
 ARG ENTRYPOINTD_PATH
+ARG ETC_NGINX_HTTPD_PATH
 ARG ETC_NGINX_PATH
-ARG NGINX_DEFAULT_CONF_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -14,7 +14,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    cat << TEMPLATING >> "${ETC_NGINX_PATH}/http.d/proxy.conf"
+    cat << TEMPLATING >> "${ETC_NGINX_HTTPD_PATH}/proxy.conf"
 include ${ETC_NGINX_PATH}/proxy.conf;
 TEMPLATING
     checkdefault_entrypoint="${ENTRYPOINTD_PATH}/98checkdefault.sh"
@@ -24,7 +24,7 @@ TEMPLATING
 main ()
 {
   set -eux
-  if [ ! -r '${NGINX_DEFAULT_CONF_PATH}' ]
+  if [ ! -r '${ETC_NGINX_HTTPD_PATH}/default.conf' ]
   then
     exit 1
   fi

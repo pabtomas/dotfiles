@@ -1,7 +1,9 @@
 FROM alpine:3.20
 
-RUN apk add --no-cache xterm
+RUN apk add --no-cache xterm;adduser -D -s /bin/sh -g 'visitor' 'visitor'
 
 ENV DISPLAY 172.17.3.2:2365
 
-ENTRYPOINT ["sh", "-c", "env; xterm"]
+USER visitor
+
+ENTRYPOINT ["sh", "-c", "env; hostname -i; xterm"]

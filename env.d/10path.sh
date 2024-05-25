@@ -11,7 +11,8 @@ _path 'docker_plugins' '/usr/local/libexec/docker/cli-plugins'
 _path 'crontabs' '/etc/crontabs'
 _path 'crontabs_log' '/var/log/cron.log'
 _path 'etc_nginx' '/etc/nginx'
-_path 'nginx_default_conf' "${ETC_NGINX_PATH}/http.d/default.conf"
+_path 'etc_nginx_confd' "${ETC_NGINX_PATH}/conf.d"
+_path 'etc_nginx_httpd' "${ETC_NGINX_PATH}/http.d"
 _path 'var_log_nginx' '/var/log/nginx'
 _path 'opt_scripts' '/opt/scripts'
 _path 'opt_ssh' '/opt/ssh'
