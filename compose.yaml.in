@@ -1,5 +1,35 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
+  ${BRIDGE_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${BRIDGE_ID}
+      dockerfile: Dockerfile
+      args:
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+        SOCAT_COMPONENT_IMG: ${SOCAT_COMPONENT_IMG}
+        XSERVER_IP: ${XSERVER_IP}
+        XSERVER_PORT: ${XSERVER_PORT}
+        XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
+    container_name: ${BRIDGE_HOST}
+    depends_on:
+      ${XSERVER_SERVICE}:
+        condition: service_started
+        required: true
+    hostname: ${BRIDGE_HOST}
+    image: ${BRIDGE_IMG}
+    networks:
+      ${PROXIFIED_XSERVER_SOCKET_NET}:
+        ipv4_address: ${BRIDGE_IP}
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: volume
+        source: ${BRIDGE_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+        volume: {}
   ${BUILDER_SERVICE}:
     build:
       context: ${CWD_PATH}/${BUILDER_ID}
@@ -88,13 +118,13 @@ services:
   ${CONTROLLER_SERVICE}:
     container_name: ${CONTROLLER_HOST}
     depends_on:
+      ${BRIDGE_SERVICE}:
+        condition: service_started
+        required: true
       ${BUILDER_SERVICE}:
         condition: service_started
         required: true
       ${PROXY_SERVICE}:
-        condition: service_started
-        required: true
-      ${XSERVER_SERVICE}:
         condition: service_started
         required: true
     hostname: ${CONTROLLER_HOST}
@@ -362,6 +392,8 @@ services:
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
         XSERVER_PORT: "\"${XSERVER_PORT}\""
         XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
+    cap_drop:
+      - ALL
     container_name: ${XSERVER_HOST}
     hostname: ${XSERVER_HOST}
     image: ${XSERVER_IMG}
@@ -369,9 +401,10 @@ services:
       ${PROXIFIED_XSERVER_SOCKET_NET}:
         ipv4_address: ${XSERVER_IP}
     read_only: true
+    security_opt:
+      - no-new-privileges:true
     tmpfs:
       - /run
-      - /var/lib/nginx/tmp
     volumes:
       - type: bind
         source: ${XSERVER_SOCKET_PATH}
@@ -430,6 +463,8 @@ networks:
           gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
           ip_range: ${PROXIFIED_XSERVER_SOCKET_SUB}
 volumes:
+  ${BRIDGE_XSERVER_SOCKET_VOLUME}:
+    name: ${BRIDGE_XSERVER_SOCKET_VOLUME}
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:
     name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
   ${COLLECTOR_OPT_DATA_VOLUME}:

@@ -4,6 +4,8 @@
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
 _service "${BASH_ID}"
+_service "${BASH_ENTRYPOINT_ID}"
+_service "${BRIDGE_ID}"
 _service "${BUILDER_ID}"
 _service "${COLLECTOR_ID}"
 _service "${CONTROLLER_ID}"
@@ -21,6 +23,7 @@ _service "${PROXY_ID}"
 _service "${SAFEDEPOSIT_ID}"
 _service "${SCHOLAR_ID}"
 _service "${SHELL_ID}"
+_service "${SOCAT_ID}"
 _service "${SPACEPORN_ID}"
 _service "${SSHD_ID}"
 _service "${TMUX_ID}"
