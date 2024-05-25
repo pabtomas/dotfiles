@@ -17,6 +17,7 @@ RUN <<END_OF_RUN
     apk add --no-cache nginx-mod-stream
     rm -rf ${APK_PATHS}
     install -d -o nginx -g nginx -m 0700 /var/lib/nginx/tmp/client_body
+    install -d -o nginx -g nginx -m 0700 /var/lib/nginx/tmp/proxy
     cat << TEMPLATING > "${ETC_NGINX_PATH}/xserver.conf"
 user root;
 
@@ -35,17 +36,9 @@ error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 
 stream {
-    client_max_body_size 0;
-    client_body_temp_path /tmp;
-    proxy_temp_path /tmp;
-    fastcgi_temp_path /tmp;
-    uwsgi_temp_path /tmp;
-    scgi_temp_path /tmp;
-
     server {
         listen 127.0.0.1:${XSERVER_PORT};
         proxy_pass xserver;
-
     }
 
     upstream xserver {
