@@ -22,8 +22,6 @@ user root;
 
 pcre_jit on;
 
-worker_processes auto;
-
 events {
     worker_connections  1024;
 }
@@ -40,6 +38,13 @@ stream {
     server {
         listen 127.0.0.1:${XSERVER_PORT};
         proxy_pass xserver;
+
+        client_max_body_size 0;
+        client_body_temp_path /tmp;
+        proxy_temp_path /tmp;
+        fastcgi_temp_path /tmp;
+        uwsgi_temp_path /tmp;
+        scgi_temp_path /tmp;
     }
 
     upstream xserver {
