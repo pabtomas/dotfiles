@@ -34,33 +34,37 @@ events {
     worker_connections  1024;
 }
 
-stream {
-    log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
-                             '\$status \$bytes_sent '
-                             'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
-
-    access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
-
-    client_max_body_size 0;
-    client_body_temp_path /tmp;
-    proxy_temp_path /tmp;
-    fastcgi_temp_path /tmp;
-    uwsgi_temp_path /tmp;
-    scgi_temp_path /tmp;
-
-    server {
-        listen 127.0.0.1:${XSERVER_PORT};
-        proxy_pass xserver;
-
-    }
-
-    upstream xserver {
-        server unix:${XSERVER_SOCKET_PATH};
-    }
-}
-
 daemon off;
 pid /run/nginx.pid;
+TEMPLATING
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream.conf"
+stream {
+    include /etc/nginx/conf.d/stream/*.conf;
+}
+TEMPLATING
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream/xserver.conf"
+log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
+                         '\$status \$bytes_sent '
+                         'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+
+access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
+
+client_max_body_size 0;
+client_body_temp_path /tmp;
+proxy_temp_path /tmp;
+fastcgi_temp_path /tmp;
+uwsgi_temp_path /tmp;
+scgi_temp_path /tmp;
+
+server {
+    listen 127.0.0.1:${XSERVER_PORT};
+    proxy_pass xserver;
+
+}
+
+upstream xserver {
+    server unix:${XSERVER_SOCKET_PATH};
+}
 TEMPLATING
     unset http_proxy https_proxy
 END_OF_RUN
