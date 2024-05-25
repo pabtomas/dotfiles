@@ -183,6 +183,7 @@ EOF
   harden sudo
   harden wget
   harden id
+  harden xhost
 
   # install docker
   if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
@@ -373,8 +374,10 @@ EOF
   ## Attach to the workspace
   if [ "${runner}" != "${bot}" ]
   then
+    xhost +local:root
     source_env_without_docker_host "${tmp}" \
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
+    xhost -local:root
   fi
 )
 
