@@ -52,9 +52,7 @@ stream {
 TEMPLATING
     mkdir -p "${ETC_NGINX_CONFD_PATH}/stream"
     cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream/xserver.conf"
-log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] '
-                         '\$status \$bytes_sent '
-                         'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent ';
 
 access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 
