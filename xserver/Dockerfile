@@ -52,17 +52,13 @@ daemon off;
 pid /run/nginx.pid;
 TEMPLATING
     cat << TEMPLATING > "${ETC_NGINX_PATH}/stream.conf"
-log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
-
-access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
-
 server {
     listen 127.0.0.1:${XSERVER_PORT};
-    proxy_pass xserver;
-}
 
-upstream xserver {
-    server unix:${XSERVER_SOCKET_PATH};
+    log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
+    access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
+
+    proxy_pass unix:${XSERVER_SOCKET_PATH};
 }
 TEMPLATING
     unset http_proxy https_proxy
