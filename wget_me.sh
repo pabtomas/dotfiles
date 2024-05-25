@@ -146,7 +146,6 @@ EOF
 
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
-    xhost -local:root
 
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
@@ -378,6 +377,7 @@ EOF
     xhost +local:root
     source_env_without_docker_host "${tmp}" \
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
+    xhost -local:root
   fi
 )
 
