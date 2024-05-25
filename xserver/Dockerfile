@@ -46,18 +46,22 @@ http {
     scgi_temp_path        /tmp;
 }
 
-include /etc/nginx/stream.conf;
-
 daemon off;
 pid /run/nginx.pid;
 TEMPLATING
-    cat << TEMPLATING > "${ETC_NGINX_PATH}/stream.conf"
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream.conf"
+stream {
+    # Includes virtual TCP hosts configs.
+    include /etc/nginx/conf.d/stream/*.conf;
+}
+TEMPLATING
+    mkdir -p "${ETC_NGINX_CONFD_PATH}/stream"
+    cat << TEMPLATING > "${ETC_NGINX_CONFD_PATH}/stream/xserver.conf"
+log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
+access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
+
 server {
     listen 127.0.0.1:${XSERVER_PORT};
-
-    log_format custom_stream '\$remote_addr > \$server_addr:\$server_port [\$time_local] \$status \$bytes_sent';
-    access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
-
     proxy_pass unix:${XSERVER_SOCKET_PATH};
 }
 TEMPLATING
