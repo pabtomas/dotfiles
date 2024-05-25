@@ -1,5 +1,18 @@
 name: ${COMPONENT_ID}s
 services:
+  ${BASH_ENTRYPOINT_SERVICE}:
+    build:
+      context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
+      dockerfile: Dockerfile
+      args:
+        BASE_IMG: ${BASH_LOCAL_IMG}
+        ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+    image: ${BASH_ENTRYPOINT_COMPONENT_IMG}
+    networks:
+      ${COMPONENT_ID}s_net: null
   ${BASH_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${BASH_ID}
@@ -7,14 +20,13 @@ services:
       args:
         BASH_ALIASES_PATH: ${BASH_ALIASES_PATH}
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        BASH_ENTRYPOINT_COMPONENT_IMG: ${BASH_ENTRYPOINT_COMPONENT_IMG}
         BASH_LOCAL_IMG: ${BASH_LOCAL_IMG}
-        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
     depends_on:
-      ${ENTRYPOINT_SERVICE}:
+      ${BASH_ENTRYPOINT_SERVICE}:
         condition: service_started
         required: true
     image: ${BASH_COMPONENT_IMG}
@@ -47,11 +59,11 @@ services:
       context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
       dockerfile: Dockerfile
       args:
+        BASE_IMG: ${OS_LOCAL_IMG}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        OS_LOCAL_IMG: ${OS_LOCAL_IMG}
     image: ${ENTRYPOINT_COMPONENT_IMG}
     networks:
       ${COMPONENT_ID}s_net: null
@@ -164,6 +176,21 @@ services:
         condition: service_started
         required: true
     image: ${SHELL_COMPONENT_IMG}
+    networks:
+      ${COMPONENT_ID}s_net: null
+  ${SOCAT_SERVICE}:
+    build:
+      context: ${COMPONENTS_PATH}/${SOCAT_ID}
+      dockerfile: Dockerfile
+      args:
+        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        condition: service_started
+        required: true
+    image: ${SOCAT_COMPONENT_IMG}
     networks:
       ${COMPONENT_ID}s_net: null
   ${SSHD_SERVICE}:
