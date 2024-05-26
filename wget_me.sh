@@ -310,7 +310,7 @@ EOF
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\n%s\n' "':${XEPHYR_DISPLAY}'" "${WM:-i3}" > "${xinitrc}"
+  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nexec %s\n' "':${XEPHYR_DISPLAY}'" "${WM:-i3}" > "${xinitrc}"
 
   _xephyr="$(
     IFS=':'
