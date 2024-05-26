@@ -321,7 +321,7 @@ EOF
   unset daemon_dir conf_dir
 
   trap 'handle_chld' USR1
-  xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST || kill -s USR1 "${PPID}" &
+  xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST || { code="${?}"; kill -s USR1 "${$}"; return "${code}"; } &
   xephyr_pid="${!}"
   PID="${xephyr_pid}"
 
