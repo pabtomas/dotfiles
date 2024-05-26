@@ -16,6 +16,7 @@ _delme_volume "${COLLECTOR_ID}_opt_data" "${COLLECTOR_ID}-opt-data-fs"
 _delme_volume "${COLLECTOR_ID}_opt_scripts" "${COLLECTOR_ID}-opt-scripts-fs"
 _delme_volume 'ssh' 'shared-ssh'
 _delme_volume "${RELAY_ID}_${XSERVER_ID}_socket" "${RELAY_ID}-${XSERVER_ID}-socket"
+_delme_volume "${RELAY_ID}_var_log" "${RELAY_ID}-var-log-fs"
 _delme_volume "${XSERVER_ID}_etc_nginx" "${XSERVER_ID}-etc-nginx-fs"
 _delme_volume "${XSERVER_ID}_opt_scripts" "${XSERVER_ID}-opt-scripts-fs"
 _delme_volume "${XSERVER_ID}_var_log_nginx" "${XSERVER_ID}-var-log-nginx-fs"
