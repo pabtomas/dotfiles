@@ -207,18 +207,12 @@ EOF
     harden apt-get apt_get sudo
     apt_get update -y
     apt_get upgrade -y
-    if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
-    then
-      apt_get install xserver-xephyr xinit -y
-    fi ;;
+    apt_get install xserver-xephyr xinit x11-xkb-utils -y ;;
   ( 'alpine' )
     harden apk apk sudo
     apk update
     apk upgrade
-    if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
-    then
-      apk add xorg-server-xephyr xinit
-    fi ;;
+    apk add xorg-server-xephyr xinit setxkbmap xkbcomp;;
   ( * )
     printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
@@ -227,6 +221,8 @@ EOF
   # check X utils
   harden Xephyr xephyr
   harden xinit
+  harden setxkbmap
+  harden xkbcomp
   harden kill
 
   XEPHYR_DISPLAY='0'
@@ -317,7 +313,7 @@ EOF
   fi
   unset daemon_dir conf_dir
 
-  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nprintf %s "$(setxkbmap -display "${DISPLAY}" -print)" | xkbcomp - "${DISPLAY}"\n%s\n' "':${XEPHYR_DISPLAY}'" "'%s\n'" "${window_manager:-gdm3}"
+  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nprintf %s | xkbcomp - "${DISPLAY}"\n%s\n' "':${XEPHYR_DISPLAY}'" "'$(setxkbmap -display "${DISPLAY}" -print)\n'" "${window_manager:-gdm3}"
 
   xinit "${xinitrc}" -- xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
   xinit_pid="${!}"
