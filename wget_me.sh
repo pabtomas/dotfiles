@@ -324,7 +324,7 @@ EOF
     done
   )"
   readonly _xephyr
-  xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable > /dev/null 2>&1 &
+  xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
 
   sleep 1
 
