@@ -49,27 +49,24 @@ main ()
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    path="$(command -v "${1}" 2> /dev/null || :)"
-    if [ -e "${path}" ]
-    then
-      eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
-    else
-      path="$(whence -p "${1}" 2> /dev/null || :)"
-      if [ -e "${path}" ]
+    IFS=':'
+    for dir in ${PATH}
+    do
+      if [ -x "${dir}/${1}" ]
       then
-        eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
-      else
-        path="$(type -P "${1}" 2> /dev/null || :)"
-        if [ -e "${path}" ]
-        then
-          eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
-        else
-          printf 'This script needs "%s" but can not find it\n' "${1}" >&2
-          return 1
-        fi
+        eval "${2:-"${1}"} () { ${3:+sudo} ${dir}/${1} \"\${@}\"; }"
+        flag='true'
       fi
+    done
+    IFS="${old_ifs}"
+    unset dir
+
+    if [ "${flag:-}" != 'true' ]
+    then
+      printf 'This script needs "%s" but can not find it\n' "${1}" >&2
+      return 1
     fi
-    unset path
+    unset flag
   }
 
   build ()
