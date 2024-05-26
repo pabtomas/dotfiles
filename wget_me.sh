@@ -54,7 +54,7 @@ main ()
     do
       if [ -x "${dir}/${1}" ]
       then
-        eval "${2:-"${1}"} () { ${3:+sudo} ${dir}/${1} \"\${@}\"; }"
+        eval "${2:-"${1}"} () { ${3:+sudo }${dir}/${1} \"\${@}\"; }"
         flag='true'
         break
       fi
@@ -151,7 +151,7 @@ EOF
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
-    trap - CHLD
+    trap - USR1
     kill "${4}" || kill -9 "${4}"
 
     # shellcheck disable=2016
@@ -320,8 +320,8 @@ EOF
   fi
   unset daemon_dir conf_dir
 
-  trap 'handle_chld' CHLD
-  xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST &
+  trap 'handle_chld' USR1
+  xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST || kill -s USR1 "${$}" &
   xephyr_pid="${!}"
   PID="${xephyr_pid}"
 
