@@ -319,7 +319,19 @@ EOF
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nprintf %s | xkbcomp - "${DISPLAY}"\n%s\n' "':${XEPHYR_DISPLAY}'" "'${kbmap}\n'" "${window_manager:-gdm3}"
 
-  xinit "${xinitrc}" -- Xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
+  _xephyr="$(
+    IFS=':'
+    for dir in ${PATH}
+    do
+      if [ -x "${dir}/Xephyr" ]
+      then
+        printf '%s\n' "${dir}/Xephyr"
+        break
+      fi
+    done
+  )"
+  readonly _xephyr
+  xinit "${xinitrc}" -- ${_xephyr} ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
   xinit_pid="${!}"
   readonly xinit_pid
 
