@@ -143,9 +143,9 @@ services:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         SOCAT_COMPONENT_IMG: ${SOCAT_COMPONENT_IMG}
+        TMP_XSERVER_SOCKETS_PATH: ${TMP_XSERVER_SOCKETS_PATH}
         XSERVER_IP: ${XSERVER_IP}
         XSERVER_PORT: ${XSERVER_PORT}
-        XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
     container_name: ${RELAY_HOST}
     depends_on:
       ${XSERVER_SERVICE}:
