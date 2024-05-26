@@ -1,18 +1,5 @@
 name: ${COMPONENT_ID}s
 services:
-  ${BASH_ENTRYPOINT_SERVICE}:
-    build:
-      context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
-      dockerfile: Dockerfile
-      args:
-        BASE_IMG: ${BASH_LOCAL_IMG}
-        ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
-        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-    image: ${BASH_ENTRYPOINT_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
   ${BASH_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${BASH_ID}
@@ -32,6 +19,19 @@ services:
     image: ${BASH_COMPONENT_IMG}
     networks:
       ${COMPONENT_ID}s_net: null
+  ${BASH_ENTRYPOINT_SERVICE}:
+    build:
+      context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
+      dockerfile: Dockerfile
+      args:
+        BASE_IMG: ${BASH_LOCAL_IMG}
+        ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+    image: ${BASH_ENTRYPOINT_COMPONENT_IMG}
+    networks:
+      ${COMPONENT_ID}s_net: null
   ${_DOCKER_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${_DOCKER_ID}
@@ -47,6 +47,7 @@ services:
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
         TCP_BUILDKIT_HOST: ${TCP_BUILDKIT_HOST}
         TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
+        XEPHYR_DISPLAY: "\"${XEPHYR_DISPLAY}\""
     depends_on:
       ${SSHD_SERVICE}:
         condition: service_started
@@ -94,8 +95,8 @@ services:
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
         LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
+        NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
     depends_on:
       ${NGINX_SERVICE}:
         condition: service_started

@@ -151,13 +151,12 @@ EOF
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
-    kill "${4}" || kill -9 "${4}"
-
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     match="$(dirname -- "${1}")" rm -rf "${1}"
+    match="$(dirname -- "${4}")" rm -rf "${4}"
     update_me "${2}/${3}"
   }
 
@@ -206,26 +205,22 @@ EOF
     harden apt-get apt_get sudo
     apt_get update -y
     apt_get upgrade -y
-    if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
-    then
-      apt_get install xserver-xephyr -y
-    fi ;;
+    apt_get install xserver-xephyr xinit x11-xkb-utils -y ;;
   ( 'alpine' )
     harden apk apk sudo
     apk update
     apk upgrade
-    if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
-    then
-      apk add xorg-server-xephyr
-    fi ;;
+    apk add xorg-server-xephyr xinit setxkbmap xkbcomp;;
   ( * )
     printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
   set -e
 
-  # check Xephyr installation
-  harden Xephyr xephyr
-  harden kill
+  # check X utils
+  harden Xephyr
+  harden xinit
+  harden setxkbmap
+  harden xkbcomp
 
   XEPHYR_DISPLAY='0'
   while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
@@ -267,9 +262,10 @@ EOF
   unset new_user
 
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
+  xinitrc="$(match='/tmp/' mktemp '/tmp/tmp.XXXXXXXX')"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
-  readonly tmp repo repo_url
+  readonly tmp repo repo_url xinitrc
 
   match="$(dirname -- "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
@@ -314,13 +310,33 @@ EOF
   fi
   unset daemon_dir conf_dir
 
-  xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST &
-  xephyr_pid="${!}"
-  readonly xephyr_pid
+  kbmap="$(setxkbmap -display "${DISPLAY}" -print)"
+  readonly kbmap
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nprintf %s | xkbcomp - "${DISPLAY}"\n%s\n' "':${XEPHYR_DISPLAY}'" "'${kbmap}\n'" "${window_manager:-gdm3}"
+
+  _xephyr="$(
+    IFS=':'
+    for dir in ${PATH}
+    do
+      if [ -x "${dir}/Xephyr" ]
+      then
+        printf '%s\n' "${dir}/Xephyr"
+        break
+      fi
+    done
+  )"
+  readonly _xephyr
+  xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
+  if [ "${runner}" = "${bot}" ]
+  then
+    Xvfb ":${XEPHYR_DISPLAY}" &
+  fi
 
   sleep 1
 
-  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xephyr_pid}"' EXIT
+  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
 
   ## generate templated files
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"

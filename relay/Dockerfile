@@ -21,7 +21,7 @@ main ()
 {
   set -eux
 
-  exec ${_socat} -d3 -lf /var/log/socat.log -lh -v UNIX-LISTEN:${XSERVER_SOCKET_PATH},fork,reuseaddr,unlink-early,user=root,group=root,mode=770 TCP:${XSERVER_IP}:${XSERVER_PORT}
+  exec ${_socat} -d3 -lf /var/log/socat.log UNIX-LISTEN:${XSERVER_SOCKET_PATH},fork,reuseaddr,unlink-early,user=root,group=root,mode=770 TCP:${XSERVER_IP}:${XSERVER_PORT}
 }
 
 main
