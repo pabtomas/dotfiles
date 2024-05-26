@@ -59,8 +59,14 @@ main ()
       then
         eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
       else
-        printf 'This script needs "%s" but can not find it\n' "${1}" >&2
-        return 1
+        path="$(type -P "${1}" 2> /dev/null || :)"
+        if [ -e "${path}" ]
+        then
+          eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
+        else
+          printf 'This script needs "%s" but can not find it\n' "${1}" >&2
+          return 1
+        fi
       fi
     fi
     unset path
