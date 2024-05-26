@@ -162,7 +162,6 @@ services:
         source: ${RELAY_XSERVER_SOCKET_VOLUME}
         target: ${TMP_XSERVER_SOCKETS_PATH}
         volume: {}
-    volumes:
       - type: volume
         source: ${RELAY_VAR_LOG_VOLUME}
         target: ${VAR_LOG_PATH}
