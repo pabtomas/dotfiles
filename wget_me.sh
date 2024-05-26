@@ -205,12 +205,12 @@ EOF
     harden apt-get apt_get sudo
     apt_get update -y
     apt_get upgrade -y
-    apt_get install xserver-xephyr xinit x11-xkb-utils -y ;;
+    apt_get install xserver-xephyr xinit -y ;;
   ( 'alpine' )
     harden apk apk sudo
     apk update
     apk upgrade
-    apk add xorg-server-xephyr xinit setxkbmap xkbcomp;;
+    apk add xorg-server-xephyr xinit ;;
   ( * )
     printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
@@ -219,8 +219,6 @@ EOF
   # check X utils
   harden Xephyr
   harden xinit
-  harden setxkbmap
-  harden xkbcomp
 
   XEPHYR_DISPLAY='0'
   while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
@@ -310,11 +308,9 @@ EOF
   fi
   unset daemon_dir conf_dir
 
-  kbmap="$(setxkbmap -display "${DISPLAY}" -print)"
-  readonly kbmap
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nprintf %s | xkbcomp - "${DISPLAY}"\n%s\n' "':${XEPHYR_DISPLAY}'" "'${kbmap}\n'" "${window_manager:-gdm3}" > "${xinitrc}"
+  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\n%s\n' "':${XEPHYR_DISPLAY}'" "${WM:-i3}" > "${xinitrc}"
 
   _xephyr="$(
     IFS=':'
@@ -328,11 +324,7 @@ EOF
     done
   )"
   readonly _xephyr
-  xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
-  if [ "${runner}" = "${bot}" ]
-  then
-    Xvfb ":${XEPHYR_DISPLAY}" &
-  fi
+  xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
 
   sleep 1
 
