@@ -11,8 +11,9 @@ RUN <<END_OF_RUN
     apk add --no-cache mandoc man-pages \
       coreutils-doc bash-doc dash-doc \
       curl-doc wget-doc jq-doc \
+      tree-doc less-doc \
       docker-doc \
-      nginx-doc openssh-doc \
+      nginx-doc openssh-doc socat-doc \
       git-doc tig-doc ripgrep-doc \
       figlet-doc \
       pass-doc \

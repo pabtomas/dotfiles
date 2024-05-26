@@ -19,7 +19,7 @@ _path 'opt_ssh' '/opt/ssh'
 _path "${SAFEDEPOSIT_ID}" '/root/.password-store'
 _path "${_DOCKER_ID}_socket" '/var/run/docker.sock'
 _path 'tmp_xserver_sockets' '/tmp/.X11-unix'
-_path "${XSERVER_ID}_socket" "${TMP_XSERVER_SOCKETS_PATH}/X0"
+_path "${XSERVER_ID}_socket" "${TMP_XSERVER_SOCKETS_PATH}/X${XEPHYR_DISPLAY}"
 _path 'ssh_root' '/root/.ssh'
 _path 'tpm' '/root/.tmux/plugins/tpm'
 _path 'var_log' '/var/log'

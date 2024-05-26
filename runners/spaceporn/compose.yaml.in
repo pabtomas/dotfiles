@@ -29,9 +29,9 @@ networks:
     name: ${PROXIFIED_XSERVER_SOCKET_NET}
     external: true
 volumes:
+  ${RELAY_XSERVER_SOCKET_VOLUME}:
+    name: ${RELAY_XSERVER_SOCKET_VOLUME}
+    external: true
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}
-    external: true
-  ${BRIDGE_XSERVER_SOCKET_VOLUME}:
-    name: ${BRIDGE_XSERVER_SOCKET_VOLUME}
     external: true

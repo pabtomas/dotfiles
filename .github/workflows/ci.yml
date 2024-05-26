@@ -46,8 +46,10 @@ jobs:
         ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
         ( * ) EXE="${PKG}" ;;
         esac
-        sudo apt-get install x11-xserver-utils xvfb -y
-        Xvfb :0 &
+        sudo apt-get install xvfb -y
+        DISPLAY=':0'
+        export DISPLAY
+        Xvfb "${DISPLAY}" &
         ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
   shellcheck:
     runs-on: ubuntu-latest
@@ -66,7 +68,8 @@ jobs:
       run: |
         set -eux -- "${GITHUB_WORKSPACE}"
         API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-        export API_TAG
+        XEPHYR_DISPLAY='0'
+        export API_TAG XEPHYR_DISPLAY
         source "${GITHUB_WORKSPACE}/env.sh"
         for template in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
         do

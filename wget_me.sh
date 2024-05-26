@@ -49,21 +49,25 @@ main ()
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    path="$(command -v "${1}" 2> /dev/null || :)"
-    if [ -e "${path}" ]
-    then
-      eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
-    else
-      path="$(whence -p "${1}" 2> /dev/null || :)"
-      if [ -e "${path}" ]
+    IFS=':'
+    for dir in ${PATH}
+    do
+      if [ -x "${dir}/${1}" ]
       then
-        eval "${2:-"${1}"} () { ${3:+sudo} ${path} \"\${@}\"; }"
-      else
-        printf 'This script needs "%s" but can not find it\n' "${1}" >&2
-        return 1
+        eval "${2:-"${1}"} () { ${3:+sudo }${dir}/${1} \"\${@}\"; }"
+        flag='true'
+        break
       fi
+    done
+    IFS="${old_ifs}"
+    unset dir
+
+    if [ "${flag:-}" != 'true' ]
+    then
+      printf 'This script needs "%s" but can not find it\n' "${1}" >&2
+      return 1
     fi
-    unset path
+    unset flag
   }
 
   build ()
@@ -147,6 +151,8 @@ EOF
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
+    kill "${4}" || kill -9 "${4}"
+
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     source_env_without_docker_host "${1}" \
@@ -183,7 +189,6 @@ EOF
   harden sudo
   harden wget
   harden id
-  harden xhost
 
   # install docker
   if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
@@ -200,15 +205,35 @@ EOF
   ( 'ubuntu'|'debian' )
     harden apt-get apt_get sudo
     apt_get update -y
-    apt_get upgrade -y ;;
+    apt_get upgrade -y
+    if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
+    then
+      apt_get install xserver-xephyr -y
+    fi ;;
   ( 'alpine' )
     harden apk apk sudo
     apk update
-    apk upgrade ;;
+    apk upgrade
+    if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
+    then
+      apk add xorg-server-xephyr
+    fi ;;
   ( * )
-    printf 'Can not update Docker packages: unknown OS: %s\n' "${dist}" >&2 ;;
+    printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
   set -e
+
+  # check Xephyr installation
+  harden Xephyr xephyr
+  harden kill
+
+  XEPHYR_DISPLAY='0'
+  while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
+  do
+    XEPHYR_DISPLAY="$(( XEPHYR_DISPLAY + 1 ))"
+  done
+  readonly XEPHYR_DISPLAY
+  export XEPHYR_DISPLAY
 
   src_tag='3.20'
   src_img="alpine:${src_tag}"
@@ -289,7 +314,13 @@ EOF
   fi
   unset daemon_dir conf_dir
 
-  trap 'trap_me "${tmp}" "${repo}" "${branch}"' EXIT
+  xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST &
+  xephyr_pid="${!}"
+  readonly xephyr_pid
+
+  sleep 1
+
+  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xephyr_pid}"' EXIT
 
   ## generate templated files
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
@@ -374,10 +405,8 @@ EOF
   ## Attach to the workspace
   if [ "${runner}" != "${bot}" ]
   then
-    xhost +local:root
     source_env_without_docker_host "${tmp}" \
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
-    xhost -local:root
   fi
 )
 
