@@ -226,7 +226,7 @@ EOF
   XEPHYR_DISPLAY='0'
   while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
   do
-    XEPHYR_DISPLAY="$(( ${XEPHYR_DISPLAY} + 1 ))"
+    XEPHYR_DISPLAY="$(( XEPHYR_DISPLAY + 1 ))"
   done
   readonly XEPHYR_DISPLAY
   export XEPHYR_DISPLAY

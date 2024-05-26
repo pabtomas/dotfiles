@@ -64,7 +64,8 @@ jobs:
       run: |
         set -eux -- "${GITHUB_WORKSPACE}"
         API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-        export API_TAG
+        XEPHYR_DISPLAY='0'
+        export API_TAG XEPHYR_DISPLAY
         source "${GITHUB_WORKSPACE}/env.sh"
         for template in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
         do
