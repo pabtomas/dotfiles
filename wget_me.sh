@@ -219,7 +219,7 @@ EOF
   set -e
 
   # check X utils
-  harden Xephyr xephyr
+  harden Xephyr
   harden xinit
   harden setxkbmap
   harden xkbcomp
