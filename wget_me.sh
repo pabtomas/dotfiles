@@ -314,7 +314,7 @@ EOF
   readonly kbmap
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nprintf %s | xkbcomp - "${DISPLAY}"\n%s\n' "':${XEPHYR_DISPLAY}'" "'${kbmap}\n'" "${window_manager:-gdm3}"
+  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nprintf %s | xkbcomp - "${DISPLAY}"\n%s\n' "':${XEPHYR_DISPLAY}'" "'${kbmap}\n'" "${window_manager:-gdm3}" > "${xinitrc}"
 
   _xephyr="$(
     IFS=':'
