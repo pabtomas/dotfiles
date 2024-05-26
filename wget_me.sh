@@ -151,6 +151,7 @@ EOF
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
+    trap - CHLD
     kill "${4}" || kill -9 "${4}"
 
     # shellcheck disable=2016
@@ -159,6 +160,11 @@ EOF
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     match="$(dirname -- "${1}")" rm -rf "${1}"
     update_me "${2}/${3}"
+  }
+
+  handle_chld ()
+  {
+    wait "${PID}"
   }
 
   bot='bot'
@@ -314,8 +320,10 @@ EOF
   fi
   unset daemon_dir conf_dir
 
+  trap 'handle_chld' CHLD
   xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST &
   xephyr_pid="${!}"
+  PID="${xephyr_pid}"
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xephyr_pid}"' EXIT
 
