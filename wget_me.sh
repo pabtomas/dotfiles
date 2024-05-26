@@ -325,6 +325,8 @@ EOF
   xephyr_pid="${!}"
   PID="${xephyr_pid}"
 
+  sleep 1
+
   trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xephyr_pid}"' EXIT
 
   ## generate templated files
