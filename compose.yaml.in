@@ -1,33 +1,5 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
-  ${BRIDGE_SERVICE}:
-    build:
-      context: ${CWD_PATH}/${BRIDGE_ID}
-      dockerfile: Dockerfile
-      args:
-        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        SOCAT_COMPONENT_IMG: ${SOCAT_COMPONENT_IMG}
-        XSERVER_IP: ${XSERVER_IP}
-        XSERVER_PORT: ${XSERVER_PORT}
-        XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
-    container_name: ${BRIDGE_HOST}
-    depends_on:
-      ${XSERVER_SERVICE}:
-        condition: service_started
-        required: true
-    hostname: ${BRIDGE_HOST}
-    image: ${BRIDGE_IMG}
-    networks:
-      ${PROXIFIED_XSERVER_SOCKET_NET}:
-        ipv4_address: ${BRIDGE_IP}
-    read_only: true
-    volumes:
-      - type: volume
-        source: ${BRIDGE_XSERVER_SOCKET_VOLUME}
-        target: ${TMP_XSERVER_SOCKETS_PATH}
-        volume: {}
   ${BUILDER_SERVICE}:
     build:
       context: ${CWD_PATH}/${BUILDER_ID}
@@ -116,13 +88,13 @@ services:
   ${CONTROLLER_SERVICE}:
     container_name: ${CONTROLLER_HOST}
     depends_on:
-      ${BRIDGE_SERVICE}:
-        condition: service_started
-        required: true
       ${BUILDER_SERVICE}:
         condition: service_started
         required: true
       ${PROXY_SERVICE}:
+        condition: service_started
+        required: true
+      ${RELAY_SERVICE}:
         condition: service_started
         required: true
     hostname: ${CONTROLLER_HOST}
@@ -161,6 +133,39 @@ services:
       - type: volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
+        volume: {}
+  ${RELAY_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${RELAY_ID}
+      dockerfile: Dockerfile
+      args:
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        SOCAT_COMPONENT_IMG: ${SOCAT_COMPONENT_IMG}
+        XSERVER_IP: ${XSERVER_IP}
+        XSERVER_PORT: ${XSERVER_PORT}
+        XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
+    container_name: ${RELAY_HOST}
+    depends_on:
+      ${XSERVER_SERVICE}:
+        condition: service_started
+        required: true
+    hostname: ${RELAY_HOST}
+    image: ${RELAY_IMG}
+    networks:
+      ${PROXIFIED_XSERVER_SOCKET_NET}:
+        ipv4_address: ${RELAY_IP}
+    read_only: true
+    volumes:
+      - type: volume
+        source: ${RELAY_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+        volume: {}
+    volumes:
+      - type: volume
+        source: ${RELAY_VAR_LOG_VOLUME}
+        target: ${VAR_LOG_PATH}
         volume: {}
   ${SHELL_EXPLORER_SERVICE}:
     container_name: ${SHELL_EXPLORER_HOST}
@@ -262,6 +267,11 @@ services:
       - type: volume
         source: ${COLLECTOR_VAR_LOG_VOLUME}
         target: /opt/${COLLECTOR_ID}${VAR_LOG_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${RELAY_VAR_LOG_VOLUME}
+        target: /opt/${RELAY_ID}${VAR_LOG_PATH}
         read_only: true
         volume: {}
       - type: volume
@@ -459,8 +469,6 @@ networks:
           gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
           ip_range: ${PROXIFIED_XSERVER_SOCKET_SUB}
 volumes:
-  ${BRIDGE_XSERVER_SOCKET_VOLUME}:
-    name: ${BRIDGE_XSERVER_SOCKET_VOLUME}
   ${COLLECTOR_ETC_CRONTABS_VOLUME}:
     name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
   ${COLLECTOR_OPT_DATA_VOLUME}:
@@ -477,6 +485,10 @@ volumes:
     name: ${PROXY_OPT_SCRIPTS_VOLUME}
   ${PROXY_VAR_LOG_NGINX_VOLUME}:
     name: ${PROXY_VAR_LOG_NGINX_VOLUME}
+  ${RELAY_VAR_LOG_VOLUME}:
+    name: ${RELAY_VAR_LOG_VOLUME}
+  ${RELAY_XSERVER_SOCKET_VOLUME}:
+    name: ${RELAY_XSERVER_SOCKET_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
   ${SSH_VOLUME}:

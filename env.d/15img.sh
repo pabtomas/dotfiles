@@ -11,12 +11,12 @@ _extern_img "${LINUXSERVER_PROXY_ID}" 'lscr.io/linuxserver' 'socket-proxy' "${LI
 OS_IMG="${ALPINE_IMG}"
 OS_LOCAL_IMG="${ALPINE_LOCAL_IMG}"
 
-_intern_img "${BRIDGE_ID}" "${OWNER_TAG}"
 _intern_img "${BUILDER_ID}" "${OWNER_TAG}"
 _intern_img "${COLLECTOR_ID}" "${OWNER_TAG}"
 _intern_img "${CONTROLLER_ID}" "${OWNER_TAG}"
 _intern_img "${JUMPER_ID}" "${OWNER_TAG}"
 _intern_img "${PROXY_ID}" "${OWNER_TAG}"
+_intern_img "${RELAY_ID}" "${OWNER_TAG}"
 _intern_img "${XSERVER_ID}" "${OWNER_TAG}"
 
 _component_img "${BASH_ID}" "${OWNER_TAG}"
