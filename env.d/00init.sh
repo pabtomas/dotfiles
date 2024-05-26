@@ -8,6 +8,7 @@ TRUE='1'
 APK_PATHS='/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk'
 COMPOSE_PROJECT_NAME='mywhalefleet'
 UNPRIVILEGED_USER='visitor'
+XEPHYR_DISPLAY="${XEPHYR_DISPLAY}"
 
 API_PFX='API_ENDPOINT_'
 ID_SEP='/'

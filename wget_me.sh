@@ -158,6 +158,7 @@ EOF
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     match="$(dirname -- "${1}")" rm -rf "${1}"
+    match="$(dirname -- "${5}")" rm -rf "${5}"
     update_me "${2}/${3}"
   }
 
@@ -208,7 +209,7 @@ EOF
     apt_get upgrade -y
     if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
     then
-      apt_get install xserver-xephyr -y
+      apt_get install xserver-xephyr xinit -y
     fi ;;
   ( 'alpine' )
     harden apk apk sudo
@@ -216,15 +217,16 @@ EOF
     apk upgrade
     if [ ! -e "$(command -v Xephyr 2> /dev/null || :)" ]
     then
-      apk add xorg-server-xephyr
+      apk add xorg-server-xephyr xinit
     fi ;;
   ( * )
     printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
   set -e
 
-  # check Xephyr installation
+  # check X utils
   harden Xephyr xephyr
+  harden xinit
   harden kill
 
   XEPHYR_DISPLAY='0'
@@ -267,9 +269,10 @@ EOF
   unset new_user
 
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
+  xinitrc="$(match='/tmp/' mktemp '/tmp/tmp.XXXXXXXX')"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
-  readonly tmp repo repo_url
+  readonly tmp repo repo_url xinitrc
 
   match="$(dirname -- "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
@@ -314,13 +317,15 @@ EOF
   fi
   unset daemon_dir conf_dir
 
-  xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST &
-  xephyr_pid="${!}"
-  readonly xephyr_pid
+  printf '#! /bin/bash\n\nexport DISPLAY=:%s\necho "$(setxkbmap -display $DISPLAY -print)" | xkbcomp - :%s\n%s\n' "${XEPHYR_DISPLAY}" "${XEPHYR_DISPLAY}" "${window_manager:-gdm3}"
+
+  xinit "${xinitrc}" -- xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
+  xinit_pid="${!}"
+  readonly xinit_pid
 
   sleep 1
 
-  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xephyr_pid}"' EXIT
+  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinit_pid}" "${xinitrc}"' EXIT
 
   ## generate templated files
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
