@@ -46,6 +46,10 @@ jobs:
         ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
         ( * ) EXE="${PKG}" ;;
         esac
+        sudo apt-get install xvfb -y
+        DISPLAY=':0'
+        export DISPLAY
+        Xvfb "${DISPLAY}" &
         ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
   shellcheck:
     runs-on: ubuntu-latest

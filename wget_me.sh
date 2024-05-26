@@ -56,6 +56,7 @@ main ()
       then
         eval "${2:-"${1}"} () { ${3:+sudo} ${dir}/${1} \"\${@}\"; }"
         flag='true'
+        break
       fi
     done
     IFS="${old_ifs}"
