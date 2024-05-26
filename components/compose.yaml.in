@@ -47,7 +47,7 @@ services:
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
         TCP_BUILDKIT_HOST: ${TCP_BUILDKIT_HOST}
         TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
-        XEPHYR_DISPLAY: "${XEPHYR_DISPLAY}"
+        XEPHYR_DISPLAY: "\"${XEPHYR_DISPLAY}\""
     depends_on:
       ${SSHD_SERVICE}:
         condition: service_started
