@@ -331,7 +331,7 @@ EOF
     done
   )"
   readonly _xephyr
-  xinit "${xinitrc}" -- ${_xephyr} ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
+  xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
   xinit_pid="${!}"
   readonly xinit_pid
 
