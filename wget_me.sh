@@ -207,12 +207,12 @@ EOF
     harden apt-get apt_get sudo
     apt_get update -y
     apt_get upgrade -y
-    apt_get install xserver-xephyr xserver-xorg-core xinit x11-xkb-utils -y ;;
+    apt_get install xserver-xephyr xinit x11-xkb-utils -y ;;
   ( 'alpine' )
     harden apk apk sudo
     apk update
     apk upgrade
-    apk add xorg-server-xephyr xorg-server xinit setxkbmap xkbcomp;;
+    apk add xorg-server-xephyr xinit setxkbmap xkbcomp;;
   ( * )
     printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
   esac
