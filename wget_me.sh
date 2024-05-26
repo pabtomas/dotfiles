@@ -151,14 +151,12 @@ EOF
     docker compose --file "${1}/compose.yaml" stop --timeout 0 || :
     docker compose --file "${1}/compose.yaml" rm --force || :
 
-    kill "${4}" || kill -9 "${4}"
-
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     source_env_without_docker_host "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     match="$(dirname -- "${1}")" rm -rf "${1}"
-    match="$(dirname -- "${5}")" rm -rf "${5}"
+    match="$(dirname -- "${4}")" rm -rf "${4}"
     update_me "${2}/${3}"
   }
 
@@ -223,7 +221,6 @@ EOF
   harden xinit
   harden setxkbmap
   harden xkbcomp
-  harden kill
 
   XEPHYR_DISPLAY='0'
   while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
@@ -332,12 +329,14 @@ EOF
   )"
   readonly _xephyr
   xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -retro -resizeable &
-  xinit_pid="${!}"
-  readonly xinit_pid
+  if [ "${runner}" = "${bot}" ]
+  then
+    Xvfb ":${XEPHYR_DISPLAY}" &
+  fi
 
   sleep 1
 
-  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinit_pid}" "${xinitrc}"' EXIT
+  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
 
   ## generate templated files
   API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
