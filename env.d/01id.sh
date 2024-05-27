@@ -43,12 +43,11 @@ __id 'os' "${ALPINE_ID}"
 __id 'owner' 'tiawl'
 
 _sfx "${COMPONENT_ID}${ID_SFX}"
-_sfx "${EXPLORER_ID}${ID_SFX}"
-_sfx "${RUNNER_ID}${ID_SFX}"
 _sfx "${COMPONENT_ID}${IMG_SFX}"
 _sfx "${LOCAL_ID}${IMG_SFX}"
 _sfx "${RUNNER_ID}${IMG_SFX}"
 _sfx "${EXPLORER_ID}${HOST_SFX}"
+_sfx "${RELAY_ID}${HOST_SFX}"
 _sfx "${RUNNER_ID}${HOST_SFX}"
 _sfx "${EXPLORER_ID}${SERVICE_SFX}"
 _sfx "${COMPONENT_ID}${TAG_SFX}"
