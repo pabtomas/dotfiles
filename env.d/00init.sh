@@ -11,6 +11,7 @@ UNPRIVILEGED_USER='visitor'
 
 API_PFX='API_ENDPOINT_'
 ID_SEP='/'
+REG_SEP='/'
 IMG_SEP='.'
 TAG_SEP=':'
 HOST_SEP='.'
@@ -120,7 +121,7 @@ _id ()
 __img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${IMG_SEP}${3}${TAG_SEP}${4}'"
+  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${2:+"${REG_SEP}"}${3}${TAG_SEP}${4}'"
 }
 
 _intern_img ()
@@ -132,21 +133,21 @@ _intern_img ()
 _component_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
 _relay_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RELAY_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${RELAY_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${RELAY_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${RELAY_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
 _runner_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RUNNER_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${RUNNER_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${RUNNER_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${RUNNER_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
@@ -154,7 +155,7 @@ _extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   __img "${1}" "${2}" "${3}" "${4}"
-  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${LOCAL_ID}${IMG_SEP}${3}" "${4}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${3}" "${4}"
   unset SFX_OVERRIDE
 }
 
