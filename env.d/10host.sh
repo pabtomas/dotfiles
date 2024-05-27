@@ -4,10 +4,10 @@
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
 _host "${BUILDER_ID}"
-_host "${COLLECTOR_ID}"
 _host "${CONTROLLER_ID}"
 _host "${EDITOR_ID}"
 _host "${JUMPER_ID}"
+_host "${LISTENER_ID}"
 _host "${MAN_ID}"
 _host "${PROXY_ID}"
 _host "${RELAY_ID}"

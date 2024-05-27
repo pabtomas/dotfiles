@@ -4,7 +4,7 @@ FROM ${HTTP_COMPONENT_IMG}
 ARG API_TAG
 ARG API_URL
 ARG APK_PATHS
-ARG COLLECTOR_IP
+ARG LISTENER_IP
 ARG CONTROLLER_IP
 ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
@@ -68,7 +68,7 @@ server {
     server_name _;
     listen ${PROXY_PORT} default_server;
     allow ${CONTROLLER_IP};
-    allow ${COLLECTOR_IP};
+    allow ${LISTENER_IP};
     deny all;
     dav_methods PUT DELETE;
 

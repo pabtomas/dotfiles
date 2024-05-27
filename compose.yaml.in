@@ -19,76 +19,13 @@ services:
     security_opt:
       - apparmor:unconfined
       - seccomp:unconfined
-  ${COLLECTOR_SERVICE}:
-    build:
-      context: ${CWD_PATH}/${COLLECTOR_ID}
-      dockerfile: Dockerfile
-      args:
-        APK_PATHS: ${APK_PATHS}
-        COMPLETION_PATH: ${COMPLETION_PATH}
-        CRON_LOG_PATH: ${CRON_LOG_PATH}
-        CRONTABS_PATH: ${CRONTABS_PATH}
-        DATA_PATH: ${DATA_PATH}
-        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
-        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_DOCKER_HOST: ${HTTP_DOCKER_HOST}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        NET: ${JUMP_AREA_NET}
-        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
-        PROXY_ID: ${PROXY_ID}
-    container_name: ${COLLECTOR_HOST}
-    depends_on:
-      ${CONTROLLER_SERVICE}:
-        condition: service_started
-        required: true
-      ${EDITOR_SERVICE}:
-        condition: service_started
-        required: true
-      ${SHELL_EXPLORER_SERVICE}:
-        condition: service_started
-        required: true
-      ${ZIG_EXPLORER_SERVICE}:
-        condition: service_started
-        required: true
-      ${PROXY_SERVICE}:
-        condition: service_started
-        required: true
-      ${SAFEDEPOSIT_SERVICE}:
-        condition: service_started
-        required: true
-      ${SCHOLAR_SERVICE}:
-        condition: service_started
-        required: true
-    hostname: ${COLLECTOR_HOST}
-    image: ${COLLECTOR_IMG}
-    networks:
-      ${PROXIFIED_DOCKER_SOCKET_NET}:
-        ipv4_address: ${COLLECTOR_IP}
-    read_only: true
-    volumes:
-      - type: volume
-        source: ${COLLECTOR_ETC_CRONTABS_VOLUME}
-        target: ${CRONTABS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
-        source: ${COLLECTOR_OPT_DATA_VOLUME}
-        target: ${DATA_PATH}
-        volume: {}
-      - type: volume
-        source: ${COLLECTOR_OPT_SCRIPTS_VOLUME}
-        target: ${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
-        source: ${COLLECTOR_VAR_LOG_VOLUME}
-        target: ${VAR_LOG_PATH}
-        volume: {}
   ${CONTROLLER_SERVICE}:
     container_name: ${CONTROLLER_HOST}
     depends_on:
       ${BUILDER_SERVICE}:
+        condition: service_started
+        required: true
+      ${LISTENER_SERVICE}:
         condition: service_started
         required: true
       ${PROXY_SERVICE}:
@@ -116,6 +53,10 @@ services:
         volume: {}
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        condition: service_started
+        required: true
     hostname: ${EDITOR_HOST}
     image: ${VIM_COMPONENT_IMG}
     networks:
@@ -136,6 +77,10 @@ services:
         volume: {}
   ${SHELL_EXPLORER_SERVICE}:
     container_name: ${SHELL_EXPLORER_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        condition: service_started
+        required: true
     hostname: ${SHELL_EXPLORER_HOST}
     image: ${SHELL_COMPONENT_IMG}
     networks:
@@ -152,6 +97,10 @@ services:
         volume: {}
   ${ZIG_EXPLORER_SERVICE}:
     container_name: ${ZIG_EXPLORER_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        condition: service_started
+        required: true
     hostname: ${ZIG_EXPLORER_HOST}
     image: ${ZIG_COMPONENT_IMG}
     networks:
@@ -172,7 +121,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        COMPLETION_PATH: /opt/${COLLECTOR_ID}${COMPLETION_PATH}
+        COMPLETION_PATH: /opt/${LISTENER_ID}${COMPLETION_PATH}
         CONTROLLER_ID: ${CONTROLLER_ID}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HOSTNAME: ${JUMPER_ID}
@@ -186,7 +135,7 @@ services:
         TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
     container_name: ${JUMPER_HOST}
     depends_on:
-      ${COLLECTOR_SERVICE}:
+      ${LISTENER_SERVICE}:
         condition: service_started
         required: true
     hostname: ${JUMPER_HOST}
@@ -217,23 +166,13 @@ services:
         read_only: true
         volume: {}
       - type: volume
-        source: ${COLLECTOR_ETC_CRONTABS_VOLUME}
-        target: /opt/${COLLECTOR_ID}${CRONTABS_PATH}
+        source: ${LISTENER_OPT_DATA_VOLUME}
+        target: /opt/${LISTENER_ID}${DATA_PATH}
         read_only: true
         volume: {}
       - type: volume
-        source: ${COLLECTOR_OPT_DATA_VOLUME}
-        target: /opt/${COLLECTOR_ID}${DATA_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
-        source: ${COLLECTOR_OPT_SCRIPTS_VOLUME}
-        target: /opt/${COLLECTOR_ID}${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
-        source: ${COLLECTOR_VAR_LOG_VOLUME}
-        target: /opt/${COLLECTOR_ID}${VAR_LOG_PATH}
+        source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+        target: /opt/${LISTENER_ID}${OPT_SCRIPTS_PATH}
         read_only: true
         volume: {}
       - type: volume
@@ -254,6 +193,37 @@ services:
       - type: volume
         source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
         target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
+        read_only: true
+        volume: {}
+  ${LISTENER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${LISTENER_ID}
+      dockerfile: Dockerfile
+      args:
+        APK_PATHS: ${APK_PATHS}
+        COMPLETION_PATH: ${COMPLETION_PATH}
+        DATA_PATH: ${DATA_PATH}
+        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_DOCKER_HOST: ${HTTP_DOCKER_HOST}
+        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        NET: ${JUMP_AREA_NET}
+    container_name: ${LISTENER_HOST}
+    hostname: ${LISTENER_HOST}
+    image: ${LISTENER_IMG}
+    networks:
+      ${PROXIFIED_DOCKER_SOCKET_NET}:
+        ipv4_address: ${LISTENER_IP}
+    read_only: true
+    volumes:
+      - type: volume
+        source: ${LISTENER_OPT_DATA_VOLUME}
+        target: ${DATA_PATH}
+        volume: {}
+      - type: volume
+        source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+        target: ${OPT_SCRIPTS_PATH}
         read_only: true
         volume: {}
   ${PROXY_SERVICE}:
@@ -285,7 +255,7 @@ services:
         API_TAG: "\"${API_TAG}\""
         API_URL: ${API_URL}
         APK_PATHS: ${APK_PATHS}
-        COLLECTOR_IP: ${COLLECTOR_IP}
+        LISTENER_IP: ${LISTENER_IP}
         CONTROLLER_IP: ${CONTROLLER_IP}
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
@@ -327,6 +297,10 @@ services:
         volume: {}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        condition: service_started
+        required: true
     hostname: ${SAFEDEPOSIT_HOST}
     image: ${PASS_COMPONENT_IMG}
     networks:
@@ -343,6 +317,10 @@ services:
         volume: {}
   ${SCHOLAR_SERVICE}:
     container_name: ${SCHOLAR_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        condition: service_started
+        required: true
     hostname: ${SCHOLAR_HOST}
     image: ${MAN_COMPONENT_IMG}
     networks:
@@ -437,14 +415,10 @@ networks:
           gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
           ip_range: ${PROXIFIED_XSERVER_SOCKET_SUB}
 volumes:
-  ${COLLECTOR_ETC_CRONTABS_VOLUME}:
-    name: ${COLLECTOR_ETC_CRONTABS_VOLUME}
-  ${COLLECTOR_OPT_DATA_VOLUME}:
-    name: ${COLLECTOR_OPT_DATA_VOLUME}
-  ${COLLECTOR_OPT_SCRIPTS_VOLUME}:
-    name: ${COLLECTOR_OPT_SCRIPTS_VOLUME}
-  ${COLLECTOR_VAR_LOG_VOLUME}:
-    name: ${COLLECTOR_VAR_LOG_VOLUME}
+  ${LISTENER_OPT_DATA_VOLUME}:
+    name: ${LISTENER_OPT_DATA_VOLUME}
+  ${LISTENER_OPT_SCRIPTS_VOLUME}:
+    name: ${LISTENER_OPT_SCRIPTS_VOLUME}
   ${MYWHALEFLEET_VOLUME}:
     name: ${MYWHALEFLEET_VOLUME}
   ${PROXY_ETC_NGINX_VOLUME}:
