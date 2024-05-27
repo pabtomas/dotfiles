@@ -245,6 +245,7 @@ services:
         ${API_PFX}CONTAINERS_ID_STOP: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_ID_WAIT: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_JSON: "\"${TRUE}\""
+        ${API_PFX}EVENTS: "\"${TRUE}\""
         ${API_PFX}IMAGES_CREATE: "\"${TRUE}\""
         ${API_PFX}IMAGES_JSON: "\"${TRUE}\""
         ${API_PFX}IMAGES_NAME: "\"${TRUE}\""
