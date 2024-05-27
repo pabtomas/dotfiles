@@ -127,7 +127,7 @@ __img ()
 _intern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  __img "${1}" "${OWNER_ID}" "${1}" "${2}"
+  __img "${1}" "${OWNER_ID}" '' "${1}${IMG_SEP}${2}"
 }
 
 _component_img ()
@@ -155,7 +155,7 @@ _extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   __img "${1}" "${2}" "${3}" "${4}"
-  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${3}" "${4}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${3##*/}" "${4}"
   unset SFX_OVERRIDE
 }
 
