@@ -210,6 +210,10 @@ services:
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}
     container_name: ${LISTENER_HOST}
+    depends_on:
+      ${PROXY_SERVICE}:
+        condition: service_started
+        required: true
     hostname: ${LISTENER_HOST}
     image: ${LISTENER_IMG}
     networks:
