@@ -76,7 +76,7 @@ main ()
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
     uid="$(id -u)"
-    docker build --tag "tiawl/wget_me/busybox:latest" --file - . << EOF
+    docker build --tag "tiawl.wget_me.busybox:latest" --file - . << EOF
 FROM ${1}
 
 RUN <<END_OF_RUN
@@ -103,7 +103,7 @@ EOF
           \${match:+\"--volume\"} \${match:+\"\${match}:\${match}\"} \
           \${match2:+\"--volume\"} \${match2:+\"\${match2}:\${match2}\"} \
           \${sudo:+\"--user\"} \${sudo:+\"root\"} \
-          --rm --interactive 'tiawl/wget_me/busybox' ${1} \"\${@}\"
+          --rm --interactive 'tiawl.wget_me.busybox' ${1} \"\${@}\"
         then
           unset cwd match match2 sudo
           return 1
@@ -230,7 +230,7 @@ EOF
 
   src_tag='3.20'
   src_img="alpine:${src_tag}"
-  target="tiawl/local/${src_img}"
+  target="tiawl.local.${src_img}"
 
   if ! docker image inspect "${src_img}" --format='Image found'
   then
