@@ -21,7 +21,7 @@ RUN <<END_OF_RUN
     _jq="$(command -v jq)"
     _wget="$(command -v wget)"
     _xargs="$(command -v xargs)"
-    events_entrypoint="${ENTRYPOINTD_PATH}/99listen.sh"
+    listen_entrypoint="${ENTRYPOINTD_PATH}/99listen.sh"
     cat << TEMPLATING > "${listen_entrypoint}"
 #! /bin/sh
 
