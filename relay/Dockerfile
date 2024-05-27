@@ -2,6 +2,7 @@ ARG SOCAT_COMPONENT_IMG
 FROM ${SOCAT_COMPONENT_IMG}
 
 ARG ENTRYPOINTD_PATH
+ARG LOG_ID
 ARG TMP_XSERVER_SOCKETS_PATH
 ARG XSERVER_IP
 ARG XSERVER_PORT
@@ -21,7 +22,7 @@ main ()
 {
   set -eux
 
-  exec ${_socat} -d3 -lf /var/log/socat.log UNIX-LISTEN:${TMP_XSERVER_SOCKETS_PATH}/X0,fork,reuseaddr,unlink-early,user=root,group=root,mode=770 TCP:${XSERVER_IP}:${XSERVER_PORT}
+  exec ${_socat} -d3 -lf /var/log/socat.${LOG_ID}.log UNIX-LISTEN:${TMP_XSERVER_SOCKETS_PATH}/X0,reuseaddr,unlink-early,user=root,group=root,mode=770 TCP:${XSERVER_IP}:${XSERVER_PORT}
 }
 
 main

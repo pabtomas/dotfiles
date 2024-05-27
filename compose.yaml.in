@@ -94,7 +94,7 @@ services:
       ${PROXY_SERVICE}:
         condition: service_started
         required: true
-      ${RELAY_SERVICE}:
+      ${XSERVER_SERVICE}:
         condition: service_started
         required: true
     hostname: ${CONTROLLER_HOST}
@@ -133,38 +133,6 @@ services:
       - type: volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
-        volume: {}
-  ${RELAY_SERVICE}:
-    build:
-      context: ${CWD_PATH}/${RELAY_ID}
-      dockerfile: Dockerfile
-      args:
-        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        SOCAT_COMPONENT_IMG: ${SOCAT_COMPONENT_IMG}
-        TMP_XSERVER_SOCKETS_PATH: ${TMP_XSERVER_SOCKETS_PATH}
-        XSERVER_IP: ${XSERVER_IP}
-        XSERVER_PORT: ${XSERVER_PORT}
-    container_name: ${RELAY_HOST}
-    depends_on:
-      ${XSERVER_SERVICE}:
-        condition: service_started
-        required: true
-    hostname: ${RELAY_HOST}
-    image: ${RELAY_IMG}
-    networks:
-      ${PROXIFIED_XSERVER_SOCKET_NET}:
-        ipv4_address: ${RELAY_IP}
-    read_only: true
-    volumes:
-      - type: volume
-        source: ${RELAY_XSERVER_SOCKET_VOLUME}
-        target: ${TMP_XSERVER_SOCKETS_PATH}
-        volume: {}
-      - type: volume
-        source: ${RELAY_VAR_LOG_VOLUME}
-        target: ${VAR_LOG_PATH}
         volume: {}
   ${SHELL_EXPLORER_SERVICE}:
     container_name: ${SHELL_EXPLORER_HOST}
@@ -396,6 +364,7 @@ services:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
+        SPACEPORN_RELAY_IP: ${SPACEPORN_RELAY_IP}
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
         XSERVER_PORT: "\"${XSERVER_PORT}\""
         XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
@@ -486,8 +455,6 @@ volumes:
     name: ${PROXY_VAR_LOG_NGINX_VOLUME}
   ${RELAY_VAR_LOG_VOLUME}:
     name: ${RELAY_VAR_LOG_VOLUME}
-  ${RELAY_XSERVER_SOCKET_VOLUME}:
-    name: ${RELAY_XSERVER_SOCKET_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
   ${SSH_VOLUME}:

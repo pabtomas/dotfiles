@@ -91,6 +91,13 @@ _explorer_host ()
   unset SFX_OVERRIDE
 }
 
+_relay_host ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${RELAY_HOST_SFX}" __host "${1}" "${RELAY_ID}${HOST_SEP}${1}"
+  unset SFX_OVERRIDE
+}
+
 _runner_host ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
