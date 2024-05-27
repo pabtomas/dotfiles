@@ -127,7 +127,7 @@ __img ()
 _intern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  __img "${1}" "${OWNER_ID}" '' "${1}${IMG_SEP}${2}"
+  __img "${1}" '' "${OWNER_ID}${IMG_SEP}${1}" "${2}"
 }
 
 _component_img ()
