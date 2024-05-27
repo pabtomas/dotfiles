@@ -14,10 +14,6 @@ services:
         XSERVER_IP: ${XSERVER_IP}
         XSERVER_PORT: ${XSERVER_PORT}
     container_name: ${SPACEPORN_RELAY_HOST}
-    depends_on:
-      ${XSERVER_SERVICE}:
-        condition: service_started
-        required: true
     hostname: ${SPACEPORN_RELAY_HOST}
     image: ${RELAY_IMG}
     networks:
@@ -38,6 +34,10 @@ services:
       context: ${RUNNERS_PATH}/${SPACEPORN_ID}
       dockerfile: Dockerfile
     container_name: ${SPACEPORN_RUNNER_HOST}
+    depends_on:
+      ${REPLAY_SERVICE}:
+        condition: service_started
+        required: true
     deploy:
       resources:
         reservations:
