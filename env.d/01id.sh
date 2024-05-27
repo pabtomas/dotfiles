@@ -45,6 +45,7 @@ __id 'owner' 'tiawl'
 _sfx "${COMPONENT_ID}${ID_SFX}"
 _sfx "${COMPONENT_ID}${IMG_SFX}"
 _sfx "${LOCAL_ID}${IMG_SFX}"
+_sfx "${RELAY_ID}${IMG_SFX}"
 _sfx "${RUNNER_ID}${IMG_SFX}"
 _sfx "${EXPLORER_ID}${HOST_SFX}"
 _sfx "${RELAY_ID}${HOST_SFX}"

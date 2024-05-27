@@ -15,7 +15,7 @@ services:
         XSERVER_PORT: "\"${XSERVER_PORT}\""
     container_name: ${SPACEPORN_RELAY_HOST}
     hostname: ${SPACEPORN_RELAY_HOST}
-    image: ${RELAY_IMG}
+    image: ${SPACEPORN_RELAY_IMG}
     networks:
       ${PROXIFIED_XSERVER_SOCKET_NET}:
         ipv4_address: ${SPACEPORN_RELAY_IP}
