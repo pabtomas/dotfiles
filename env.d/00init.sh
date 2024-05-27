@@ -136,6 +136,13 @@ _component_img ()
   unset SFX_OVERRIDE
 }
 
+_relay_img ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${RELAY_IMG_SFX}" __img "${1}" "${OWNER_ID}" "${RELAY_ID}${IMG_SEP}${1}" "${2}"
+  unset SFX_OVERRIDE
+}
+
 _runner_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi

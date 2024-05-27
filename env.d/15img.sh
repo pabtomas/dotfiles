@@ -16,7 +16,6 @@ _intern_img "${COLLECTOR_ID}" "${OWNER_TAG}"
 _intern_img "${CONTROLLER_ID}" "${OWNER_TAG}"
 _intern_img "${JUMPER_ID}" "${OWNER_TAG}"
 _intern_img "${PROXY_ID}" "${OWNER_TAG}"
-_intern_img "${RELAY_ID}" "${OWNER_TAG}"
 _intern_img "${XSERVER_ID}" "${OWNER_TAG}"
 
 _component_img "${BASH_ID}" "${OWNER_TAG}"
@@ -36,5 +35,7 @@ _component_img "${TMUX_ID}" "${OWNER_TAG}"
 _component_img "${VIM_ID}" "${OWNER_TAG}"
 _component_img "${WORKSPACES_ID}" "${OWNER_TAG}"
 _component_img "${ZIG_ID}" "${OWNER_TAG}"
+
+_relay_img "${SPACEPORN_ID}" "${OWNER_TAG}"
 
 _runner_img "${SPACEPORN_ID}" "${OWNER_TAG}"
