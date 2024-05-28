@@ -5,6 +5,7 @@
 
 _path 'bash_aliases' '/etc/profile.d/99aliases.d'
 _path 'bash_completion' '/etc/profile.d/99completion.d'
+_path 'bash_theme' '/etc/profile.d/10theme.d'
 _path 'data' '/opt/data'
 _path 'docker_bin' '/usr/local/bin'
 _path 'docker_plugins' '/usr/local/libexec/docker/cli-plugins'

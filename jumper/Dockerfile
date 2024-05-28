@@ -3,6 +3,7 @@ ARG TMUX_COMPONENT_IMG
 FROM ${TMUX_COMPONENT_IMG}
 
 ARG BASH_COMPLETION_PATH
+ARG BASH_THEME_PATH
 ARG COMPLETION_PATH
 ARG CONTROLLER_ID
 ARG ENTRYPOINTD_PATH
@@ -41,6 +42,11 @@ _ssh ()
 complete -F _ssh ssh
 TEMPLATING
     _bash="$(command -v bash)"
+    _cat="$(command -v cat)"
+    _head="$(command -v head)"
+    _shuf="$(command -v shuf)"
+    _tr="$(command -v tr)"
+    _yes="$(command -v yes)"
     login_entrypoint="${ENTRYPOINTD_PATH}/99login.sh"
     cat << TEMPLATING > "${login_entrypoint}"
 #! /bin/sh
@@ -49,12 +55,10 @@ main ()
 {
   set -eux
 
-  local themes themes_sh host
-  themes="\$(yes "\$(printf '%s\n' '21' '27' '33' '39' '45' '46' '47' '48' '49' '50' '51' '82' '93' '118' '129' '154' '165' '190' '196' '197' '198' '199' '200' '201' '202' '208' '214' '220' '244' '15' | shuf)" | head -n 256 | tr '\n' ' ')"
-  themes_sh='/etc/profile.d/10themes.sh'
-  readonly themes themes_sh
+  themes="\$(${_yes} "\$(printf '%s\n' '21' '27' '33' '39' '45' '46' '47' '48' '49' '50' '51' '82' '93' '118' '129' '154' '165' '190' '196' '197' '198' '199' '200' '201' '202' '208' '214' '220' '244' '15' | ${_shuf})" | ${_head} -n 256 | ${_tr} '\n' ' ')"
+  readonly themes
 
-  cat << __TEMPLATING >> "\${themes_sh}"
+  ${_cat} << __TEMPLATING >> ${BASH_THEME_PATH}/99themes.sh
 main ()
 {
   ID="\\\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
@@ -66,11 +70,6 @@ main ()
 
 main
 __TEMPLATING
-
-  for host in \$(grep -v '${HOSTNAME}' '/opt/collector/opt/data/99completion')
-  do
-    until scp "\${themes_sh}" "\${host}:\${themes_sh}"; do :; done
-  done
 
   exec ${_bash} -l
 }
