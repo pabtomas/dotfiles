@@ -51,6 +51,11 @@ services:
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
         volume: {}
+      - type: volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
+        read_only: true
+        volume: {}
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
     depends_on:
@@ -75,6 +80,11 @@ services:
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
         volume: {}
+      - type: volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
+        read_only: true
+        volume: {}
   ${SHELL_EXPLORER_SERVICE}:
     container_name: ${SHELL_EXPLORER_HOST}
     depends_on:
@@ -95,6 +105,11 @@ services:
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
         volume: {}
+      - type: volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
+        read_only: true
+        volume: {}
   ${ZIG_EXPLORER_SERVICE}:
     container_name: ${ZIG_EXPLORER_HOST}
     depends_on:
@@ -114,6 +129,11 @@ services:
       - type: volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
+        volume: {}
+      - type: volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
+        read_only: true
         volume: {}
   ${JUMPER_SERVICE}:
     build:
@@ -193,6 +213,11 @@ services:
       - type: volume
         source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
         target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
         read_only: true
         volume: {}
   ${LISTENER_SERVICE}:
@@ -320,6 +345,11 @@ services:
         source: ${SAFEDEPOSIT_VOLUME}
         target: ${SAFEDEPOSIT_PATH}
         volume: {}
+      - type: volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
+        read_only: true
+        volume: {}
   ${SCHOLAR_SERVICE}:
     container_name: ${SCHOLAR_HOST}
     depends_on:
@@ -334,6 +364,11 @@ services:
       - type: volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
         read_only: true
         volume: {}
   ${XSERVER_SERVICE}:
@@ -446,3 +481,5 @@ volumes:
     name: ${XSERVER_OPT_SCRIPTS_VOLUME}
   ${XSERVER_VAR_LOG_NGINX_VOLUME}:
     name: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+  ${THEME_VOLUME}:
+    name: ${THEME_VOLUME}

@@ -18,3 +18,4 @@ _delme_volume "${RELAY_ID}_var_log" "${RELAY_ID}-var-log-fs"
 _delme_volume "${XSERVER_ID}_etc_nginx" "${XSERVER_ID}-etc-nginx-fs"
 _delme_volume "${XSERVER_ID}_opt_scripts" "${XSERVER_ID}-opt-scripts-fs"
 _delme_volume "${XSERVER_ID}_var_log_nginx" "${XSERVER_ID}-var-log-nginx-fs"
+_delme_volume 'theme' 'theme'

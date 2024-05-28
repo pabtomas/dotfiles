@@ -20,7 +20,6 @@ RUN <<END_OF_RUN
     mkdir -p "${DATA_PATH}"
     _jq="$(command -v jq)"
     _wget="$(command -v wget)"
-    _xargs="$(command -v xargs)"
     listen_entrypoint="${ENTRYPOINTD_PATH}/99listen.sh"
     cat << TEMPLATING > "${listen_entrypoint}"
 #! /bin/sh

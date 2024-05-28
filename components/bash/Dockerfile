@@ -5,6 +5,7 @@ COPY etc/ /etc/
 
 ARG BASH_ALIASES_PATH
 ARG BASH_COMPLETION_PATH
+ARG BASH_THEME_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -39,11 +40,27 @@ TEMPLATING
     cat << TEMPLATING >> "$(dirname "${BASH_COMPLETION_PATH}")/$(basename -s '.d' "${BASH_COMPLETION_PATH}").sh"
 main ()
 {
-  unalias -a
-
   if [ -d ${BASH_COMPLETION_PATH} ]
   then
     for file in ${BASH_COMPLETION_PATH}/*.sh
+    do
+      if [ -r "\${file}" ]
+      then
+        . "\${file}"
+      fi
+    done
+    unset file
+  fi
+}
+
+main
+TEMPLATING
+    cat << TEMPLATING >> "$(dirname "${BASH_THEME_PATH}")/$(basename -s '.d' "${BASH_THEME_PATH}").sh"
+main ()
+{
+  if [ -d ${BASH_THEME_PATH} ]
+  then
+    for file in ${BASH_THEME_PATH}/*.sh
     do
       if [ -r "\${file}" ]
       then
