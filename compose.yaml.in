@@ -219,7 +219,6 @@ services:
       - type: volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        read_only: true
         volume: {}
   ${LISTENER_SERVICE}:
     build:
