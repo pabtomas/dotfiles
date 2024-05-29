@@ -154,10 +154,16 @@ EOF
     set -a
     . "${1}/env.sh"
 
+    # shellcheck disable=2153,2154
+    # SC2153: Possible misspelling LOCAL_IMG_SFX => not it is not
+    # SC2154: VAR is referenced but not assigned => assigned into env.sh
     local_imgs="$(set | grep "^[^= ]\+${LOCAL_IMG_SFX}=")"
     for local_img in ${local_imgs}
     do
       target="$(eval "printf '%s\n' \"\${${local_img%%=*}}\"")"
+
+      # shellcheck disable=2154
+      # SC2154: VAR is referenced but not assigned => assigned into env.sh
       src="$(eval "printf '%s\n' \"\${${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}}\"")"
       if ! docker image inspect "${src}" --format='Image found'
       then
