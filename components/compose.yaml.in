@@ -123,9 +123,13 @@ services:
       dockerfile: Dockerfile
       args:
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LINGUIST_ID}.sh
+        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        OS_LOCAL_IMG: ${OS_LOCAL_IMG}
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        condition: service_started
+        required: true
     image: ${LINGUIST_COMPONENT_IMG}
     networks:
       ${COMPONENT_ID}s_net: null
