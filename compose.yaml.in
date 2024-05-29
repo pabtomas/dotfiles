@@ -202,6 +202,11 @@ services:
         read_only: true
         volume: {}
       - type: volume
+        source: ${LISTENER_VAR_LOG_VOLUME}
+        target: /opt/${LISTENER_ID}${VAR_LOG_PATH}
+        read_only: true
+        volume: {}
+      - type: volume
         source: ${RELAY_VAR_LOG_VOLUME}
         target: /opt/${RELAY_ID}${VAR_LOG_PATH}
         read_only: true
@@ -241,6 +246,7 @@ services:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}
+        VAR_LOG_PATH: ${VAR_LOG_PATH}
     container_name: ${LISTENER_HOST}
     depends_on:
       ${PROXY_SERVICE}:
@@ -261,6 +267,10 @@ services:
         source: ${LISTENER_OPT_SCRIPTS_VOLUME}
         target: ${OPT_SCRIPTS_PATH}
         read_only: true
+        volume: {}
+      - type: volume
+        source: ${LISTENER_VAR_LOG_VOLUME}
+        target: ${VAR_LOG_PATH}
         volume: {}
   ${PROXY_SERVICE}:
     build:
@@ -335,7 +345,7 @@ services:
   ${REGISTRY_SERVICE}:
     container_name: ${REGISTRY_HOST}
     environment:
-      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${REGISTRY_STORAGE_PATH}
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${DATA_PATH}
     hostname: ${REGISTRY_HOST}
     image: ${REGISTRY_IMG}
     networks:
@@ -344,7 +354,7 @@ services:
     volumes:
       - type: volume
         source: ${REGISTRY_VOLUME}
-        target: ${REGISTRY_STORAGE_PATH}
+        target: ${DATA_PATH}
         volume: {}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
@@ -490,6 +500,8 @@ volumes:
     name: ${LISTENER_OPT_DATA_VOLUME}
   ${LISTENER_OPT_SCRIPTS_VOLUME}:
     name: ${LISTENER_OPT_SCRIPTS_VOLUME}
+  ${LISTENER_VAR_LOG_VOLUME}:
+    name: ${LISTENER_VAR_LOG_VOLUME}
   ${MYWHALEFLEET_VOLUME}:
     name: ${MYWHALEFLEET_VOLUME}
   ${PROXY_ETC_NGINX_VOLUME}:

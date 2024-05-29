@@ -10,6 +10,7 @@ ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
 ARG HTTP_DOCKER_TARGET
 ARG NET
+ARG VAR_LOG_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -28,7 +29,7 @@ RUN <<END_OF_RUN
 
 main ()
 {
-  set -eux
+  set -x
 
   ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/events' | \
     while read -r event
@@ -42,7 +43,7 @@ main ()
     done
 }
 
-main
+main > ${VAR_LOG_PATH}/listener.log 2>&1
 TEMPLATING
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
 #! /bin/sh
