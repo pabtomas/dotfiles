@@ -124,7 +124,7 @@ EOF
   }
 
   ## Posix shell: no local variables => subshell instead of braces
-  generate_templates
+  generate_templates ()
   (
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
@@ -144,7 +144,7 @@ EOF
 
   ## Posix shell: no local variables => subshell instead of braces
   ## Use local images if already downloaded: https://stackoverflow.com/a/70483395
-  generate_local_tags
+  generate_local_tags ()
   (
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi

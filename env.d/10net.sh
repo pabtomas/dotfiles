@@ -6,6 +6,9 @@
 BUILDER_NET=${BUILDER_ID}
 JUMP_AREA_NET='jump-area'
 PROXIFIED_DOCKER_SOCKET_NET="proxified-${_DOCKER_ID}-socket"
+
+# shellcheck disable=2153
+# SC2153: Possible misspelling => it is not, we really want PROXY_ID here
 PROXIFIED_XSERVER_SOCKET_NET="proxified-${XSERVER_ID}-socket"
 REGISTRY_NET="${REGISTRY_ID}"
 

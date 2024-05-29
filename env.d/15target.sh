@@ -13,6 +13,9 @@ REGISTRY_PORT='5000'
 _DOCKER_TARGET="${PROXY_HOST}:${PROXY_PORT}"
 HTTP_DOCKER_TARGET="http://${_DOCKER_TARGET}"
 TCP_DOCKER_TARGET="tcp://${_DOCKER_TARGET}"
+
+# shellcheck disable=2153
+# SC2153: Possible misspelling => it is not, we really want PROXY_ID here
 REGISTRY_TARGET="${REGISTRY_HOST}:${REGISTRY_PORT}"
 
 # shellcheck disable=2153
