@@ -56,7 +56,19 @@ main ()
 
 main
 TEMPLATING
-    chmod 0700 "${registry_entrypoint}"
+    check_entrypoint="${ENTRYPOINTD_PATH}/99check.sh"
+    cat << TEMPLATING > "${check_entrypoint}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+  docker ps -a
+}
+
+main
+TEMPLATING
+    chmod 0700 "${check_entrypoint}" "${registry_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 
