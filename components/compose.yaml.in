@@ -38,7 +38,7 @@ services:
       context: ${COMPONENTS_PATH}/${_DOCKER_ID}
       dockerfile: Dockerfile
       args:
-        _DOCKER_BIN_PATH: ${_DOCKER_BIN_PATH}
+        BIN_PATH: ${BIN_PATH}
         _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
         _DOCKER_PLUGINS_PATH: ${_DOCKER_PLUGINS_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
