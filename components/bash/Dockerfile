@@ -6,6 +6,7 @@ COPY etc/ /etc/
 ARG BASH_ALIASES_PATH
 ARG BASH_COMPLETION_PATH
 ARG BASH_THEME_PATH
+ARG CHECK_ENTRYPOINT_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -73,6 +74,32 @@ main ()
 
 main
 TEMPLATING
+    _apk="$(command -v apk)"
+    _bash="$(command -v bash)"
+    _less="$(command -v less)"
+    _tree="$(command -v tree)"
+    cat << TEMPLATING > "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check bash is available
+  ${_bash} --version
+
+  # check utils packages are available
+  [ -n "$(${_apk} info -q -L coreutils)" ]
+  [ -n "$(${_apk} info -q -L diffutils)" ]
+
+  # check less & tree availability
+  ${_tree} --version
+  ${_less} --version
+}
+
+main
+TEMPLATING
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
 

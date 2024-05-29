@@ -1,6 +1,7 @@
 ARG OS_LOCAL_IMG
 FROM ${OS_LOCAL_IMG}
 
+ARG CHECK_ENTRYPOINT_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -12,6 +13,21 @@ RUN <<END_OF_RUN
     apk add --no-cache ruby cmake icu-dev zlib-dev openssl-dev libcurl
     gem install github-linguist
     apk del __install_linguist
+    _linguist="$(command -v github-linguist)"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check linguist availability
+  ${_linguist} --version
+}
+
+main
+TEMPLATING
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
 

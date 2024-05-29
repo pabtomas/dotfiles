@@ -1,6 +1,7 @@
 ARG WORKSPACES_COMPONENT_IMG
 FROM ${WORKSPACES_COMPONENT_IMG}
 
+ARG CHECK_ENTRYPOINT_PATH
 ARG NERDTREE_URL
 ARG POLYGLOT_URL
 ARG RAINBOW_URL
@@ -20,6 +21,22 @@ RUN <<END_OF_RUN
     apk del __install_plugins
     apk add --no-cache gvim
     mkdir -p /root/.vim/
+    _grep="$(command -v grep)"
+    _vim="$(command -v vim)"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check vim availability and clientserver feature
+  ${_vim} --version | ${_grep} '+clientserver'
+}
+
+main
+TEMPLATING
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
 

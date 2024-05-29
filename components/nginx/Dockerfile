@@ -25,6 +25,19 @@ error_log ${VAR_LOG_NGINX_PATH}/error.log info;
 error_log stderr;
 TEMPLATING
     _nginx="$(command -v nginx-debug)"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check nginx availability
+  ${_nginx} --version
+}
+
+main
+TEMPLATING
     nginx_entrypoint="${ENTRYPOINTD_PATH}/99nginx.sh"
     cat << TEMPLATING > "${nginx_entrypoint}"
 #! /bin/sh
@@ -42,6 +55,6 @@ __TEMPLATING
 
 main
 TEMPLATING
-    chmod 0700 "${nginx_entrypoint}"
+    chmod 0700 "${nginx_entrypoint}" "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN

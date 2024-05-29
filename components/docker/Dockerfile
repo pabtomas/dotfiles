@@ -9,6 +9,8 @@ ARG _DOCKER_PLUGINS_PATH
 COPY --from=docker_img ${BIN_PATH}/ ${BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
+ARG CHECK_ENTRYPOINT_PATH
+ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
 ARG NET
 ARG REGBOT_URL
@@ -44,6 +46,11 @@ main ()
 
 main
 TEMPLATING
+    _apk="$(command -v apk)"
+    _docker="$(command -v regctl)"
+    _regbot="$(command -v regctl)"
+    _regctl="$(command -v regctl)"
+    _regsync="$(command -v regctl)"
     registry_entrypoint="${ENTRYPOINTD_PATH}/98registry.sh"
     cat << TEMPLATING > "${registry_entrypoint}"
 #! /bin/sh
@@ -51,24 +58,40 @@ TEMPLATING
 main ()
 {
   set -eux
-  regctl registry set --tls=disabled "${REGISTRY_TARGET}"
+  ${_regctl} registry set --tls=disabled "${REGISTRY_TARGET}"
 }
 
 main
 TEMPLATING
-    check_entrypoint="${ENTRYPOINTD_PATH}/99check.sh"
-    cat << TEMPLATING > "${check_entrypoint}"
+    cat << TEMPLATING > "${CHECK_ENTRYPOINT_PATH}"
 #! /bin/sh
 
 main ()
 {
   set -eux
-  docker ps -a
+
+  # check docker client is available
+  ${_docker} version
+
+  # check docker server is available
+  [ -S "${_DOCKER_SOCKET_PATH}" ]
+
+  # check docker plugins
+  ${_docker} buildx version
+  ${_docker} compose version
+
+  # check regclient is available
+  ${_regbot} version
+  ${_regctl} version
+  ${_regsync} version
+
+  # check packages are available
+  [ -n "$(${_apk} info -q -L docker-bash-completion)" ]
 }
 
 main
 TEMPLATING
-    chmod 0700 "${check_entrypoint}" "${registry_entrypoint}"
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}" "${registry_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 

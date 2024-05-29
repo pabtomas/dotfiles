@@ -2,6 +2,7 @@ ARG GIT_COMPONENT_IMG
 FROM ${GIT_COMPONENT_IMG}
 
 ARG BASH_COMPLETION_PATH
+ARG CHECK_ENTRYPOINT_PATH
 ARG ZIG_BUILDS_URL
 ARG ZIG_COMPLETION_URL
 ARG ZIG_COMPONENT_TAG
@@ -22,5 +23,20 @@ RUN <<END_OF_RUN
     mv -t /usr/local/bin/ "${tmp_zig}/lib/" "${tmp_zig}/zig"
     rm -rf "${tmp_xz}" "${tmp_zig}"
     wget -O "${BASH_COMPLETION_PATH}/99zig.sh" "${ZIG_COMPLETION_URL}"
+    _zig="$(command -v zig)"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check zig availability
+  ${_zig} version
+}
+
+main
+TEMPLATING
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN

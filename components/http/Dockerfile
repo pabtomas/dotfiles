@@ -4,7 +4,7 @@ ARG LINUXSERVER_PROXY_LOCAL_IMG
 FROM ${LINUXSERVER_PROXY_LOCAL_IMG} as linuxserver_img
 FROM ${NGINX_COMPONENT_IMG}
 
-ARG ENTRYPOINTD_PATH
+ARG CHECK_ENTRYPOINT_PATH
 ARG ETC_NGINX_HTTPD_PATH
 ARG ETC_NGINX_PATH
 ARG HTTP_PROXY
@@ -17,8 +17,7 @@ RUN <<END_OF_RUN
     cat << TEMPLATING >> "${ETC_NGINX_HTTPD_PATH}/proxy.conf"
 include ${ETC_NGINX_PATH}/proxy.conf;
 TEMPLATING
-    checkdefault_entrypoint="${ENTRYPOINTD_PATH}/98checkdefault.sh"
-    cat << TEMPLATING >> "${checkdefault_entrypoint}"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
 #! /bin/sh
 
 main ()
@@ -32,7 +31,7 @@ main ()
 
 main
 TEMPLATING
-    chmod 0700 "${checkdefault_entrypoint}"
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
 
