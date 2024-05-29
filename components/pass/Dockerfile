@@ -27,8 +27,8 @@ main ()
   ${_pass} --version
 
   # check packages are available
-  [ -n "$(${_apk} info -q -L git-bash-completion)" ]
-  [ -n "$(${_apk} info -q -L pass-bash-completion)" ]
+  [ -n "\$(${_apk} info -q -L git-bash-completion)" ]
+  [ -n "\$(${_apk} info -q -L pass-bash-completion)" ]
 }
 
 main

@@ -89,8 +89,8 @@ main ()
   ${_bash} --version
 
   # check utils packages are available
-  [ -n "$(${_apk} info -q -L coreutils)" ]
-  [ -n "$(${_apk} info -q -L diffutils)" ]
+  [ -n "\$(${_apk} info -q -L coreutils)" ]
+  [ -n "\$(${_apk} info -q -L diffutils)" ]
 
   # check less & tree availability
   ${_tree} --version

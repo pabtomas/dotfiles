@@ -86,7 +86,7 @@ main ()
   ${_regsync} version
 
   # check packages are available
-  [ -n "$(${_apk} info -q -L docker-bash-completion)" ]
+  [ -n "\$(${_apk} info -q -L docker-bash-completion)" ]
 }
 
 main

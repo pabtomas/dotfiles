@@ -38,7 +38,7 @@ main ()
   # check pages availability
   for doc in ${docs}
   do
-    [ -n "$(${_apk} info -q -L "\${doc}")" ]
+    [ -n "\$(${_apk} info -q -L "\${doc}")" ]
   done
 }
 

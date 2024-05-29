@@ -33,7 +33,7 @@ main ()
   ${_tmuxinator} version
 
   # check packages are available
-  [ -n "$(${_apk} info -q -L tmux-bash-completion)" ]
+  [ -n "\$(${_apk} info -q -L tmux-bash-completion)" ]
 }
 
 main

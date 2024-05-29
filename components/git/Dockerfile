@@ -30,8 +30,8 @@ main ()
   ${_ripgrep} --version
 
   # check packages are available
-  [ -n "$(${_apk} info -q -L git-bash-completion)" ]
-  [ -n "$(${_apk} info -q -L ripgrep-bash-completion)" ]
+  [ -n "\$(${_apk} info -q -L git-bash-completion)" ]
+  [ -n "\$(${_apk} info -q -L ripgrep-bash-completion)" ]
 }
 
 main
