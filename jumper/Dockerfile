@@ -30,7 +30,7 @@ RUN <<END_OF_RUN
     cp "${key_path}.pub" "${OPT_SSH_PATH}/authorized_keys"
     ssh_environment="${OPT_SSH_PATH}/environment"
     cat << TEMPLATING > "${ssh_environment}"
-DOCKER_TARGET=${TCP_DOCKER_TARGET}
+DOCKER_HOST=${TCP_DOCKER_TARGET}
 TEMPLATING
     chmod 0640 "${ssh_environment}"
     cat << TEMPLATING > "${BASH_COMPLETION_PATH}/99ssh.sh"
