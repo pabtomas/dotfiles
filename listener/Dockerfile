@@ -53,8 +53,8 @@ main ()
   # check jq availability
   ${_jq} --version
 
-  # check docker socket is mounted
-  [ -S "${_DOCKER_SOCKET_PATH}" ]
+  # check docker socket is reachable
+  ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/version'
 }
 
 main
