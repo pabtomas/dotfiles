@@ -27,6 +27,8 @@ services:
       dockerfile: Dockerfile
       args:
         BASE_IMG: ${BASH_LOCAL_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
