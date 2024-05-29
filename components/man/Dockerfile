@@ -9,19 +9,17 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    read -r -d '' docs << EOF || :
-coreutils-doc bash-doc dash-doc
-curl-doc wget-doc jq-doc
-tree-doc less-doc
-docker-doc
-nginx-doc openssh-doc socat-doc
-git-doc tig-doc ripgrep-doc
-figlet-doc
-pass-doc gnupg-doc
-tmux-doc vim-doc
-bats-doc shellcheck-doc
-cronie-doc
-EOF
+    docs='diffutils-doc coreutils-doc bash-doc dash-doc'
+    docs="${docs} curl-doc wget-doc"
+    docs="${docs} tree-doc less-doc jq-doc"
+    docs="${docs} docker-doc"
+    docs="${docs} nginx-doc openssh-doc socat-doc"
+    docs="${docs} git-doc tig-doc ripgrep-doc"
+    docs="${docs} figlet-doc"
+    docs="${docs} pass-doc gnupg-doc"
+    docs="${docs} tmux-doc vim-doc"
+    docs="${docs} bats-doc shellcheck-doc"
+    docs="${docs} cronie-doc"
     apk add --no-cache mandoc man-pages ${docs}
     _apk="$(command -v apk)"
     _man="$(command -v man)"
