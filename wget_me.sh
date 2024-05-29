@@ -90,7 +90,7 @@ main ()
 FROM ${target}
 
 RUN <<END_OF_RUN
-    apk --no-cache add git
+    apk --no-cache add git jq
     rm -rf /var/lib/apt/lists/* /var/cache/apk/*
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
@@ -123,14 +123,19 @@ EOF
       }"
   }
 
+  generate_variables ()
+  {
+    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+    export API_TAG _COMPOSE_JUMP_AREA_HOSTS
+  }
+
   ## Posix shell: no local variables => subshell instead of braces
   generate_templates ()
   (
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-    export API_TAG
+    generate_variables
     set -a
     . "${1}/env.sh"
 
@@ -149,8 +154,7 @@ EOF
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-    export API_TAG
+    generate_variables
     set -a
     . "${1}/env.sh"
 
@@ -180,8 +184,7 @@ EOF
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-    export API_TAG
+    generate_variables
     . "${1}/env.sh"
     eval "${2}"
   )
@@ -383,8 +386,17 @@ EOF
 
   generate_local_tags "${tmp}"
 
-  docker compose --file "${tmp}/components/compose.yaml" build
-  docker compose --file "${tmp}/compose.yaml" build
+  IFS=''
+  while read -r line
+  do
+    _COMPOSE_FILE=="${_COMPOSE_FILE=:-}${_COMPOSE_FILE=:+
+}${line}"
+  done < "${tmp}/compose.yaml"
+  IFS="${old_ifs}"
+  unset line
+
+  docker compose --file "${tmp}/components/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
+  docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
 
@@ -393,6 +405,7 @@ EOF
   then
     printf 'Sleeping ...\n'
     sleep 3
+    # TODO: CHECK EVERYTHING
   fi
 
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"

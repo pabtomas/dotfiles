@@ -153,6 +153,7 @@ services:
         HOSTNAME: ${JUMPER_ID}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        NET: ${JUMP_AREA_NET}
         NET_PFX: ${JUMP_AREA_PFX}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OPT_SSH_PATH: ${OPT_SSH_PATH}
@@ -302,7 +303,7 @@ services:
         API_TAG: "\"${API_TAG}\""
         API_URL: ${API_URL}
         APK_PATHS: ${APK_PATHS}
-        LISTENER_IP: ${LISTENER_IP}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PROXY_ID}.sh
         CONTROLLER_IP: ${CONTROLLER_IP}
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
@@ -310,6 +311,7 @@ services:
         HTTP_COMPONENT_IMG: ${HTTP_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        LISTENER_IP: ${LISTENER_IP}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         PROXY_PORT: "\"${PROXY_PORT}\""
     container_name: ${PROXY_HOST}

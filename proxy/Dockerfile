@@ -4,11 +4,12 @@ FROM ${HTTP_COMPONENT_IMG}
 ARG API_TAG
 ARG API_URL
 ARG APK_PATHS
-ARG LISTENER_IP
+ARG CHECK_ENTRYPOINT_PATH
 ARG CONTROLLER_IP
 ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
 ARG ETC_NGINX_HTTPD_PATH
+ARG LISTENER_IP
 ARG OPT_SCRIPTS_PATH
 ARG PROXY_PORT
 ARG HTTP_PROXY
@@ -42,11 +43,9 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     mkdir -p "${OPT_SCRIPTS_PATH}"
-    apk add --no-cache --virtual __install_spec_parser yq
     endpoints="$(wget -q -O- "${API_URL}" | yq '.paths | keys | .[]')"
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g;s@}$@@'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
-    apk del __install_spec_parser
     rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGINX_HTTPD_PATH}/default.conf"
 geo \$privileged {

@@ -6,11 +6,13 @@ ARG BASH_COMPLETION_PATH
 ARG BASH_THEME_PATH
 ARG CHECK_ENTRYPOINT_PATH
 ARG COMPLETION_PATH
+ARG _COMPOSE_FILE
 ARG CONTROLLER_ID
 ARG ENTRYPOINTD_PATH
 ARG HOSTNAME
 ARG OPT_SCRIPTS_PATH
 ARG OPT_SSH_PATH
+ARG NET
 ARG NET_PFX
 ARG SSH_ROOT_PATH
 ARG TCP_DOCKER_TARGET
@@ -77,7 +79,9 @@ __TEMPLATING
 
 main
 TEMPLATING
+    _nc="$(command -v nc)"
     _ssh="$(command -v ssh)"
+    _yq="$(command -v yq)"
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
 #! /bin/sh
 
@@ -85,8 +89,14 @@ main ()
 {
   set -eux
 
-  # check pass availability
+  # check ssh availability
   ${_ssh} -V
+
+  # check hosts are available through ssh
+  for host in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname')
+  do
+    if [ "\${host}" != "\$(hostname)" ]; then ${_nc} -z \${host} 22; fi
+  done
 }
 
 main
