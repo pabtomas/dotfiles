@@ -389,7 +389,7 @@ EOF
   IFS=''
   while read -r line
   do
-    _COMPOSE_FILE=="${_COMPOSE_FILE=:-}${_COMPOSE_FILE=:+
+    _COMPOSE_FILE="${_COMPOSE_FILE=:-}${_COMPOSE_FILE=:+
 }${line}"
   done < "${tmp}/compose.yaml"
   IFS="${old_ifs}"
