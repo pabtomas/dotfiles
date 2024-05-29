@@ -47,10 +47,10 @@ main ()
 main
 TEMPLATING
     _apk="$(command -v apk)"
-    _docker="$(command -v regctl)"
-    _regbot="$(command -v regctl)"
+    _docker="$(command -v docker)"
+    _regbot="$(command -v regbot)"
     _regctl="$(command -v regctl)"
-    _regsync="$(command -v regctl)"
+    _regsync="$(command -v regsync)"
     _wget="$(command -v wget)"
     registry_entrypoint="${ENTRYPOINTD_PATH}/98registry.sh"
     cat << TEMPLATING > "${registry_entrypoint}"
