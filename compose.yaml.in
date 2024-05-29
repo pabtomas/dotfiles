@@ -156,7 +156,7 @@ services:
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OPT_SSH_PATH: ${OPT_SSH_PATH}
         SSH_ROOT_PATH: ${SSH_ROOT_PATH}
-        TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
+        TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
         TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
     container_name: ${JUMPER_HOST}
     depends_on:
@@ -234,7 +234,7 @@ services:
         DATA_PATH: ${DATA_PATH}
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_DOCKER_HOST: ${HTTP_DOCKER_HOST}
+        HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}

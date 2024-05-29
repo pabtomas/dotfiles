@@ -6,7 +6,7 @@ ARG APK_PATHS
 ARG COMPLETION_PATH
 ARG DATA_PATH
 ARG ENTRYPOINTD_PATH
-ARG HTTP_DOCKER_HOST
+ARG HTTP_DOCKER_TARGET
 ARG NET
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -28,14 +28,14 @@ main ()
 {
   set -eux
 
-  ${_wget} -q -O- '${HTTP_DOCKER_HOST}/events' | \
+  ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/events' | \
     while read -r event
     do
       event="\$(printf '%s\n' "\${event}" | ${_jq} -c '. | select(.Type=="network" and (.Action=="connect" or .Action=="disconnect") and .Actor.Attributes.name=="jump-area")')"
       if [ -n "\${event}" ]
       then
-        id="\$(${_wget} -q -O- '${HTTP_DOCKER_HOST}/networks' | ${_jq} -r '.[] | select(.Name=="${NET}") | .Id')"
-        ${_wget} -q -O- "${HTTP_DOCKER_HOST}/networks/\${id}" | ${_jq} -r '.Containers | to_entries[] | .value.Name' > '${COMPLETION_PATH}'
+        id="\$(${_wget} -q -O- '${HTTP_DOCKER_TARGET}/networks' | ${_jq} -r '.[] | select(.Name=="${NET}") | .Id')"
+        ${_wget} -q -O- "${HTTP_DOCKER_TARGET}/networks/\${id}" | ${_jq} -r '.Containers | to_entries[] | .value.Name' > '${COMPLETION_PATH}'
       fi
     done
 }

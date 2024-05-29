@@ -12,7 +12,7 @@ ARG OPT_SCRIPTS_PATH
 ARG OPT_SSH_PATH
 ARG NET_PFX
 ARG SSH_ROOT_PATH
-ARG TCP_DOCKER_HOST
+ARG TCP_DOCKER_TARGET
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -27,7 +27,7 @@ RUN <<END_OF_RUN
     cp "${key_path}.pub" "${OPT_SSH_PATH}/authorized_keys"
     ssh_environment="${OPT_SSH_PATH}/environment"
     cat << TEMPLATING > "${ssh_environment}"
-DOCKER_HOST=${TCP_DOCKER_HOST}
+DOCKER_TARGET=${TCP_DOCKER_TARGET}
 TEMPLATING
     chmod 0640 "${ssh_environment}"
     cat << TEMPLATING > "${BASH_COMPLETION_PATH}/99ssh.sh"

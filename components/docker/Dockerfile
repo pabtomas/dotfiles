@@ -13,9 +13,10 @@ ARG ENTRYPOINTD_PATH
 ARG NET
 ARG REGBOT_URL
 ARG REGCTL_URL
+ARG REGISTRY_TARGET
 ARG REGSYNC_URL
-ARG TCP_BUILDKIT_HOST
-ARG TCP_DOCKER_HOST
+ARG TCP_BUILDKIT_TARGET
+ARG TCP_DOCKER_TARGET
 ARG XEPHYR_DISPLAY
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -30,15 +31,16 @@ RUN <<END_OF_RUN
     wget -q -O "${BIN_PATH}/regsync" "${REGSYNC_URL}" https://github.com/regclient/regclient/releases/latest/download/regsync-linux-amd64
     chmod 0755 "${BIN_PATH}/regbot" "${BIN_PATH}/regctl" "${BIN_PATH}/regsync"
     builder='remote-builder'
-    docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_HOST}"
+    docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_TARGET}"
     docker buildx use --global "${builder}"
+    regctl registry set --tls=disable "${REGISTRY_TARGET}"
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
-  DOCKER_HOST='${TCP_DOCKER_HOST}'
+  DOCKER_TARGET='${TCP_DOCKER_TARGET}'
   XEPHYR_DISPLAY='${XEPHYR_DISPLAY}'
 
-  export DOCKER_HOST XEPHYR_DISPLAY
+  export DOCKER_TARGET XEPHYR_DISPLAY
 }
 
 main
