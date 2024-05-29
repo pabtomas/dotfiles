@@ -80,6 +80,9 @@ main ()
 
   # check packages are available
   [ -n "$(${_apk} info -q -L nginx-mod-stream)" ]
+
+  # check Xserver socket is mounted
+  [ -S "${XSERVER_SOCKET_PATH}" ]
 }
 
 main

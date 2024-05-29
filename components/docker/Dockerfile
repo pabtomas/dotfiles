@@ -10,8 +10,8 @@ COPY --from=docker_img ${BIN_PATH}/ ${BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
 ARG CHECK_ENTRYPOINT_PATH
-ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
+ARG HTTP_DOCKER_TARGET
 ARG NET
 ARG REGBOT_URL
 ARG REGCTL_URL
@@ -38,10 +38,10 @@ RUN <<END_OF_RUN
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
-  DOCKER_TARGET='${TCP_DOCKER_TARGET}'
+  DOCKER_HOST='${TCP_DOCKER_TARGET}'
   XEPHYR_DISPLAY='${XEPHYR_DISPLAY}'
 
-  export DOCKER_TARGET XEPHYR_DISPLAY
+  export DOCKER_HOST XEPHYR_DISPLAY
 }
 
 main
@@ -73,8 +73,8 @@ main ()
   # check docker client is available
   ${_docker} version
 
-  # check docker server is available
-  [ -S "${_DOCKER_SOCKET_PATH}" ]
+  # check docker socket is reachable
+  ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/version'
 
   # check docker plugins
   ${_docker} buildx version

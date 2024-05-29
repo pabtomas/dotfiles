@@ -3,8 +3,10 @@ ARG ENTRYPOINT_COMPONENT_IMG
 FROM ${ENTRYPOINT_COMPONENT_IMG}
 
 ARG APK_PATHS
+ARG CHECK_ENTRYPOINT_PATH
 ARG COMPLETION_PATH
 ARG DATA_PATH
+ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
 ARG HTTP_DOCKER_TARGET
 ARG NET
@@ -42,6 +44,22 @@ main ()
 
 main
 TEMPLATING
-    chmod 0700 "${listen_entrypoint}"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check jq availability
+  ${_jq} --version
+
+  # check docker socket is mounted
+  [ -S "${_DOCKER_SOCKET_PATH}" ]
+}
+
+main
+TEMPLATING
+    chmod 0700 "${listen_entrypoint}" "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN

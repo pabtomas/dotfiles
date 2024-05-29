@@ -122,7 +122,20 @@ EOF
 
 main
 TEMPLATING
-    chmod 0700 "${warning_entrypoint}"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check docker socket is mounted
+  [ -S "${_DOCKER_SOCKET_PATH}" ]
+}
+
+main
+TEMPLATING
+    chmod 0700 "${warning_entrypoint}" "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
 
