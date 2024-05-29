@@ -398,8 +398,8 @@ EOF
   parallel="$(if [ "${runner}" != "${bot}" ]; then printf '-'; fi)1"
   docker compose --parallel "${parallel}" --file "${tmp}/components/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --parallel "${parallel}" --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
-  docker compose --file "${tmp}/compose.yaml" create --no-recreate
-  docker compose --file "${tmp}/compose.yaml" start
+  docker compose --parallel "${parallel}" --file "${tmp}/compose.yaml" create --no-recreate
+  docker compose --parallel "${parallel}" --file "${tmp}/compose.yaml" start
 
   ## let a short time before checking services status
   if [ "${runner}" = "${bot}" ]
