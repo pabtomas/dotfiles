@@ -50,6 +50,7 @@ TEMPLATING
 
 main ()
 {
+  set -eux
   regctl registry set --tls=disabled "${REGISTRY_TARGET}"
 }
 
