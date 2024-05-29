@@ -60,6 +60,7 @@ TEMPLATING
     check_volumes="${CHECK_ENTRYPOINTD_PATH}/99volumes.sh"
     _grep="$(command -v grep)"
     _mount="$(command -v mount)"
+    _realpath="$(command -v realpath)"
     _yq="$(command -v yq)"
     cat << TEMPLATING > "${check_volumes}"
 #! /bin/sh
@@ -72,7 +73,7 @@ main ()
   # check volumes are mounted
   for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(hostname).volumes.[].target")
   do
-    ${_mount} | ${_grep} '^/dev' | ${_grep} " \${target} "
+    ${_mount} | ${_grep} " \$(${_realpath} "\${target}") "
   done
 }
 
