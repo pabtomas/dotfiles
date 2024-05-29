@@ -33,7 +33,6 @@ RUN <<END_OF_RUN
     builder='remote-builder'
     docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_TARGET}"
     docker buildx use --global "${builder}"
-    regctl registry set --tls=disabled "${REGISTRY_TARGET}"
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
@@ -45,6 +44,18 @@ main ()
 
 main
 TEMPLATING
+    registry_entrypoint="${ENTRYPOINTD_PATH}/98registry.sh"
+    cat << TEMPLATING > "${registry_entrypoint}"
+#! /bin/sh
+
+main ()
+{
+  regctl registry set --tls=disabled "${REGISTRY_TARGET}"
+}
+
+main
+TEMPLATING
+    chmod 0700 "${registry_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 
