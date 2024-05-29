@@ -159,12 +159,11 @@ EOF
     do
       target="$(eval "printf '%s\n' \"\${${local_img%%=*}}\"")"
       src="$(eval "printf '%s\n' \"\${${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}}\"")"
-        if ! docker image inspect "${src}" --format='Image found'
-        then
-          docker pull "${src}"
-        fi
-        docker tag "${src}" "${target}"
+      if ! docker image inspect "${src}" --format='Image found'
+      then
+        docker pull "${src}"
       fi
+      docker tag "${src}" "${target}"
     done
   )
 
