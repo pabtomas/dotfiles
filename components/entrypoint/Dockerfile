@@ -70,6 +70,8 @@ main ()
   # check yq is available
   ${_yq} --version
 
+  ${_mount}
+
   # check volumes are mounted
   for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(hostname).volumes.[].target")
   do

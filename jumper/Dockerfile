@@ -28,11 +28,6 @@ RUN <<END_OF_RUN
     key_path="${SSH_ROOT_PATH}/id_rsa"
     ssh-keygen -q -t rsa -N '' -f "${key_path}"
     cp "${key_path}.pub" "${OPT_SSH_PATH}/authorized_keys"
-    ssh_environment="${OPT_SSH_PATH}/environment"
-    cat << TEMPLATING > "${ssh_environment}"
-DOCKER_HOST=${TCP_DOCKER_TARGET}
-TEMPLATING
-    chmod 0640 "${ssh_environment}"
     cat << TEMPLATING > "${BASH_COMPLETION_PATH}/99ssh.sh"
 #! /usr/bin/env bash
 
