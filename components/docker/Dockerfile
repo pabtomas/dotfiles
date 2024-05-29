@@ -72,7 +72,7 @@ main ()
   set -eux
 
   # check docker client is available
-  ${_docker} version
+  DOCKER_HOST=${DOCKER_TARGET} ${_docker} version
 
   # check docker socket is reachable
   ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/version'
