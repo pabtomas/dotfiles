@@ -71,13 +71,23 @@ main ()
   }
 
   build ()
-  {
+  (
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
+    src_tag='3.20'
+    src_img="alpine:${src_tag}"
+    target="tiawl.local.${src_img}"
+
+    if ! docker image inspect "${src_img}" --format='Image found'
+    then
+      docker pull "${src_img}"
+    fi
+    docker tag "${src_img}" "${target}"
+
     uid="$(id -u)"
-    docker build --tag "tiawl.wget_me.busybox:latest" --file - . << EOF
-FROM ${1}
+    docker build --tag "tiawl.wget_me.oneshot:latest" --file - . << EOF
+FROM ${target}
 
 RUN <<END_OF_RUN
     apk --no-cache add git
@@ -91,7 +101,7 @@ WORKDIR /home/${new_user}
 
 CMD ["busybox", "sh"]
 EOF
-  }
+  )
 
   dockerize ()
   {
@@ -103,7 +113,7 @@ EOF
           \${match:+\"--volume\"} \${match:+\"\${match}:\${match}\"} \
           \${match2:+\"--volume\"} \${match2:+\"\${match2}:\${match2}\"} \
           \${sudo:+\"--user\"} \${sudo:+\"root\"} \
-          --rm --interactive 'tiawl.wget_me.busybox' ${1} \"\${@}\"
+          --rm --interactive 'tiawl.wget_me.oneshot' ${1} \"\${@}\"
         then
           unset cwd match match2 sudo
           return 1
@@ -114,8 +124,58 @@ EOF
   }
 
   ## Posix shell: no local variables => subshell instead of braces
+  generate_templates ()
+  (
+    ## oksh/loksh: debugtrace does not follow in functions
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
+
+    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+    export API_TAG
+    set -a
+    . "${1}/env.sh"
+
+    for template in "${1}/components/compose.yaml.in" "${1}/compose.yaml.in"
+    do
+      cat="$(IFS='
+'; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
+      eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
+    done
+  )
+
+  ## Posix shell: no local variables => subshell instead of braces
+  ## Use local images if already downloaded: https://stackoverflow.com/a/70483395
+  generate_local_tags ()
+  (
+    ## oksh/loksh: debugtrace does not follow in functions
+    if [ -n "${DEBUG:-}" ]; then set -x; fi
+
+    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+    export API_TAG
+    set -a
+    . "${1}/env.sh"
+
+    # shellcheck disable=2153,2154
+    # SC2153: Possible misspelling LOCAL_IMG_SFX => not it is not
+    # SC2154: VAR is referenced but not assigned => assigned into env.sh
+    local_imgs="$(set | grep "^[^= ]\+${LOCAL_IMG_SFX}=")"
+    for local_img in ${local_imgs}
+    do
+      target="$(eval "printf '%s\n' \"\${${local_img%%=*}}\"")"
+
+      # shellcheck disable=2154
+      # SC2154: VAR is referenced but not assigned => assigned into env.sh
+      src="$(eval "printf '%s\n' \"\${${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}}\"")"
+      if ! docker image inspect "${src}" --format='Image found'
+      then
+        docker pull "${src}"
+      fi
+      docker tag "${src}" "${target}"
+    done
+  )
+
+  ## Posix shell: no local variables => subshell instead of braces
   ## unset DOCKET_HOST after sourcing variables needed in templated to avoid conflicts with docker client
-  source_env_without_docker_host ()
+  source_env ()
   (
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
@@ -153,7 +213,7 @@ EOF
 
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-    source_env_without_docker_host "${1}" \
+    source_env "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     match="$(dirname -- "${1}")" rm -rf "${1}"
     match="$(dirname -- "${4}")" rm -rf "${4}"
@@ -228,22 +288,9 @@ EOF
   readonly XEPHYR_DISPLAY
   export XEPHYR_DISPLAY
 
-  src_tag='3.20'
-  src_img="alpine:${src_tag}"
-  target="tiawl.local.${src_img}"
-
-  if ! docker image inspect "${src_img}" --format='Image found'
-  then
-    docker pull "${src_img}"
-  fi
-  docker tag "${src_img}" "${target}"
-  unset src_tag src_img
-
   ## dockerize external tools to keep same behavior wherever the script is running
   new_user='visitor'
-  build "${target}"
-  unset target
-
+  build
   dockerize basename
   dockerize cp
   dockerize dirname
@@ -330,37 +377,11 @@ EOF
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
 
-  ## generate templated files
-  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-  (
-    set -a -- "${tmp}"
-    . "${tmp}/env.sh"
-    for template in "${tmp}/components/compose.yaml.in" "${tmp}/compose.yaml.in"
-    do
-      cat="$(IFS='
-'; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
-      eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
-    done
-  )
-  unset API_TAG
+  generate_templates "${tmp}"
 
   docker network prune --force
 
-  ## use local images if already downloaded: https://stackoverflow.com/a/70483395
-  # shellcheck disable=2016
-  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  source_env_without_docker_host "${tmp}" \
-    'local_imgs="$(set | grep "^[^= ]\+${LOCAL_IMG_SFX}=")"
-     for local_img in ${local_imgs}
-     do
-       target="$(eval "printf \"%s\n\" \"\${${local_img%%=*}}\"")"
-       src="$(eval "printf \"%s\n\" \"\${${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}}\"")"
-       if ! docker image inspect "${src}" --format="Image found"
-       then
-         docker pull "${src}"
-       fi
-       docker tag "${src}" "${target}"
-     done'
+  generate_local_tags "${tmp}"
 
   docker compose --file "${tmp}/components/compose.yaml" build
   docker compose --file "${tmp}/compose.yaml" build
@@ -407,13 +428,13 @@ EOF
   ## Output the docker API used by the docker daemon
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  source_env_without_docker_host "${tmp}" \
+  source_env "${tmp}" \
     'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
 
   ## Attach to the workspace
   if [ "${runner}" != "${bot}" ]
   then
-    source_env_without_docker_host "${tmp}" \
+    source_env "${tmp}" \
       "docker compose --file '${tmp}/compose.yaml' attach \"\${JUMPER_SERVICE}\""
   fi
 )

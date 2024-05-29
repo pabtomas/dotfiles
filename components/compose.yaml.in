@@ -38,16 +38,20 @@ services:
       context: ${COMPONENTS_PATH}/${_DOCKER_ID}
       dockerfile: Dockerfile
       args:
-        _DOCKER_BIN_PATH: ${_DOCKER_BIN_PATH}
+        BIN_PATH: ${BIN_PATH}
         _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
         _DOCKER_PLUGINS_PATH: ${_DOCKER_PLUGINS_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}
+        REGBOT_URL: ${REGBOT_URL}
+        REGCTL_URL: ${REGCTL_URL}
+        REGISTRY_TARGET: ${REGISTRY_TARGET}
+        REGSYNC_URL: ${REGSYNC_URL}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
-        TCP_BUILDKIT_HOST: ${TCP_BUILDKIT_HOST}
-        TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
+        TCP_BUILDKIT_TARGET: ${TCP_BUILDKIT_TARGET}
+        TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
         XEPHYR_DISPLAY: "\"${XEPHYR_DISPLAY}\""
     depends_on:
       ${SSHD_SERVICE}:

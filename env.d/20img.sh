@@ -8,6 +8,7 @@ _extern_img "${BASH_ID}" 'docker.io' "${BASH_ID}" "${BASH_TAG}"
 _extern_img "${_BUILDKIT_ID}" 'docker.io' "moby${REG_SEP}${_BUILDKIT_ID}" "${_BUILDKIT_TAG}"
 _extern_img "${_DOCKER_ID}" 'docker.io' "${_DOCKER_ID}" "${_DOCKER_TAG}"
 _extern_img "${LINUXSERVER_PROXY_ID}" 'lscr.io' "linuxserver${REG_SEP}socket-proxy" "${LINUXSERVER_PROXY_TAG}"
+_extern_img "${REGISTRY_ID}" 'docker.io' "${REGISTRY_ID}" "${REGISTRY_TAG}"
 OS_IMG="${ALPINE_IMG}"
 OS_LOCAL_IMG="${ALPINE_LOCAL_IMG}"
 

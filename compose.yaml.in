@@ -31,6 +31,9 @@ services:
       ${PROXY_SERVICE}:
         condition: service_started
         required: true
+      ${REGISTRY_SERVICE}:
+        condition: service_started
+        required: true
       ${XSERVER_SERVICE}:
         condition: service_started
         required: true
@@ -41,6 +44,7 @@ services:
       ${JUMP_AREA_NET}: null
       ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
+      ${REGISTRY_NET}: null
     volumes:
       - type: volume
         source: ${SSH_VOLUME}
@@ -152,7 +156,7 @@ services:
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OPT_SSH_PATH: ${OPT_SSH_PATH}
         SSH_ROOT_PATH: ${SSH_ROOT_PATH}
-        TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}
+        TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
         TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
     container_name: ${JUMPER_HOST}
     depends_on:
@@ -230,7 +234,7 @@ services:
         DATA_PATH: ${DATA_PATH}
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_DOCKER_HOST: ${HTTP_DOCKER_HOST}
+        HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}
@@ -324,6 +328,20 @@ services:
       - type: volume
         source: ${PROXY_VAR_LOG_NGINX_VOLUME}
         target: ${VAR_LOG_NGINX_PATH}
+        volume: {}
+  ${REGISTRY_SERVICE}:
+    container_name: ${REGISTRY_HOST}
+    environment:
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${REGISTRY_STORAGE_PATH}
+    hostname: ${REGISTRY_HOST}
+    image: ${REGISTRY_IMG}
+    networks:
+      ${REGISTRY_NET}: null
+    read_only: true
+    volumes:
+      - type: volume
+        source: ${REGISTRY_VOLUME}
+        target: ${REGISTRY_STORAGE_PATH}
         volume: {}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
@@ -454,6 +472,15 @@ networks:
         - subnet: ${PROXIFIED_XSERVER_SOCKET_SUB}
           gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
           ip_range: ${PROXIFIED_XSERVER_SOCKET_SUB}
+  ${REGISTRY_NET}:
+    name: ${REGISTRY_NET}
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${REGISTRY_SUB}
+          gateway: ${REGISTRY_GATEWAY_IP}
+          ip_range: ${REGISTRY_SUB}
 volumes:
   ${LISTENER_OPT_DATA_VOLUME}:
     name: ${LISTENER_OPT_DATA_VOLUME}
@@ -467,6 +494,8 @@ volumes:
     name: ${PROXY_OPT_SCRIPTS_VOLUME}
   ${PROXY_VAR_LOG_NGINX_VOLUME}:
     name: ${PROXY_VAR_LOG_NGINX_VOLUME}
+  ${REGISTRY_VOLUME}:
+    name: ${REGISTRY_VOLUME}
   ${RELAY_VAR_LOG_VOLUME}:
     name: ${RELAY_VAR_LOG_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
@@ -475,11 +504,11 @@ volumes:
     name: ${SSH_VOLUME}
   ${SPACEPORN_VOLUME}:
     name: ${SPACEPORN_VOLUME}
+  ${THEME_VOLUME}:
+    name: ${THEME_VOLUME}
   ${XSERVER_ETC_NGINX_VOLUME}:
     name: ${XSERVER_ETC_NGINX_VOLUME}
   ${XSERVER_OPT_SCRIPTS_VOLUME}:
     name: ${XSERVER_OPT_SCRIPTS_VOLUME}
   ${XSERVER_VAR_LOG_NGINX_VOLUME}:
     name: ${XSERVER_VAR_LOG_NGINX_VOLUME}
-  ${THEME_VOLUME}:
-    name: ${THEME_VOLUME}
