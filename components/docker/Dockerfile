@@ -33,7 +33,7 @@ RUN <<END_OF_RUN
     builder='remote-builder'
     docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_TARGET}"
     docker buildx use --global "${builder}"
-    regctl registry set --tls=disable "${REGISTRY_TARGET}"
+    regctl registry set --tls=disabled "${REGISTRY_TARGET}"
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
