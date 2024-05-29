@@ -51,6 +51,7 @@ TEMPLATING
     _regbot="$(command -v regctl)"
     _regctl="$(command -v regctl)"
     _regsync="$(command -v regctl)"
+    _wget="$(command -v wget)"
     registry_entrypoint="${ENTRYPOINTD_PATH}/98registry.sh"
     cat << TEMPLATING > "${registry_entrypoint}"
 #! /bin/sh

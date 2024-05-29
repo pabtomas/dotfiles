@@ -9,7 +9,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    docs='
+    read -r -d '' docs << EOF || :
 coreutils-doc bash-doc dash-doc
 curl-doc wget-doc jq-doc
 tree-doc less-doc
@@ -21,7 +21,7 @@ pass-doc gnupg-doc
 tmux-doc vim-doc
 bats-doc shellcheck-doc
 cronie-doc
-'
+EOF
     apk add --no-cache mandoc man-pages ${docs}
     _apk="$(command -v apk)"
     _man="$(command -v man)"
