@@ -33,7 +33,7 @@ main ()
   set -eux
 
   # check nginx availability
-  ${_nginx} --version
+  ${_nginx} -v
 }
 
 main

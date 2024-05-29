@@ -4,6 +4,7 @@ FROM ${TMUX_COMPONENT_IMG}
 
 ARG BASH_COMPLETION_PATH
 ARG BASH_THEME_PATH
+ARG CHECK_ENTRYPOINT_PATH
 ARG COMPLETION_PATH
 ARG CONTROLLER_ID
 ARG ENTRYPOINTD_PATH
@@ -76,7 +77,21 @@ __TEMPLATING
 
 main
 TEMPLATING
-    chmod 0700 "${login_entrypoint}"
+    _ssh="$(command -v ssh)"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check pass availability
+  ${_ssh} -V
+}
+
+main
+TEMPLATING
+    chmod 0700 "${login_entrypoint}" "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
 

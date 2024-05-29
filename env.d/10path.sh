@@ -9,8 +9,6 @@ _path 'bash_theme' '/etc/profile.d/10theme.d'
 _path 'bin' '/usr/local/bin'
 _path 'data' '/opt/data'
 _path 'docker_plugins' '/usr/local/libexec/docker/cli-plugins'
-_path 'crontabs' '/etc/crontabs'
-_path 'crontabs_log' '/var/log/cron.log'
 _path 'etc_nginx' '/etc/nginx'
 _path 'etc_nginx_confd' "${ETC_NGINX_PATH}/conf.d"
 _path 'etc_nginx_httpd' "${ETC_NGINX_PATH}/http.d"
@@ -29,6 +27,7 @@ _path "${WORKSPACES_ID}" '/workspaces'
 _path 'completion' "${DATA_PATH}/99completion"
 _path "${ENTRYPOINT_ID}" "${OPT_SCRIPTS_PATH}/docker_entrypoint.sh"
 _path 'entrypointd' "${ENTRYPOINT_PATH%/*}/$(set -- "${ENTRYPOINT_PATH##*/}"; printf '%s\n' "${1%.*}").d"
+_path 'check_entrypoint' "${ENTRYPOINTD_PATH}/98check.sh"
 _path 'cron_log' "${VAR_LOG_PATH}/cron.log"
 _path "${COMPOSE_PROJECT_NAME}" "${WORKSPACES_PATH}/${COMPOSE_PROJECT_NAME}"
 _path "${SPACEPORN_ID}" "${WORKSPACES_PATH}/${SPACEPORN_ID}"
