@@ -2,7 +2,6 @@ ARG ENTRYPOINT_COMPONENT_IMG
 
 FROM ${ENTRYPOINT_COMPONENT_IMG}
 
-ARG APK_PATHS
 ARG CHECK_ENTRYPOINT_PATH
 ARG COMPLETION_PATH
 ARG DATA_PATH
@@ -19,7 +18,6 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache jq
-    rm -rf ${APK_PATHS}
     mkdir -p "${DATA_PATH}"
     _jq="$(command -v jq)"
     _wget="$(command -v wget)"

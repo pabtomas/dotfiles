@@ -3,7 +3,6 @@ FROM ${HTTP_COMPONENT_IMG}
 
 ARG API_TAG
 ARG API_URL
-ARG APK_PATHS
 ARG CHECK_ENTRYPOINT_PATH
 ARG CONTROLLER_IP
 ARG _DOCKER_SOCKET_PATH
@@ -46,7 +45,6 @@ RUN <<END_OF_RUN
     endpoints="$(wget -q -O- "${API_URL}" | yq '.paths | keys | .[]')"
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g;s@}$@@'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
-    rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGINX_HTTPD_PATH}/default.conf"
 geo \$privileged {
     default          0;

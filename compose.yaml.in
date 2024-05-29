@@ -236,7 +236,6 @@ services:
       context: ${CWD_PATH}/${LISTENER_ID}
       dockerfile: Dockerfile
       args:
-        APK_PATHS: ${APK_PATHS}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LISTENER_ID}.sh
         COMPLETION_PATH: ${COMPLETION_PATH}
         DATA_PATH: ${DATA_PATH}
@@ -302,7 +301,6 @@ services:
         API_PFX: ${API_PFX}
         API_TAG: "\"${API_TAG}\""
         API_URL: ${API_URL}
-        APK_PATHS: ${APK_PATHS}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PROXY_ID}.sh
         CONTROLLER_IP: ${CONTROLLER_IP}
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
@@ -409,7 +407,6 @@ services:
       context: ${CWD_PATH}/${XSERVER_ID}
       dockerfile: Dockerfile
       args:
-        APK_PATHS: ${APK_PATHS}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${XSERVER_ID}.sh
         ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}

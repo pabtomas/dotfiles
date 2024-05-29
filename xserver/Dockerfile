@@ -1,7 +1,6 @@
 ARG NGINX_COMPONENT_IMG
 FROM ${NGINX_COMPONENT_IMG}
 
-ARG APK_PATHS
 ARG CHECK_ENTRYPOINT_PATH
 ARG ETC_NGINX_CONFD_PATH
 ARG ETC_NGINX_PATH
@@ -17,7 +16,6 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
-    rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
 user root;
 
