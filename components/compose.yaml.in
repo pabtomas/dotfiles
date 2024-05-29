@@ -10,7 +10,7 @@ services:
         BASH_THEME_PATH: ${BASH_THEME_PATH}
         BASH_ENTRYPOINT_COMPONENT_IMG: ${BASH_ENTRYPOINT_COMPONENT_IMG}
         BASH_LOCAL_IMG: ${BASH_LOCAL_IMG}
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${BASH_ID}.sh
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
@@ -40,7 +40,7 @@ services:
       dockerfile: Dockerfile
       args:
         BIN_PATH: ${BIN_PATH}
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${_DOCKER_ID}.sh
         _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
         _DOCKER_PLUGINS_PATH: ${_DOCKER_PLUGINS_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
@@ -69,6 +69,8 @@ services:
       dockerfile: Dockerfile
       args:
         BASE_IMG: ${OS_LOCAL_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -82,7 +84,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${GIT_ID}.sh
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         TIG_COMPLETION_URL: ${TIG_COMPLETION_URL}
@@ -99,7 +101,7 @@ services:
       context: ${COMPONENTS_PATH}/${HTTP_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${HTTP_ID}.sh
         ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
@@ -118,7 +120,7 @@ services:
       context: ${COMPONENTS_PATH}/${LINGUIST_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${LINGUIST_ID}.sh
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         OS_LOCAL_IMG: ${OS_LOCAL_IMG}
@@ -130,7 +132,7 @@ services:
       context: ${COMPONENTS_PATH}/${MAN_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${MAN_ID}.sh
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
@@ -146,7 +148,7 @@ services:
       context: ${COMPONENTS_PATH}/${NGINX_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${NGINX_ID}.sh
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
@@ -166,7 +168,7 @@ services:
       context: ${COMPONENTS_PATH}/${PASS_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${PASS_ID}.sh
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
@@ -182,7 +184,7 @@ services:
       context: ${COMPONENTS_PATH}/${SHELL_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${SHELL_ID}.sh
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
@@ -198,7 +200,7 @@ services:
       context: ${COMPONENTS_PATH}/${SOCAT_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${SOCAT_ID}.sh
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
@@ -215,7 +217,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${SSHD_ID}.sh
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
@@ -233,7 +235,7 @@ services:
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${TMUX_ID}.sh
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         TMUX_COMPLETION_URL: ${TMUX_COMPLETION_URL}
@@ -251,7 +253,7 @@ services:
       context: ${COMPONENTS_PATH}/${VIM_ID}
       dockerfile: Dockerfile
       args:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${VIM_ID}.sh
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NERDTREE_URL: ${NERDTREE_URL}
@@ -291,7 +293,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}/99${ZIG_ID}.sh
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
