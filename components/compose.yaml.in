@@ -45,6 +45,9 @@ services:
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
         NET: ${JUMP_AREA_NET}
+        REGBOT_URL: ${REGBOT_URL}
+        REGCTL_URL: ${REGCTL_URL}
+        REGSYNC_URL: ${REGSYNC_URL}
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
         TCP_BUILDKIT_HOST: ${TCP_BUILDKIT_HOST}
         TCP_DOCKER_HOST: ${TCP_DOCKER_HOST}

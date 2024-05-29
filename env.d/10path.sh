@@ -17,6 +17,7 @@ _path 'etc_nginx_httpd' "${ETC_NGINX_PATH}/http.d"
 _path 'var_log_nginx' '/var/log/nginx'
 _path 'opt_scripts' '/opt/scripts'
 _path 'opt_ssh' '/opt/ssh'
+_path "${REGISTRY_ID}_storage" '/data'
 _path "${SAFEDEPOSIT_ID}" '/root/.password-store'
 _path "${_DOCKER_ID}_socket" '/var/run/docker.sock'
 _path 'tmp_xserver_sockets' '/tmp/.X11-unix'

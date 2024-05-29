@@ -127,27 +127,27 @@ __img ()
 _intern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  __img "${1}" '' "${OWNER_ID}${IMG_SEP}${1}" "${2}"
+  __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${1}" "${2}"
 }
 
 _component_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
 _relay_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RELAY_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${RELAY_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${RELAY_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${RELAY_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
 _runner_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RUNNER_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${RUNNER_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${RUNNER_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${RUNNER_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
@@ -155,7 +155,7 @@ _extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   __img "${1}" "${2}" "${3}" "${4}"
-  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" '' "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${3##*/}" "${4}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${3##*/}" "${4}"
   unset SFX_OVERRIDE
 }
 

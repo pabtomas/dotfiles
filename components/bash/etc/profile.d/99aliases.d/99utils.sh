@@ -1,7 +1,7 @@
 colors () { command wget -q -O- https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash; }
-ls () { command ls --color "${@}"; }
-grep () { command grep --color "${@}"; }
-diff () { command diff -u --color "${@}"; }
+ls () { command ls --color=always "${@}"; }
+grep () { command grep --color=always "${@}"; }
+diff () { command diff -u --color=always "${@}"; }
 tree () { command tree -C "${@}"; }
 rm () { command rm -i -r -v "${@}"; }
 cp () { command cp -i -r -v "${@}"; }

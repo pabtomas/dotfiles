@@ -4,6 +4,7 @@
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
 _volume "${COMPOSE_PROJECT_NAME}"
+_volume "${REGISTRY_ID}"
 _volume "${SPACEPORN_ID}"
 _volume "${SAFEDEPOSIT_ID}"
 
