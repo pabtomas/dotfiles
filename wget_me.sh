@@ -395,8 +395,9 @@ EOF
   IFS="${old_ifs}"
   unset line
 
-  docker compose --file "${tmp}/components/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
-  docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
+  parallel="$(if [ "${runner}" != "${bot}" ]; then printf '-'; fi)1"
+  docker compose --parallel "${parallel}" --file "${tmp}/components/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
+  docker compose --parallel "${parallel}" --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
 
