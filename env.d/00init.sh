@@ -154,7 +154,7 @@ _extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
   __img "${1}" "${2}" "${3}" "${4}" "${5}"
-  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${3##*/}" "${4}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${4##*/}" "${5}"
   unset SFX_OVERRIDE
 }
 
