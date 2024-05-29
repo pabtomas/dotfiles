@@ -19,8 +19,8 @@ RUN <<END_OF_RUN
     docs="${docs} pass-doc gnupg-doc"
     docs="${docs} tmux-doc vim-doc"
     docs="${docs} bats-doc shellcheck-doc"
-    docs="${docs} cronie-doc"
-    apk add --no-cache mandoc man-pages ${docs}
+    docs="${docs} cronie-doc man-db-doc"
+    apk add --no-cache man-db man-pages ${docs}
     _apk="$(command -v apk)"
     _man="$(command -v man)"
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
