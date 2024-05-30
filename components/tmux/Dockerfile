@@ -14,7 +14,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --virtual __install_plugins git
-    git clone --depth=1 "${TPM_URL}" "${TPM_PATH}"
+    git clone --depth 1 "${TPM_URL}" "${TPM_PATH}"
     apk del __install_plugins
     apk add --no-cache tmux tmuxinator tmuxinator-bash-completion
     wget -O "${BASH_COMPLETION_PATH}/99tmux.sh" "${TMUX_COMPLETION_URL}"
