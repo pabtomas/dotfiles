@@ -44,14 +44,13 @@ TEMPLATING
     _cat="$(command -v cat)"
     _head="$(command -v head)"
     _hostname="$(command -v hostname)"
-    _nc="$(command -v nc)"
     _shuf="$(command -v shuf)"
     _ssh="$(command -v ssh)"
     _tr="$(command -v tr)"
     _yes="$(command -v yes)"
-    _yq="$(command -v yq)"
+    themes_entrypoint="${ENTRYPOINTD_PATH}/98themes.sh"
     login_entrypoint="${ENTRYPOINTD_PATH}/99login.sh"
-    cat << TEMPLATING > "${login_entrypoint}"
+    cat << TEMPLATING > "${themes_entrypoint}"
 #! /bin/sh
 
 main ()
@@ -73,7 +72,16 @@ main ()
 
 main
 __TEMPLATING
+}
 
+main
+TEMPLATING
+    cat << TEMPLATING > "${login_entrypoint}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
   exec ${_bash} -l
 }
 
@@ -88,10 +96,20 @@ main ()
 
   # check ssh availability
   ${_ssh} -V
+}
 
-  ip route
+main
+TEMPLATING
+    after_entrypoint="${OPT_SCRIPTS_PATH}/after_entrypoint.sh"
+    cat << TEMPLATING >> "${after_entrypoint}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
   # check hosts are available through ssh
-  for host in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname')
+  for host in $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname | tr '\n' ' ')
   do
     if [ "\${host}" != "\$(${_hostname})" ]
     then
@@ -106,7 +124,7 @@ main ()
 
 main
 TEMPLATING
-    chmod 0700 "${login_entrypoint}" "${CHECK_ENTRYPOINT_PATH}"
+    chmod 0700 "${login_entrypoint}" "${themes_entrypoint}" "${CHECK_ENTRYPOINT_PATH}" "${after_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 

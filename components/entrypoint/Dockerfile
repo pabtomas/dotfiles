@@ -57,12 +57,14 @@ main ()
 
 main
 TEMPLATING
-    check_volumes="${CHECK_ENTRYPOINTD_PATH}/99volumes.sh"
+    check_compose="${CHECK_ENTRYPOINTD_PATH}/99compose.sh"
     _grep="$(command -v grep)"
     _hostname="$(command -v hostname)"
     _realpath="$(command -v realpath)"
+    _sort="$(command -v sort)"
+    _uniq="$(command -v uniq)"
     _yq="$(command -v yq)"
-    cat << TEMPLATING > "${check_volumes}"
+    cat << TEMPLATING > "${check_compose}"
 #! /bin/sh
 
 main ()
@@ -75,11 +77,21 @@ main ()
   do
     ${_grep} " \$(${_realpath} "\${target}") " /etc/mtab
   done
+
+  # check routes are available
+  routes="\$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq}  ".services.\"\$(${_hostname})\".networks | to_entries[].key")"
+  gateways="\$(${_yq} "\$(printf '.networks | ."%s" | .ipam.config[].gateway,' \${routes})" "${_COMPOSE_FILE}")"
+  [ -z "\$(for ip in \$(${_hostname} -i) \${gateways%,}
+           do
+             ip="\${ip%.*}"
+             ip="\${ip##*.}"
+             printf '%s\n' "\${ip}"
+           done | ${_sort} | ${_uniq} -u)" ]
 }
 
 main
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT_PATH}" "${CHECK_ENTRYPOINT_PATH}" "${check_volumes}"
+    chmod 0700 "${ENTRYPOINT_PATH}" "${CHECK_ENTRYPOINT_PATH}" "${check_compose}"
     unset http_proxy https_proxy
 END_OF_RUN
 

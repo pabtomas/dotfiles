@@ -400,6 +400,9 @@ EOF
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
 
+  source_env "${tmp}" \
+    'docker compose --file "${tmp}/compose.yaml" exec "${JUMPER_SERVICE}" sh "${OPT_SCRIPTS_PATH}/after_entrypoint.sh"'
+
   ## let a short time before checking services status
   if [ "${runner}" = "${bot}" ]
   then
