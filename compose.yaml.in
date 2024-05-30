@@ -162,6 +162,24 @@ services:
       ${LISTENER_SERVICE}:
         condition: service_started
         required: true
+      ${CONTROLLER_SERVICE}:
+        condition: service_started
+        required: true
+      ${EDITOR_SERVICE}:
+        condition: service_started
+        required: true
+      ${SHELL_EXPLORER_SERVICE}:
+        condition: service_started
+        required: true
+      ${ZIG_EXPLORER_SERVICE}:
+        condition: service_started
+        required: true
+      ${SAFEDEPOSIT_SERVICE}:
+        condition: service_started
+        required: true
+      ${SCHOLAR_SERVICE}:
+        condition: service_started
+        required: true
     hostname: ${JUMPER_HOST}
     image: ${JUMPER_IMG}
     networks:
