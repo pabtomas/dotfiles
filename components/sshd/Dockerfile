@@ -34,7 +34,7 @@ TEMPLATING
 main ()
 {
   set -eux
-  exec ${_sshd} -D -e p ${SSH_PORT}
+  exec ${_sshd} -D -e -p ${SSH_PORT}
 }
 
 main
