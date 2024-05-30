@@ -44,6 +44,7 @@ TEMPLATING
     _cat="$(command -v cat)"
     _head="$(command -v head)"
     _hostname="$(command -v hostname)"
+    _nc="$(command -v nc)"
     _shuf="$(command -v shuf)"
     _ssh="$(command -v ssh)"
     _tr="$(command -v tr)"
