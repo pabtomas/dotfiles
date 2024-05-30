@@ -6,7 +6,6 @@ FROM ${SSHD_COMPONENT_IMG}
 
 ARG BIN_PATH
 ARG _DOCKER_PLUGINS_PATH
-COPY --from=dockle_builder /dockle ${BIN_PATH}/
 COPY --from=docker_img ${BIN_PATH}/ ${BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
