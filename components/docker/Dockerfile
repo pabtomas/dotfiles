@@ -4,12 +4,15 @@ ARG GOLANG_LOCAL_IMG
 
 FROM ${_DOCKER_LOCAL_IMG} AS docker_img
 FROM ${GOLANG_LOCAL_IMG} AS dockle_builder
-ARG TARGET_DIR="github.com/goodwithtech/dockle"
 
+ARG TARGET_DIR="github.com/goodwithtech/dockle"
 WORKDIR /go/src/${TARGET_DIR}
+
+ARG DOCKLE_TAG
+
 RUN <<END_OF_RUN
     apk --no-cache add git
-    git clone "https://${TARGET_DIR}" .
+    git clone --depth 1 --branch "${DOCKLE_TAG}" "https://${TARGET_DIR}" .
     CGO_ENABLED=0 go build -a -o /dockle "${PWD}/cmd/dockle"
 END_OF_RUN
 

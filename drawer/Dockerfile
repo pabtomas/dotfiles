@@ -10,7 +10,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --virtual __install_fonts git
-    git clone --depth=1 "${FIGLET_FONTS_URL}" /usr/share/figlet/fonts/
+    git clone --depth 1 "${FIGLET_FONTS_URL}" /usr/share/figlet/fonts/
     apk del __install_fonts
     apk add --no-cache figlet lolcat
     _figlet="$(command -v figlet)"
