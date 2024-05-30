@@ -405,14 +405,6 @@ EOF
   source_env "${tmp}" \
     'docker compose --file "${tmp}/compose.yaml" exec "${JUMPER_SERVICE}" sh "${OPT_SCRIPTS_PATH}/after_entrypoint.sh"'
 
-  ## let a short time before checking services status
-  if [ "${runner}" = "${bot}" ]
-  then
-    printf 'Sleeping ...\n'
-    sleep 3
-    # TODO: CHECK EVERYTHING
-  fi
-
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
   readonly running_services services
