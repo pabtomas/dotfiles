@@ -227,6 +227,7 @@ services:
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
         HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        SSH_PORT: "\"${SSH_PORT}\""
     depends_on:
       ${BASH_SERVICE}:
         condition: service_started

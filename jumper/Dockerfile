@@ -43,9 +43,13 @@ TEMPLATING
     _bash="$(command -v bash)"
     _cat="$(command -v cat)"
     _head="$(command -v head)"
+    _hostname="$(command -v hostname)"
+    _nc="$(command -v nc)"
     _shuf="$(command -v shuf)"
+    _ssh="$(command -v ssh)"
     _tr="$(command -v tr)"
     _yes="$(command -v yes)"
+    _yq="$(command -v yq)"
     login_entrypoint="${ENTRYPOINTD_PATH}/99login.sh"
     cat << TEMPLATING > "${login_entrypoint}"
 #! /bin/sh
@@ -61,8 +65,8 @@ main ()
 main ()
 {
   ID="\\\$(hostname -i | tr ' ' '\n' | grep '^${NET_PFX}')"
-  PROMPT_THEME="\\\$(printf '%s\n' \${themes} | sed "\\\${ID##*.}q;d" )"
-  THEME="\\\$(printf '%s\n' \${themes} | sed '1q;d' )"
+  PROMPT_THEME="\\\$(printf '%s\n' \${themes} | sed "\\\${ID##*.}q;d")"
+  THEME="\\\$(printf '%s\n' \${themes} | sed '1q;d')"
 
   export PROMPT_THEME THEME
 }
@@ -75,10 +79,6 @@ __TEMPLATING
 
 main
 TEMPLATING
-    _hostname="$(command -v hostname)"
-    _nc="$(command -v nc)"
-    _ssh="$(command -v ssh)"
-    _yq="$(command -v yq)"
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
 #! /bin/sh
 
@@ -89,6 +89,7 @@ main ()
   # check ssh availability
   ${_ssh} -V
 
+  ip route
   # check hosts are available through ssh
   for host in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname')
   do

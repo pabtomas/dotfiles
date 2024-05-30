@@ -5,6 +5,7 @@ ARG CHECK_ENTRYPOINT_PATH
 ARG ENTRYPOINTD_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
+ARG SSH_PORT
 
 RUN <<END_OF_RUN
     set -eux
@@ -33,7 +34,7 @@ TEMPLATING
 main ()
 {
   set -eux
-  exec ${_sshd} -D -e
+  exec ${_sshd} -D -e p ${SSH_PORT}
 }
 
 main
