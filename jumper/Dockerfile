@@ -109,7 +109,7 @@ main ()
   set -eux
 
   # check hosts are available through ssh
-  for host in $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname | tr '\n' ' ')
+  for host in $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname' | tr '\n' ' ')
   do
     if [ "\${host}" != "\$(${_hostname})" ]
     then
