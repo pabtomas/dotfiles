@@ -79,8 +79,9 @@ main ()
   done
 
   # check routes are available
-  routes="\$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq}  ".services.\$(${_hostname}).networks | to_entries[].key")"
-  filter="\$(printf '.networks.%s.ipam.config[].gateway,' \${routes})"
+  filter=".services.\"\$(${_hostname})\".networks | to_entries[].key"
+  routes="\$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} "\${filter}")"
+  filter="\$(printf '.networks."%s".ipam.config[].gateway,' \${routes})"
   gateways="\$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} "\${filter%,}")"
   [ -z "\$(for ip in \$(${_hostname} -i) \${gateways}
            do
