@@ -1,21 +1,7 @@
 ARG SSHD_COMPONENT_IMG
 ARG _DOCKER_LOCAL_IMG
-ARG GOLANG_LOCAL_IMG
 
 FROM ${_DOCKER_LOCAL_IMG} AS docker_img
-FROM ${GOLANG_LOCAL_IMG} AS dockle_builder
-
-ARG TARGET_DIR="github.com/goodwithtech/dockle"
-WORKDIR /go/src/${TARGET_DIR}
-
-ARG DOCKLE_TAG
-
-RUN <<END_OF_RUN
-    apk --no-cache add git
-    git clone --depth 1 --branch "${DOCKLE_TAG}" "https://${TARGET_DIR}" .
-    CGO_ENABLED=0 go build -a -o /dockle "${PWD}/cmd/dockle"
-END_OF_RUN
-
 FROM ${SSHD_COMPONENT_IMG}
 
 ARG BIN_PATH
@@ -25,6 +11,8 @@ COPY --from=docker_img ${BIN_PATH}/ ${BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
 ARG CHECK_ENTRYPOINT_PATH
+ARG DOCKLE_DOWNLOAD_URL
+ARG DOCKLE_LATEST_URL
 ARG ENTRYPOINTD_PATH
 ARG HTTP_DOCKER_TARGET
 ARG NET
@@ -47,6 +35,15 @@ RUN <<END_OF_RUN
     wget -q -O "${BIN_PATH}/regctl" "${REGCTL_URL}" https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64
     wget -q -O "${BIN_PATH}/regsync" "${REGSYNC_URL}" https://github.com/regclient/regclient/releases/latest/download/regsync-linux-amd64
     chmod 0755 "${BIN_PATH}/regbot" "${BIN_PATH}/regctl" "${BIN_PATH}/regsync"
+    dockle_tag="$(wget -q -O- "${DOCKLE_LATEST_URL}" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')"
+    gz="dockle_${dockle_version}_Linux-64bit.tar.gz"
+    tmp_gz="/tmp/${gz}"
+    tmp_dockle='/tmp/dockle'
+    wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${dockle_version}/${gz}"
+    mkdir -p "${tmp_dockle}"
+    mv "${tmp_dockle}/dockle" "${BIN_PATH}"
+    tar zxvf "${tmp_gz}" -C "${tmp_dockle}"
+    rm -rf "${tmp_gz}" "${tmp_dockle}"
     builder='remote-builder'
     docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_TARGET}"
     docker buildx use --global "${builder}"

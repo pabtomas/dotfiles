@@ -2,6 +2,7 @@ ARG GIT_COMPONENT_IMG
 FROM ${GIT_COMPONENT_IMG}
 
 ARG BASH_COMPLETION_PATH
+ARG BIN_PATH
 ARG CHECK_ENTRYPOINT_PATH
 ARG ZIG_BUILDS_URL
 ARG ZIG_COMPLETION_URL
@@ -20,7 +21,7 @@ RUN <<END_OF_RUN
     wget -O "${tmp_xz}" "${ZIG_BUILDS_URL}/${xz}"
     mkdir -p "${tmp_zig}"
     tar -xvf "${tmp_xz}" --strip-component 1 -C "${tmp_zig}"
-    mv -t /usr/local/bin/ "${tmp_zig}/lib/" "${tmp_zig}/zig"
+    mv -t "${BIN_PATH}" "${tmp_zig}/lib/" "${tmp_zig}/zig"
     rm -rf "${tmp_xz}" "${tmp_zig}"
     wget -O "${BASH_COMPLETION_PATH}/99zig.sh" "${ZIG_COMPLETION_URL}"
     _zig="$(command -v zig)"
