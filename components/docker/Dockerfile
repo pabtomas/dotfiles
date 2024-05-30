@@ -40,8 +40,8 @@ RUN <<END_OF_RUN
     tmp_dockle='/tmp/dockle'
     wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${dockle_tag}/${gz}"
     mkdir -p "${tmp_dockle}"
+    tar -zxvf "${tmp_gz}" -C "${tmp_dockle}"
     mv "${tmp_dockle}/dockle" "${BIN_PATH}"
-    tar zxvf "${tmp_gz}" -C "${tmp_dockle}"
     rm -rf "${tmp_gz}" "${tmp_dockle}"
     builder='remote-builder'
     docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_TARGET}"
