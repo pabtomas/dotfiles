@@ -7,7 +7,7 @@ FROM ${GOLANG_LOCAL_IMG} AS dockle_builder
 ARG TARGET_DIR="github.com/goodwithtech/dockle"
 
 WORKDIR /go/src/${TARGET_DIR}
-RUN << END_OF_RUN
+RUN <<END_OF_RUN
     apk --no-cache add git
     git clone "https://${TARGET_DIR}" .
     CGO_ENABLED=0 go build -a -o /dockle "${PWD}/cmd/dockle"
