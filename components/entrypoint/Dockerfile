@@ -75,7 +75,7 @@ main ()
   cat /etc/mtab
 
   # check volumes are mounted
-  for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(${hostname}).volumes.[].target")
+  for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(${_hostname}).volumes.[].target")
   do
     ${_mount} | ${_grep} " \$(${_realpath} "\${target}") "
   done
