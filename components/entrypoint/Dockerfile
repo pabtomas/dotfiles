@@ -73,6 +73,7 @@ main ()
 
   ${_mount} >&2
   cat /etc/mtab
+  ls -la /etc
 
   # check volumes are mounted
   for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(${_hostname}).volumes.[].target")
