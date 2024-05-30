@@ -74,9 +74,10 @@ __TEMPLATING
 
 main
 TEMPLATING
+    _bash="$(command -v bash)"
     _hostname="$(command -v hostname)"
-    _nc="$(command -v nc)"
     _ssh="$(command -v ssh)"
+    _timeout="$(command -v timeout)"
     _yq="$(command -v yq)"
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
 #! /bin/sh
@@ -91,7 +92,15 @@ main ()
   # check hosts are available through ssh
   for host in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname')
   do
-    if [ "\${host}" != "\$(${_hostname})" ]; then ${_nc} -z -v \${host} 22; fi
+    if [ "\${host}" != "\$(${_hostname})" ]
+    then
+      if ${_timeout} 3 ${_bash} -c "< /dev/tcp/\${host}/22 &>/dev/null"
+      then
+        printf 'OPENED\n'
+      else
+        printf 'CLOSED\n'
+      fi
+    fi
   done
 }
 
