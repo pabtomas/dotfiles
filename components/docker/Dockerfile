@@ -1,14 +1,23 @@
 ARG SSHD_COMPONENT_IMG
 ARG _DOCKER_LOCAL_IMG
-ARG DOCKLE_LOCAL_IMG
+ARG GOLANG_LOCAL_IMG
 
-FROM ${DOCKLE_LOCAL_IMG} as dockle_img
-FROM ${_DOCKER_LOCAL_IMG} as docker_img
+FROM ${_DOCKER_LOCAL_IMG} AS docker_img
+FROM ${GOLANG_LOCAL_IMG} AS dockle_builder
+ARG TARGET_DIR="github.com/goodwithtech/dockle"
+
+WORKDIR /go/src/${TARGET_DIR}
+RUN << END_OF_RUN
+    apk --no-cache add git
+    git clone "https://${TARGET_DIR}" .
+    CGO_ENABLED=0 go build -a -o /dockle "${PWD}/cmd/dockle"
+END_OF_RUN
+
 FROM ${SSHD_COMPONENT_IMG}
 
 ARG BIN_PATH
 ARG _DOCKER_PLUGINS_PATH
-COPY --from=dockle_img ${BIN_PATH}/dockle ${BIN_PATH}/
+COPY --from=dockle_builder /dockle ${BIN_PATH}/
 COPY --from=docker_img ${BIN_PATH}/ ${BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
