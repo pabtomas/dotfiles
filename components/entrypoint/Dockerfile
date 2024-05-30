@@ -59,6 +59,7 @@ main
 TEMPLATING
     check_volumes="${CHECK_ENTRYPOINTD_PATH}/99volumes.sh"
     _grep="$(command -v grep)"
+    _hostname="$(command -v hostname)"
     _mount="$(command -v mount)"
     _realpath="$(command -v realpath)"
     _yq="$(command -v yq)"
@@ -71,9 +72,10 @@ main ()
   ${_yq} --version
 
   ${_mount} >&2
+  cat /etc/mtab
 
   # check volumes are mounted
-  for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(hostname).volumes.[].target")
+  for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(${hostname}).volumes.[].target")
   do
     ${_mount} | ${_grep} " \$(${_realpath} "\${target}") "
   done

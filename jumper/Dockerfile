@@ -74,6 +74,7 @@ __TEMPLATING
 
 main
 TEMPLATING
+    _hostname="$(command -v hostname)"
     _nc="$(command -v nc)"
     _ssh="$(command -v ssh)"
     _yq="$(command -v yq)"
@@ -90,7 +91,7 @@ main ()
   # check hosts are available through ssh
   for host in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname')
   do
-    if [ "\${host}" != "\$(hostname)" ]; then ${_nc} -z \${host} 22; fi
+    if [ "\${host}" != "\$(${_hostname})" ]; then ${_nc} -z \${host} 22; fi
   done
 }
 
