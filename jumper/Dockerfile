@@ -9,7 +9,6 @@ ARG COMPLETION_PATH
 ARG _COMPOSE_FILE
 ARG CONTROLLER_ID
 ARG ENTRYPOINTD_PATH
-ARG HOSTNAME
 ARG OPT_SCRIPTS_PATH
 ARG OPT_SSH_PATH
 ARG NET
@@ -35,7 +34,7 @@ RUN <<END_OF_RUN
 _ssh ()
 {
   declare -a -g COMPREPLY
-  COMPREPLY=( \$(compgen -W "\$(grep -v '^${HOSTNAME}$' '${COMPLETION_PATH}')" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
+  COMPREPLY=( \$(compgen -W "\$(grep -v "^\$(hostname)$" '${COMPLETION_PATH}')" -- "\${COMP_WORDS["\${COMP_CWORD}"]}" ) )
 }
 
 complete -F _ssh ssh

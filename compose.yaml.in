@@ -1,5 +1,23 @@
-include:
-  - path: ./${COMPONENT_ID}s/compose.yaml
+x-bind: &bind
+  type: bind
+  bind: {}
+x-bind-ro: &readonly-bind
+  <<: *bind
+  read_only: true
+x-dockerfile: &default-dockerfile
+  dockerfile: Dockerfile
+x-proxy-env: &proxy-environment
+  HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+  HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+x-volume: &volume
+  type: volume
+  volume: {}
+x-volume-ro: &readonly-volume
+  <<: *volume
+  read_only: true
+x-started: &service-started
+  condition: service_started
+  required: true
 name: ${COMPOSE_PROJECT_NAME}
 services:
   ${BUILDER_SERVICE}:
@@ -21,20 +39,15 @@ services:
     container_name: ${CONTROLLER_HOST}
     depends_on:
       ${BUILDER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${LISTENER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${PROXY_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${REGISTRY_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${XSERVER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${CONTROLLER_HOST}
     image: ${_DOCKER_COMPONENT_IMG}
     networks:
@@ -44,103 +57,79 @@ services:
         ipv4_address: ${CONTROLLER_IP}
       ${REGISTRY_NET}: null
     volumes:
-      - type: volume
+      - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        read_only: true
-        volume: {}
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
     depends_on:
       ${LISTENER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${EDITOR_HOST}
     image: ${VIM_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
-      - type: volume
+      - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        read_only: true
-        volume: {}
   ${SHELL_EXPLORER_SERVICE}:
     container_name: ${SHELL_EXPLORER_HOST}
     depends_on:
       ${LISTENER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${SHELL_EXPLORER_HOST}
     image: ${SHELL_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
-      - type: volume
+      - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        read_only: true
-        volume: {}
   ${ZIG_EXPLORER_SERVICE}:
     container_name: ${ZIG_EXPLORER_HOST}
     depends_on:
       ${LISTENER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${ZIG_EXPLORER_HOST}
     image: ${ZIG_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
-      - type: volume
+      - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        read_only: true
-        volume: {}
   ${JUMPER_SERVICE}:
     build:
       context: ${CWD_PATH}/${JUMPER_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         BASH_THEME_PATH: ${BASH_THEME_PATH}
@@ -148,9 +137,7 @@ services:
         COMPLETION_PATH: /opt/${LISTENER_ID}${COMPLETION_PATH}
         CONTROLLER_ID: ${CONTROLLER_ID}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HOSTNAME: ${JUMPER_ID}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         NET: ${JUMP_AREA_NET}
         NET_PFX: ${JUMP_AREA_PFX}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
@@ -161,27 +148,20 @@ services:
         TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
     container_name: ${JUMPER_HOST}
     depends_on:
-      ${LISTENER_SERVICE}:
-        condition: service_started
-        required: true
       ${CONTROLLER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${EDITOR_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${SHELL_EXPLORER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${ZIG_EXPLORER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
+      ${LISTENER_SERVICE}:
+        <<: *service-started
       ${SAFEDEPOSIT_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
       ${SCHOLAR_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${JUMPER_HOST}
     image: ${JUMPER_IMG}
     networks:
@@ -189,69 +169,46 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - type: volume
+      - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${OPT_SSH_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${PROXY_ETC_NGINX_VOLUME}
         target: /opt/${PROXY_ID}${ETC_NGINX_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${PROXY_OPT_SCRIPTS_VOLUME}
         target: /opt/${PROXY_ID}${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${PROXY_VAR_LOG_NGINX_VOLUME}
         target: /opt/${PROXY_ID}${VAR_LOG_NGINX_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${LISTENER_OPT_DATA_VOLUME}
         target: /opt/${LISTENER_ID}${DATA_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${LISTENER_OPT_SCRIPTS_VOLUME}
         target: /opt/${LISTENER_ID}${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${LISTENER_VAR_LOG_VOLUME}
         target: /opt/${LISTENER_ID}${VAR_LOG_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${RELAY_VAR_LOG_VOLUME}
         target: /opt/${RELAY_ID}${VAR_LOG_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${XSERVER_ETC_NGINX_VOLUME}
         target: /opt/${XSERVER_ID}${ETC_NGINX_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${XSERVER_OPT_SCRIPTS_VOLUME}
         target: /opt/${XSERVER_ID}${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
         target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        volume: {}
   ${LISTENER_SERVICE}:
     build:
       context: ${CWD_PATH}/${LISTENER_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LISTENER_ID}.sh
@@ -260,15 +217,13 @@ services:
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         NET: ${JUMP_AREA_NET}
         VAR_LOG_PATH: ${VAR_LOG_PATH}
     container_name: ${LISTENER_HOST}
     depends_on:
       ${PROXY_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${LISTENER_HOST}
     image: ${LISTENER_IMG}
     networks:
@@ -276,23 +231,19 @@ services:
         ipv4_address: ${LISTENER_IP}
     read_only: true
     volumes:
-      - type: volume
+      - <<: *volume
         source: ${LISTENER_OPT_DATA_VOLUME}
         target: ${DATA_PATH}
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${LISTENER_OPT_SCRIPTS_VOLUME}
         target: ${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${LISTENER_VAR_LOG_VOLUME}
         target: ${VAR_LOG_PATH}
-        volume: {}
   ${PROXY_SERVICE}:
     build:
       context: ${CWD_PATH}/${PROXY_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         ${API_PFX}_PING: "\"${TRUE}\""
@@ -324,8 +275,7 @@ services:
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
         HTTP_COMPONENT_IMG: ${HTTP_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         LISTENER_IP: ${LISTENER_IP}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         PROXY_PORT: "\"${PROXY_PORT}\""
@@ -342,25 +292,18 @@ services:
       - /run
       - /tmp
     volumes:
-      - type: bind
+      - <<: *readonly-bind
         source: ${_DOCKER_SOCKET_PATH}
         target: ${_DOCKER_SOCKET_PATH}
-        read_only: true
-        bind: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${PROXY_ETC_NGINX_VOLUME}
         target: ${ETC_NGINX_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${PROXY_OPT_SCRIPTS_VOLUME}
         target: ${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${PROXY_VAR_LOG_NGINX_VOLUME}
         target: ${VAR_LOG_NGINX_PATH}
-        volume: {}
   ${REGISTRY_SERVICE}:
     container_name: ${REGISTRY_HOST}
     environment:
@@ -371,66 +314,53 @@ services:
       ${REGISTRY_NET}: null
     read_only: true
     volumes:
-      - type: volume
+      - <<: *volume
         source: ${REGISTRY_VOLUME}
         target: ${DATA_PATH}
-        volume: {}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
     depends_on:
       ${LISTENER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${SAFEDEPOSIT_HOST}
     image: ${PASS_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
-      - type: volume
+      - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${SAFEDEPOSIT_VOLUME}
         target: ${SAFEDEPOSIT_PATH}
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        read_only: true
-        volume: {}
   ${SCHOLAR_SERVICE}:
     container_name: ${SCHOLAR_HOST}
     depends_on:
       ${LISTENER_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     hostname: ${SCHOLAR_HOST}
     image: ${MAN_COMPONENT_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
-      - type: volume
+      - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
-        read_only: true
-        volume: {}
   ${XSERVER_SERVICE}:
     build:
       context: ${CWD_PATH}/${XSERVER_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${XSERVER_ID}.sh
         ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
         SPACEPORN_RELAY_IP: ${SPACEPORN_RELAY_IP}
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
@@ -450,25 +380,18 @@ services:
     tmpfs:
       - /run
     volumes:
-      - type: bind
+      - <<: *readonly-bind
         source: ${XSERVER_SOCKET_PATH}
         target: ${XSERVER_SOCKET_PATH}
-        read_only: true
-        bind: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${XSERVER_ETC_NGINX_VOLUME}
         target: ${ETC_NGINX_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *readonly-volume
         source: ${XSERVER_OPT_SCRIPTS_VOLUME}
         target: ${OPT_SCRIPTS_PATH}
-        read_only: true
-        volume: {}
-      - type: volume
+      - <<: *volume
         source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
         target: ${VAR_LOG_NGINX_PATH}
-        volume: {}
 networks:
   ${BUILDER_NET}:
     name: ${BUILDER_NET}
