@@ -88,5 +88,3 @@ TEMPLATING
     chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
-
-EXPOSE ${XSERVER_PORT}

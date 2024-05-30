@@ -43,5 +43,3 @@ TEMPLATING
 END_OF_RUN
 
 COPY etc/ /etc/
-
-EXPOSE 22

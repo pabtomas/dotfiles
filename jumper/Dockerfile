@@ -74,10 +74,9 @@ __TEMPLATING
 
 main
 TEMPLATING
-    _bash="$(command -v bash)"
     _hostname="$(command -v hostname)"
+    _nc="$(command -v nc)"
     _ssh="$(command -v ssh)"
-    _timeout="$(command -v timeout)"
     _yq="$(command -v yq)"
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
 #! /bin/sh
@@ -94,11 +93,10 @@ main ()
   do
     if [ "\${host}" != "\$(${_hostname})" ]
     then
-      if ${_timeout} 3 ${_bash} -c "< /dev/tcp/\${host}/22 &>/dev/null"
+      if ! ${_nc} -z -v \${host} ${SSH_PORT}
       then
-        printf 'OPENED\n'
-      else
-        printf 'CLOSED\n'
+        printf '%s:${SSH_PORT} closed\n' "\${host}"
+        return 1
       fi
     fi
   done

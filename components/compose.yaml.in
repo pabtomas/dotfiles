@@ -231,6 +231,8 @@ services:
       ${BASH_SERVICE}:
         condition: service_started
         required: true
+    expose:
+      - "\"${SSH_PORT}\""
     image: ${SSHD_COMPONENT_IMG}
     networks:
       ${COMPONENT_ID}s_net: null

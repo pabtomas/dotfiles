@@ -1,19 +1,15 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
   ${BUILDER_SERVICE}:
-    build:
-      context: ${CWD_PATH}/${BUILDER_ID}
-      dockerfile: Dockerfile
-      args:
-        _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}
-        BUILDER_PORT: "\"${BUILDER_PORT}\""
     command:
       - --addr
       - tcp://0.0.0.0:${BUILDER_PORT}
       - --oci-worker-no-process-sandbox
     container_name: ${BUILDER_HOST}
+    expose:
+      - "\"${BUILDER_PORT}\""
     hostname: ${BUILDER_HOST}
-    image: ${BUILDER_IMG}
+    image: ${_BUILDKIT_LOCAL_IMG}
     networks:
       ${BUILDER_NET}: null
     security_opt:
@@ -157,6 +153,7 @@ services:
         NET_PFX: ${JUMP_AREA_PFX}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OPT_SSH_PATH: ${OPT_SSH_PATH}
+        SSH_PORT: ${SSH_PORT}
         SSH_ROOT_PATH: ${SSH_ROOT_PATH}
         TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
         TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
@@ -313,6 +310,8 @@ services:
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         PROXY_PORT: "\"${PROXY_PORT}\""
     container_name: ${PROXY_HOST}
+    expose:
+      - "\"${PROXY_PORT}\""
     hostname: ${PROXY_HOST}
     image: ${PROXY_IMG}
     networks:
@@ -418,6 +417,8 @@ services:
         XSERVER_PORT: "\"${XSERVER_PORT}\""
         XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
     container_name: ${XSERVER_HOST}
+    expose:
+      - "\"${XSERVER_PORT}\""
     hostname: ${XSERVER_HOST}
     image: ${XSERVER_IMG}
     networks:

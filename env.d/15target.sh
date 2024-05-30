@@ -3,6 +3,7 @@
 # SC2034: VAR appears unused => VAR used for templating
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
+SSH_PORT='22'
 PROXY_PORT='2363'
 BUILDER_PORT='2364'
 XSERVER_PORT='2365'
