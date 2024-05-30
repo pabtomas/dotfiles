@@ -1,15 +1,29 @@
 ARG SSHD_COMPONENT_IMG
 ARG _DOCKER_LOCAL_IMG
+ARG GOLANG_LOCAL_IMG
 
-FROM ${_DOCKER_LOCAL_IMG} as docker_img
+FROM ${_DOCKER_LOCAL_IMG} AS docker_img
+FROM ${GOLANG_LOCAL_IMG} AS dockle_builder
+ARG TARGET_DIR="github.com/goodwithtech/dockle"
+
+WORKDIR /go/src/${TARGET_DIR}
+RUN <<END_OF_RUN
+    apk --no-cache add git
+    git clone "https://${TARGET_DIR}" .
+    CGO_ENABLED=0 go build -a -o /dockle "${PWD}/cmd/dockle"
+END_OF_RUN
+
 FROM ${SSHD_COMPONENT_IMG}
 
 ARG BIN_PATH
 ARG _DOCKER_PLUGINS_PATH
+COPY --from=dockle_builder /dockle ${BIN_PATH}/
 COPY --from=docker_img ${BIN_PATH}/ ${BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
+ARG CHECK_ENTRYPOINT_PATH
 ARG ENTRYPOINTD_PATH
+ARG HTTP_DOCKER_TARGET
 ARG NET
 ARG REGBOT_URL
 ARG REGCTL_URL
@@ -33,18 +47,68 @@ RUN <<END_OF_RUN
     builder='remote-builder'
     docker buildx create --name "${builder}" --driver remote "${TCP_BUILDKIT_TARGET}"
     docker buildx use --global "${builder}"
-    regctl registry set --tls=disabled "${REGISTRY_TARGET}"
     cat << TEMPLATING > /etc/profile.d/99env.sh
 main ()
 {
-  DOCKER_TARGET='${TCP_DOCKER_TARGET}'
+  DOCKER_HOST='${TCP_DOCKER_TARGET}'
   XEPHYR_DISPLAY='${XEPHYR_DISPLAY}'
 
-  export DOCKER_TARGET XEPHYR_DISPLAY
+  export DOCKER_HOST XEPHYR_DISPLAY
 }
 
 main
 TEMPLATING
+    _apk="$(command -v apk)"
+    _docker="$(command -v docker)"
+    _dockle="$(command -v dockle)"
+    _regbot="$(command -v regbot)"
+    _regctl="$(command -v regctl)"
+    _regsync="$(command -v regsync)"
+    _wget="$(command -v wget)"
+    registry_entrypoint="${ENTRYPOINTD_PATH}/98registry.sh"
+    cat << TEMPLATING > "${registry_entrypoint}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+  ${_regctl} registry set --tls=disabled "${REGISTRY_TARGET}"
+}
+
+main
+TEMPLATING
+    cat << TEMPLATING > "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check docker client is available
+  DOCKER_HOST=${TCP_DOCKER_TARGET} ${_docker} version
+
+  # check docker socket is reachable
+  ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/version'
+
+  # check docker plugins
+  ${_docker} buildx version
+  ${_docker} compose version
+
+  # check dockle availability
+  ${_dockle} --version
+
+  # check regclient is available
+  ${_regbot} version
+  ${_regctl} version
+  ${_regsync} version
+
+  # check packages are available
+  [ -n "\$(${_apk} info -q -L docker-bash-completion)" ]
+}
+
+main
+TEMPLATING
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}" "${registry_entrypoint}"
     unset http_proxy https_proxy
 END_OF_RUN
 

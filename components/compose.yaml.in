@@ -1,49 +1,60 @@
+x-dockerfile: &default-dockerfile
+  dockerfile: Dockerfile
+x-network: &default-network
+  networks:
+    ${COMPONENT_ID}s_net: null
+x-proxy-env: &proxy-environment
+  HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+  HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+x-started: &service-started
+  condition: service_started
+  required: true
 name: ${COMPONENT_ID}s
 services:
   ${BASH_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${BASH_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASH_ALIASES_PATH: ${BASH_ALIASES_PATH}
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        BASH_THEME_PATH: ${BASH_THEME_PATH}
         BASH_ENTRYPOINT_COMPONENT_IMG: ${BASH_ENTRYPOINT_COMPONENT_IMG}
         BASH_LOCAL_IMG: ${BASH_LOCAL_IMG}
+        BASH_THEME_PATH: ${BASH_THEME_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${BASH_ID}.sh
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
     depends_on:
       ${BASH_ENTRYPOINT_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${BASH_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${BASH_ENTRYPOINT_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASE_IMG: ${BASH_LOCAL_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
     image: ${BASH_ENTRYPOINT_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${_DOCKER_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${_DOCKER_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
-        BIN_PATH: ${BIN_PATH}
         _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
         _DOCKER_PLUGINS_PATH: ${_DOCKER_PLUGINS_PATH}
+        BIN_PATH: ${BIN_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${_DOCKER_ID}.sh
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        GOLANG_LOCAL_IMG: ${GOLANG_LOCAL_IMG}
+        HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
+        <<: *proxy-environment
         NET: ${JUMP_AREA_NET}
         REGBOT_URL: ${REGBOT_URL}
         REGCTL_URL: ${REGCTL_URL}
@@ -55,192 +66,176 @@ services:
         XEPHYR_DISPLAY: "\"${XEPHYR_DISPLAY}\""
     depends_on:
       ${SSHD_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${_DOCKER_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${ENTRYPOINT_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${ENTRYPOINT_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASE_IMG: ${OS_LOCAL_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
     image: ${ENTRYPOINT_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${GIT_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${GIT_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${GIT_ID}.sh
+        <<: *proxy-environment
         TIG_COMPLETION_URL: ${TIG_COMPLETION_URL}
         WORKSPACES_COMPONENT_IMG: ${WORKSPACES_COMPONENT_IMG}
     depends_on:
       ${WORKSPACES_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${GIT_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${HTTP_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${HTTP_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
-        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${HTTP_ID}.sh
         ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
         NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
     depends_on:
       ${NGINX_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${HTTP_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${LINGUIST_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${LINGUIST_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-        OS_LOCAL_IMG: ${OS_LOCAL_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LINGUIST_ID}.sh
+        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
+        <<: *proxy-environment
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        <<: *service-started
     image: ${LINGUIST_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${MAN_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${MAN_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${MAN_ID}.sh
+        <<: *proxy-environment
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
     depends_on:
       ${SSHD_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${MAN_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${NGINX_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${NGINX_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${NGINX_ID}.sh
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
         ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
     depends_on:
       ${ENTRYPOINT_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${NGINX_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${PASS_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${PASS_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PASS_ID}.sh
+        <<: *proxy-environment
         SSHD_COMPONENT_IMG: ${SSHD_COMPONENT_IMG}
     depends_on:
       ${SSHD_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${PASS_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${SHELL_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${SHELL_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SHELL_ID}.sh
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
     depends_on:
       ${GIT_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${SHELL_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${SOCAT_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${SOCAT_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SOCAT_ID}.sh
         ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
     depends_on:
       ${ENTRYPOINT_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${SOCAT_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${SSHD_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${SSHD_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SSHD_ID}.sh
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
+        SSH_PORT: "\"${SSH_PORT}\""
     depends_on:
       ${BASH_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
+    expose:
+      - "\"${SSH_PORT}\""
     image: ${SSHD_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${TMUX_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${TMUX_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         BASH_COMPONENT_IMG: ${BASH_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${TMUX_ID}.sh
+        <<: *proxy-environment
         TMUX_COMPLETION_URL: ${TMUX_COMPLETION_URL}
         TPM_PATH: ${TPM_PATH}
         TPM_URL: ${TPM_URL}
     depends_on:
       ${BASH_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${TMUX_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${VIM_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${VIM_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${VIM_ID}.sh
+        <<: *proxy-environment
         NERDTREE_URL: ${NERDTREE_URL}
         POLYGLOT_URL: ${POLYGLOT_URL}
         RAINBOW_URL: ${RAINBOW_URL}
@@ -248,18 +243,15 @@ services:
         WORKSPACES_COMPONENT_IMG: ${WORKSPACES_COMPONENT_IMG}
     depends_on:
       ${WORKSPACES_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${VIM_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${WORKSPACES_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${WORKSPACES_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OWNER_URL: ${OWNER_URL}
         SPACEPORN_ID: ${SPACEPORN_ID}
@@ -267,30 +259,26 @@ services:
         WORKSPACES_PATH: ${WORKSPACES_PATH}
     depends_on:
       ${SSHD_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${WORKSPACES_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
   ${ZIG_SERVICE}:
     build:
       context: ${COMPONENTS_PATH}/${ZIG_ID}
-      dockerfile: Dockerfile
+      <<: *default-dockerfile
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${ZIG_ID}.sh
         GIT_COMPONENT_IMG: ${GIT_COMPONENT_IMG}
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+        <<: *proxy-environment
         ZIG_BUILDS_URL: ${ZIG_BUILDS_URL}
         ZIG_COMPLETION_URL: ${ZIG_COMPLETION_URL}
         ZIG_COMPONENT_TAG: ${ZIG_COMPONENT_TAG}
     depends_on:
       ${GIT_SERVICE}:
-        condition: service_started
-        required: true
+        <<: *service-started
     image: ${ZIG_COMPONENT_IMG}
-    networks:
-      ${COMPONENT_ID}s_net: null
+    <<: *default-network
 networks:
   ${COMPONENT_ID}s_net:
     name: ${COMPONENT_ID}s_net

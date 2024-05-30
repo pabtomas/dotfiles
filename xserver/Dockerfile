@@ -1,7 +1,7 @@
 ARG NGINX_COMPONENT_IMG
 FROM ${NGINX_COMPONENT_IMG}
 
-ARG APK_PATHS
+ARG CHECK_ENTRYPOINT_PATH
 ARG ETC_NGINX_CONFD_PATH
 ARG ETC_NGINX_PATH
 ARG SPACEPORN_RELAY_IP
@@ -16,7 +16,6 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache nginx-mod-stream
-    rm -rf ${APK_PATHS}
     cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
 user root;
 
@@ -69,7 +68,23 @@ server {
     proxy_pass unix:${XSERVER_SOCKET_PATH};
 }
 TEMPLATING
+    _apk="$(command -v apk)"
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check packages are available
+  [ -n "\$(${_apk} info -q -L nginx-mod-stream)" ]
+
+  # check Xserver socket is mounted
+  [ -S "${XSERVER_SOCKET_PATH}" ]
+}
+
+main
+TEMPLATING
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
-
-EXPOSE ${XSERVER_PORT}

@@ -2,12 +2,14 @@ ARG ENTRYPOINT_COMPONENT_IMG
 
 FROM ${ENTRYPOINT_COMPONENT_IMG}
 
-ARG APK_PATHS
+ARG CHECK_ENTRYPOINT_PATH
 ARG COMPLETION_PATH
 ARG DATA_PATH
+ARG _DOCKER_SOCKET_PATH
 ARG ENTRYPOINTD_PATH
 ARG HTTP_DOCKER_TARGET
 ARG NET
+ARG VAR_LOG_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -16,7 +18,6 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache jq
-    rm -rf ${APK_PATHS}
     mkdir -p "${DATA_PATH}"
     _jq="$(command -v jq)"
     _wget="$(command -v wget)"
@@ -26,7 +27,7 @@ RUN <<END_OF_RUN
 
 main ()
 {
-  set -eux
+  set -x
 
   ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/events' | \
     while read -r event
@@ -40,8 +41,24 @@ main ()
     done
 }
 
+main > ${VAR_LOG_PATH}/listener.log 2>&1
+TEMPLATING
+    cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check jq availability
+  ${_jq} --version
+
+  # check docker socket is reachable
+  ${_wget} -q -O- '${HTTP_DOCKER_TARGET}/version'
+}
+
 main
 TEMPLATING
-    chmod 0700 "${listen_entrypoint}"
+    chmod 0700 "${listen_entrypoint}" "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN

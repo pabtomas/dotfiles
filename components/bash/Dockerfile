@@ -6,6 +6,7 @@ COPY etc/ /etc/
 ARG BASH_ALIASES_PATH
 ARG BASH_COMPLETION_PATH
 ARG BASH_THEME_PATH
+ARG CHECK_ENTRYPOINT_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
@@ -14,7 +15,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk update
-    apk add --no-cache coreutils diffutils bash-completion tree less
+    apk add --no-cache coreutils diffutils bash-completion tree less jq
     mkdir -p "${BASH_ALIASES_PATH}" "${BASH_COMPLETION_PATH}"
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
     cat << TEMPLATING >> "$(dirname "${BASH_ALIASES_PATH}")/$(basename -s '.d' "${BASH_ALIASES_PATH}").sh"
@@ -73,6 +74,34 @@ main ()
 
 main
 TEMPLATING
+    _apk="$(command -v apk)"
+    _bash="$(command -v bash)"
+    _jq="$(command -v jq)"
+    _less="$(command -v less)"
+    _tree="$(command -v tree)"
+    cat << TEMPLATING > "${CHECK_ENTRYPOINT_PATH}"
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # check bash is available
+  ${_bash} --version
+
+  # check utils packages are available
+  [ -n "\$(${_apk} info -q -L coreutils)" ]
+  [ -n "\$(${_apk} info -q -L diffutils)" ]
+
+  # check jq, less & tree availability
+  ${_jq} --version
+  ${_less} --version
+  ${_tree} --version
+}
+
+main
+TEMPLATING
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
     unset http_proxy https_proxy
 END_OF_RUN
 

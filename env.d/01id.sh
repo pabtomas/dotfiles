@@ -15,6 +15,7 @@ _id 'entrypoint'
 _id "${BASH_ID}_${ENTRYPOINT_ID}"
 _id 'explorer'
 _id 'git'
+_id 'golang'
 _id 'http'
 _id 'jumper'
 _id 'linguist'

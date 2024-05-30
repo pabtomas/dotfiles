@@ -5,7 +5,6 @@
 
 FALSE='0'
 TRUE='1'
-APK_PATHS='/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/lib/apk'
 COMPOSE_PROJECT_NAME='mywhalefleet'
 UNPRIVILEGED_USER='visitor'
 
@@ -76,7 +75,7 @@ _sfx 'volume'
 __host ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
 }
 
 _host ()
@@ -109,7 +108,7 @@ _runner_host ()
 __id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${ID_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${ID_SFX}"}='${2}'"
 }
 
 _id ()
@@ -121,54 +120,54 @@ _id ()
 __img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${2:+"${REG_SEP}"}${3}${TAG_SEP}${4}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${2:+"${REG_SEP}"}${3}${3:+"${REG_SEP}"}${4}${TAG_SEP}${5}'"
 }
 
 _intern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${1}" "${2}"
+  __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${1}" "${2}"
 }
 
 _component_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
 _relay_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RELAY_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${RELAY_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${RELAY_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${RELAY_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
 _runner_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${RUNNER_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${RUNNER_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${RUNNER_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${RUNNER_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
 _extern_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  __img "${1}" "${2}" "${3}" "${4}"
-  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${3##*/}" "${4}"
+  __img "${1}" "${2}" "${3}" "${4}" "${5}"
+  SFX_OVERRIDE="${LOCAL_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${LOCAL_ID}${IMG_SEP}${4##*/}" "${5}"
   unset SFX_OVERRIDE
 }
 
 _path ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${PATH_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${PATH_SFX}"}='${2}'"
 }
 
 __service ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${SERVICE_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${SERVICE_SFX}"}='${2}'"
 }
 
 _service ()
@@ -187,7 +186,7 @@ _explorer_service ()
 _tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
 }
 
 _component_tag ()
@@ -200,13 +199,13 @@ _component_tag ()
 _url ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${URL_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${URL_SFX}"}='${2}'"
 }
 
 __volume ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${VOLUME_SFX}"}='${2}'"
+  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${VOLUME_SFX}"}='${2}'"
 }
 
 _volume ()
