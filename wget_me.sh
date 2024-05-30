@@ -126,7 +126,7 @@ EOF
   generate_variables ()
   {
     API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-    export API_TAG _COMPOSE_JUMP_AREA_HOSTS
+    export API_TAG
   }
 
   ## Posix shell: no local variables => subshell instead of braces
@@ -400,6 +400,8 @@ EOF
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
 
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env "${tmp}" \
     'docker compose --file "${tmp}/compose.yaml" exec "${JUMPER_SERVICE}" sh "${OPT_SCRIPTS_PATH}/after_entrypoint.sh"'
 
