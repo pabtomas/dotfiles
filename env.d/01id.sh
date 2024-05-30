@@ -10,6 +10,7 @@ _id 'buildkit'
 _id 'component'
 _id 'controller'
 _id 'docker'
+_id 'dockle'
 _id 'editor'
 _id 'entrypoint'
 _id "${BASH_ID}_${ENTRYPOINT_ID}"

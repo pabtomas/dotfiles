@@ -1,11 +1,14 @@
 ARG SSHD_COMPONENT_IMG
 ARG _DOCKER_LOCAL_IMG
+ARG DOCKLE_LOCAL_IMG
 
+FROM ${DOCKLE_LOCAL_IMG} as dockle_img
 FROM ${_DOCKER_LOCAL_IMG} as docker_img
 FROM ${SSHD_COMPONENT_IMG}
 
 ARG BIN_PATH
 ARG _DOCKER_PLUGINS_PATH
+COPY --from=dockle_img ${BIN_PATH}/dockle ${BIN_PATH}/
 COPY --from=docker_img ${BIN_PATH}/ ${BIN_PATH}/
 COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
@@ -48,6 +51,7 @@ main
 TEMPLATING
     _apk="$(command -v apk)"
     _docker="$(command -v docker)"
+    _dockle="$(command -v dockle)"
     _regbot="$(command -v regbot)"
     _regctl="$(command -v regctl)"
     _regsync="$(command -v regsync)"
@@ -80,6 +84,9 @@ main ()
   # check docker plugins
   ${_docker} buildx version
   ${_docker} compose version
+
+  # check dockle availability
+  ${_dockle} --version
 
   # check regclient is available
   ${_regbot} version

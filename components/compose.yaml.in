@@ -1,14 +1,3 @@
-x-dockerfile: &default-dockerfile
-  dockerfile: Dockerfile
-x-network: &default-network
-  networks:
-    ${COMPONENT_ID}s_net: null
-x-proxy-env: &proxy-environment
-  HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-  HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-x-started: &service-started
-  condition: service_started
-  required: true
 name: ${COMPONENT_ID}s
 services:
   ${BASH_SERVICE}:
@@ -18,9 +7,9 @@ services:
       args:
         BASH_ALIASES_PATH: ${BASH_ALIASES_PATH}
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
-        BASH_THEME_PATH: ${BASH_THEME_PATH}
         BASH_ENTRYPOINT_COMPONENT_IMG: ${BASH_ENTRYPOINT_COMPONENT_IMG}
         BASH_LOCAL_IMG: ${BASH_LOCAL_IMG}
+        BASH_THEME_PATH: ${BASH_THEME_PATH}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${BASH_ID}.sh
         ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
         <<: *proxy-environment
@@ -47,10 +36,11 @@ services:
       context: ${COMPONENTS_PATH}/${_DOCKER_ID}
       <<: *default-dockerfile
       args:
-        BIN_PATH: ${BIN_PATH}
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${_DOCKER_ID}.sh
         _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
         _DOCKER_PLUGINS_PATH: ${_DOCKER_PLUGINS_PATH}
+        BIN_PATH: ${BIN_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${_DOCKER_ID}.sh
+        DOCKLE_LOCAL_IMG: ${DOCKLE_LOCAL_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
         <<: *proxy-environment
@@ -281,3 +271,14 @@ services:
 networks:
   ${COMPONENT_ID}s_net:
     name: ${COMPONENT_ID}s_net
+x-dockerfile: &default-dockerfile
+  dockerfile: Dockerfile
+x-network: &default-network
+  networks:
+    ${COMPONENT_ID}s_net: null
+x-proxy-env: &proxy-environment
+  HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+  HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+x-started: &service-started
+  condition: service_started
+  required: true

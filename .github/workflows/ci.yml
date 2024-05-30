@@ -76,9 +76,5 @@ jobs:
           eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
           canonical="${template%.*}.canonical"
           docker compose --file "${template%.*}" config > "${canonical}"
-          if grep -Fxvf "${template%.*}" "${canonical}" > /dev/null
-          then
-            diff -u "${template%.*}" "${canonical}" || :
-            return 1
-          fi
+          diff -u "${template%.*}" "${canonical}" || :
         done

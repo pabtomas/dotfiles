@@ -8,6 +8,7 @@ _tag 'os' "${ALPINE_TAG}"
 _tag "${BASH_ID}" "5.2-${OS_ID}${OS_TAG}"
 _tag "${_BUILDKIT_ID}" 'buildx-stable-1-rootless'
 _tag "${_DOCKER_ID}" 'cli'
+_tag "${DOCKLE_ID}" 'v0.4.14'
 _tag "${LINUXSERVER_PROXY_ID}" 'latest'
 _tag "${REGISTRY_ID}" '2'
 _tag 'owner' 'latest'
