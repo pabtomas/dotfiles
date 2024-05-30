@@ -4,6 +4,8 @@
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
 _url 'api' "https://raw.githubusercontent.com/moby/moby/master/docs/api/v${API_TAG}.yaml"
+_url 'dockle_download' 'https://github.com/goodwithtech/dockle/releases/download'
+_url 'dockle_latest' 'https://api.github.com/repos/goodwithtech/dockle/releases/latest'
 _url 'figlet_fonts' 'https://github.com/xero/figlet-fonts'
 _url 'nerdtree' 'https://github.com/preservim/nerdtree'
 _url 'owner' "https://github.com/${OWNER_ID}"
