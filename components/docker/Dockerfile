@@ -35,10 +35,10 @@ RUN <<END_OF_RUN
     wget -q -O "${BIN_PATH}/regsync" "${REGSYNC_URL}" https://github.com/regclient/regclient/releases/latest/download/regsync-linux-amd64
     chmod 0755 "${BIN_PATH}/regbot" "${BIN_PATH}/regctl" "${BIN_PATH}/regsync"
     dockle_tag="$(wget -q -O- "${DOCKLE_LATEST_URL}" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')"
-    gz="dockle_${dockle_version}_Linux-64bit.tar.gz"
+    gz="dockle_${dockle_tag}_Linux-64bit.tar.gz"
     tmp_gz="/tmp/${gz}"
     tmp_dockle='/tmp/dockle'
-    wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${dockle_version}/${gz}"
+    wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${dockle_tag}/${gz}"
     mkdir -p "${tmp_dockle}"
     mv "${tmp_dockle}/dockle" "${BIN_PATH}"
     tar zxvf "${tmp_gz}" -C "${tmp_dockle}"
