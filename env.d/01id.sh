@@ -7,7 +7,6 @@ _id 'alpine'
 _id 'bash'
 _id 'builder'
 _id 'buildkit'
-_id 'component'
 _id 'controller'
 _id 'docker'
 _id 'dockle'
@@ -18,6 +17,7 @@ _id 'explorer'
 _id 'git'
 _id 'http'
 _id 'jumper'
+_id 'layer'
 _id 'linguist'
 _id 'linuxserver_proxy'
 _id 'listener'
@@ -44,8 +44,8 @@ _id 'zig'
 __id 'os' "${ALPINE_ID}"
 __id 'owner' 'tiawl'
 
-_sfx "${COMPONENT_ID}${ID_SFX}"
-_sfx "${COMPONENT_ID}${IMG_SFX}"
+_sfx "${LAYER_ID}${ID_SFX}"
+_sfx "${LAYER_ID}${IMG_SFX}"
 _sfx "${LOCAL_ID}${IMG_SFX}"
 _sfx "${RELAY_ID}${IMG_SFX}"
 _sfx "${RUNNER_ID}${IMG_SFX}"
@@ -53,4 +53,4 @@ _sfx "${EXPLORER_ID}${HOST_SFX}"
 _sfx "${RELAY_ID}${HOST_SFX}"
 _sfx "${RUNNER_ID}${HOST_SFX}"
 _sfx "${EXPLORER_ID}${SERVICE_SFX}"
-_sfx "${COMPONENT_ID}${TAG_SFX}"
+_sfx "${LAYER_ID}${TAG_SFX}"
