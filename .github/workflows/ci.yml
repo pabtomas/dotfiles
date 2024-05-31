@@ -71,16 +71,18 @@ jobs:
         XEPHYR_DISPLAY='0'
         export API_TAG XEPHYR_DISPLAY
         source "${GITHUB_WORKSPACE}/env.sh"
-        extensions="${GITHUB_WORKSPACE}/extensions.yaml.in"
-        eval "printf '%s\n' \"$(cat "${extensions}")\"" > "${extensions%.*}"
-        for template in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
+        extensions_yaml="${GITHUB_WORKSPACE}/extensions.yaml"
+        extensions_in="${extensions_yaml}.in"
+        eval "printf '%s\n' \"$(cat "${extensions_in}")\"" > "${extensions%.*}"
+        for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
         do
+          compose_yaml="${compose_in%.*}"
           # Resolve shell substitution
-          eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
-          canonical="${template%.*}.canonical"
+          eval "printf '%s\n' \"$(cat "${compose_in}")\"" > "${compose_yaml}"
           # Resolve anchors & aliases
-          final="$(cat "${extensions%.*}" "${template%.*}" | yq 'explode(.)')"
-          printf '%s\n' "${final}" > "${template%.*}"
-          docker compose --file "${template%.*}" config > "${canonical}"
-          diff -u "${template%.*}" "${canonical}" || :
+          compose_content="$(cat "${extensions_yaml}" "${compose_yaml}" | yq 'explode(.)')"
+          printf '%s\n' "${compose_content}" > "${compose_yaml}"
+          canonical_compose="${compose_yaml}.canonical"
+          docker compose --file "${compose_yaml}" config > "${canonical_compose}"
+          diff -u "${compose_yaml}" "${canonical_compose}" || :
         done
