@@ -1,24 +1,22 @@
-'-'   -> go for it
-'?'   -> go for it but adjust it
-'??'  -> go for it but not now
-
-TODO:
-- .vimrc: unsource .vimrc
-- .vimrc: toggle set paste
-- .vimrc: toggle hightlight search
-- .vimrc + NERDtree: mapping to open/close tree pane
-?? .vimrc: vim9script
-?? .tmux.conf: add keybinding to change color theme
+- .vimrc:
+  - unsource .vimrc (for big files)
+  - toggle set paste
+  - toggle hightlight search
+  - NERDtree and +clientserver feature: mapping to open buffers into another vim
+  - vim9script
+- .tmux.conf:
+  - add keybinding to change color theme
+- update env.d/10tag with bot
 - Add a cache volume (1 for all or 1 for each ?) for SSHD containers (find a way to sync it: git/docker-secret/backup ?):
   - bash_history
   - vim sessions
   - tmux resurrect files
   - tmuxinator conf sessions
-- update env.d/10tag with bot
 - logger alias for controller
 - decorator:
-  - figlet/lolcat/tui monitoring/socat + service network
+  - figlet/lolcat/tui monitoring/socat
   - motd
+  - dedicated service network
 - wget_me.sh:
   - pull latest workspace images from registry
   - make the script works without internet (use cache)
@@ -29,9 +27,12 @@ TODO:
 - why does it rebuild image each time ?
 - runners:
   - relay + GUI
-  - firefox
+  - firefox:
+    - dedicated service network
   - white-board:
     - tldraw/excalidraw/draw.io
+    - on same firefox network
   - secretary:
     - hedgedoc
-  ?? pro
+    - on same firefox network
+  - pro
