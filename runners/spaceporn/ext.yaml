@@ -1,0 +1,8 @@
+services:
+  test:
+    container_name: relay.spaceporn
+    hostname: relay.spaceporn
+    image: tiawl.relay.spaceporn:latest
+    networks:
+      proxified-xserver-socket:
+        ipv4_address: 172.17.3.3
