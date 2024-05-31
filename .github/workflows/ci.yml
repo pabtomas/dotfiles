@@ -73,7 +73,7 @@ jobs:
         source "${GITHUB_WORKSPACE}/env.sh"
         extensions_yaml="${GITHUB_WORKSPACE}/extensions.yaml"
         extensions_in="${extensions_yaml}.in"
-        eval "printf '%s\n' \"$(cat "${extensions_in}")\"" > "${extensions%.*}"
+        eval "printf '%s\n' \"$(cat "${extensions_in}")\"" > "${extensions_yaml}"
         for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
         do
           compose_yaml="${compose_in%.*}"
