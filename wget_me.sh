@@ -297,6 +297,7 @@ EOF
   dockerize basename
   dockerize cp
   dockerize dirname
+  dockerize find
   dockerize git git
   dockerize grep
   dockerize mkdir
@@ -386,29 +387,21 @@ EOF
 
   generate_local_tags "${tmp}"
 
-  IFS=''
-  while read -r line
-  do
-    _LAYERS_COMPOSE_FILE="${_LAYERS_COMPOSE_FILE:-}${_LAYERS_COMPOSE_FILE:+
+  _COMPOSE_FILE="$(match="${tmp}" find "${tmp}" -type f -name compose.yaml exec sh -c '
+       IFS=""
+       while read -r line
+       do
+         file="${file:-}${file:+
 }${line}"
-    _COMPOSE_FILE="${_COMPOSE_FILE:-}${_COMPOSE_FILE:+
+       done < "${2}/extensions.yaml"
+       while read -r line
+       do
+         file="${file:-}${file:+
 }${line}"
-  done < "${tmp}/extensions.yaml"
-  while read -r line
-  do
-    _LAYERS_COMPOSE_FILE="${_LAYERS_COMPOSE_FILE:-}${_LAYERS_COMPOSE_FILE:+
-}${line}"
-  done < "${tmp}/models/layers/compose.yaml"
-  while read -r line
-  do
-    _COMPOSE_FILE="${_COMPOSE_FILE:-}${_COMPOSE_FILE:+
-}${line}"
-  done < "${tmp}/compose.yaml"
-  IFS="${old_ifs}"
-  unset line
-
-  printf '%s\n' "${_LAYERS_COMPOSE_FILE}" > "${tmp}/models/layers/compose.yaml"
-  printf '%s\n' "${_COMPOSE_FILE}" > "${tmp}/compose.yaml"
+       done < "${1}"
+       printf "%s\n" "${file}" > "${1}"
+       if [ "${1}" = "${2}/compose.yaml" ]; then printf "%s\n" "${file}"; fi
+       ' sh {} "${tmp}" \;)"
 
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
