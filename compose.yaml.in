@@ -1,20 +1,11 @@
 name: ${COMPOSE_PROJECT_NAME}
 services:
   ${BUILDER_SERVICE}:
-    command:
-      - --addr
-      - tcp://0.0.0.0:${BUILDER_PORT}
-      - --oci-worker-no-process-sandbox
     container_name: ${BUILDER_HOST}
-    expose:
-      - "\"${BUILDER_PORT}\""
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${_BUILDKIT_MODEL}
     hostname: ${BUILDER_HOST}
-    image: ${_BUILDKIT_LOCAL_IMG}
-    networks:
-      ${BUILDER_NET}: null
-    security_opt:
-      - apparmor:unconfined
-      - seccomp:unconfined
   ${CONTROLLER_SERVICE}:
     container_name: ${CONTROLLER_HOST}
     depends_on:
@@ -33,17 +24,12 @@ services:
       service: ${_DOCKER_MODEL}
     hostname: ${CONTROLLER_HOST}
     networks:
-      ${BUILDER_NET}: null
       ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
-      ${REGISTRY_NET}: null
     volumes:
       - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
-      - <<: *readonly-volume
-        source: ${THEME_VOLUME}
-        target: ${BASH_THEME_PATH}
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
     depends_on:
@@ -60,9 +46,6 @@ services:
       - <<: *volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
-      - <<: *readonly-volume
-        source: ${THEME_VOLUME}
-        target: ${BASH_THEME_PATH}
   ${SHELL_EXPLORER_SERVICE}:
     container_name: ${SHELL_EXPLORER_HOST}
     depends_on:
@@ -76,9 +59,6 @@ services:
       - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
-      - <<: *readonly-volume
-        source: ${THEME_VOLUME}
-        target: ${BASH_THEME_PATH}
   ${ZIG_EXPLORER_SERVICE}:
     container_name: ${ZIG_EXPLORER_HOST}
     depends_on:
@@ -92,9 +72,6 @@ services:
       - <<: *volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
-      - <<: *readonly-volume
-        source: ${THEME_VOLUME}
-        target: ${BASH_THEME_PATH}
   ${JUMPER_SERVICE}:
     build:
       context: ${CWD_PATH}/${JUMPER_ID}
@@ -276,17 +253,10 @@ services:
         target: ${VAR_LOG_NGINX_PATH}
   ${REGISTRY_SERVICE}:
     container_name: ${REGISTRY_HOST}
-    environment:
-      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${DATA_PATH}
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${REGISTRY_MODEL}
     hostname: ${REGISTRY_HOST}
-    image: ${REGISTRY_IMG}
-    networks:
-      ${REGISTRY_NET}: null
-    read_only: true
-    volumes:
-      - <<: *volume
-        source: ${REGISTRY_VOLUME}
-        target: ${DATA_PATH}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
     depends_on:
@@ -300,9 +270,6 @@ services:
       - <<: *volume
         source: ${SAFEDEPOSIT_VOLUME}
         target: ${SAFEDEPOSIT_PATH}
-      - <<: *readonly-volume
-        source: ${THEME_VOLUME}
-        target: ${BASH_THEME_PATH}
   ${SCHOLAR_SERVICE}:
     container_name: ${SCHOLAR_HOST}
     depends_on:
@@ -312,10 +279,6 @@ services:
       file: ${MODELS_PATH}/compose.yaml
       service: ${MAN_MODEL}
     hostname: ${SCHOLAR_HOST}
-    volumes:
-      - <<: *readonly-volume
-        source: ${THEME_VOLUME}
-        target: ${BASH_THEME_PATH}
   ${XSERVER_SERVICE}:
     build:
       context: ${CWD_PATH}/${XSERVER_ID}

@@ -1,14 +1,42 @@
 name: ${MODEL_ID}s
 services:
+  ${_BUILDKIT_MODEL}:
+    command:
+      - --addr
+      - tcp://0.0.0.0:${BUILDER_PORT}
+      - --oci-worker-no-process-sandbox
+    expose:
+      - "\"${BUILDER_PORT}\""
+    image: ${_BUILDKIT_LOCAL_IMG}
+    networks:
+      ${BUILDER_NET}: null
+    security_opt:
+      - apparmor:unconfined
+      - seccomp:unconfined
   ${_DOCKER_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${_DOCKER_LAYER_IMG}
+    networks:
+      ${BUILDER_NET}: null
+      ${PROXIFIED_DOCKER_SOCKET_NET}: null
+      ${REGISTRY_NET}: null
   ${MAN_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${MAN_LAYER_IMG}
   ${PASS_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${PASS_LAYER_IMG}
+  ${REGISTRY_MODEL}:
+    environment:
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${DATA_PATH}
+    image: ${REGISTRY_IMG}
+    networks:
+      ${REGISTRY_NET}: null
+    read_only: true
+    volumes:
+      - <<: *volume
+        source: ${REGISTRY_VOLUME}
+        target: ${DATA_PATH}
   ${SSHD_MODEL}:
     expose:
       - "\"${SSH_PORT}\""
@@ -19,6 +47,9 @@ services:
       - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
+      - <<: *readonly-volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
   ${SHELL_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${SHELL_LAYER_IMG}
@@ -29,10 +60,25 @@ services:
     extends: ${SSHD_MODEL}
     image: ${ZIG_LAYER_IMG}
 networks:
+  ${BUILDER_NET}:
+    name: ${BUILDER_NET}
+    external: true
   ${JUMP_AREA_NET}:
     name: ${JUMP_AREA_NET}
     external: true
+  ${PROXIFIED_DOCKER_SOCKET_NET}:
+    name: ${PROXIFIED_DOCKER_SOCKET_NET}
+    external: true
+  ${REGISTRY_NET}:
+    name: ${REGISTRY_NET}
+    external: true
 volumes:
+  ${REGISTRY_VOLUME}:
+    name: ${REGISTRY_VOLUME}
+    external: true
   ${SSH_VOLUME}:
     name: ${SSH_VOLUME}
+    external: true
+  ${THEME_VOLUME}:
+    name: ${THEME_VOLUME}
     external: true
