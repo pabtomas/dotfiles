@@ -268,8 +268,8 @@ services:
       context: ${LAYERS_PATH}/${ZIG_ID}
       <<: *default-dockerfile
       args:
-        BIN_PATH: ${BIN_PATH}
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        BIN_PATH: ${BIN_PATH}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${ZIG_ID}.sh
         GIT_LAYER_IMG: ${GIT_LAYER_IMG}
         <<: *proxy-environment
