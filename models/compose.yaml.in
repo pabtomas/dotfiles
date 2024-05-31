@@ -1,5 +1,14 @@
 name: ${MODEL_ID}s
 services:
+  ${_DOCKER_MODEL}:
+    extends: ${SSHD_MODEL}
+    image: ${_DOCKER_LAYER_IMG}
+  ${MAN_MODEL}:
+    extends: ${SSHD_MODEL}
+    image: ${MAN_LAYER_IMG}
+  ${PASS_MODEL}:
+    extends: ${SSHD_MODEL}
+    image: ${PASS_LAYER_IMG}
   ${SSHD_MODEL}:
     expose:
       - "\"${SSH_PORT}\""
@@ -10,6 +19,15 @@ services:
       - <<: *readonly-volume
         source: ${SSH_VOLUME}
         target: ${SSH_ROOT_PATH}
+  ${SHELL_MODEL}:
+    extends: ${SSHD_MODEL}
+    image: ${SHELL_LAYER_IMG}
+  ${VIM_MODEL}:
+    extends: ${SSHD_MODEL}
+    image: ${VIM_LAYER_IMG}
+  ${ZIG_MODEL}:
+    extends: ${SSHD_MODEL}
+    image: ${ZIG_LAYER_IMG}
 networks:
   ${JUMP_AREA_NET}:
     name: ${JUMP_AREA_NET}

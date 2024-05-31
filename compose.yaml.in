@@ -28,18 +28,16 @@ services:
         <<: *service-started
       ${XSERVER_SERVICE}:
         <<: *service-started
+    extends:
+      file: ./${MODEL_ID}s/compose.yaml
+      service: ${_DOCKER_MODEL}
     hostname: ${CONTROLLER_HOST}
-    image: ${_DOCKER_LAYER_IMG}
     networks:
       ${BUILDER_NET}: null
-      ${JUMP_AREA_NET}: null
       ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
       ${REGISTRY_NET}: null
     volumes:
-      - <<: *readonly-volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
       - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
@@ -51,14 +49,11 @@ services:
     depends_on:
       ${LISTENER_SERVICE}:
         <<: *service-started
+    extends:
+      file: ./${MODEL_ID}s/compose.yaml
+      service: ${VIM_MODEL}
     hostname: ${EDITOR_HOST}
-    image: ${VIM_LAYER_IMG}
-    networks:
-      ${JUMP_AREA_NET}: null
     volumes:
-      - <<: *readonly-volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
       - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
@@ -73,14 +68,11 @@ services:
     depends_on:
       ${LISTENER_SERVICE}:
         <<: *service-started
+    extends:
+      file: ./${MODEL_ID}s/compose.yaml
+      service: ${SHELL_MODEL}
     hostname: ${SHELL_EXPLORER_HOST}
-    image: ${SHELL_LAYER_IMG}
-    networks:
-      ${JUMP_AREA_NET}: null
     volumes:
-      - <<: *readonly-volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
       - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
@@ -92,14 +84,11 @@ services:
     depends_on:
       ${LISTENER_SERVICE}:
         <<: *service-started
+    extends:
+      file: ./${MODEL_ID}s/compose.yaml
+      service: ${ZIG_MODEL}
     hostname: ${ZIG_EXPLORER_HOST}
-    image: ${ZIG_LAYER_IMG}
-    networks:
-      ${JUMP_AREA_NET}: null
     volumes:
-      - <<: *readonly-volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
       - <<: *volume
         source: ${SPACEPORN_VOLUME}
         target: ${SPACEPORN_PATH}
@@ -303,14 +292,11 @@ services:
     depends_on:
       ${LISTENER_SERVICE}:
         <<: *service-started
+    extends:
+      file: ./${MODEL_ID}s/compose.yaml
+      service: ${PASS_MODEL}
     hostname: ${SAFEDEPOSIT_HOST}
-    image: ${PASS_LAYER_IMG}
-    networks:
-      ${JUMP_AREA_NET}: null
     volumes:
-      - <<: *readonly-volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
       - <<: *volume
         source: ${SAFEDEPOSIT_VOLUME}
         target: ${SAFEDEPOSIT_PATH}
@@ -322,14 +308,11 @@ services:
     depends_on:
       ${LISTENER_SERVICE}:
         <<: *service-started
+    extends:
+      file: ./${MODEL_ID}s/compose.yaml
+      service: ${MAN_MODEL}
     hostname: ${SCHOLAR_HOST}
-    image: ${MAN_LAYER_IMG}
-    networks:
-      ${JUMP_AREA_NET}: null
     volumes:
-      - <<: *readonly-volume
-        source: ${SSH_VOLUME}
-        target: ${SSH_ROOT_PATH}
       - <<: *readonly-volume
         source: ${THEME_VOLUME}
         target: ${BASH_THEME_PATH}
