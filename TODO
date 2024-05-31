@@ -27,7 +27,8 @@
 - jumper, listener, proxy, xserver -> change into a layer or model
 - why does it rebuild image each time ?
 - runners:
-  - relay + GUI
+  - relay + GUI:
+    - window manager/Xephyr/xinit conf
   - firefox:
     - dedicated service network
   - white-board:
