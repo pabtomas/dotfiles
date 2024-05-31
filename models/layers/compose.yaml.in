@@ -86,7 +86,7 @@ services:
     depends_on:
       ${WORKSPACES_SERVICE}:
         <<: *service-started
-    image: ${GIT_LAYER_IMG}
+    image: ${EXPLORER_LAYER_IMG}
     <<: *default-network
   ${GIT_SERVICE}:
     build:
