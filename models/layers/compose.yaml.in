@@ -1,14 +1,8 @@
-x-dockerfile: &default-dockerfile
-  dockerfile: Dockerfile
+include:
+  - path: ../../extensions.yaml
 x-network: &default-network
   networks:
     ${LAYER_ID}s_net: null
-x-proxy-env: &proxy-environment
-  HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
-  HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
-x-started: &service-started
-  condition: service_started
-  required: true
 name: ${LAYER_ID}s
 services:
   ${BASH_SERVICE}:

@@ -1,6 +1,0 @@
-name: ${MODEL_ID}s
-services:
-  ${SSHD_MODEL_SERVICE}:
-    expose:
-      - "\"${SSH_PORT}\""
-    image: ${SSHD_LAYER_IMG}

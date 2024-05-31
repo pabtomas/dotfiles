@@ -56,6 +56,11 @@ _upper ()
   printf '%s\n' "${2}"
 }
 
+_pfx ()
+{
+  case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac
+}
+
 _sfx ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
@@ -66,6 +71,7 @@ _sfx ()
 _sfx 'host'
 _sfx 'id'
 _sfx 'img'
+_sfx 'model'
 _sfx 'path'
 _sfx 'service'
 _sfx 'tag'
@@ -75,7 +81,7 @@ _sfx 'volume'
 __host ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${HOST_SFX}"}='${2}'"
 }
 
 _host ()
@@ -108,7 +114,7 @@ _runner_host ()
 __id ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${ID_SFX}"}='${2}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${ID_SFX}"}='${2}'"
 }
 
 _id ()
@@ -120,7 +126,7 @@ _id ()
 __img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${2:+"${REG_SEP}"}${3}${3:+"${REG_SEP}"}${4}${TAG_SEP}${5}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${IMG_SFX}"}='${2}${2:+"${REG_SEP}"}${3}${3:+"${REG_SEP}"}${4}${TAG_SEP}${5}'"
 }
 
 _intern_img ()
@@ -158,16 +164,28 @@ _extern_img ()
   unset SFX_OVERRIDE
 }
 
+__model ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${MODEL_SFX}"}='${MODEL_ID}${SERVICE_SEP}${2}'"
+}
+
+_model ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  __model "${1}" "${1}"
+}
+
 _path ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${PATH_SFX}"}='${2}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${PATH_SFX}"}='${2}'"
 }
 
 __service ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${SERVICE_SFX}"}='${2}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${SERVICE_SFX}"}='${2}'"
 }
 
 _service ()
@@ -183,17 +201,10 @@ _explorer_service ()
   unset SFX_OVERRIDE
 }
 
-_model_service ()
-{
-  if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${MODEL_SERVICE_SFX}" __service "${1}" "${MODEL_ID}${SERVICE_SEP}${1}"
-  unset SFX_OVERRIDE
-}
-
 _tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
 }
 
 _layer_tag ()
@@ -206,13 +217,13 @@ _layer_tag ()
 _url ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${URL_SFX}"}='${2}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${URL_SFX}"}='${2}'"
 }
 
 __volume ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${VOLUME_SFX}"}='${2}'"
+  eval "$(_pfx "${1}"; _upper "${1}" || :)${SFX_OVERRIDE:-"${VOLUME_SFX}"}='${2}'"
 }
 
 _volume ()

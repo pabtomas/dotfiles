@@ -35,5 +35,3 @@ _service "${ZIG_ID}"
 
 _explorer_service "${SHELL_ID}"
 _explorer_service "${ZIG_ID}"
-
-_model_service "${SSHD_ID}"

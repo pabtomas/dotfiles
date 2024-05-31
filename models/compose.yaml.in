@@ -1,0 +1,22 @@
+include:
+  - path: ../../extensions.yaml
+name: ${MODEL_ID}s
+services:
+  ${SSHD_MODEL}:
+    expose:
+      - "\"${SSH_PORT}\""
+    image: ${SSHD_LAYER_IMG}
+    networks:
+      ${JUMP_AREA_NET}: null
+    volumes:
+      - <<: *readonly-volume
+        source: ${SSH_VOLUME}
+        target: ${SSH_ROOT_PATH}
+networks:
+  ${JUMP_AREA_NET}:
+    name: ${JUMP_AREA_NET}
+    external: true
+volumes:
+  ${SSH_VOLUME}:
+    name: ${SSH_VOLUME}
+    external: true
