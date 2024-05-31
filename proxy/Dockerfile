@@ -41,8 +41,10 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    mkdir -p "${OPT_SCRIPTS_PATH}"
+    apk add --no-cache --virtual __yq yq
     endpoints="$(wget -q -O- "${API_URL}" | yq '.paths | keys | .[]')"
+    apk del __yq
+    mkdir -p "${OPT_SCRIPTS_PATH}"
     nginx_varname () { printf '%s\n' "${1}" | sed 's@^/@@;s@/{\|}/\|/@_@g;s@}$@@'; }
     docker_varname () { printf '%s%s\n' "${API_PFX}" "${1}" | tr 'a-z' 'A-Z'; }
     cat << TEMPLATING > "${ETC_NGINX_HTTPD_PATH}/default.conf"
