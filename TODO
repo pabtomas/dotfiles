@@ -23,12 +23,14 @@ TODO:
 - decorator:
   - figlet/lolcat/tui monitoring/socat + service network
   - motd
-- white-board:
-  - tldraw/excalidraw/draw.io
-- secretary:
-  - hedgedoc
-- firefox
-?? pro
+- runners:
+  - relay + GUI
+  - firefox
+  - white-board:
+    - tldraw/excalidraw/draw.io
+  - secretary:
+    - hedgedoc
+  ?? pro
 - jlesage/docker-baseimage-gui based images working with min
 - update tags with bot
 - jumper, listener, proxy, xserver -> change into a layer or model
