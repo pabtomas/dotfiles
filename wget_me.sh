@@ -139,7 +139,7 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/models/layers/compose.yaml.in" "${1}/models/compose.yaml.in" "${1}/compose.yaml.in" "${1}/extensions.yaml.in"
+    for template in "${1}/extensions.yaml.in" "${1}/models/layers/compose.yaml.in" "${1}/models/compose.yaml.in" "${1}/compose.yaml.in"
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"

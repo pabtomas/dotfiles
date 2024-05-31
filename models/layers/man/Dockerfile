@@ -9,7 +9,8 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    docs='diffutils-doc coreutils-doc bash-doc dash-doc'
+    docs='coreutils-doc diffutils-doc findutils-doc'
+    docs="${docs} bash-doc dash-doc"
     docs="${docs} curl-doc wget-doc"
     docs="${docs} tree-doc less-doc jq-doc"
     docs="${docs} docker-doc"

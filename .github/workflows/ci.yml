@@ -74,19 +74,15 @@ jobs:
         extensions_yaml="${GITHUB_WORKSPACE}/extensions.yaml"
         extensions_in="${extensions_yaml}.in"
         eval "printf '%s\n' \"$(cat "${extensions_in}")\"" > "${extensions_yaml}"
-        for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
+        for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in -printf "%d %p\n" | sort -n -r | cut -d ' ' -f 2)
         do
           compose_yaml="${compose_in%.*}"
           # Resolve shell substitution
           eval "printf '%s\n' \"$(cat "${compose_in}")\"" > "${compose_yaml}"
           # Resolve anchors & aliases
-          ls -la "$(dirname -- ${compose_yaml})"
           compose_content="$(cat "${extensions_yaml}" "${compose_yaml}" | yq 'explode(.)')"
-          ls -la "$(dirname -- ${compose_yaml})"
           printf '%s\n' "${compose_content}" > "${compose_yaml}"
-          ls -la "$(dirname -- ${compose_yaml})"
           canonical_compose="${compose_yaml}.canonical"
-          ls -la "$(dirname -- ${compose_yaml})"
           docker compose --file "${compose_yaml}" config > "${canonical_compose}"
           diff -u "${compose_yaml}" "${canonical_compose}" || :
         done
