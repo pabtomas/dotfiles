@@ -84,6 +84,6 @@ jobs:
           if grep -Fxvf "${template%.*}" "${canonical}" > /dev/null
           then
             diff -u "${template%.*}" "${canonical}" || :
-            return 1
+            exit 1
           fi
         done
