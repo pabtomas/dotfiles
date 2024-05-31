@@ -404,11 +404,9 @@ EOF
       done < "${1}"
       printf "%s\n" "${file}" > "${1}"
     } > /dev/null 2>&1
-    if [ "${1}" = "${2}/compose.yaml" ]
-    then
-      docker compose --file "${1}" config
-    fi
+    if [ "${1}" = "${2}/compose.yaml" ]; then printf "%s\n" "${file}"; fi
     ' sh {} "${tmp}" \;)"
+  _COMPOSE_FILE="$(printf '%s\n' "${_COMPOSE_FILE}" | docker compose --file - config)"
 
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
