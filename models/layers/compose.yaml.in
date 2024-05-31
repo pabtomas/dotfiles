@@ -1,5 +1,3 @@
-include:
-  - path: ../../extensions.yaml
 x-network: &default-network
   networks:
     ${LAYER_ID}s_net: null

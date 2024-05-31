@@ -71,11 +71,14 @@ jobs:
         XEPHYR_DISPLAY='0'
         export API_TAG XEPHYR_DISPLAY
         source "${GITHUB_WORKSPACE}/env.sh"
+        extensions="${GITHUB_WORKSPACE}/extensions.yaml"
         for template in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in)
         do
+          # Resolve shell substitution
           eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
           canonical="${template%.*}.canonical"
-          yq -i 'explode(.)' "${template%.*}"
+          # Resolve anchors & aliases
+          cat "${extensions}" "${template%.*}" | yq 'explode(.)' > "${template%.*}"
           docker compose --file "${template%.*}" config > "${canonical}"
           if grep -Fxvf "${template%.*}" "${canonical}" > /dev/null
           then

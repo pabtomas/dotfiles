@@ -389,11 +389,26 @@ EOF
   IFS=''
   while read -r line
   do
+    _LAYERS_COMPOSE_FILE="${_LAYERS_COMPOSE_FILE:-}${_LAYERS_COMPOSE_FILE:+
+}${line}"
+    _COMPOSE_FILE="${_COMPOSE_FILE:-}${_COMPOSE_FILE:+
+}${line}"
+  done < "${tmp}/extensions.yaml"
+  while read -r line
+  do
+    _LAYERS_COMPOSE_FILE="${_LAYERS_COMPOSE_FILE:-}${_LAYERS_COMPOSE_FILE:+
+}${line}"
+  done < "${tmp}/models/layers/compose.yaml"
+  while read -r line
+  do
     _COMPOSE_FILE="${_COMPOSE_FILE:-}${_COMPOSE_FILE:+
 }${line}"
   done < "${tmp}/compose.yaml"
   IFS="${old_ifs}"
   unset line
+
+  printf '%s\n' "${_LAYERS_COMPOSE_FILE}" > "${tmp}/models/layers/compose.yaml"
+  printf '%s\n' "${_COMPOSE_FILE}" > "${tmp}/compose.yaml"
 
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
