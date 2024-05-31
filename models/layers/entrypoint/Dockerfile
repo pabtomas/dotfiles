@@ -14,17 +14,17 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --virtual __yq yq
-    mkdir -p /opt/data/volumes /opt/data/routes
+    mkdir -p /opt/compose/volumes /opt/compose/routes
     set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)')
     while [ "${#}" != '0' ]
     do
-      printf '%s\n' "${2}" >> "/opt/data/volumes/${1}"
+      printf '%s\n' "${2}" >> "/opt/compose/volumes/${1}"
       shift 2
     done
     set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')
     while [ "${#}" != '0' ]
     do
-      printf '%s\n' "${2%/*}" >> "/opt/data/routes/${1}"
+      printf '%s\n' "${2%/*}" >> "/opt/compose/routes/${1}"
       shift 2
     done
     apk del __yq
@@ -84,13 +84,13 @@ TEMPLATING
 main ()
 {
   # check volumes are mounted
-  for target in \$(${_cat} /opt/data/volumes/\$(${_hostname}))
+  for target in \$(${_cat} /opt/compose/volumes/\$(${_hostname}))
   do
     ${_grep} " \$(${_realpath} "\${target}") " /etc/mtab
   done
 
   # check routes are available
-  [ -z "\$(for ip in \$(${_hostname} -i) \$(${_cat} /opt/data/routes/\$(${_hostname}))
+  [ -z "\$(for ip in \$(${_hostname} -i) \$(${_cat} /opt/compose/routes/\$(${_hostname}))
            do
              ip="\${ip%.*}"
              ip="\${ip##*.}"
