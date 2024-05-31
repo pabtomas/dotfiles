@@ -14,15 +14,19 @@ TODO:
   - vim sessions
   - tmux resurrect files
   - tmuxinator conf sessions
-- find a solution to put SHELL templates outside of Dockerfiles
+- update env.d/10tag with bot
 - logger alias for controller
-- add aliases/remove old directory
-- wget_me.sh:
-  - pull latest workspace images from registry
-  - make the script works without internet (use cache)
 - decorator:
   - figlet/lolcat/tui monitoring/socat + service network
   - motd
+- wget_me.sh:
+  - pull latest workspace images from registry
+  - make the script works without internet (use cache)
+- add aliases/remove old directory
+- find a solution to put SHELL templates outside of Dockerfiles
+- use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
+- jumper, listener, proxy, xserver -> change into a layer or model
+- why does it rebuild image each time ?
 - runners:
   - relay + GUI
   - firefox
@@ -31,8 +35,3 @@ TODO:
   - secretary:
     - hedgedoc
   ?? pro
-- jlesage/docker-baseimage-gui based images working with min
-- update tags with bot
-- jumper, listener, proxy, xserver -> change into a layer or model
-- use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
-- why does it rebuild image each time ?
