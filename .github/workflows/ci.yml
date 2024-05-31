@@ -79,7 +79,8 @@ jobs:
           eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
           canonical="${template%.*}.canonical"
           # Resolve anchors & aliases
-          cat "${extensions%.*}" "${template%.*}" | yq -i 'explode(.)' "${template%.*}"
+          final="$(cat "${extensions%.*}" "${template%.*}" | yq 'explode(.)')"
+          printf '%s\n' "${final}" > "${template%.*}"
           docker compose --file "${template%.*}" config > "${canonical}"
           if grep -Fxvf "${template%.*}" "${canonical}" > /dev/null
           then
