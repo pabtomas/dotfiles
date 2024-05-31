@@ -80,9 +80,13 @@ jobs:
           # Resolve shell substitution
           eval "printf '%s\n' \"$(cat "${compose_in}")\"" > "${compose_yaml}"
           # Resolve anchors & aliases
+          ls -la "${GITHUB_WORKSPACE}"
           compose_content="$(cat "${extensions_yaml}" "${compose_yaml}" | yq 'explode(.)')"
+          ls -la "${GITHUB_WORKSPACE}"
           printf '%s\n' "${compose_content}" > "${compose_yaml}"
+          ls -la "${GITHUB_WORKSPACE}"
           canonical_compose="${compose_yaml}.canonical"
+          ls -la "${GITHUB_WORKSPACE}"
           docker compose --file "${compose_yaml}" config > "${canonical_compose}"
           diff -u "${compose_yaml}" "${canonical_compose}" || :
         done
