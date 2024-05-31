@@ -387,6 +387,8 @@ EOF
 
   generate_local_tags "${tmp}"
 
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   _COMPOSE_FILE="$(match="${tmp}" find "${tmp}" -type f -name compose.yaml exec sh -c '
        IFS=""
        while read -r line
