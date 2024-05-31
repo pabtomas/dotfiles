@@ -389,21 +389,29 @@ EOF
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  _COMPOSE_FILE="$(match="${tmp}" find "${tmp}" -type f -name compose.yaml exec sh -c '
-       IFS=""
-       while read -r line
-       do
-         file="${file:-}${file:+
+  match="${tmp}" find "${tmp}" -type f -name compose.yaml exec sh -c '
+    IFS=""
+    while read -r line
+    do
+      file="${file:-}${file:+
 }${line}"
-       done < "${2}/extensions.yaml"
-       while read -r line
-       do
-         file="${file:-}${file:+
+    done < "${2}/extensions.yaml"
+    while read -r line
+    do
+      file="${file:-}${file:+
 }${line}"
-       done < "${1}"
-       printf "%s\n" "${file}" > "${1}"
-       if [ "${1}" = "${2}/compose.yaml" ]; then printf "%s\n" "${file}"; fi
-       ' sh {} "${tmp}" \;)"
+    done < "${1}"
+    printf "%s\n" "${file}" > "${1}"
+    ' sh {} "${tmp}" \;
+
+  IFS=''
+  while read -r line
+  do
+    _COMPOSE_FILE="${_COMPOSE_FILE:-}${_COMPOSE_FILE:+
+}${line}"
+  done < "${tmp}/compose.yaml"
+  IFS="${old_ifs}"
+  unset line
 
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
