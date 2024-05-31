@@ -21,7 +21,7 @@ RUN <<END_OF_RUN
       printf '%s\n' "${2}" >> "/tmp/volumes/${1}"
       shift 2
     done
-    set -- "$(printf '%s\n' "${_COMPOSE_FILE}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')"
+    set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')
     while [ "$#" != '0' ]
     do
       printf '%s\n' "${2%/*}" >> "/tmp/routes/${1}"
