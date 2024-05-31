@@ -35,6 +35,8 @@ TODO:
     - pro: aliases/packages for pro usage
 - jlesage/docker-baseimage-gui based images working with min
 - update Dockerfiles + images with bot
+- models
+- components -> layers
 
 proposition:
   workspaces

@@ -219,6 +219,7 @@ services:
         HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
         <<: *proxy-environment
         NET: ${JUMP_AREA_NET}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         VAR_LOG_PATH: ${VAR_LOG_PATH}
     container_name: ${LISTENER_HOST}
     depends_on:
