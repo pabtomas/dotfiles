@@ -23,6 +23,7 @@ _id 'linuxserver_proxy'
 _id 'listener'
 _id 'local'
 _id 'man'
+_id 'model'
 _id 'nginx'
 _id 'pass'
 _id 'proxy'
@@ -53,4 +54,5 @@ _sfx "${EXPLORER_ID}${HOST_SFX}"
 _sfx "${RELAY_ID}${HOST_SFX}"
 _sfx "${RUNNER_ID}${HOST_SFX}"
 _sfx "${EXPLORER_ID}${SERVICE_SFX}"
+_sfx "${MODEL_ID}${SERVICE_SFX}"
 _sfx "${LAYER_ID}${TAG_SFX}"

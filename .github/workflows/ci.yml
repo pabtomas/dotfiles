@@ -75,6 +75,11 @@ jobs:
         do
           eval "printf '%s\n' \"$(cat "${template}")\"" > "${template%.*}"
           canonical="${template%.*}.canonical"
+          yq -i 'explode(.)' "${template%.*}"
           docker compose --file "${template%.*}" config > "${canonical}"
-          diff -u "${template%.*}" "${canonical}" || :
+          if grep -Fxvf "${template%.*}" "${canonical}" > /dev/null
+          then
+            diff -u "${template%.*}" "${canonical}" || :
+            return 1
+          fi
         done

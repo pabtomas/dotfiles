@@ -209,8 +209,6 @@ services:
     depends_on:
       ${BASH_SERVICE}:
         <<: *service-started
-    expose:
-      - "\"${SSH_PORT}\""
     image: ${SSHD_LAYER_IMG}
     <<: *default-network
   ${TMUX_SERVICE}:

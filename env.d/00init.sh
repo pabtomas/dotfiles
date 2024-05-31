@@ -183,6 +183,13 @@ _explorer_service ()
   unset SFX_OVERRIDE
 }
 
+_model_service ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${MODEL_SERVICE_SFX}" __service "${1}" "${MODEL_ID}${SERVICE_SEP}${1}"
+  unset SFX_OVERRIDE
+}
+
 _tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi

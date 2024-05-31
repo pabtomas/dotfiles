@@ -1,0 +1,5 @@
+name: ${MODEL_ID}s
+services:
+  ${SSHD_MODEL_ID}:
+    expose:
+      - "\"${SSH_PORT}\""
