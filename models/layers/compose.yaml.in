@@ -75,6 +75,19 @@ services:
         <<: *proxy-environment
     image: ${ENTRYPOINT_LAYER_IMG}
     <<: *default-network
+  ${EXPLORER_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${EXPLORER_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${EXPLORER_ID}.sh
+        <<: *proxy-environment
+        WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}
+    depends_on:
+      ${WORKSPACES_SERVICE}:
+        <<: *service-started
+    image: ${GIT_LAYER_IMG}
+    <<: *default-network
   ${GIT_SERVICE}:
     build:
       context: ${LAYERS_PATH}/${GIT_ID}
@@ -82,11 +95,11 @@ services:
       args:
         BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${GIT_ID}.sh
+        EXPLORER_LAYER_IMG: ${EXPLORER_LAYER_IMG}
         <<: *proxy-environment
         TIG_COMPLETION_URL: ${TIG_COMPLETION_URL}
-        WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}
     depends_on:
-      ${WORKSPACES_SERVICE}:
+      ${EXPLORER_SERVICE}:
         <<: *service-started
     image: ${GIT_LAYER_IMG}
     <<: *default-network

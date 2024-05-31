@@ -394,8 +394,6 @@ EOF
   readonly _xephyr
   xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
 
-  sleep 1
-
   trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
 
   generate_templates "${tmp}"

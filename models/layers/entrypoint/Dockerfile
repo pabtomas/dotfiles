@@ -14,10 +14,19 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --virtual __yq yq
-    volumes="$(printf '%s\n' "${_COMPOSE_FILE}" | yq ".services.\"$(hostname)\".volumes.[].target")"
-    routes="$(printf '%s\n' "${_COMPOSE_FILE}" | yq ".services.\"$(hostname)\".networks | to_entries[].key")"
-    filter="$(printf '.networks."%s".ipam.config[].gateway,' ${routes})"
-    gateways="$(printf '%s\n' "${_COMPOSE_FILE}" | yq "${filter%,}")"
+    mkdir -p /tmp/volumes /tmp/routes
+    set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)')
+    while [ "$#" != '0' ]
+    do
+      printf '%s\n' "${2}" >> "/tmp/volumes/${1}"
+      shift 2
+    done
+    set -- "$(printf '%s\n' "${_COMPOSE_FILE}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')"
+    while [ "$#" != '0' ]
+    do
+      printf '%s\n' "${2%/*}" >> "/tmp/routes/${1}"
+      shift 2
+    done
     apk del __yq
     mkdir -p "${ENTRYPOINTD_PATH}" "${CHECK_ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
@@ -63,6 +72,7 @@ main ()
 main
 TEMPLATING
     check_compose="${CHECK_ENTRYPOINTD_PATH}/99compose.sh"
+    _cat="$(command -v cat)"
     _grep="$(command -v grep)"
     _hostname="$(command -v hostname)"
     _realpath="$(command -v realpath)"
@@ -74,13 +84,13 @@ TEMPLATING
 main ()
 {
   # check volumes are mounted
-  for target in ${volumes}
+  for target in \$(${_cat} /tmp/volumes/\$(${_hostname}))
   do
     ${_grep} " \$(${_realpath} "\${target}") " /etc/mtab
   done
 
   # check routes are available
-  [ -z "\$(for ip in \$(${_hostname} -i) ${gateways}
+  [ -z "\$(for ip in \$(${_hostname} -i) \$(${_cat} /tmp/routes/\$(${_hostname}))
            do
              ip="\${ip%.*}"
              ip="\${ip##*.}"
