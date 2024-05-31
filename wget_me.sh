@@ -40,8 +40,9 @@ main ()
   ## cleanup done: now it is time to define needed functions
 
   ## zsh has a which builtin. ksh93u+m has a sleep builtin.
-  ## this is a simple way to standardize external tools usage the script can not dockerize whatever the shell used to run this script:
-  ## 1) ignore shell builtins with the specified name
+  ## this is a simple way to standardize external tools usage the script can not dockerize whatever the shell used to run this script.
+  ## no `which`, `command` or `whence` usage: because their behavior differ depending of the used shell
+  ## 1) ignore shell builtins for the specified name
   ## 2) fail if no external tool exists with the specified name
   ## 3) wrap the external tool with the specified name
   harden ()
@@ -70,6 +71,8 @@ main ()
     unset flag
   }
 
+  ## Posix shell: no local variables => subshell instead of braces
+  ## build the oneshot docker image
   build ()
   (
     ## oksh/loksh: debugtrace does not follow in functions
@@ -79,18 +82,20 @@ main ()
     src_img="alpine:${src_tag}"
     target="tiawl.local.${src_img}"
 
+    ## pull the image if not if the local cache
     if ! docker image inspect "${src_img}" --format='Image found'
     then
       docker pull "${src_img}"
     fi
     docker tag "${src_img}" "${target}"
 
+    ## define the same uid between host and image to avoid permissions issues
     uid="$(id -u)"
     docker build --tag "tiawl.wget_me.oneshot:latest" --file - . << EOF
 FROM ${target}
 
 RUN <<END_OF_RUN
-    apk --no-cache add git jq
+    apk --no-cache add git
     rm -rf /var/lib/apt/lists/* /var/cache/apk/*
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
@@ -103,10 +108,15 @@ CMD ["busybox", "sh"]
 EOF
   )
 
+  ## define a new function for each external tool: allow to standardize external tools for an expensive speed loss
   dockerize ()
   {
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
+
+    ## cwd: mount to define the current working directory of the tool
+    ## match & match2: mounts to define identical absolute path between host and container
+    ## sudo: do we need root access ?
     eval "${1} ()
       {
         if ! docker run \${cwd:+\"--volume\"} \${cwd:+\"\${cwd}:/home/${new_user}/\"} \
@@ -123,6 +133,7 @@ EOF
       }"
   }
 
+  ## factorize reusable code
   generate_variables ()
   {
     API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
@@ -130,6 +141,7 @@ EOF
   }
 
   ## Posix shell: no local variables => subshell instead of braces
+  ## resolve shell templates
   generate_templates ()
   (
     ## oksh/loksh: debugtrace does not follow in functions
@@ -139,7 +151,7 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/models/layers/compose.yaml.in" "${1}/compose.yaml.in"
+    for template in "${1}/extensions.yaml.in" "${1}/models/layers/compose.yaml.in" "${1}/models/compose.yaml.in" "${1}/compose.yaml.in"
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
@@ -169,6 +181,8 @@ EOF
       # shellcheck disable=2154
       # SC2154: VAR is referenced but not assigned => assigned into env.sh
       src="$(eval "printf '%s\n' \"\${${local_img%%"${LOCAL_IMG_SFX}"=*}${IMG_SFX}}\"")"
+
+      ## pull the image if not if the local cache
       if ! docker image inspect "${src}" --format='Image found'
       then
         docker pull "${src}"
@@ -252,16 +266,16 @@ EOF
   harden wget
   harden id
 
-  # install docker
+  ## install docker
   if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
 
-  # check docker installation
+  ## check docker installation
   harden docker
 
   dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
   readonly dist
 
-  # update docker to the last version depending of the OS
+  ## update docker to the last version depending of the OS
   set +e
   case "${dist}" in
   ( 'ubuntu'|'debian' )
@@ -279,10 +293,11 @@ EOF
   esac
   set -e
 
-  # check X utils
+  ## check X utils
   harden Xephyr
   harden xinit
 
+  ## search the first available display
   XEPHYR_DISPLAY='0'
   while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
   do
@@ -297,6 +312,7 @@ EOF
   dockerize basename
   dockerize cp
   dockerize dirname
+  dockerize find
   dockerize git git
   dockerize grep
   dockerize mkdir
@@ -339,6 +355,7 @@ EOF
 
   daemon_dir="$(dirname -- "${daemon_json}")"
   conf_dir="$(dirname -- "${daemon_conf}")"
+  ## copy docker daemon config to the host and restart daemon
   if [ ! -e "${daemon_json}" ] || match="${daemon_dir}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
   then
     sudo='true' match="$(dirname -- "${daemon_dir}")" mkdir -p "${daemon_dir}"
@@ -362,6 +379,7 @@ EOF
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nexec %s\n' "':${XEPHYR_DISPLAY}'" "${WM:-awesome}" > "${xinitrc}"
 
+  ## resolve Xephyr absolute path for xinit
   _xephyr="$(
     IFS=':'
     for dir in ${PATH}
@@ -376,8 +394,6 @@ EOF
   readonly _xephyr
   xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
 
-  sleep 1
-
   trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
 
   generate_templates "${tmp}"
@@ -386,14 +402,30 @@ EOF
 
   generate_local_tags "${tmp}"
 
-  IFS=''
-  while read -r line
-  do
-    _COMPOSE_FILE="${_COMPOSE_FILE:-}${_COMPOSE_FILE:+
+  ## add extensions.yaml before each compose.yaml because anchors' YAML can not be shared accross different files:
+  ## https://github.com/docker/compose/issues/5621
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+  _COMPOSE_FILE="$(match="${tmp}" find "${tmp}" -type f -name compose.yaml -exec sh -c '
+    {
+      IFS=""
+      while read -r line
+      do
+        file="${file:-}${file:+
 }${line}"
-  done < "${tmp}/compose.yaml"
-  IFS="${old_ifs}"
-  unset line
+      done < "${2}/extensions.yaml"
+      while read -r line
+      do
+        file="${file:-}${file:+
+}${line}"
+      done < "${1}"
+      printf "%s\n" "${file}" > "${1}"
+    } > /dev/null 2>&1
+    if [ "${1}" = "${2}/compose.yaml" ]; then printf "%s\n" "${file}"; fi
+    ' sh {} "${tmp}" \;)"
+
+  ## resolve compose 'extends:' for entrypoint checks
+  _COMPOSE_FILE="$(printf '%s\n' "${_COMPOSE_FILE}" | docker compose --file - config)"
 
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"

@@ -1,0 +1,20 @@
+x-bind: &bind
+  type: bind
+  bind: {}
+x-bind-ro: &readonly-bind
+  <<: *bind
+  read_only: true
+x-dockerfile: &default-dockerfile
+  dockerfile: Dockerfile
+x-proxy-env: &proxy-environment
+  HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+  HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+x-started: &service-started
+  condition: service_started
+  required: true
+x-volume: &volume
+  type: volume
+  volume: {}
+x-volume-ro: &readonly-volume
+  <<: *volume
+  read_only: true

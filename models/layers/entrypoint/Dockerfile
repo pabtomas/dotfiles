@@ -13,7 +13,21 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add --no-cache yq
+    apk add --no-cache --virtual __yq yq
+    mkdir -p /opt/compose/volumes /opt/compose/routes
+    set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)')
+    while [ "${#}" != '0' ]
+    do
+      printf '%s\n' "${2}" >> "/opt/compose/volumes/${1}"
+      shift 2
+    done
+    set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')
+    while [ "${#}" != '0' ]
+    do
+      printf '%s\n' "${2%/*}" >> "/opt/compose/routes/${1}"
+      shift 2
+    done
+    apk del __yq
     mkdir -p "${ENTRYPOINTD_PATH}" "${CHECK_ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #! /bin/sh
@@ -58,32 +72,25 @@ main ()
 main
 TEMPLATING
     check_compose="${CHECK_ENTRYPOINTD_PATH}/99compose.sh"
+    _cat="$(command -v cat)"
     _grep="$(command -v grep)"
     _hostname="$(command -v hostname)"
     _realpath="$(command -v realpath)"
     _sort="$(command -v sort)"
     _uniq="$(command -v uniq)"
-    _yq="$(command -v yq)"
     cat << TEMPLATING > "${check_compose}"
 #! /bin/sh
 
 main ()
 {
-  # check yq is available
-  ${_yq} --version
-
   # check volumes are mounted
-  for target in \$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} ".services.\$(${_hostname}).volumes.[].target")
+  for target in \$(${_cat} /opt/compose/volumes/\$(${_hostname}))
   do
     ${_grep} " \$(${_realpath} "\${target}") " /etc/mtab
   done
 
   # check routes are available
-  filter=".services.\"\$(${_hostname})\".networks | to_entries[].key"
-  routes="\$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} "\${filter}")"
-  filter="\$(printf '.networks."%s".ipam.config[].gateway,' \${routes})"
-  gateways="\$(printf '%s\n' "${_COMPOSE_FILE}" | ${_yq} "\${filter%,}")"
-  [ -z "\$(for ip in \$(${_hostname} -i) \${gateways}
+  [ -z "\$(for ip in \$(${_hostname} -i) \$(${_cat} /opt/compose/routes/\$(${_hostname}))
            do
              ip="\${ip%.*}"
              ip="\${ip##*.}"

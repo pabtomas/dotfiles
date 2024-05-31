@@ -1,58 +1,40 @@
-'-'   -> go for it
-'?'   -> go for it but adjust the need to the V2 proposition
-'??'  -> go for it but not now
-
-TODO:
-- .vimrc: unsource .vimrc
-- .vimrc: toggle set paste
-- .vimrc: toggle hightlight search
-- .vimrc + NERDtree: mapping to open/close tree pane
-?? .vimrc: vim9script
-?? .tmux.conf: add keybinding to change color theme
-- Add a cache volume to gather for container (find a way to sync it: git/docker secret/ backup ?):
+- .vimrc:
+  - unsource .vimrc (for big files)
+  - toggle set paste
+  - toggle hightlight search
+  - NERDtree and +clientserver feature: mapping to open buffers into another vim
+  - vim9script
+- .tmux.conf:
+  - add keybinding to change color theme
+- update env.d/10tag with bot
+- Add a cache volume (1 for all or 1 for each ?) for SSHD containers (find a way to sync it: git/docker-secret/backup ?):
   - bash_history
   - vim sessions
   - tmux resurrect files
   - tmuxinator conf sessions
-- find a solution to split templates and Dockerfiles
-- jumper -> change into a layer
 - logger alias for controller
-- add aliases/remove old directory
+- decorator:
+  - figlet/lolcat/tui monitoring/socat
+  - motd
+  - dedicated service network
 - wget_me.sh:
-  - install min (or another modern minimal web browser)
-  - pull latest workspace images from registry ??
+  - pull latest workspace images from registry
   - make the script works without internet (use cache)
-- new compose.yaml file:
-  - 1 dir = 1 ALPINE Dockerfile = 1 service:
-    - decorator:
-      - figlet/lolcat/tui monitoring/xinetd/socat + service network
-      - motd
-    - drafter:
-      - tldraw/excalidraw/draw.io
-    - notetaker:
-      - hedgedoc
-    - jlesage/docker-firefox
-    - pro: aliases/packages for pro usage
-- jlesage/docker-baseimage-gui based images working with min
-- update Dockerfiles + images with bot
-- models
-
-proposition:
-  workspaces
-  ├── compose.yaml/templated
-  ├── wget_me.sh
-  ├── .github/workflows/bot.yml
-  ├── host
-  ├── proxy/jumper/collector
-  │   └── Dockerfile/templated
-  ├── layers
-  │   ├── compose.yaml/templated
-  │   └── bash/sshd/docker/linguist/pass/git/vim/tmux/zig
-  │       └── Dockerfile/templated
-  ├── explorers
-  │   ├── compose.yaml/templated
-  │   └── zig/shell
-  │       └── Dockerfile/templated
-  └── runners
-      └── spaceporn
-          └── Dockerfile/compose.yaml/templates
+- add aliases/remove old directory
+- use dockle/hadolint into CI
+- find a solution to put SHELL templates outside of Dockerfiles
+- use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
+- jumper, listener, proxy, xserver -> change into a layer or model
+- why does it rebuild image each time ?
+- runners:
+  - relay + GUI:
+    - window manager/Xephyr/xinit conf
+  - firefox:
+    - dedicated service network
+  - white-board:
+    - tldraw/excalidraw/draw.io
+    - on same firefox network
+  - secretary:
+    - hedgedoc
+    - on same firefox network
+  - pro

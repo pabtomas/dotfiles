@@ -15,7 +15,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk update
-    apk add --no-cache coreutils diffutils bash-completion tree less jq
+    apk add --no-cache bash-completion coreutils diffutils tree less
     mkdir -p "${BASH_ALIASES_PATH}" "${BASH_COMPLETION_PATH}"
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
     cat << TEMPLATING >> "$(dirname "${BASH_ALIASES_PATH}")/$(basename -s '.d' "${BASH_ALIASES_PATH}").sh"
@@ -76,7 +76,6 @@ main
 TEMPLATING
     _apk="$(command -v apk)"
     _bash="$(command -v bash)"
-    _jq="$(command -v jq)"
     _less="$(command -v less)"
     _tree="$(command -v tree)"
     cat << TEMPLATING > "${CHECK_ENTRYPOINT_PATH}"
@@ -93,8 +92,7 @@ main ()
   [ -n "\$(${_apk} info -q -L coreutils)" ]
   [ -n "\$(${_apk} info -q -L diffutils)" ]
 
-  # check jq, less & tree availability
-  ${_jq} --version
+  # check less & tree availability
   ${_less} --version
   ${_tree} --version
 }
