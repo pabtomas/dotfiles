@@ -29,7 +29,7 @@ services:
       ${XSERVER_SERVICE}:
         <<: *service-started
     extends:
-      file: ./${MODEL_ID}s/compose.yaml
+      file: ${MODELS_PATH}/compose.yaml
       service: ${_DOCKER_MODEL}
     hostname: ${CONTROLLER_HOST}
     networks:
@@ -50,7 +50,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     extends:
-      file: ./${MODEL_ID}s/compose.yaml
+      file: ${MODELS_PATH}/compose.yaml
       service: ${VIM_MODEL}
     hostname: ${EDITOR_HOST}
     volumes:
@@ -69,7 +69,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     extends:
-      file: ./${MODEL_ID}s/compose.yaml
+      file: ${MODELS_PATH}/compose.yaml
       service: ${SHELL_MODEL}
     hostname: ${SHELL_EXPLORER_HOST}
     volumes:
@@ -85,7 +85,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     extends:
-      file: ./${MODEL_ID}s/compose.yaml
+      file: ${MODELS_PATH}/compose.yaml
       service: ${ZIG_MODEL}
     hostname: ${ZIG_EXPLORER_HOST}
     volumes:
@@ -293,7 +293,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     extends:
-      file: ./${MODEL_ID}s/compose.yaml
+      file: ${MODELS_PATH}/compose.yaml
       service: ${PASS_MODEL}
     hostname: ${SAFEDEPOSIT_HOST}
     volumes:
@@ -309,7 +309,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     extends:
-      file: ./${MODEL_ID}s/compose.yaml
+      file: ${MODELS_PATH}/compose.yaml
       service: ${MAN_MODEL}
     hostname: ${SCHOLAR_HOST}
     volumes:
