@@ -129,10 +129,10 @@ _intern_img ()
   __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${1}" "${2}"
 }
 
-_component_img ()
+_layer_img ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${COMPONENT_ID}${IMG_SEP}${1}" "${2}"
+  SFX_OVERRIDE="${LAYER_IMG_SFX}" __img "${1}" "${REGISTRY_TARGET}" "${COMPOSE_PROJECT_NAME}" "${OWNER_ID}${IMG_SEP}${LAYER_ID}${IMG_SEP}${1}" "${2}"
   unset SFX_OVERRIDE
 }
 
@@ -189,10 +189,10 @@ _tag ()
   eval "$(case "${1}" in ( 'compose'*|'docker'*|'buildkit'* ) printf '_' ;; ( * ) ;; esac; _upper "${1}" || :)${SFX_OVERRIDE:-"${TAG_SFX}"}='${2}'"
 }
 
-_component_tag ()
+_layer_tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
-  SFX_OVERRIDE="${COMPONENT_TAG_SFX}" _tag "${1}" "${2}"
+  SFX_OVERRIDE="${LAYER_TAG_SFX}" _tag "${1}" "${2}"
   unset SFX_OVERRIDE
 }
 

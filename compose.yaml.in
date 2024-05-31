@@ -49,7 +49,7 @@ services:
       ${XSERVER_SERVICE}:
         <<: *service-started
     hostname: ${CONTROLLER_HOST}
-    image: ${_DOCKER_COMPONENT_IMG}
+    image: ${_DOCKER_LAYER_IMG}
     networks:
       ${BUILDER_NET}: null
       ${JUMP_AREA_NET}: null
@@ -72,7 +72,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     hostname: ${EDITOR_HOST}
-    image: ${VIM_COMPONENT_IMG}
+    image: ${VIM_LAYER_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
@@ -94,7 +94,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     hostname: ${SHELL_EXPLORER_HOST}
-    image: ${SHELL_COMPONENT_IMG}
+    image: ${SHELL_LAYER_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
@@ -113,7 +113,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     hostname: ${ZIG_EXPLORER_HOST}
-    image: ${ZIG_COMPONENT_IMG}
+    image: ${ZIG_LAYER_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
@@ -145,7 +145,7 @@ services:
         SSH_PORT: "\"${SSH_PORT}\""
         SSH_ROOT_PATH: ${SSH_ROOT_PATH}
         TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
-        TMUX_COMPONENT_IMG: ${TMUX_COMPONENT_IMG}
+        TMUX_LAYER_IMG: ${TMUX_LAYER_IMG}
     container_name: ${JUMPER_HOST}
     depends_on:
       ${CONTROLLER_SERVICE}:
@@ -214,7 +214,7 @@ services:
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LISTENER_ID}.sh
         COMPLETION_PATH: ${COMPLETION_PATH}
         DATA_PATH: ${DATA_PATH}
-        ENTRYPOINT_COMPONENT_IMG: ${ENTRYPOINT_COMPONENT_IMG}
+        ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
         <<: *proxy-environment
@@ -275,7 +275,7 @@ services:
         CONTROLLER_IP: ${CONTROLLER_IP}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
-        HTTP_COMPONENT_IMG: ${HTTP_COMPONENT_IMG}
+        HTTP_LAYER_IMG: ${HTTP_LAYER_IMG}
         <<: *proxy-environment
         LISTENER_IP: ${LISTENER_IP}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
@@ -324,7 +324,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     hostname: ${SAFEDEPOSIT_HOST}
-    image: ${PASS_COMPONENT_IMG}
+    image: ${PASS_LAYER_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
@@ -343,7 +343,7 @@ services:
       ${LISTENER_SERVICE}:
         <<: *service-started
     hostname: ${SCHOLAR_HOST}
-    image: ${MAN_COMPONENT_IMG}
+    image: ${MAN_LAYER_IMG}
     networks:
       ${JUMP_AREA_NET}: null
     volumes:
@@ -362,7 +362,7 @@ services:
         ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}
         <<: *proxy-environment
-        NGINX_COMPONENT_IMG: ${NGINX_COMPONENT_IMG}
+        NGINX_LAYER_IMG: ${NGINX_LAYER_IMG}
         SPACEPORN_RELAY_IP: ${SPACEPORN_RELAY_IP}
         VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
         XSERVER_PORT: "\"${XSERVER_PORT}\""

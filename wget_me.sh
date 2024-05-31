@@ -139,7 +139,7 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/components/compose.yaml.in" "${1}/compose.yaml.in"
+    for template in "${1}/models/layers/compose.yaml.in" "${1}/compose.yaml.in"
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
@@ -395,7 +395,7 @@ EOF
   IFS="${old_ifs}"
   unset line
 
-  docker compose --file "${tmp}/components/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
+  docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start

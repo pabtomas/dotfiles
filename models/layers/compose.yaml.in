@@ -1,0 +1,286 @@
+x-dockerfile: &default-dockerfile
+  dockerfile: Dockerfile
+x-network: &default-network
+  networks:
+    ${LAYER_ID}s_net: null
+x-proxy-env: &proxy-environment
+  HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-null}}
+  HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-null}}
+x-started: &service-started
+  condition: service_started
+  required: true
+name: ${LAYER_ID}s
+services:
+  ${BASH_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${BASH_ID}
+      <<: *default-dockerfile
+      args:
+        BASH_ALIASES_PATH: ${BASH_ALIASES_PATH}
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        BASH_ENTRYPOINT_LAYER_IMG: ${BASH_ENTRYPOINT_LAYER_IMG}
+        BASH_LOCAL_IMG: ${BASH_LOCAL_IMG}
+        BASH_THEME_PATH: ${BASH_THEME_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${BASH_ID}.sh
+        ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
+        <<: *proxy-environment
+    depends_on:
+      ${BASH_ENTRYPOINT_SERVICE}:
+        <<: *service-started
+    image: ${BASH_LAYER_IMG}
+    <<: *default-network
+  ${BASH_ENTRYPOINT_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${ENTRYPOINT_ID}
+      <<: *default-dockerfile
+      args:
+        BASE_IMG: ${BASH_LOCAL_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
+        ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+    image: ${BASH_ENTRYPOINT_LAYER_IMG}
+    <<: *default-network
+  ${_DOCKER_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${_DOCKER_ID}
+      <<: *default-dockerfile
+      args:
+        _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
+        _DOCKER_PLUGINS_PATH: ${_DOCKER_PLUGINS_PATH}
+        BIN_PATH: ${BIN_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${_DOCKER_ID}.sh
+        DOCKLE_DOWNLOAD_URL: ${DOCKLE_DOWNLOAD_URL}
+        DOCKLE_LATEST_URL: ${DOCKLE_LATEST_URL}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
+        <<: *proxy-environment
+        NET: ${JUMP_AREA_NET}
+        REGBOT_URL: ${REGBOT_URL}
+        REGCTL_URL: ${REGCTL_URL}
+        REGISTRY_TARGET: ${REGISTRY_TARGET}
+        REGSYNC_URL: ${REGSYNC_URL}
+        SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}
+        TCP_BUILDKIT_TARGET: ${TCP_BUILDKIT_TARGET}
+        TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
+        XEPHYR_DISPLAY: "\"${XEPHYR_DISPLAY}\""
+    depends_on:
+      ${SSHD_SERVICE}:
+        <<: *service-started
+    image: ${_DOCKER_LAYER_IMG}
+    <<: *default-network
+  ${ENTRYPOINT_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${ENTRYPOINT_ID}
+      <<: *default-dockerfile
+      args:
+        BASE_IMG: ${OS_LOCAL_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+        CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
+        ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+    image: ${ENTRYPOINT_LAYER_IMG}
+    <<: *default-network
+  ${GIT_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${GIT_ID}
+      <<: *default-dockerfile
+      args:
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${GIT_ID}.sh
+        <<: *proxy-environment
+        TIG_COMPLETION_URL: ${TIG_COMPLETION_URL}
+        WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}
+    depends_on:
+      ${WORKSPACES_SERVICE}:
+        <<: *service-started
+    image: ${GIT_LAYER_IMG}
+    <<: *default-network
+  ${HTTP_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${HTTP_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${HTTP_ID}.sh
+        ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
+        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
+        <<: *proxy-environment
+        LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
+        NGINX_LAYER_IMG: ${NGINX_LAYER_IMG}
+    depends_on:
+      ${NGINX_SERVICE}:
+        <<: *service-started
+    image: ${HTTP_LAYER_IMG}
+    <<: *default-network
+  ${LINGUIST_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${LINGUIST_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LINGUIST_ID}.sh
+        ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
+        <<: *proxy-environment
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        <<: *service-started
+    image: ${LINGUIST_LAYER_IMG}
+    <<: *default-network
+  ${MAN_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${MAN_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${MAN_ID}.sh
+        <<: *proxy-environment
+        SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}
+    depends_on:
+      ${SSHD_SERVICE}:
+        <<: *service-started
+    image: ${MAN_LAYER_IMG}
+    <<: *default-network
+  ${NGINX_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${NGINX_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${NGINX_ID}.sh
+        ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
+        ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
+        <<: *proxy-environment
+        VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        <<: *service-started
+    image: ${NGINX_LAYER_IMG}
+    <<: *default-network
+  ${PASS_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${PASS_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PASS_ID}.sh
+        <<: *proxy-environment
+        SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}
+    depends_on:
+      ${SSHD_SERVICE}:
+        <<: *service-started
+    image: ${PASS_LAYER_IMG}
+    <<: *default-network
+  ${SHELL_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${SHELL_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SHELL_ID}.sh
+        GIT_LAYER_IMG: ${GIT_LAYER_IMG}
+        <<: *proxy-environment
+    depends_on:
+      ${GIT_SERVICE}:
+        <<: *service-started
+    image: ${SHELL_LAYER_IMG}
+    <<: *default-network
+  ${SOCAT_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${SOCAT_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SOCAT_ID}.sh
+        ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
+        <<: *proxy-environment
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        <<: *service-started
+    image: ${SOCAT_LAYER_IMG}
+    <<: *default-network
+  ${SSHD_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${SSHD_ID}
+      <<: *default-dockerfile
+      args:
+        BASH_LAYER_IMG: ${BASH_LAYER_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SSHD_ID}.sh
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+        SSH_PORT: "\"${SSH_PORT}\""
+    depends_on:
+      ${BASH_SERVICE}:
+        <<: *service-started
+    expose:
+      - "\"${SSH_PORT}\""
+    image: ${SSHD_LAYER_IMG}
+    <<: *default-network
+  ${TMUX_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${TMUX_ID}
+      <<: *default-dockerfile
+      args:
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        BASH_LAYER_IMG: ${BASH_LAYER_IMG}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${TMUX_ID}.sh
+        <<: *proxy-environment
+        TMUX_COMPLETION_URL: ${TMUX_COMPLETION_URL}
+        TPM_PATH: ${TPM_PATH}
+        TPM_URL: ${TPM_URL}
+    depends_on:
+      ${BASH_SERVICE}:
+        <<: *service-started
+    image: ${TMUX_LAYER_IMG}
+    <<: *default-network
+  ${VIM_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${VIM_ID}
+      <<: *default-dockerfile
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${VIM_ID}.sh
+        <<: *proxy-environment
+        NERDTREE_URL: ${NERDTREE_URL}
+        POLYGLOT_URL: ${POLYGLOT_URL}
+        RAINBOW_URL: ${RAINBOW_URL}
+        UNDOTREE_URL: ${UNDOTREE_URL}
+        WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}
+    depends_on:
+      ${WORKSPACES_SERVICE}:
+        <<: *service-started
+    image: ${VIM_LAYER_IMG}
+    <<: *default-network
+  ${WORKSPACES_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${WORKSPACES_ID}
+      <<: *default-dockerfile
+      args:
+        <<: *proxy-environment
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        OWNER_URL: ${OWNER_URL}
+        SPACEPORN_ID: ${SPACEPORN_ID}
+        SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}
+        WORKSPACES_PATH: ${WORKSPACES_PATH}
+    depends_on:
+      ${SSHD_SERVICE}:
+        <<: *service-started
+    image: ${WORKSPACES_LAYER_IMG}
+    <<: *default-network
+  ${ZIG_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${ZIG_ID}
+      <<: *default-dockerfile
+      args:
+        BIN_PATH: ${BIN_PATH}
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${ZIG_ID}.sh
+        GIT_LAYER_IMG: ${GIT_LAYER_IMG}
+        <<: *proxy-environment
+        ZIG_BUILDS_URL: ${ZIG_BUILDS_URL}
+        ZIG_COMPLETION_URL: ${ZIG_COMPLETION_URL}
+        ZIG_LAYER_TAG: ${ZIG_LAYER_TAG}
+    depends_on:
+      ${GIT_SERVICE}:
+        <<: *service-started
+    image: ${ZIG_LAYER_IMG}
+    <<: *default-network
+networks:
+  ${LAYER_ID}s_net:
+    name: ${LAYER_ID}s_net

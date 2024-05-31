@@ -1,4 +1,4 @@
-# my wheel fleet
+# my whale fleet
 
 Work in progress ...
 

@@ -15,7 +15,7 @@ TODO:
   - tmux resurrect files
   - tmuxinator conf sessions
 - find a solution to split templates and Dockerfiles
-- jumper -> change into components
+- jumper -> change into a layer
 - logger alias for controller
 - add aliases/remove old directory
 - wget_me.sh:
@@ -36,7 +36,6 @@ TODO:
 - jlesage/docker-baseimage-gui based images working with min
 - update Dockerfiles + images with bot
 - models
-- components -> layers
 
 proposition:
   workspaces
@@ -46,7 +45,7 @@ proposition:
   ├── host
   ├── proxy/jumper/collector
   │   └── Dockerfile/templated
-  ├── components
+  ├── layers
   │   ├── compose.yaml/templated
   │   └── bash/sshd/docker/linguist/pass/git/vim/tmux/zig
   │       └── Dockerfile/templated
