@@ -9,7 +9,7 @@ TODO:
 - .vimrc + NERDtree: mapping to open/close tree pane
 ?? .vimrc: vim9script
 ?? .tmux.conf: add keybinding to change color theme
-- Add a cache volume to gather for container (find a way to sync it: git/docker-secret/backup ?):
+- Add a cache volume (1 for all or 1 for each ?) for SSHD containers (find a way to sync it: git/docker-secret/backup ?):
   - bash_history
   - vim sessions
   - tmux resurrect files
@@ -30,7 +30,7 @@ TODO:
 - firefox
 ?? pro
 - jlesage/docker-baseimage-gui based images working with min
-- update Dockerfiles + images with bot
+- update tags with bot
 - jumper, listener, proxy, xserver -> change into a layer or model
 - use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
 - why does it rebuild image each time ?
