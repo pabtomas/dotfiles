@@ -92,6 +92,7 @@ main ()
   # check utils packages are available
   [ -n "\$(${_apk} info -q -L coreutils)" ]
   [ -n "\$(${_apk} info -q -L diffutils)" ]
+  [ -n "\$(${_apk} info -q -L findutils)" ]
 
   # check jq, less & tree availability
   ${_jq} --version

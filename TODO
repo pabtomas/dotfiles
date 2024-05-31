@@ -36,6 +36,7 @@ TODO:
 - jlesage/docker-baseimage-gui based images working with min
 - update Dockerfiles + images with bot
 - models
+- why does it rebuild image each time ?
 
 proposition:
   workspaces
