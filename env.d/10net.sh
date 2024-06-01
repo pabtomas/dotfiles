@@ -10,6 +10,9 @@ PROXIFIED_DOCKER_SOCKET_NET="proxified-${_DOCKER_ID}-socket"
 # shellcheck disable=2153
 # SC2153: Possible misspelling => it is not, we really want PROXY_ID here
 PROXIFIED_XSERVER_SOCKET_NET="proxified-${XSERVER_ID}-socket"
+
+# shellcheck disable=2153
+# SC2153: Possible misspelling => it is not, we really want REGISTRY_ID here
 REGISTRY_NET="${REGISTRY_ID}"
 
 SUBNET_MASK='/24'

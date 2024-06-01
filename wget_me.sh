@@ -292,16 +292,17 @@ EOF
     printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nexec %s\n' "':${XEPHYR_DISPLAY}'" "${WM:-awesome}" > "${1}"
 
     ## resolve Xephyr absolute path for xinit
-    set -- "${1}" "$(IFS=':'
-                     for dir in ${PATH}
-                     do
-                       if [ -x "${dir}/Xephyr" ]
-                       then
-                         printf '%s\n' "${dir}/Xephyr"
-                         break
-                       fi
-                     done)"
-    xinit "${1}" -- "${2}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
+    _xephyr="$(IFS=':'
+               for dir in ${PATH}
+               do
+                 if [ -x "${dir}/Xephyr" ]
+                 then
+                   printf '%s\n' "${dir}/Xephyr"
+                   break
+                 fi
+               done)"
+    xinit "${1}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
+    unset _xephyr
   }
 
   ## Posix shell: no local variables => subshell instead of braces
