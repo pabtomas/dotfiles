@@ -151,7 +151,7 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/anchors.yaml.in" $(find "${1}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
+    for template in "${1}/anchors.yaml.in" $(match="${1}" find "${1}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
