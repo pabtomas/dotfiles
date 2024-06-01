@@ -19,6 +19,7 @@ services:
     image: ${BUILDER_IMG}
     networks:
       ${BUILDER_NET}: null
+      ${REGISTRY_NET}: null
     security_opt:
       - apparmor:unconfined
       - seccomp:unconfined
@@ -270,15 +271,26 @@ services:
         source: ${PROXY_VAR_LOG_NGINX_VOLUME}
         target: ${VAR_LOG_NGINX_PATH}
   ${REGISTRY_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${REGISTRY_ID}
+      <<: *default-dockerfile
+      args:
+        DATA_PATH: ${DATA_PATH}
+        <<: *proxy-environment
+        REGISTRY_LOCAL_IMG: ${REGISTRY_LOCAL_IMG}
     container_name: ${REGISTRY_HOST}
     extends:
       file: ${MODELS_PATH}/compose.yaml
       service: ${REGISTRY_MODEL}
     hostname: ${REGISTRY_HOST}
+    image: ${OVERRIDDEN_REGISTRY_IMG}
+    networks:
+      ${REGISTRY_NET}:
+        ipv4_address: ${REGISTRY_IP}
     volumes:
       - <<: *volume
         source: ${REGISTRY_VAR_LOG_VOLUME}
-        target: ${VAR_LOG_NGINX_PATH}
+        target: ${VAR_LOG_PATH}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
     depends_on:
