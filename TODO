@@ -25,7 +25,6 @@
 - find a solution to put SHELL templates outside of Dockerfiles
 - use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
 - jumper, listener, proxy, xserver -> change into a layer or model
-- why does it rebuild image each time ?
 - runners:
   - relay + GUI:
     - window manager/Xephyr/xinit conf

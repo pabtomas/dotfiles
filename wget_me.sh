@@ -219,9 +219,15 @@ EOF
     ## resolve compose 'extends:' for entrypoint checks
     compose_file="$(printf '%s\n' "${compose_file}" | docker compose --file - config)"
 
+    # shellcheck disable=2016
+    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed: it is yq variables not shell variables
     _COMPOSE_ROUTES="$(printf '%s\n' "${compose_file}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')"
     _COMPOSE_VOLUMES="$(printf '%s\n' "${compose_file}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)')"
-    _COMPOSE_JUMP_AREA_HOSTS="$(printf '%s\n' "${compose_file}" | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname' | tr '\n' ' ')"
+
+    # shellcheck disable=2154
+    # SC2154: VAR is referenced but not assigned => assigned into env.sh
+    _COMPOSE_JUMP_AREA_HOSTS="$(source_env "${1}" \
+      "printf '%s\\n' '${compose_file}' | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key==\"${JUMP_AREA_NET}\")) | .value.hostname' | tr '\n' ' '")"
     readonly _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
     export _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
 
