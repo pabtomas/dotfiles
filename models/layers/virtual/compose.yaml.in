@@ -1,6 +1,7 @@
 services:
   virtual:
     build:
+      context: .
       <<: *default-dockerfile
       args:
         <<: *proxy-environment
