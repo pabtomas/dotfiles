@@ -236,17 +236,17 @@ EOF
   ## Posix shell: no local variables => subshell instead of braces
   config_host ()
   (
-    daemon_json='/etc/docker/daemon.json'
-    daemon_conf="${1}/host/${daemon_json#/}"
-    daemon_dir="$(dirname -- "${daemon_json}")"
-    conf_dir="$(dirname -- "${daemon_conf}")"
-    readonly daemon_json daemon_conf conf_dir daemon_dir
+    etc_docker='/etc/docker'
+    conf_dir="${1}/host/${etc_docker#/}"
+    daemon_json="${etc_docker}/daemon.json"
+    daemon_conf="${conf_dir}/daemon.json"
+    readonly daemon_json daemon_conf conf_dir etc_docker
 
     ## copy docker daemon config to the host and restart daemon
-    if [ ! -e "${daemon_json}" ] || match="${daemon_dir}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
+    if [ ! -e "${daemon_json}" ] || match="${etc_docker}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
     then
-      sudo='true' match="$(dirname -- "${daemon_dir}")" mkdir -p "${daemon_dir}"
-      sudo='true' match="${conf_dir}" match2="${daemon_dir}" cp -f "${daemon_conf}" "${daemon_json}"
+      sudo='true' match="$(dirname -- "${etc_docker}")" mkdir -p "${etc_docker}"
+      sudo='true' match="${conf_dir}" match2="${etc_docker}" cp -f "${daemon_conf}" "${daemon_json}"
       if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
       then
         harden systemctl
@@ -261,15 +261,16 @@ EOF
       fi
     fi
 
-    etc_hosts='/etc/hosts'
+    etc='/etc'
+    etc_hosts="${etc}/hosts"
     hosts_conf="${1}/host/${etc_hosts#/}"
-    readonly etc_hosts hosts_conf
+    readonly etc etc_hosts hosts_conf
 
     IFS='
 '
     while read -r entry
     do
-      if ! grep "${entry}" "${etc_hosts}"
+      if ! match="${etc}" grep "^${entry}$" "${etc_hosts}"
       then
         sudo sh -c "printf '${entry}\n' >> ${etc_hosts}"
       fi
