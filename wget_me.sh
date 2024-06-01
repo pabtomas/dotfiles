@@ -151,7 +151,7 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/extensions.yaml.in" "${1}/models/layers/compose.yaml.in" "${1}/models/compose.yaml.in" "${1}/compose.yaml.in"
+    for template in "${1}/anchors.yaml.in" "${1}/models/layers/compose.yaml.in" "${1}/models/compose.yaml.in" "${1}/compose.yaml.in"
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
@@ -190,6 +190,43 @@ EOF
       docker tag "${src}" "${target}"
     done
   )
+
+  ## parse exploded main compose.yaml to set check entrypoint variables
+  parse_compose ()
+  {
+    ## add anchors.yaml before each compose.yaml because anchors' YAML can not be shared accross different files:
+    ## https://github.com/docker/compose/issues/5621
+    # shellcheck disable=2016
+    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+    compose_file="$(match="${1}" find "${1}" -type f -name compose.yaml -exec sh -c '
+      {
+        IFS=""
+        while read -r line
+        do
+          file="${file:-}${file:+
+}${line}"
+        done < "${2}/anchors.yaml"
+        while read -r line
+        do
+          file="${file:-}${file:+
+}${line}"
+        done < "${1}"
+        printf "%s\n" "${file}" > "${1}"
+      } > /dev/null 2>&1
+      if [ "${1}" = "${2}/compose.yaml" ]; then printf "%s\n" "${file}"; fi
+      ' sh {} "${1}" \;)"
+
+    ## resolve compose 'extends:' for entrypoint checks
+    compose_file="$(printf '%s\n' "${compose_file}" | docker compose --file - config)"
+
+    _COMPOSE_ROUTES="$(printf '%s\n' "${compose_file}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')"
+    _COMPOSE_VOLUMES="$(printf '%s\n' "${compose_file}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)')"
+    _COMPOSE_JUMP_AREA_HOSTS="$(printf '%s\n' "${compose_file}" | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname' | tr '\n' ' ')"
+    readonly _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
+    export _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
+
+    unset compose_file
+  }
 
   ## Posix shell: no local variables => subshell instead of braces
   ## unset DOCKET_HOST after sourcing variables needed in templated to avoid conflicts with docker client
@@ -323,6 +360,7 @@ EOF
   dockerize sort
   dockerize uniq
   dockerize wget
+  dockerize yq
   unset new_user
 
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
@@ -402,33 +440,10 @@ EOF
 
   generate_local_tags "${tmp}"
 
-  ## add extensions.yaml before each compose.yaml because anchors' YAML can not be shared accross different files:
-  ## https://github.com/docker/compose/issues/5621
-  # shellcheck disable=2016
-  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  _COMPOSE_FILE="$(match="${tmp}" find "${tmp}" -type f -name compose.yaml -exec sh -c '
-    {
-      IFS=""
-      while read -r line
-      do
-        file="${file:-}${file:+
-}${line}"
-      done < "${2}/extensions.yaml"
-      while read -r line
-      do
-        file="${file:-}${file:+
-}${line}"
-      done < "${1}"
-      printf "%s\n" "${file}" > "${1}"
-    } > /dev/null 2>&1
-    if [ "${1}" = "${2}/compose.yaml" ]; then printf "%s\n" "${file}"; fi
-    ' sh {} "${tmp}" \;)"
+  parse_compose "${tmp}"
 
-  ## resolve compose 'extends:' for entrypoint checks
-  _COMPOSE_FILE="$(printf '%s\n' "${_COMPOSE_FILE}" | docker compose --file - config)"
-
-  docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
-  docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_FILE=${_COMPOSE_FILE}"
+  docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_ROUTES=${_COMPOSE_ROUTES}" --build-arg "_COMPOSE_VOLUMES=${_COMPOSE_VOLUMES}"
+  docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_JUMP_AREA_HOSTS=${_COMPOSE_JUMP_AREA_HOSTS}"
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
   docker compose --file "${tmp}/compose.yaml" start
 

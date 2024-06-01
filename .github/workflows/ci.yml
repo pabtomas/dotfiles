@@ -71,16 +71,16 @@ jobs:
         XEPHYR_DISPLAY='0'
         export API_TAG XEPHYR_DISPLAY
         source "${GITHUB_WORKSPACE}/env.sh"
-        extensions_yaml="${GITHUB_WORKSPACE}/extensions.yaml"
-        extensions_in="${extensions_yaml}.in"
-        eval "printf '%s\n' \"$(cat "${extensions_in}")\"" > "${extensions_yaml}"
+        anchors_yaml="${GITHUB_WORKSPACE}/anchors.yaml"
+        anchors_in="${anchors_yaml}.in"
+        eval "printf '%s\n' \"$(cat "${anchors_in}")\"" > "${anchors_yaml}"
         for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
         do
           compose_yaml="${compose_in%.*}"
           # Resolve shell substitution
           eval "printf '%s\n' \"$(cat "${compose_in}")\"" > "${compose_yaml}"
           # Resolve anchors & aliases
-          compose_content="$(cat "${extensions_yaml}" "${compose_yaml}" | yq 'explode(.)')"
+          compose_content="$(cat "${anchors_yaml}" "${compose_yaml}" | yq 'explode(.)')"
           printf '%s\n' "${compose_content}" > "${compose_yaml}"
           canonical_compose="${compose_yaml}.canonical"
           docker compose --file "${compose_yaml}" config > "${canonical_compose}"

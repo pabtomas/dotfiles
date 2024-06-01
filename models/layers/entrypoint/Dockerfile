@@ -3,7 +3,8 @@ FROM ${BASE_IMG}
 
 ARG CHECK_ENTRYPOINT_PATH
 ARG CHECK_ENTRYPOINTD_PATH
-ARG _COMPOSE_FILE
+ARG _COMPOSE_ROUTES
+ARG _COMPOSE_VOLUMES
 ARG ENTRYPOINT_PATH
 ARG ENTRYPOINTD_PATH
 ARG HTTP_PROXY
@@ -13,21 +14,20 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add --no-cache --virtual __yq yq
-    mkdir -p /opt/compose/volumes /opt/compose/routes
-    set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)')
+    opt_compose='/opt/compose'
+    mkdir -p "${opt_compose}/volumes" "${opt_compose}/routes"
+    set -- ${_COMPOSE_VOLUMES}
     while [ "${#}" != '0' ]
     do
-      printf '%s\n' "${2}" >> "/opt/compose/volumes/${1}"
+      printf '%s\n' "${2}" >> "${opt_compose}/volumes/${1}"
       shift 2
     done
-    set -- $(printf '%s\n' "${_COMPOSE_FILE}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')
+    set -- ${_COMPOSE_ROUTES}
     while [ "${#}" != '0' ]
     do
-      printf '%s\n' "${2%/*}" >> "/opt/compose/routes/${1}"
+      printf '%s\n' "${2%/*}" >> "${opt_compose}/routes/${1}"
       shift 2
     done
-    apk del __yq
     mkdir -p "${ENTRYPOINTD_PATH}" "${CHECK_ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #! /bin/sh
@@ -84,18 +84,20 @@ TEMPLATING
 main ()
 {
   # check volumes are mounted
-  for target in \$(${_cat} /opt/compose/volumes/\$(${_hostname}))
+  for target in \$(${_cat} ${opt_compose}/volumes/\$(${_hostname}))
   do
     ${_grep} " \$(${_realpath} "\${target}") " /etc/mtab
   done
 
   # check routes are available
-  [ -z "\$(for ip in \$(${_hostname} -i) \$(${_cat} /opt/compose/routes/\$(${_hostname}))
+  [ -z "\$(for ip in \$(${_hostname} -i) \$(${_cat} ${opt_compose}/routes/\$(${_hostname}))
            do
              ip="\${ip%.*}"
              ip="\${ip##*.}"
              printf '%s\n' "\${ip}"
            done | ${_sort} | ${_uniq} -u)" ]
+
+  rm -rf ${opt_compose}
 }
 
 main
