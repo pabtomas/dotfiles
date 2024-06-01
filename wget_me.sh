@@ -95,7 +95,7 @@ main ()
 FROM ${target}
 
 RUN <<END_OF_RUN
-    apk --no-cache add git yq
+    apk --no-cache add git yq findutils
     rm -rf /var/lib/apt/lists/* /var/cache/apk/*
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
@@ -151,7 +151,7 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/anchors.yaml.in" "${1}/models/layers/compose.yaml.in" "${1}/models/compose.yaml.in" "${1}/compose.yaml.in"
+    for template in "${1}/anchors.yaml.in" $(match="${1}" find "${1}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
@@ -354,6 +354,7 @@ EOF
   build
   dockerize basename
   dockerize cp
+  dockerize cut
   dockerize dirname
   dockerize find
   dockerize git git
