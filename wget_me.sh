@@ -169,7 +169,7 @@ main ()
 FROM ${target}
 
 RUN <<END_OF_RUN
-    apk --no-cache add git yq findutils
+    apk --no-cache add git jq yq findutils
     rm -rf /var/lib/apt/lists/* /var/cache/apk/*
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
@@ -229,7 +229,10 @@ EOF
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
-      eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
+      case "${template%.*}" in
+      ( *.json ) eval "printf '%s\\n' \"${cat}\"" | jq > "${template%.*}" ;;
+      ( * ) eval "printf '%s\\n' \"${cat}\"" > "${template%.*}" ;;
+      esac
     done
   )
 
@@ -453,6 +456,7 @@ EOF
   dockerize find
   dockerize git git
   dockerize grep
+  dockerize jq
   dockerize mkdir
   dockerize mktemp
   dockerize rm
