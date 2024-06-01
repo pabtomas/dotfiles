@@ -170,7 +170,7 @@ FROM ${target}
 
 RUN <<END_OF_RUN
     apk --no-cache add git yq findutils
-    rm -rf /var/lib/apt/lists/* /var/cache/apk/*
+    rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp /etc/hosts /etc/docker ${1}
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
 
@@ -236,16 +236,17 @@ EOF
   ## Posix shell: no local variables => subshell instead of braces
   config_host ()
   (
-    etc_docker='/etc/docker'
+    etc='/etc'
+    etc_docker="${etc}/docker"
     conf_dir="${1}/host/${etc_docker#/}"
     daemon_json="${etc_docker}/daemon.json"
     daemon_conf="${conf_dir}/daemon.json"
-    readonly daemon_json daemon_conf conf_dir etc_docker
+    readonly daemon_json daemon_conf conf_dir etc etc_docker
 
     ## copy docker daemon config to the host and restart daemon
     if [ ! -e "${daemon_json}" ] || match="${etc_docker}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
     then
-      sudo='true' match="$(dirname -- "${etc_docker}")" mkdir -p "${etc_docker}"
+      sudo='true' match="${etc}" mkdir -p "${etc_docker}"
       sudo='true' match="${conf_dir}" match2="${etc_docker}" cp -f "${daemon_conf}" "${daemon_json}"
       if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
       then
@@ -261,10 +262,9 @@ EOF
       fi
     fi
 
-    etc='/etc'
     etc_hosts="${etc}/hosts"
     hosts_conf="${1}/host/${etc_hosts#/}"
-    readonly etc etc_hosts hosts_conf
+    readonly etc_hosts hosts_conf
 
     IFS='
 '
@@ -404,9 +404,7 @@ EOF
     ## oksh/loksh: debugtrace does not follow in functions
     if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-    CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1
-    pwd="$(pwd)"
-    match="${pwd}" wget -q -O "${pwd}/$(basename -- "${0}")" \
+    match="${2}" wget -q -O "${2}/$(basename -- "${0}")" \
       "https://raw.githubusercontent.com/${1}/wget_me.sh"
   )
 
@@ -426,11 +424,12 @@ EOF
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     match="$(dirname -- "${1}")" rm -rf "${1}"
     match="$(dirname -- "${4}")" rm -rf "${4}"
-    update_me "${2}/${3}"
+    update_me "${2}/${3}" "${5}"
   }
 
   bot='bot'
-  readonly bot
+  pwd="$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1; pwd)"
+  readonly bot pwd
 
   parse_options "${@}"
   set --
@@ -446,7 +445,7 @@ EOF
 
   ## dockerize external tools to keep same behavior wherever the script is running
   new_user='visitor'
-  build
+  build "${pwd}"
   dockerize basename
   dockerize cp
   dockerize cut
@@ -496,7 +495,7 @@ EOF
 
   config_host "${tmp}"
 
-  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
+  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}" "${pwd}"' EXIT
 
   docker network prune --force
 
