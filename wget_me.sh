@@ -170,7 +170,7 @@ FROM ${target}
 
 RUN <<END_OF_RUN
     apk --no-cache add git yq findutils
-    rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp /etc/hosts /etc/docker ${1}
+    rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp /etc/docker ${1}
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
 
@@ -261,20 +261,6 @@ EOF
         return 1
       fi
     fi
-
-    etc_hosts="${etc}/hosts"
-    hosts_conf="${1}/host/${etc_hosts#/}"
-    readonly etc_hosts hosts_conf
-
-    IFS='
-'
-    while read -r entry
-    do
-      if ! match="${etc}" grep "^${entry}$" "${etc_hosts}"
-      then
-        sudo sh -c "printf '${entry}\n' >> ${etc_hosts}"
-      fi
-    done < "${hosts_conf}"
   )
 
   ## must be call before any sourcing of env.sh because it needs XEPHYR_DISPLAY

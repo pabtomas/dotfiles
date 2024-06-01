@@ -39,3 +39,4 @@
     - hedgedoc
     - on same firefox network
   - pro
+- healthcheck for registry: docker push

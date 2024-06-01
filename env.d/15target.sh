@@ -17,7 +17,7 @@ TCP_DOCKER_TARGET="tcp://${_DOCKER_TARGET}"
 
 # shellcheck disable=2153
 # SC2153: Possible misspelling => it is not, we really want PROXY_ID here
-REGISTRY_TARGET="${REGISTRY_HOST}:${REGISTRY_PORT}"
+REGISTRY_TARGET="${REGISTRY_IP}:${REGISTRY_PORT}"
 
 # shellcheck disable=2153
 # SC2153: Possible misspelling => it is not, we really want BUILDER_HOST here
