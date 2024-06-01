@@ -241,7 +241,7 @@ EOF
     conf_dir="${1}/host/${etc_docker#/}"
     daemon_json="${etc_docker}/daemon.json"
     daemon_conf="${conf_dir}/daemon.json"
-    readonly daemon_json daemon_conf conf_dir atc etc_docker
+    readonly daemon_json daemon_conf conf_dir etc etc_docker
 
     ## copy docker daemon config to the host and restart daemon
     if [ ! -e "${daemon_json}" ] || match="${etc_docker}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
