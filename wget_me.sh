@@ -276,6 +276,7 @@ EOF
     done < "${hosts_conf}"
   )
 
+  ## must be call before any sourcing of env.sh because it needs XEPHYR_DISPLAY
   open_display ()
   {
     ## search the first available display
@@ -284,7 +285,8 @@ EOF
     do
       XEPHYR_DISPLAY="$(( XEPHYR_DISPLAY + 1 ))"
     done
-    printf '%s\n' "${XEPHYR_DISPLAY}"
+    readonly XEPHYR_DISPLAY
+    export XEPHYR_DISPLAY
 
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
@@ -487,13 +489,11 @@ EOF
   done
   unset var
 
+  open_display "${xinitrc}"
+
   generate_templates "${tmp}"
 
   config_host "${tmp}"
-
-  XEPHYR_DISPLAY="$(open_display "${xinitrc}")"
-  readonly XEPHYR_DISPLAY
-  export XEPHYR_DISPLAY
 
   trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
 
