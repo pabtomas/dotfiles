@@ -1,18 +1,5 @@
 name: ${MODEL_ID}s
 services:
-  ${_BUILDKIT_MODEL}:
-    command:
-      - --addr
-      - tcp://0.0.0.0:${BUILDER_PORT}
-      - --oci-worker-no-process-sandbox
-    expose:
-      - "\"${BUILDER_PORT}\""
-    image: ${_BUILDKIT_LOCAL_IMG}
-    networks:
-      ${BUILDER_NET}: null
-    security_opt:
-      - apparmor:unconfined
-      - seccomp:unconfined
   ${_DOCKER_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${_DOCKER_LAYER_IMG}
