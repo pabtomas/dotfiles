@@ -170,7 +170,7 @@ FROM ${target}
 
 RUN <<END_OF_RUN
     apk --no-cache add git yq findutils
-    rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp /etc/hosts /etc/docker ${2}
+    rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp /etc/hosts /etc/docker ${1}
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
 
