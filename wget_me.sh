@@ -95,7 +95,7 @@ main ()
 FROM ${target}
 
 RUN <<END_OF_RUN
-    apk --no-cache add git
+    apk --no-cache add git yq
     rm -rf /var/lib/apt/lists/* /var/cache/apk/*
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
