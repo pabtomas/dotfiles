@@ -15,6 +15,9 @@ services:
     image: ${PASS_LAYER_IMG}
   ${REGISTRY_MODEL}:
     environment:
+      REGISTRY_LOG_ACCESSLOG_DISABLED: false
+      REGISTRY_LOG_FORMATTER: text
+      REGISTRY_LOG_LEVEL: info
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${DATA_PATH}
     image: ${REGISTRY_LOCAL_IMG}
     networks:

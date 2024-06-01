@@ -9,7 +9,12 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    cat << TEMPLATING >> /etc/buildkit/buildkitd.toml
+    etc_buildkit='/etc/buildkit'
+    mkdir -p "${etc_buildkit}"
+    cat << TEMPLATING >> "${etc_buildkit}/buildkitd.toml"
+[log]
+  format = "text"
+
 [registry."${REGISTRY_TARGET}"]
   http = true
   insecure = true
