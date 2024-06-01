@@ -21,10 +21,12 @@
   - pull latest workspace images from registry
   - make the script works without internet (use cache)
 - add aliases/remove old directory
-- use dockle/hadolint into CI
+- use dockle/hadolint into CI:
+  - readonly: true for all containers
+  - use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
 - find a solution to put SHELL templates outside of Dockerfiles
-- use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
 - jumper, listener, proxy, xserver -> change into a layer or model
+- solve docker run 409
 - runners:
   - relay + GUI:
     - window manager/Xephyr/xinit conf

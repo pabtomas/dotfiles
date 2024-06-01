@@ -6,6 +6,6 @@
         }
     ],
     "insecure-registries" : [
-        "registry:5000"
+        "${REGISTRY_TARGET}"
     ]
 }

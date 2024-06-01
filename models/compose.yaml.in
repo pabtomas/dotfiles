@@ -29,7 +29,7 @@ services:
   ${REGISTRY_MODEL}:
     environment:
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${DATA_PATH}
-    image: ${REGISTRY_IMG}
+    image: ${REGISTRY_LOCAL_IMG}
     networks:
       ${REGISTRY_NET}: null
     read_only: true
