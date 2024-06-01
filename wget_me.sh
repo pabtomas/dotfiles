@@ -262,19 +262,15 @@ EOF
       fi
     fi
 
-    etc_hosts='/etc/hosts'
+    etc_hosts="${etc}/hosts"
     hosts_conf="${1}/host/${etc_hosts#/}"
     readonly etc_hosts hosts_conf
-
-    while read -r "${}"
-    do
-    done < "${etc_hosts}"
 
     IFS='
 '
     while read -r entry
     do
-      if ! grep "^${entry}$"
+      if ! match="${etc}" grep "^${entry}$" "${etc_hosts}"
       then
         sudo sh -c "printf '${entry}\n' >> ${etc_hosts}"
       fi
