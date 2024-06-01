@@ -6,12 +6,11 @@ ARG BASH_COMPLETION_PATH
 ARG BASH_THEME_PATH
 ARG CHECK_ENTRYPOINT_PATH
 ARG COMPLETION_PATH
-ARG _COMPOSE_FILE
+ARG _COMPOSE_JUMP_AREA_HOSTS
 ARG CONTROLLER_ID
 ARG ENTRYPOINTD_PATH
 ARG OPT_SCRIPTS_PATH
 ARG OPT_SSH_PATH
-ARG NET
 ARG NET_PFX
 ARG SSH_PORT
 ARG SSH_ROOT_PATH
@@ -24,9 +23,6 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache openssh-client
-    apk add --no-cache --virtual __yq yq
-    targets="$(printf '%s\n' "${_COMPOSE_FILE}" | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key=="${NET}")) | .value.hostname' | tr '\n' ' ')"
-    apk del __yq
     mkdir -p "${SSH_ROOT_PATH}" "${OPT_SSH_PATH}" "${OPT_SCRIPTS_PATH}"
     key_path="${SSH_ROOT_PATH}/id_rsa"
     ssh-keygen -q -t rsa -N '' -f "${key_path}"
@@ -112,7 +108,7 @@ main ()
   set -eux
 
   # check hosts are available through ssh
-  for host in ${targets}
+  for host in ${_COMPOSE_JUMP_AREA_HOSTS}
   do
     if [ "\${host}" != "\$(${_hostname})" ]
     then

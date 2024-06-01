@@ -84,7 +84,6 @@ services:
         CONTROLLER_ID: ${CONTROLLER_ID}
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         <<: *proxy-environment
-        NET: ${JUMP_AREA_NET}
         NET_PFX: ${JUMP_AREA_PFX}
         OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
         OPT_SSH_PATH: ${OPT_SSH_PATH}

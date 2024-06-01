@@ -21,15 +21,19 @@ jobs:
         - zsh
     runs-on: ubuntu-latest
     steps:
+    # Fetch only a single file
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          wget_me.sh
+        sparse-checkout-cone-mode: false
     - name: check wget_me.sh
       env:
         PKG: ${{ matrix.pkg }}
       shell: bash
       run: |
         set -eux
-        tmp="$(mktemp '/tmp/tmp.XXXXXXXXXX.sh')"
-        wget -q -O "${tmp}" "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_HEAD_REF}/wget_me.sh"
-        chmod 0700 "${tmp}"
+        chmod 0700 "${GITHUB_WORKSPACE}/wget_me.sh"
         sudo apt-get update -y
         case "${PKG}" in
         ( 'busybox'|'loksh'|'oksh'|'yash'|'zsh' )
@@ -50,7 +54,7 @@ jobs:
         DISPLAY=':0'
         export DISPLAY
         Xvfb "${DISPLAY}" &
-        ${EXE} -x ${tmp} --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
+        ${EXE} -x "${GITHUB_WORKSPACE}/wget_me.sh" --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
   shellcheck:
     runs-on: ubuntu-latest
     steps:
@@ -58,7 +62,7 @@ jobs:
     - name: shellcheck
       shell: bash
       run: |
-        shellcheck --severity style --external-sources ./env.sh --external-sources ./env.d/*.sh wget_me.sh
+        shellcheck --severity style --external-sources ./env.sh --external-sources ./env.d/*.sh "${GITHUB_WORKSPACE}/wget_me.sh"
   canonical_compose:
     runs-on: ubuntu-latest
     steps:
@@ -71,16 +75,16 @@ jobs:
         XEPHYR_DISPLAY='0'
         export API_TAG XEPHYR_DISPLAY
         source "${GITHUB_WORKSPACE}/env.sh"
-        extensions_yaml="${GITHUB_WORKSPACE}/extensions.yaml"
-        extensions_in="${extensions_yaml}.in"
-        eval "printf '%s\n' \"$(cat "${extensions_in}")\"" > "${extensions_yaml}"
+        anchors_yaml="${GITHUB_WORKSPACE}/anchors.yaml"
+        anchors_in="${anchors_yaml}.in"
+        eval "printf '%s\n' \"$(cat "${anchors_in}")\"" > "${anchors_yaml}"
         for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
         do
           compose_yaml="${compose_in%.*}"
           # Resolve shell substitution
           eval "printf '%s\n' \"$(cat "${compose_in}")\"" > "${compose_yaml}"
           # Resolve anchors & aliases
-          compose_content="$(cat "${extensions_yaml}" "${compose_yaml}" | yq 'explode(.)')"
+          compose_content="$(cat "${anchors_yaml}" "${compose_yaml}" | yq 'explode(.)')"
           printf '%s\n' "${compose_content}" > "${compose_yaml}"
           canonical_compose="${compose_yaml}.canonical"
           docker compose --file "${compose_yaml}" config > "${canonical_compose}"
