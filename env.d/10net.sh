@@ -10,6 +10,9 @@ PROXIFIED_DOCKER_SOCKET_NET="proxified-${_DOCKER_ID}-socket"
 # shellcheck disable=2153
 # SC2153: Possible misspelling => it is not, we really want PROXY_ID here
 PROXIFIED_XSERVER_SOCKET_NET="proxified-${XSERVER_ID}-socket"
+
+# shellcheck disable=2153
+# SC2153: Possible misspelling => it is not, we really want REGISTRY_ID here
 REGISTRY_NET="${REGISTRY_ID}"
 
 SUBNET_MASK='/24'
@@ -37,3 +40,4 @@ LISTENER_IP="${PROXIFIED_DOCKER_SOCKET_PFX}.3"
 CONTROLLER_IP="${PROXIFIED_DOCKER_SOCKET_PFX}.4"
 XSERVER_IP="${PROXIFIED_XSERVER_SOCKET_PFX}.2"
 SPACEPORN_RELAY_IP="${PROXIFIED_XSERVER_SOCKET_PFX}.3"
+REGISTRY_IP="${REGISTRY_PFX}.2"

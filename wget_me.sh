@@ -39,6 +39,23 @@ main ()
 
   ## cleanup done: now it is time to define needed functions
 
+  parse_options ()
+  {
+    while [ "${#}" != '0' ]
+    do
+      case "${1}" in
+      ( '--runner-is-a-bot' ) runner="${bot}"; shift 1 ;;
+      ( '--branch' ) branch="${2}"; shift 2 ;;
+      ( * ) printf 'Unknown flag: "%s"\n' "${1}" >&2; return 1 ;;
+      esac
+    done
+
+    ## options fallback
+    branch="${branch:-trunk}"
+    runner="${runner:-someone}"
+    readonly branch runner
+  }
+
   ## zsh has a which builtin. ksh93u+m has a sleep builtin.
   ## this is a simple way to standardize external tools usage the script can not dockerize whatever the shell used to run this script.
   ## no `which`, `command` or `whence` usage: because their behavior differ depending of the used shell
@@ -70,6 +87,63 @@ main ()
     fi
     unset flag
   }
+
+  install_docker ()
+  {
+    if [ ! -f /etc/os-release ]
+    then
+      ## get_distribution () comment into https://get.docker.com/ script
+      printf 'Can not find /etc/os-release. The OS where this script is running is probably not officialy supported by Docker.\n' >&2
+      return 1
+    fi
+
+    ## install docker
+    if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
+
+    ## check
+    harden docker
+  }
+
+  ## Posix shell: no local variables => subshell instead of braces
+  update_docker ()
+  (
+    dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
+    readonly dist
+
+    ## update docker to the last version depending of the OS
+    case "${dist}" in
+    ( 'ubuntu'|'debian' )
+      harden apt-get apt_get sudo
+
+      ## do not fail if internet is not available
+      set +e
+
+      apt_get update -y
+      apt_get upgrade -y
+
+      ## the function fails later if matching executable are not available
+      apt_get install xserver-xephyr xinit -y
+      set -e ;;
+    ( 'alpine' )
+      harden apk apk sudo
+
+      ## do not fail if internet is not available
+      set +e
+
+      apk update
+      apk upgrade
+
+      ## the function fails later if matching executable are not available
+      apk add xorg-server-xephyr xinit
+      set -e ;;
+    ( * )
+      printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
+    esac
+
+    ## check X utils
+    harden Xephyr
+    harden xinit
+  )
 
   ## Posix shell: no local variables => subshell instead of braces
   ## build the oneshot docker image
@@ -151,13 +225,87 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/anchors.yaml.in" $(match="${1}" find "${1}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
+    for template in "${1}/anchors.yaml.in" $(match="${1}" find "${1}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${1}" find "${1}" -type f -name '*.in' -not -name '*.yaml.in')
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
       eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
     done
   )
+
+  ## Posix shell: no local variables => subshell instead of braces
+  config_host ()
+  (
+    etc_docker='/etc/docker'
+    conf_dir="${1}/host/${etc_docker#/}"
+    daemon_json="${etc_docker}/daemon.json"
+    daemon_conf="${conf_dir}/daemon.json"
+    readonly daemon_json daemon_conf conf_dir etc_docker
+
+    ## copy docker daemon config to the host and restart daemon
+    if [ ! -e "${daemon_json}" ] || match="${etc_docker}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
+    then
+      sudo='true' match="$(dirname -- "${etc_docker}")" mkdir -p "${etc_docker}"
+      sudo='true' match="${conf_dir}" match2="${etc_docker}" cp -f "${daemon_conf}" "${daemon_json}"
+      if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
+      then
+        harden systemctl
+        sudo systemctl restart docker
+      elif [ -e "$(command -v service 2> /dev/null || :)" ]
+      then
+        harden service
+        sudo service docker restart
+      else
+        printf 'Can not restart Dockerd: unknown service manager\n' >&2
+        return 1
+      fi
+    fi
+
+    etc='/etc'
+    etc_hosts="${etc}/hosts"
+    hosts_conf="${1}/host/${etc_hosts#/}"
+    readonly etc etc_hosts hosts_conf
+
+    IFS='
+'
+    while read -r entry
+    do
+      if ! match="${etc}" grep "^${entry}$" "${etc_hosts}"
+      then
+        sudo sh -c "printf '${entry}\n' >> ${etc_hosts}"
+      fi
+    done < "${hosts_conf}"
+  )
+
+  ## must be call before any sourcing of env.sh because it needs XEPHYR_DISPLAY
+  open_display ()
+  {
+    ## search the first available display
+    XEPHYR_DISPLAY='0'
+    while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
+    do
+      XEPHYR_DISPLAY="$(( XEPHYR_DISPLAY + 1 ))"
+    done
+    readonly XEPHYR_DISPLAY
+    export XEPHYR_DISPLAY
+
+    # shellcheck disable=2016
+    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+    printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nexec %s\n' "':${XEPHYR_DISPLAY}'" "${WM:-awesome}" > "${1}"
+
+    ## resolve Xephyr absolute path for xinit
+    _xephyr="$(IFS=':'
+               for dir in ${PATH}
+               do
+                 if [ -x "${dir}/Xephyr" ]
+                 then
+                   printf '%s\n' "${dir}/Xephyr"
+                   break
+                 fi
+               done)"
+    xinit "${1}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
+    unset _xephyr
+  }
 
   ## Posix shell: no local variables => subshell instead of braces
   ## Use local images if already downloaded: https://stackoverflow.com/a/70483395
@@ -200,7 +348,8 @@ EOF
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     compose_file="$(match="${1}" find "${1}" -type f -name compose.yaml -exec sh -c '
       {
-        IFS=""
+        IFS="
+"
         while read -r line
         do
           file="${file:-}${file:+
@@ -283,71 +432,17 @@ EOF
   bot='bot'
   readonly bot
 
-  ## parse options
-  while [ "${#}" != '0' ]
-  do
-    case "${1}" in
-    ( '--runner-is-a-bot' ) runner="${bot}"; shift 1 ;;
-    ( '--branch' ) branch="${2}"; shift 2 ;;
-    ( * ) printf 'Unknown flag: "%s"\n' "${1}" >&2; return 1 ;;
-    esac
-  done
-
-  ## options fallback
-  branch="${branch:-trunk}"
-  runner="${runner:-someone}"
-  readonly branch runner
-
-  if [ ! -f /etc/os-release ]
-  then
-    ## get_distribution () comment into https://get.docker.com/ script
-    printf 'Can not find /etc/os-release. The OS where this script is running is probably not officialy supported by Docker.\n' >&2
-    return 1
-  fi
+  parse_options "${@}"
+  set --
 
   harden sudo
   harden wget
   harden id
+  harden sh
 
-  ## install docker
-  if [ ! -e "$(command -v docker 2> /dev/null || :)" ]; then wget -q -O- https://get.docker.com | sudo sh; fi
+  install_docker
 
-  ## check docker installation
-  harden docker
-
-  dist="$(. /etc/os-release && printf '%s\n' "${ID}")"
-  readonly dist
-
-  ## update docker to the last version depending of the OS
-  set +e
-  case "${dist}" in
-  ( 'ubuntu'|'debian' )
-    harden apt-get apt_get sudo
-    apt_get update -y
-    apt_get upgrade -y
-    apt_get install xserver-xephyr xinit -y ;;
-  ( 'alpine' )
-    harden apk apk sudo
-    apk update
-    apk upgrade
-    apk add xorg-server-xephyr xinit ;;
-  ( * )
-    printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
-  esac
-  set -e
-
-  ## check X utils
-  harden Xephyr
-  harden xinit
-
-  ## search the first available display
-  XEPHYR_DISPLAY='0'
-  while [ -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]
-  do
-    XEPHYR_DISPLAY="$(( XEPHYR_DISPLAY + 1 ))"
-  done
-  readonly XEPHYR_DISPLAY
-  export XEPHYR_DISPLAY
+  update_docker
 
   ## dockerize external tools to keep same behavior wherever the script is running
   new_user='visitor'
@@ -395,54 +490,13 @@ EOF
   done
   unset var
 
-  daemon_json='/etc/docker/daemon.json'
-  daemon_conf="${tmp}/host/${daemon_json#/}"
-  readonly daemon_json daemon_conf
-
-  daemon_dir="$(dirname -- "${daemon_json}")"
-  conf_dir="$(dirname -- "${daemon_conf}")"
-  ## copy docker daemon config to the host and restart daemon
-  if [ ! -e "${daemon_json}" ] || match="${daemon_dir}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
-  then
-    sudo='true' match="$(dirname -- "${daemon_dir}")" mkdir -p "${daemon_dir}"
-    sudo='true' match="${conf_dir}" match2="${daemon_dir}" cp -f "${daemon_conf}" "${daemon_json}"
-    if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
-    then
-      harden systemctl
-      sudo systemctl restart docker
-    elif [ -e "$(command -v service 2> /dev/null || :)" ]
-    then
-      harden service
-      sudo service docker restart
-    else
-      printf 'Can not restart Dockerd: unknown service manager\n' >&2
-      return 1
-    fi
-  fi
-  unset daemon_dir conf_dir
-
-  # shellcheck disable=2016
-  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nexec %s\n' "':${XEPHYR_DISPLAY}'" "${WM:-awesome}" > "${xinitrc}"
-
-  ## resolve Xephyr absolute path for xinit
-  _xephyr="$(
-    IFS=':'
-    for dir in ${PATH}
-    do
-      if [ -x "${dir}/Xephyr" ]
-      then
-        printf '%s\n' "${dir}/Xephyr"
-        break
-      fi
-    done
-  )"
-  readonly _xephyr
-  xinit "${xinitrc}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
-
-  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
+  open_display "${xinitrc}"
 
   generate_templates "${tmp}"
+
+  config_host "${tmp}"
+
+  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}"' EXIT
 
   docker network prune --force
 
