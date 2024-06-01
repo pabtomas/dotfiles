@@ -96,8 +96,6 @@ main ()
              ip="\${ip##*.}"
              printf '%s\n' "\${ip}"
            done | ${_sort} | ${_uniq} -u)" ]
-
-  rm -rf ${opt_compose}
 }
 
 main
