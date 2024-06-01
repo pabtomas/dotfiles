@@ -1,0 +1,12 @@
+services:
+  virtual:
+    build:
+      <<: *default-dockerfile
+      args:
+        <<: *proxy-environment
+    networks:
+      ${LAYER_ID}s_net: null
+networks:
+  ${LAYER_ID}s_net:
+    name: ${LAYER_ID}s_net
+    external: true
