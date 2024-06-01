@@ -14,20 +14,6 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    opt_compose='/opt/compose'
-    mkdir -p "${opt_compose}/volumes" "${opt_compose}/routes"
-    set -- ${_COMPOSE_VOLUMES}
-    while [ "${#}" != '0' ]
-    do
-      printf '%s\n' "${2}" >> "${opt_compose}/volumes/${1}"
-      shift 2
-    done
-    set -- ${_COMPOSE_ROUTES}
-    while [ "${#}" != '0' ]
-    do
-      printf '%s\n' "${2%/*}" >> "${opt_compose}/routes/${1}"
-      shift 2
-    done
     mkdir -p "${ENTRYPOINTD_PATH}" "${CHECK_ENTRYPOINTD_PATH}"
     cat << TEMPLATING > "${ENTRYPOINT_PATH}"
 #! /bin/sh
@@ -72,7 +58,6 @@ main ()
 main
 TEMPLATING
     check_compose="${CHECK_ENTRYPOINTD_PATH}/99compose.sh"
-    _cat="$(command -v cat)"
     _grep="$(command -v grep)"
     _hostname="$(command -v hostname)"
     _realpath="$(command -v realpath)"
@@ -83,14 +68,31 @@ TEMPLATING
 
 main ()
 {
+  set -eux
+
   # check volumes are mounted
-  for target in \$(${_cat} ${opt_compose}/volumes/\$(${_hostname}))
+  set -- ${_COMPOSE_VOLUMES}
+  while [ "\${#}" != '0' ]
   do
-    ${_grep} " \$(${_realpath} "\${target}") " /etc/mtab
+    if [ \${1} = \$(${_hostname}) ]
+    then
+      ${_grep} " \$(${_realpath} "\${2}") " /etc/mtab
+    fi
+    shift 2
   done
 
   # check routes are available
-  [ -z "\$(for ip in \$(${_hostname} -i) \$(${_cat} ${opt_compose}/routes/\$(${_hostname}))
+  set -- ${_COMPOSE_ROUTES}
+  while [ "\${#}" != '0' ]
+  do
+    if [ \${1} = \$(${_hostname}) ]
+    then
+      routes="\${routes:-}\${2%/*}"
+    fi
+    shift 2
+  done
+
+  [ -z "\$(for ip in \$(${_hostname} -i) \${routes:-})
            do
              ip="\${ip%.*}"
              ip="\${ip##*.}"
