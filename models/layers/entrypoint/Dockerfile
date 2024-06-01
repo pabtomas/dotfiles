@@ -74,7 +74,7 @@ main ()
   set -- ${_COMPOSE_VOLUMES}
   while [ "\${#}" != '0' ]
   do
-    if [ \${1} = \$(${_hostname}) ]
+    if [ "\${1}" = "\$(${_hostname})" ]
     then
       ${_grep} " \$(${_realpath} "\${2}") " /etc/mtab
     fi
@@ -85,7 +85,7 @@ main ()
   set -- ${_COMPOSE_ROUTES}
   while [ "\${#}" != '0' ]
   do
-    if [ \${1} = \$(${_hostname}) ]
+    if [ "\${1}" = "\$(${_hostname})" ]
     then
       routes="\${routes:-}\${2%/*}"
     fi

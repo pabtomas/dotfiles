@@ -221,8 +221,8 @@ EOF
 
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed: it is yq variables not shell variables
-    _COMPOSE_ROUTES="$(printf '%s\n' "${compose_file}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)')"
-    _COMPOSE_VOLUMES="$(printf '%s\n' "${compose_file}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)')"
+    _COMPOSE_ROUTES="$(printf '%s\n' "${compose_file}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)' | tr '\n' ' ')"
+    _COMPOSE_VOLUMES="$(printf '%s\n' "${compose_file}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)' | tr '\n' ' ')"
 
     # shellcheck disable=2154
     # SC2154: VAR is referenced but not assigned => assigned into env.sh
@@ -364,6 +364,7 @@ EOF
   dockerize sed
   dockerize sleep
   dockerize sort
+  dockerize tr
   dockerize uniq
   dockerize wget
   dockerize yq
