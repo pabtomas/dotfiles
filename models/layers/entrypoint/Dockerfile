@@ -87,7 +87,7 @@ main ()
   do
     if [ "\${1}" = "\$(${_hostname})" ]
     then
-      routes="\${routes:-}\${2%/*}"
+      routes="\${routes:-}\${routes:+ }\${2%/*}"
     fi
     shift 2
   done
