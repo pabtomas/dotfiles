@@ -496,6 +496,13 @@ EOF
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+  if [ "$(source_env "${tmp}" 'docker container inspect --format "{{ .State.Status }}" "${JUMPER_SERVICE}"')" != 'running']
+  then
+    source_env "${tmp}" 'docker compose --file "${tmp}/compose.yaml" logs "${JUMPER_SERVICE}"'
+  fi
+
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env "${tmp}" \
     'docker compose --file "${tmp}/compose.yaml" exec "${JUMPER_SERVICE}" sh "${OPT_SCRIPTS_PATH}/after_entrypoint.sh"'
 
@@ -519,7 +526,7 @@ EOF
     for failed in ${failed_services}
     do
       printf 'This service failed: %s\n' "${failed}" >&2
-      docker logs "${failed}"
+      docker compose --file "${tmp}/compose.yaml" logs "${failed}"
     done
     set +f
     unset failed
@@ -533,7 +540,7 @@ EOF
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env "${tmp}" \
-    'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
+    'docker compose --file "${tmp}/compose.yaml" logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
 
   ## Attach to the workspace
   if [ "${runner}" != "${bot}" ]
