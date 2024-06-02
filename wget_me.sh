@@ -169,7 +169,7 @@ main ()
 FROM ${target}
 
 RUN <<END_OF_RUN
-    apk --no-cache add git yq findutils
+    apk --no-cache add git yq findutils lshw
     rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp /etc/docker ${1}
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
@@ -243,6 +243,14 @@ EOF
     daemon_conf="${conf_dir}/daemon.json"
     readonly daemon_json daemon_conf conf_dir etc etc_docker
 
+    ## configure docker with nvidia-container-toolkit (if nvidia detected)
+    if sudo='true' lshw -C display | grep vendor: | grep -i nvidia
+    then
+      ## does not install nvidia-container-toolkit (not easily scriptable) so it fails if not found
+      harden nvidia-ctk nvidia_ctk sudo
+      nvidia_ctk runtime configure --runtime=docker --config="${daemon_conf}"
+    fi
+
     ## copy docker daemon config to the host and restart daemon
     if [ ! -e "${daemon_json}" ] || match="${etc_docker}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
     then
@@ -250,12 +258,12 @@ EOF
       sudo='true' match="${conf_dir}" match2="${etc_docker}" cp -f "${daemon_conf}" "${daemon_json}"
       if [ -e "$(command -v systemctl 2> /dev/null || :)" ]
       then
-        harden systemctl
-        sudo systemctl restart docker
+        harden systemctl systemctl sudo
+        systemctl restart docker
       elif [ -e "$(command -v service 2> /dev/null || :)" ]
       then
-        harden service
-        sudo service docker restart
+        harden service service sudo
+        service docker restart
       else
         printf 'Can not restart Dockerd: unknown service manager\n' >&2
         return 1
@@ -439,6 +447,7 @@ EOF
   dockerize find
   dockerize git git
   dockerize grep
+  dockerize lshw
   dockerize mkdir
   dockerize mktemp
   dockerize rm
