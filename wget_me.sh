@@ -496,7 +496,7 @@ EOF
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  if [ "$(source_env "${tmp}" 'docker container inspect --format "{{ .State.Status }}" "${JUMPER_SERVICE}"')" != 'running']
+  if [ "$(source_env "${tmp}" 'docker container inspect --format "{{ .State.Status }}" "${JUMPER_SERVICE}"')" != 'running' ]
   then
     source_env "${tmp}" 'docker compose --file "${tmp}/compose.yaml" logs "${JUMPER_SERVICE}"'
   fi
