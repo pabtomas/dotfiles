@@ -4,9 +4,8 @@ services:
     extends: ${SSHD_MODEL}
     image: ${_DOCKER_LAYER_IMG}
     networks:
-      ${BUILDER_NET}: null
+      ${_DOCKER_NET}: null
       ${PROXIFIED_DOCKER_SOCKET_NET}: null
-      ${REGISTRY_NET}: null
   ${MAN_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${MAN_LAYER_IMG}
@@ -21,7 +20,7 @@ services:
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: ${DATA_PATH}
     image: ${REGISTRY_LOCAL_IMG}
     networks:
-      ${REGISTRY_NET}: null
+      ${_DOCKER_NET}: null
     read_only: true
     volumes:
       - <<: *volume
@@ -50,17 +49,14 @@ services:
     extends: ${SSHD_MODEL}
     image: ${ZIG_LAYER_IMG}
 networks:
-  ${BUILDER_NET}:
-    name: ${BUILDER_NET}
+  ${_DOCKER_NET}:
+    name: ${_DOCKER_NET}
     external: true
   ${JUMP_AREA_NET}:
     name: ${JUMP_AREA_NET}
     external: true
   ${PROXIFIED_DOCKER_SOCKET_NET}:
     name: ${PROXIFIED_DOCKER_SOCKET_NET}
-    external: true
-  ${REGISTRY_NET}:
-    name: ${REGISTRY_NET}
     external: true
 volumes:
   ${REGISTRY_VOLUME}:

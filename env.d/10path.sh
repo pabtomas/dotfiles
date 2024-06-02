@@ -22,13 +22,14 @@ _path "${XSERVER_ID}_socket" "${TMP_XSERVER_SOCKETS_PATH}/X${XEPHYR_DISPLAY}"
 _path 'ssh_root' '/root/.ssh'
 _path 'tpm' '/root/.tmux/plugins/tpm'
 _path 'var_log' '/var/log'
-_path "${WORKSPACES_ID}" '/workspaces'
 _path 'completion' "${DATA_PATH}/99completion"
 _path "${ENTRYPOINT_ID}" "${OPT_SCRIPTS_PATH}/docker_entrypoint.sh"
 _path 'entrypointd' "${ENTRYPOINT_PATH%/*}/$(set -- "${ENTRYPOINT_PATH##*/}"; printf '%s\n' "${1%.*}").d"
 _path 'check_entrypoint' "${ENTRYPOINTD_PATH}/98check.sh"
 _path 'check_entrypointd' "${CHECK_ENTRYPOINT_PATH%/*}/$(set -- "${CHECK_ENTRYPOINT_PATH##*/}"; printf '%s\n' "${1%.*}").d"
 _path 'cron_log' "${VAR_LOG_PATH}/cron.log"
+_path "${_BUILDKIT_ID}_config" '/etc/buildkit/buildkitd.toml'
+_path "${WORKSPACES_ID}" '/workspaces'
 _path "${COMPOSE_PROJECT_NAME}" "${WORKSPACES_PATH}/${COMPOSE_PROJECT_NAME}"
 _path "${SPACEPORN_ID}" "${WORKSPACES_PATH}/${SPACEPORN_ID}"
 _path 'cwd' "$(set -- "${#}" "${@}"; shift "${1}" || :; printf '%s\n' "${1}")"

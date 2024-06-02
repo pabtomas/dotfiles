@@ -2,6 +2,7 @@ ARG _BUILDKIT_LOCAL_IMG
 
 FROM ${_BUILDKIT_LOCAL_IMG}
 
+ARG _BUILDKIT_CONFIG_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG REGISTRY_TARGET
@@ -12,9 +13,8 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    etc_buildkit='/etc/buildkit'
-    mkdir -p "${etc_buildkit}"
-    cat << TEMPLATING >> "${etc_buildkit}/buildkitd.toml"
+    mkdir -p "$(dirname -- "${_BUILDKIT_CONFIG_PATH}")"
+    cat << TEMPLATING >> "${_BUILDKIT_CONFIG_PATH}"
 [log]
   format = "text"
 

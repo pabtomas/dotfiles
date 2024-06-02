@@ -17,7 +17,6 @@ _intern_img "${CONTROLLER_ID}" "${OWNER_TAG}"
 _intern_img "${JUMPER_ID}" "${OWNER_TAG}"
 _intern_img "${LISTENER_ID}" "${OWNER_TAG}"
 _intern_img "${PROXY_ID}" "${OWNER_TAG}"
-_intern_img "overridden_${REGISTRY_ID}" "${REGISTRY_TAG}"
 _intern_img "${XSERVER_ID}" "${OWNER_TAG}"
 
 _layer_img "${BASH_ID}" "${OWNER_TAG}"
