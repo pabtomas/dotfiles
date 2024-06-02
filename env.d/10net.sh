@@ -3,7 +3,7 @@
 # SC2034: VAR appears unused => VAR used for templating
 # SC2154: VAR is referenced but not assigned => VAR is assigned with eval statement in 01init.sh function
 
-_DOCKER_NET=${_DOCKER_ID}
+_DOCKER_NET="${_DOCKER_ID}"
 JUMP_AREA_NET='jump-area'
 PROXIFIED_DOCKER_SOCKET_NET="proxified-${_DOCKER_ID}-socket"
 
