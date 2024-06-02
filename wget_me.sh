@@ -496,20 +496,14 @@ EOF
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  jumper_state="$(source_env "${tmp}" 'docker container inspect --format "{{ .State.Status }}" "${JUMPER_SERVICE}"')"
-  if [ "${jumper_state}" != 'running' ]
+  if ! source_env "${tmp}" \
+    'docker compose --file "${tmp}/compose.yaml" exec "${JUMPER_SERVICE}" sh "${OPT_SCRIPTS_PATH}/after_entrypoint.sh"'
   then
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     source_env "${tmp}" 'docker compose --file "${tmp}/compose.yaml" logs "${JUMPER_SERVICE}"'
     return 1
   fi
-  unset jumper_state
-
-  # shellcheck disable=2016
-  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  source_env "${tmp}" \
-    'docker compose --file "${tmp}/compose.yaml" exec "${JUMPER_SERVICE}" sh "${OPT_SCRIPTS_PATH}/after_entrypoint.sh"'
 
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
