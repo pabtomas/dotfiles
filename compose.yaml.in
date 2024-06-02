@@ -5,12 +5,15 @@ services:
       context: ${CWD_PATH}/${BUILDER_ID}
       <<: *default-dockerfile
       args:
+        _BUILDKIT_CONFIG_PATH: ${_BUILDKIT_CONFIG_PATH}
         _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}
         <<: *proxy-environment
         REGISTRY_TARGET: ${REGISTRY_TARGET}
     command:
       - --addr
       - tcp://0.0.0.0:${BUILDER_PORT}
+      - --config
+      - ${_BUILDKIT_CONFIG_PATH}
       - --oci-worker-no-process-sandbox
     container_name: ${BUILDER_HOST}
     expose:
@@ -18,8 +21,8 @@ services:
     hostname: ${BUILDER_HOST}
     image: ${BUILDER_IMG}
     networks:
-      ${BUILDER_NET}: null
-      ${REGISTRY_NET}: null
+      ${_DOCKER_NET}:
+        ipv4_address: ${BUILDER_IP}
     security_opt:
       - apparmor:unconfined
       - seccomp:unconfined
@@ -41,6 +44,8 @@ services:
       service: ${_DOCKER_MODEL}
     hostname: ${CONTROLLER_HOST}
     networks:
+      ${_DOCKER_NET}:
+        ipv4_address: ${CLIENT_IP}
       ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
     volumes:
@@ -149,9 +154,6 @@ services:
       - <<: *readonly-volume
         source: ${PROXY_VAR_LOG_NGINX_VOLUME}
         target: /opt/${PROXY_ID}${VAR_LOG_NGINX_PATH}
-      - <<: *readonly-volume
-        source: ${REGISTRY_VAR_LOG_VOLUME}
-        target: /opt/${REGISTRY_ID}${VAR_LOG_PATH}
       - <<: *readonly-volume
         source: ${RELAY_VAR_LOG_VOLUME}
         target: /opt/${RELAY_ID}${VAR_LOG_PATH}
@@ -271,26 +273,14 @@ services:
         source: ${PROXY_VAR_LOG_NGINX_VOLUME}
         target: ${VAR_LOG_NGINX_PATH}
   ${REGISTRY_SERVICE}:
-    build:
-      context: ${CWD_PATH}/${REGISTRY_ID}
-      <<: *default-dockerfile
-      args:
-        DATA_PATH: ${DATA_PATH}
-        <<: *proxy-environment
-        REGISTRY_LOCAL_IMG: ${REGISTRY_LOCAL_IMG}
     container_name: ${REGISTRY_HOST}
     extends:
       file: ${MODELS_PATH}/compose.yaml
       service: ${REGISTRY_MODEL}
     hostname: ${REGISTRY_HOST}
-    image: ${OVERRIDDEN_REGISTRY_IMG}
     networks:
-      ${REGISTRY_NET}:
+      ${_DOCKER_NET}:
         ipv4_address: ${REGISTRY_IP}
-    volumes:
-      - <<: *volume
-        source: ${REGISTRY_VAR_LOG_VOLUME}
-        target: ${VAR_LOG_PATH}
   ${SAFEDEPOSIT_SERVICE}:
     container_name: ${SAFEDEPOSIT_HOST}
     depends_on:
@@ -354,15 +344,15 @@ services:
         source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
         target: ${VAR_LOG_NGINX_PATH}
 networks:
-  ${BUILDER_NET}:
-    name: ${BUILDER_NET}
+  ${_DOCKER_NET}:
+    name: ${_DOCKER_NET}
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: ${BUILDER_SUB}
-          gateway: ${BUILDER_GATEWAY_IP}
-          ip_range: ${BUILDER_SUB}
+        - subnet: ${_DOCKER_SUB}
+          gateway: ${_DOCKER_GATEWAY_IP}
+          ip_range: ${_DOCKER_SUB}
   ${JUMP_AREA_NET}:
     name: ${JUMP_AREA_NET}
     driver: bridge
@@ -390,15 +380,6 @@ networks:
         - subnet: ${PROXIFIED_XSERVER_SOCKET_SUB}
           gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
           ip_range: ${PROXIFIED_XSERVER_SOCKET_SUB}
-  ${REGISTRY_NET}:
-    name: ${REGISTRY_NET}
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: ${REGISTRY_SUB}
-          gateway: ${REGISTRY_GATEWAY_IP}
-          ip_range: ${REGISTRY_SUB}
 volumes:
   ${LISTENER_OPT_DATA_VOLUME}:
     name: ${LISTENER_OPT_DATA_VOLUME}
@@ -414,8 +395,6 @@ volumes:
     name: ${PROXY_OPT_SCRIPTS_VOLUME}
   ${PROXY_VAR_LOG_NGINX_VOLUME}:
     name: ${PROXY_VAR_LOG_NGINX_VOLUME}
-  ${REGISTRY_VAR_LOG_VOLUME}:
-    name: ${REGISTRY_VAR_LOG_VOLUME}
   ${REGISTRY_VOLUME}:
     name: ${REGISTRY_VOLUME}
   ${RELAY_VAR_LOG_VOLUME}:
