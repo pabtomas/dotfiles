@@ -107,17 +107,23 @@ main ()
 {
   set -eux
 
+  set -- ${_COMPOSE_JUMP_AREA_HOSTS}
+
+  # check extern ressource is not empty
+  [ "${#}" != '0' ]
+
   # check hosts are available through ssh
-  for host in ${_COMPOSE_JUMP_AREA_HOSTS}
+  while [ "\${#}" != '0' ]
   do
-    if [ "\${host}" != "\$(${_hostname})" ]
+    if [ "\${1}" != "\$(${_hostname})" ]
     then
-      if ! ${_nc} -z -v \${host} ${SSH_PORT}
+      if ! ${_nc} -z -v \${1} ${SSH_PORT}
       then
-        printf '%s:${SSH_PORT} closed\n' "\${host}"
+        printf '%s:${SSH_PORT} closed\n' "\${1}"
         return 1
       fi
     fi
+    shift
   done
 }
 
