@@ -21,7 +21,8 @@ services:
     hostname: ${BUILDER_HOST}
     image: ${BUILDER_IMG}
     networks:
-      ${_DOCKER_NET}: null
+      ${_DOCKER_NET}:
+        ipv4_address: ${BUILDER_IP}
     security_opt:
       - apparmor:unconfined
       - seccomp:unconfined
@@ -43,6 +44,8 @@ services:
       service: ${_DOCKER_MODEL}
     hostname: ${CONTROLLER_HOST}
     networks:
+      ${_DOCKER_NET}:
+        ipv4_address: ${CLIENT_IP}
       ${PROXIFIED_DOCKER_SOCKET_NET}:
         ipv4_address: ${CONTROLLER_IP}
     volumes:
