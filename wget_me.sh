@@ -497,7 +497,7 @@ EOF
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   started_services="$(source_env "${tmp}" \
-    'docker compose --file "${tmp}/compose.yaml" config --services | grep -v "^${REPLAY_ID}${SERVICE_SEP}\|^${RUNNER_ID}${SERVICE_SEP}"')"
+    'docker compose --file "${tmp}/compose.yaml" config --services | grep -v "^${RELAY_ID}${SERVICE_SEP}\|^${RUNNER_ID}${SERVICE_SEP}"')"
   set -f
   # shellcheck disable=2086
   # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
