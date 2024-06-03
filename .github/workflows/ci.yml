@@ -75,7 +75,7 @@ jobs:
         XEPHYR_DISPLAY='0'
         export API_TAG XEPHYR_DISPLAY
         source "${GITHUB_WORKSPACE}/env.sh"
-        anchors_yaml="${GITHUB_WORKSPACE}/anchors.yaml"
+        anchors_yaml="${GITHUB_WORKSPACE}/anchors/compose.yaml"
         anchors_in="${anchors_yaml}.in"
         eval "printf '%s\n' \"$(cat "${anchors_in}")\"" > "${anchors_yaml}"
         for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
