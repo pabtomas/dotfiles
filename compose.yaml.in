@@ -344,7 +344,7 @@ services:
       - video
     hostname: ${SPACEPORN_RUNNER_HOST}
     image: ${SPACEPORN_RUNNER_IMG}
-    networks: null
+    networks: []
     volumes:
       - <<: *readonly-volume
         source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
