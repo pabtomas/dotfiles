@@ -53,7 +53,7 @@ services:
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
         volume:
-          subpath: ${RUNNER_IS}s
+          subpath: ${RUNNER_ID}s
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
     depends_on:
