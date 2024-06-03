@@ -38,17 +38,11 @@ services:
       ${RELAY_SERVICE}:
         condition: service_started
         required: true
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities:
-                - gpu
-              count: -1
     hostname: ${SPACEPORN_RUNNER_HOST}
     image: ${SPACEPORN_RUNNER_IMG}
     networks:
       ${SPACEPORN_ID}_net: null
+    runtime: nvidia
     volumes:
       - type: volume
         source: ${RELAY_XSERVER_SOCKET_VOLUME}
