@@ -96,7 +96,7 @@ main ()
   # check utils packages are available
   for _pkg in ${pkg}
   do
-    [ -n "\$(${_apk} info -q -L "\${_pkg}")" ]
+    [ -n "\$(${_apk} info -L "\${_pkg}")" ]
   done
 }
 
