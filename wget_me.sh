@@ -225,7 +225,8 @@ EOF
     set -a
     . "${1}/env.sh"
 
-    for template in "${1}/anchors.yaml.in" $(match="${1}" find "${1}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${1}" find "${1}" -type f -name '*.in' -not -name '*.yaml.in')
+    ## generate anchors first, then compose files and at the very end, other templates
+    for template in "${1}/anchors/compose.yaml.in" $(match="${1}" find "${1}" -type f -name 'compose.yaml.in' -not -path "${1}/anchors/*" -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${1}" find "${1}" -type f -name '*.in' -not -name '*.yaml.in')
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
@@ -328,11 +329,11 @@ EOF
   ## parse exploded main compose.yaml to set check entrypoint variables
   parse_compose ()
   {
-    ## add anchors.yaml before each compose.yaml because anchors' YAML can not be shared accross different files:
+    ## add anchors before each compose.yaml because anchors' YAML can not be shared accross different files:
     ## https://github.com/docker/compose/issues/5621
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-    compose_file="$(match="${1}" find "${1}" -type f -name compose.yaml -exec sh -c '
+    compose_file="$(match="${1}" find "${1}" -type f -name 'compose.yaml' -not -path "${1}/anchors/*" -exec sh -c '
       {
         IFS="
 "
@@ -340,7 +341,7 @@ EOF
         do
           file="${file:-}${file:+
 }${line}"
-        done < "${2}/anchors.yaml"
+        done < "${2}/anchors/compose.yaml"
         while read -r line
         do
           file="${file:-}${file:+
@@ -362,7 +363,8 @@ EOF
     # shellcheck disable=2016,2154
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     # SC2154: VAR is referenced but not assigned => assigned into env.sh
-    _COMPOSE_JUMP_AREA_HOSTS="$(source_env "${1}" "printf '%s\\n' '${compose_file}'"' | yq ".services | to_entries[] | select(.value.networks | to_entries[] | select(.key==\"${JUMP_AREA_NET}\")) | .value.hostname" | tr "\n" " "')"
+    _COMPOSE_JUMP_AREA_HOSTS="$(source_env "${1}" \
+      "printf '%s\\n' '${compose_file}'"' | yq ".services | to_entries[] | select(.value.networks | to_entries[] | select(.key==\"${JUMP_AREA_NET}\")) | .value.hostname" | tr "\n" " "')"
     readonly _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
     export _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
 
@@ -492,7 +494,16 @@ EOF
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_ROUTES=${_COMPOSE_ROUTES}" --build-arg "_COMPOSE_VOLUMES=${_COMPOSE_VOLUMES}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_JUMP_AREA_HOSTS=${_COMPOSE_JUMP_AREA_HOSTS}"
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
-  docker compose --file "${tmp}/compose.yaml" start
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+  started_services="$(source_env "${tmp}" \
+    'docker compose --file "${tmp}/compose.yaml" config --services | grep -v "^${RELAY_ID}${SERVICE_SEP}\|^${RUNNER_ID}${SERVICE_SEP}"')"
+  set -f
+  # shellcheck disable=2086
+  # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
+  docker compose --file "${tmp}/compose.yaml" start ${started_services}
+  set +f
+  readonly started_services
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
@@ -506,13 +517,12 @@ EOF
   fi
 
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
-  services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
-  readonly running_services services
+  readonly running_services
 
   set -f
   # shellcheck disable=2086
   # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
-  failed_services="$(printf '%s\n' ${running_services} ${services} | sort | uniq -u)"
+  failed_services="$(printf '%s\n' ${running_services} ${started_services} | sort | uniq -u)"
   set +f
   readonly failed_services
 

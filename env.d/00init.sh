@@ -201,6 +201,20 @@ _explorer_service ()
   unset SFX_OVERRIDE
 }
 
+_relay_service ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${RELAY_SERVICE_SFX}" __service "${1}" "${RELAY_ID}${SERVICE_SEP}${1}"
+  unset SFX_OVERRIDE
+}
+
+_runner_service ()
+{
+  if [ -n "${DEBUG:-}" ]; then set -x; fi
+  SFX_OVERRIDE="${RUNNER_SERVICE_SFX}" __service "${1}" "${RUNNER_ID}${SERVICE_SEP}${1}"
+  unset SFX_OVERRIDE
+}
+
 _tag ()
 {
   if [ -n "${DEBUG:-}" ]; then set -x; fi
