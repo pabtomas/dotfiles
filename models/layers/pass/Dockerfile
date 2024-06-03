@@ -9,7 +9,8 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add --no-cache pass git gpg-agent git-bash-completion pass-bash-completion
+    pkg='pass git gpg-agent git-bash-completion pass-bash-completion'
+    apk add --no-cache ${pkg}
     _apk="$(command -v apk)"
     _gpg="$(command -v gpg)"
     _git="$(command -v git)"
@@ -27,8 +28,10 @@ main ()
   ${_pass} --version
 
   # check packages are available
-  [ -n "\$(${_apk} info -q -L git-bash-completion)" ]
-  [ -n "\$(${_apk} info -q -L pass-bash-completion)" ]
+  for _pkg in ${pkg}
+  do
+    ${_apk} info --installed "\${_pkg}"
+  done
 }
 
 main

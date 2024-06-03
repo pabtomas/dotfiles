@@ -15,7 +15,8 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add --no-cache nginx-mod-stream
+    pkg='nginx-mod-stream'
+    apk add --no-cache ${pkg}
     cat << TEMPLATING > "${ETC_NGINX_PATH}/nginx.conf"
 user root;
 
@@ -77,7 +78,10 @@ main ()
   set -eux
 
   # check packages are available
-  [ -n "\$(${_apk} info -q -L nginx-mod-stream)" ]
+  for _pkg in ${pkg}
+  do
+    ${_apk} info --installed "\${_pkg}"
+  done
 
   # check Xserver socket is mounted
   [ -S "${XSERVER_SOCKET_PATH}" ]

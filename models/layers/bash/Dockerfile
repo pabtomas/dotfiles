@@ -96,7 +96,7 @@ main ()
   # check packages are available
   for _pkg in ${pkg}
   do
-    [ -n "\$(${_apk} info -q -L "\${_pkg}")" ]
+    ${_apk} info --installed "\${_pkg}"
   done
 }
 
