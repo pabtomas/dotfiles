@@ -96,7 +96,8 @@ main ()
   # check packages are available
   for _pkg in ${pkg}
   do
-    [ -n "\$(${_apk} info -q -L "\${_pkg}")" ] || return 1
+    ${_apk} info -q -L "\${_pkg}" || :
+    [ -n "\$(${_apk} info -q -L "\${_pkg}")" ]
   done
 }
 
