@@ -93,10 +93,10 @@ main ()
   ${_less} --version
   ${_tree} --version
 
-  # check utils packages are available
+  # check packages are available
   for _pkg in ${pkg}
   do
-    [ -n "\$(${_apk} info -L "\${_pkg}")" ]
+    [ -n "\$(${_apk} info -q -L "\${_pkg}")" ]
   done
 }
 
