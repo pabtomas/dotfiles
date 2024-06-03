@@ -88,13 +88,14 @@ main ()
   # check bash is available
   ${_bash} --version
 
-  # check utils packages are available
-  [ -n "\$(${_apk} info -q -L coreutils)" ]
-  [ -n "\$(${_apk} info -q -L diffutils)" ]
-
   # check less & tree availability
   ${_less} --version
   ${_tree} --version
+
+  # check utils packages are available
+  [ -n "\$(${_apk} info -q -L bash-completion)" ]
+  [ -n "\$(${_apk} info -q -L coreutils)" ]
+  [ -n "\$(${_apk} info -q -L diffutils)" ]
 }
 
 main
