@@ -226,7 +226,7 @@ EOF
     . "${1}/env.sh"
 
     ## generate anchors first, then compose files and at the very end, other templates
-    for template in "${1}/anchors/compose.yaml.in" $(match="${1}" find "${1}" -type f -name 'compose.yaml.in' -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${1}" find "${1}" -type f -name '*.in' -not -name '*.yaml.in')
+    for template in "${1}/anchors/compose.yaml.in" $(match="${1}" find "${1}" -type f -name 'compose.yaml.in' -not -path './anchors/*' -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${1}" find "${1}" -type f -name '*.in' -not -name '*.yaml.in')
     do
       cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
@@ -342,7 +342,7 @@ EOF
     ## https://github.com/docker/compose/issues/5621
     # shellcheck disable=2016
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-    compose_file="$(match="${1}" find "${1}" -type f -name 'compose.yaml' -exec sh -c '
+    compose_file="$(match="${1}" find "${1}" -type f -name 'compose.yaml' -not -path './anchors/*' -exec sh -c '
       {
         IFS="
 "

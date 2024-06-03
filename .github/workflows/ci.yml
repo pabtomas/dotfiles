@@ -78,7 +78,7 @@ jobs:
         anchors_yaml="${GITHUB_WORKSPACE}/anchors/compose.yaml"
         anchors_in="${anchors_yaml}.in"
         eval "printf '%s\n' \"$(cat "${anchors_in}")\"" > "${anchors_yaml}"
-        for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
+        for compose_in in $(find "${GITHUB_WORKSPACE}" -type f -name compose.yaml.in -not -path './anchors/*' -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2)
         do
           compose_yaml="${compose_in%.*}"
           # Resolve shell substitution
