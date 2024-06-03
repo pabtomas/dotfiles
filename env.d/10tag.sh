@@ -12,4 +12,5 @@ _tag "${LINUXSERVER_PROXY_ID}" 'latest'
 _tag "${REGISTRY_ID}" '2'
 _tag 'owner' 'latest'
 
+_layer_tag "${DOCKLE_ID}" '0.4.14'
 _layer_tag "${ZIG_ID}" '0.12.0'
