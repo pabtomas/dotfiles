@@ -110,7 +110,7 @@ main ()
   set -- ${_COMPOSE_JUMP_AREA_HOSTS}
 
   # check extern ressource is not empty
-  [ "${#}" != '0' ]
+  [ "\${#}" != '0' ]
 
   # check hosts are available through ssh
   while [ "\${#}" != '0' ]

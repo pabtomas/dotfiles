@@ -74,7 +74,7 @@ main ()
   set -- ${_COMPOSE_VOLUMES}
 
   # check extern ressource is not empty
-  [ "${#}" != '0' ]
+  [ "\${#}" != '0' ]
 
   while [ "\${#}" != '0' ]
   do
@@ -89,7 +89,7 @@ main ()
   set -- ${_COMPOSE_ROUTES}
 
   # check extern ressource is not empty
-  [ "${#}" != '0' ]
+  [ "\${#}" != '0' ]
 
   while [ "\${#}" != '0' ]
   do
