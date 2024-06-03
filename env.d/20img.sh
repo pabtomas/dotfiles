@@ -39,5 +39,4 @@ _layer_img "${WORKSPACES_ID}" "${OWNER_TAG}"
 _layer_img "${ZIG_ID}" "${OWNER_TAG}"
 
 _relay_img "${SPACEPORN_ID}" "${OWNER_TAG}"
-
 _runner_img "${SPACEPORN_ID}" "${OWNER_TAG}"

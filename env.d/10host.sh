@@ -20,5 +20,4 @@ _explorer_host "${SHELL_ID}"
 _explorer_host "${ZIG_ID}"
 
 _relay_host "${SPACEPORN_ID}"
-
 _runner_host "${SPACEPORN_ID}"

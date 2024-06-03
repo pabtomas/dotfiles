@@ -52,6 +52,8 @@ services:
       - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
+        volume:
+          subpath: ${RUNNER_IS}s
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
     depends_on:
@@ -303,6 +305,54 @@ services:
       file: ${MODELS_PATH}/compose.yaml
       service: ${MAN_MODEL}
     hostname: ${SCHOLAR_HOST}
+  ${SPACEPORN_RELAY_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${RELAY_ID}
+      <<: *default-dockerfile
+      args:
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+        LOG_ID: ${SPACEPORN_ID}
+        SOCAT_LAYER_IMG: ${SOCAT_LAYER_IMG}
+        TMP_XSERVER_SOCKETS_PATH: ${TMP_XSERVER_SOCKETS_PATH}
+        XSERVER_IP: ${XSERVER_IP}
+        XSERVER_PORT: "\"${XSERVER_PORT}\""
+    container_name: ${SPACEPORN_RELAY_HOST}
+    hostname: ${SPACEPORN_RELAY_HOST}
+    image: ${SPACEPORN_RELAY_IMG}
+    networks:
+      ${PROXIFIED_XSERVER_SOCKET_NET}:
+        ipv4_address: ${SPACEPORN_RELAY_IP}
+    read_only: true
+    volumes:
+      - <<: *volume
+        source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+      - <<: *volume
+        source: ${RELAY_VAR_LOG_VOLUME}
+        target: ${VAR_LOG_PATH}
+  ${SPACEPORN_RUNNER_SERVICE}:
+    build:
+      context: ${RUNNERS_PATH}/${SPACEPORN_ID}
+      <<: *default-dockerfile
+    container_name: ${SPACEPORN_RUNNER_HOST}
+    depends_on:
+      ${SPACEPORN_RELAY_SERVICE}:
+        condition: service_started
+        required: true
+    devices:
+      - ${GPU_PATH}:${GPU_PATH}
+    group_add:
+      - video
+    hostname: ${SPACEPORN_RUNNER_HOST}
+    image: ${SPACEPORN_RUNNER_IMG}
+    volumes:
+      - <<: *readonly-volume
+        source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+      - <<: *readonly-volume
+        source: ${SPACEPORN_VOLUME}
+        target: ${SPACEPORN_PATH}
   ${XSERVER_SERVICE}:
     build:
       context: ${CWD_PATH}/${XSERVER_ID}
@@ -401,6 +451,8 @@ volumes:
     name: ${RELAY_VAR_LOG_VOLUME}
   ${SAFEDEPOSIT_VOLUME}:
     name: ${SAFEDEPOSIT_VOLUME}
+  ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}:
+    name: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
   ${SSH_VOLUME}:
     name: ${SSH_VOLUME}
   ${SPACEPORN_VOLUME}:

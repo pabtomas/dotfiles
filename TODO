@@ -26,6 +26,7 @@
   - use unprivileged user for bg containers (listener, proxy, xserver, relay, ...)
 - find a solution to put SHELL templates outside of Dockerfiles
 - jumper, listener, proxy, xserver -> change into a layer or model
+- split services/volumes/networks ???
 - solve docker run 409
 - runners:
   - relay + GUI:
