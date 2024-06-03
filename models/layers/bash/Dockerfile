@@ -15,7 +15,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk update
-    pkg='bash-completion coreutils diffutils tree less '
+    pkg='bash-completion coreutils diffutils tree less'
     apk add --no-cache ${pkg}
     mkdir -p "${BASH_ALIASES_PATH}" "${BASH_COMPLETION_PATH}"
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
