@@ -72,6 +72,10 @@ main ()
 
   # check volumes are mounted
   set -- ${_COMPOSE_VOLUMES}
+
+  # check extern ressource is not empty
+  [ "\${#}" != '0' ]
+
   while [ "\${#}" != '0' ]
   do
     if [ "\${1}" = "\$(${_hostname})" ]
@@ -83,6 +87,10 @@ main ()
 
   # check routes are available
   set -- ${_COMPOSE_ROUTES}
+
+  # check extern ressource is not empty
+  [ "\${#}" != '0' ]
+
   while [ "\${#}" != '0' ]
   do
     if [ "\${1}" = "\$(${_hostname})" ]

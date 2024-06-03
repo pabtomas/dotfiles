@@ -11,7 +11,7 @@ COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
 ARG CHECK_ENTRYPOINT_PATH
 ARG DOCKLE_DOWNLOAD_URL
-ARG DOCKLE_LATEST_URL
+ARG DOCKLE_LAYER_TAG
 ARG ENTRYPOINTD_PATH
 ARG HTTP_DOCKER_TARGET
 ARG NET
@@ -29,16 +29,16 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community docker-bash-completion
+    pkg='docker-bash-completion'
+    apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community ${pkg}
     wget -q -O "${BIN_PATH}/regbot" "${REGBOT_URL}" https://github.com/regclient/regclient/releases/latest/download/regbot-linux-amd64
     wget -q -O "${BIN_PATH}/regctl" "${REGCTL_URL}" https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64
     wget -q -O "${BIN_PATH}/regsync" "${REGSYNC_URL}" https://github.com/regclient/regclient/releases/latest/download/regsync-linux-amd64
     chmod 0755 "${BIN_PATH}/regbot" "${BIN_PATH}/regctl" "${BIN_PATH}/regsync"
-    dockle_tag="$(wget -q -O- "${DOCKLE_LATEST_URL}" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')"
-    gz="dockle_${dockle_tag}_Linux-64bit.tar.gz"
+    gz="dockle_${DOCKLE_LAYER_TAG}_Linux-64bit.tar.gz"
     tmp_gz="/tmp/${gz}"
     tmp_dockle='/tmp/dockle'
-    wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${dockle_tag}/${gz}"
+    wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${DOCKLE_LAYER_TAG}/${gz}"
     mkdir -p "${tmp_dockle}"
     tar -zxvf "${tmp_gz}" -C "${tmp_dockle}"
     mv "${tmp_dockle}/dockle" "${BIN_PATH}"
@@ -102,7 +102,10 @@ main ()
   ${_regsync} version
 
   # check packages are available
-  [ -n "\$(${_apk} info -q -L docker-bash-completion)" ]
+  for _pkg in ${pkg}
+  do
+    ${_apk} info --installed "\${_pkg}"
+  done
 }
 
 main

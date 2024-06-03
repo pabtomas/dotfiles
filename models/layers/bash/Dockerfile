@@ -15,7 +15,8 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk update
-    apk add --no-cache bash-completion coreutils diffutils tree less
+    pkg='bash-completion coreutils diffutils tree less'
+    apk add --no-cache ${pkg}
     mkdir -p "${BASH_ALIASES_PATH}" "${BASH_COMPLETION_PATH}"
     sed -i "s@^\(root:.*:\)[^:]\+\$@\1$(command -v bash)@" /etc/passwd
     cat << TEMPLATING >> "$(dirname "${BASH_ALIASES_PATH}")/$(basename -s '.d' "${BASH_ALIASES_PATH}").sh"
@@ -88,13 +89,15 @@ main ()
   # check bash is available
   ${_bash} --version
 
-  # check utils packages are available
-  [ -n "\$(${_apk} info -q -L coreutils)" ]
-  [ -n "\$(${_apk} info -q -L diffutils)" ]
-
   # check less & tree availability
   ${_less} --version
   ${_tree} --version
+
+  # check packages are available
+  for _pkg in ${pkg}
+  do
+    ${_apk} info --installed "\${_pkg}"
+  done
 }
 
 main

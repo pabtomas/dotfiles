@@ -169,7 +169,7 @@ main ()
 FROM ${target}
 
 RUN <<END_OF_RUN
-    apk --no-cache add git yq findutils lshw
+    apk --no-cache add git yq findutils
     rm -rf /var/lib/apt/lists/* /var/cache/apk/* /tmp /etc/docker ${1}
     adduser -D -s /bin/sh -g '${new_user}' -u '${uid}' '${new_user}'
 END_OF_RUN
@@ -242,14 +242,6 @@ EOF
     daemon_json="${etc_docker}/daemon.json"
     daemon_conf="${conf_dir}/daemon.json"
     readonly daemon_json daemon_conf conf_dir etc etc_docker
-
-    ## configure docker with nvidia-container-toolkit (if nvidia detected)
-    if sudo='true' lshw -C display | grep vendor: | grep -i nvidia
-    then
-      ## does not install nvidia-container-toolkit (not easily scriptable) so it fails if not found
-      harden nvidia-ctk nvidia_ctk sudo
-      nvidia_ctk runtime configure --runtime=docker --config="${daemon_conf}"
-    fi
 
     ## copy docker daemon config to the host and restart daemon
     if [ ! -e "${daemon_json}" ] || match="${etc_docker}" match2="${conf_dir}" grep -Fxvf "${daemon_json}" "${daemon_conf}" > /dev/null
@@ -367,10 +359,10 @@ EOF
     _COMPOSE_ROUTES="$(printf '%s\n' "${compose_file}" | yq '.networks as $net | {.services | to_entries[] | (.key: (.value.networks | to_entries[] | .key))} | to_entries[] | (.key + " " + $net[.value].ipam.config[].subnet)' | tr '\n' ' ')"
     _COMPOSE_VOLUMES="$(printf '%s\n' "${compose_file}" | yq '.services | to_entries[] | (.key + " " + .value.volumes.[].target)' | tr '\n' ' ')"
 
-    # shellcheck disable=2154
+    # shellcheck disable=2016,2154
+    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     # SC2154: VAR is referenced but not assigned => assigned into env.sh
-    _COMPOSE_JUMP_AREA_HOSTS="$(source_env "${1}" \
-      "printf '%s\\n' '${compose_file}' | yq '.services | to_entries[] | select(.value.networks | to_entries[] | select(.key==\"\${JUMP_AREA_NET}\")) | .value.hostname' | tr '\n' ' '")"
+    _COMPOSE_JUMP_AREA_HOSTS="$(source_env "${1}" "printf '%s\\n' '${compose_file}'"' | yq ".services | to_entries[] | select(.value.networks | to_entries[] | select(.key==\"${JUMP_AREA_NET}\")) | .value.hostname" | tr "\n" " "')"
     readonly _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
     export _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
 
@@ -447,7 +439,6 @@ EOF
   dockerize find
   dockerize git git
   dockerize grep
-  dockerize lshw
   dockerize mkdir
   dockerize mktemp
   dockerize rm
@@ -505,8 +496,14 @@ EOF
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  source_env "${tmp}" \
+  if ! source_env "${tmp}" \
     'docker compose --file "${tmp}/compose.yaml" exec "${JUMPER_SERVICE}" sh "${OPT_SCRIPTS_PATH}/after_entrypoint.sh"'
+  then
+    # shellcheck disable=2016
+    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+    source_env "${tmp}" 'docker compose --file "${tmp}/compose.yaml" logs "${JUMPER_SERVICE}"'
+    return 1
+  fi
 
   running_services="$(docker compose --file "${tmp}/compose.yaml" ps --filter 'status=running' --format '{{ .Names }}')"
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
@@ -528,7 +525,7 @@ EOF
     for failed in ${failed_services}
     do
       printf 'This service failed: %s\n' "${failed}" >&2
-      docker logs "${failed}"
+      docker compose --file "${tmp}/compose.yaml" logs "${failed}"
     done
     set +f
     unset failed
@@ -542,7 +539,7 @@ EOF
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   source_env "${tmp}" \
-    'docker logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
+    'docker compose --file "${tmp}/compose.yaml" logs "${PROXY_SERVICE}" 2> /dev/null | sed -n "/^-----\+$/,/^-----\+$/p"'
 
   ## Attach to the workspace
   if [ "${runner}" != "${bot}" ]

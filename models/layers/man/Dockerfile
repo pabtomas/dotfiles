@@ -9,19 +9,19 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    docs='coreutils-doc diffutils-doc findutils-doc'
-    docs="${docs} bash-doc dash-doc"
-    docs="${docs} curl-doc wget-doc"
-    docs="${docs} tree-doc less-doc jq-doc"
-    docs="${docs} docker-doc"
-    docs="${docs} nginx-doc openssh-doc socat-doc"
-    docs="${docs} git-doc tig-doc ripgrep-doc"
-    docs="${docs} figlet-doc"
-    docs="${docs} pass-doc gnupg-doc"
-    docs="${docs} tmux-doc vim-doc"
-    docs="${docs} bats-doc shellcheck-doc"
-    docs="${docs} cronie-doc man-db-doc"
-    apk add --no-cache man-db man-pages ${docs}
+    pkg='coreutils-doc diffutils-doc findutils-doc'
+    pkg="${pkg} bash-doc dash-doc"
+    pkg="${pkg} curl-doc wget-doc"
+    pkg="${pkg} tree-doc less-doc jq-doc"
+    pkg="${pkg} docker-doc"
+    pkg="${pkg} nginx-doc openssh-doc socat-doc"
+    pkg="${pkg} git-doc tig-doc ripgrep-doc"
+    pkg="${pkg} figlet-doc"
+    pkg="${pkg} pass-doc gnupg-doc"
+    pkg="${pkg} tmux-doc vim-doc"
+    pkg="${pkg} bats-doc shellcheck-doc"
+    pkg="${pkg} cronie-doc man-db-doc"
+    apk add --no-cache man-db man-pages ${pkg}
     _apk="$(command -v apk)"
     _man="$(command -v man)"
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
@@ -35,9 +35,9 @@ main ()
   ${_man} --version
 
   # check pages availability
-  for doc in ${docs}
+  for _pkg in ${pkg}
   do
-    [ -n "\$(${_apk} info -q -L "\${doc}")" ]
+    ${_apk} info --installed "\${_pkg}"
   done
 }
 

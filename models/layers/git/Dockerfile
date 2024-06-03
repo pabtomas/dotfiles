@@ -11,7 +11,8 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add --no-cache git tig ripgrep git-bash-completion ripgrep-bash-completion
+    pkg='git tig ripgrep git-bash-completion ripgrep-bash-completion'
+    apk add --no-cache ${pkg}
     wget -q -O "${BASH_COMPLETION_PATH}/99tig.sh" "${TIG_COMPLETION_URL}"
     _apk="$(command -v apk)"
     _git="$(command -v git)"
@@ -30,8 +31,10 @@ main ()
   ${_ripgrep} --version
 
   # check packages are available
-  [ -n "\$(${_apk} info -q -L git-bash-completion)" ]
-  [ -n "\$(${_apk} info -q -L ripgrep-bash-completion)" ]
+  for _pkg in ${pkg}
+  do
+    ${_apk} info --installed "\${_pkg}"
+  done
 }
 
 main

@@ -9,7 +9,8 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    apk add findutils jq yq
+    pkg='findutils jq yq'
+    apk add --no-cache ${pkg}
     _apk="$(command -v apk)"
     _jq="$(command -v jq)"
     _yq="$(command -v yq)"
@@ -25,7 +26,10 @@ main ()
   ${_yq} --version
 
   # check packages are available
-  [ -n "\$(${_apk} info -q -L findutils)" ]
+  for _pkg in ${pkg}
+  do
+    ${_apk} info --installed "\${_pkg}"
+  done
 }
 
 main
