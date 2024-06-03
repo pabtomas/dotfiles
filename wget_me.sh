@@ -372,7 +372,8 @@ EOF
     # shellcheck disable=2016,2154
     # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
     # SC2154: VAR is referenced but not assigned => assigned into env.sh
-    _COMPOSE_JUMP_AREA_HOSTS="$(source_env "${1}" "printf '%s\\n' '${compose_file}'"' | yq ".services | to_entries[] | select(.value.networks | to_entries[] | select(.key==\"${JUMP_AREA_NET}\")) | .value.hostname" | tr "\n" " "')"
+    _COMPOSE_JUMP_AREA_HOSTS="$(source_env "${1}" \
+      "printf '%s\\n' '${compose_file}'"' | yq ".services | to_entries[] | select(.value.networks | to_entries[] | select(.key==\"${JUMP_AREA_NET}\")) | .value.hostname" | tr "\n" " "')"
     readonly _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
     export _COMPOSE_ROUTES _COMPOSE_VOLUMES _COMPOSE_JUMP_AREA_HOSTS
 
@@ -503,6 +504,8 @@ EOF
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_ROUTES=${_COMPOSE_ROUTES}" --build-arg "_COMPOSE_VOLUMES=${_COMPOSE_VOLUMES}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_JUMP_AREA_HOSTS=${_COMPOSE_JUMP_AREA_HOSTS}"
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   started_services="$(source_env "${tmp}" \
     'docker compose --file "${tmp}/compose.yaml" config --services | grep -v "^${REPLAY_ID}${SERVICE_SEP}\|^${RUNNER_ID}${SERVICE_SEP}"')"
   set -f
