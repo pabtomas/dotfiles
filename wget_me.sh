@@ -122,7 +122,7 @@ main ()
       apt_get upgrade -y
 
       ## the function fails later if matching executable are not available
-      apt_get install xserver-xephyr xinit -y
+      apt_get install xserver-xephyr -y
       set -e ;;
     ( 'alpine' )
       harden apk apk sudo
@@ -134,7 +134,7 @@ main ()
       apk upgrade
 
       ## the function fails later if matching executable are not available
-      apk add xorg-server-xephyr xinit
+      apk add xorg-server-xephyr
       set -e ;;
     ( * )
       printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
@@ -142,7 +142,6 @@ main ()
 
     ## check X utils
     harden Xephyr
-    harden xinit
   )
 
   ## Posix shell: no local variables => subshell instead of braces
@@ -207,33 +206,6 @@ EOF
       }"
   }
 
-  ## factorize reusable code
-  generate_variables ()
-  {
-    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-    export API_TAG
-  }
-
-  ## Posix shell: no local variables => subshell instead of braces
-  ## resolve shell templates
-  generate_templates ()
-  (
-    ## oksh/loksh: debugtrace does not follow in functions
-    if [ -n "${DEBUG:-}" ]; then set -x; fi
-
-    generate_variables
-    set -a
-    . "${1}/env.sh"
-
-    ## generate anchors first, then compose files and at the very end, other templates
-    for template in "${1}/anchors/compose.yaml.in" $(match="${1}" find "${1}" -type f -name 'compose.yaml.in' -not -path "${1}/anchors/*" -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${1}" find "${1}" -type f -name '*.in' -not -name '*.yaml.in')
-    do
-      cat="$(IFS='
-'; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
-      eval "printf '%s\\n' \"${cat}\"" > "${template%.*}"
-    done
-  )
-
   ## Posix shell: no local variables => subshell instead of braces
   config_host ()
   (
@@ -276,22 +248,7 @@ EOF
     readonly XEPHYR_DISPLAY
     export XEPHYR_DISPLAY
 
-    # shellcheck disable=2016
-    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-    printf '#! /bin/sh\n\nDISPLAY=%s\nexport DISPLAY\nexec %s\n' "':${XEPHYR_DISPLAY}'" "${WM:-awesome}" > "${1}"
-
-    ## resolve Xephyr absolute path for xinit
-    _xephyr="$(IFS=':'
-               for dir in ${PATH}
-               do
-                 if [ -x "${dir}/Xephyr" ]
-                 then
-                   printf '%s\n' "${dir}/Xephyr"
-                   break
-                 fi
-               done)"
-    xinit "${1}" -- "${_xephyr}" ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
-    unset _xephyr
+    Xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
   }
 
   ## Posix shell: no local variables => subshell instead of braces
@@ -329,28 +286,9 @@ EOF
   ## parse exploded main compose.yaml to set check entrypoint variables
   parse_compose ()
   {
-    ## add anchors before each compose.yaml because anchors' YAML can not be shared accross different files:
-    ## https://github.com/docker/compose/issues/5621
-    # shellcheck disable=2016
-    # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-    compose_file="$(match="${1}" find "${1}" -type f -name 'compose.yaml' -not -path "${1}/anchors/*" -exec sh -c '
-      {
-        IFS="
-"
-        while read -r line
-        do
-          file="${file:-}${file:+
-}${line}"
-        done < "${2}/anchors/compose.yaml"
-        while read -r line
-        do
-          file="${file:-}${file:+
-}${line}"
-        done < "${1}"
-        printf "%s\n" "${file}" > "${1}"
-      } > /dev/null 2>&1
-      if [ "${1}" = "${2}/compose.yaml" ]; then printf "%s\n" "${file}"; fi
-      ' sh {} "${1}" \;)"
+    compose_file="$(IFS='
+'; while read -r line; do file="${file:-}${file:+
+}${line}"; done < "${1}/compose.yaml")"
 
     ## resolve compose 'extends:' for entrypoint checks
     compose_file="$(printf '%s\n' "${compose_file}" | docker compose --file - config)"
@@ -411,8 +349,7 @@ EOF
     source_env "${1}" \
       'docker volume rm $(docker volume list --filter "name=${DELETE_ME_SFX}" --format "{{ .Name }}")' || :
     match="$(dirname -- "${1}")" rm -rf "${1}"
-    match="$(dirname -- "${4}")" rm -rf "${4}"
-    update_me "${2}/${3}" "${5}"
+    update_me "${2}/${3}" "${4}"
   }
 
   bot='bot'
@@ -454,10 +391,9 @@ EOF
   unset new_user
 
   tmp="$(match='/tmp/' mktemp --directory '/tmp/tmp.XXXXXXXX')"
-  xinitrc="$(match='/tmp/' mktemp '/tmp/tmp.XXXXXXXX')"
   repo='tiawl/MyWhaleFleet'
   repo_url="https://github.com/${repo}.git"
-  readonly tmp repo repo_url xinitrc
+  readonly tmp repo repo_url
 
   match="$(dirname -- "${tmp}")" git clone --depth 1 --branch "${branch}" "${repo_url}" "${tmp}"
 
@@ -477,13 +413,13 @@ EOF
   done
   unset var
 
-  open_display "${xinitrc}"
+  open_display
 
-  generate_templates "${tmp}"
+  "${tmp}"/scripts/templating.sh
 
   config_host "${tmp}"
 
-  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${xinitrc}" "${pwd}"' EXIT
+  trap 'trap_me "${tmp}" "${repo}" "${branch}" "${pwd}"' EXIT
 
   docker network prune --force
 
@@ -494,16 +430,25 @@ EOF
   docker compose --file "${tmp}/models/layers/compose.yaml" build --build-arg "_COMPOSE_ROUTES=${_COMPOSE_ROUTES}" --build-arg "_COMPOSE_VOLUMES=${_COMPOSE_VOLUMES}"
   docker compose --file "${tmp}/compose.yaml" build --build-arg "_COMPOSE_JUMP_AREA_HOSTS=${_COMPOSE_JUMP_AREA_HOSTS}"
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
+
+  services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  started_services="$(source_env "${tmp}" \
-    'docker compose --file "${tmp}/compose.yaml" config --services | grep -v "^${RELAY_ID}${SERVICE_SEP}\|^${RUNNER_ID}${SERVICE_SEP}"')"
+  runners_relays="$(source_env "${tmp}" \
+    'set -f; printf "%s\n" ${services} | grep "^${RELAY_ID}[${SERVICE_SEP}]\|^${RUNNER_ID}[${SERVICE_SEP}]"')"
+  # shellcheck disable=2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
+  created_services="$(source_env "${tmp}" \
+    'set -f; printf "%s\n" ${runners_relays} | grep -v "[${SERVICE_SEP}]${CARPENTER_ID}$"')"
+  started_services="$(set -f; printf '%s\n' ${services} ${created_services} | sort | uniq -u)"
+  readonly started_services
+  unset services runners_relays created_services
+
   set -f
   # shellcheck disable=2086
   # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
   docker compose --file "${tmp}/compose.yaml" start ${started_services}
   set +f
-  readonly started_services
 
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed

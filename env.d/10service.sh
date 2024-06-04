@@ -25,6 +25,7 @@ _service "${SAFEDEPOSIT_ID}"
 _service "${SCHOLAR_ID}"
 _service "${SHELL_ID}"
 _service "${SOCAT_ID}"
+_service "${SPECTRWM_ID}"
 _service "${SSHD_ID}"
 _service "${TMUX_ID}"
 _service "${VIM_ID}"
@@ -35,6 +36,9 @@ _service "${ZIG_ID}"
 
 _explorer_service "${SHELL_ID}"
 _explorer_service "${ZIG_ID}"
+
+_relay_service "${CARPENTER_ID}"
+_runner_service "${CARPENTER_ID}"
 
 _relay_service "${SPACEPORN_ID}"
 _runner_service "${SPACEPORN_ID}"

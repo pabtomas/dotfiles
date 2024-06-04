@@ -11,13 +11,15 @@ _host "${LISTENER_ID}"
 _host "${MAN_ID}"
 _host "${PROXY_ID}"
 _host "${REGISTRY_ID}"
-_host "${RELAY_ID}"
 _host "${SAFEDEPOSIT_ID}"
 _host "${SCHOLAR_ID}"
 _host "${XSERVER_ID}"
 
 _explorer_host "${SHELL_ID}"
 _explorer_host "${ZIG_ID}"
+
+_relay_host "${CARPENTER_ID}"
+_runner_host "${CARPENTER_ID}"
 
 _relay_host "${SPACEPORN_ID}"
 _runner_host "${SPACEPORN_ID}"

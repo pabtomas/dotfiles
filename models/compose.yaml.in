@@ -26,6 +26,8 @@ services:
       - <<: *volume
         source: ${REGISTRY_VOLUME}
         target: ${DATA_PATH}
+  ${RUNNER_MODEL}:
+    network_mode: none
   ${SSHD_MODEL}:
     expose:
       - "\"${SSH_PORT}\""

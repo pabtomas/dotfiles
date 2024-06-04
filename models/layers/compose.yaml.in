@@ -198,6 +198,19 @@ services:
       file: ${VIRTUAL_ID}/compose.yaml
       service: ${VIRTUAL_SERVICE}
     image: ${SOCAT_LAYER_IMG}
+  ${SPECTRWM_SERVICE}:
+    build:
+      context: ${LAYERS_PATH}/${SPECTRWM_ID}
+      args:
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SPECTRWM_ID}.sh
+        ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
+    depends_on:
+      ${ENTRYPOINT_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${VIRTUAL_ID}/compose.yaml
+      service: ${VIRTUAL_SERVICE}
+    image: ${SPECTRWM_LAYER_IMG}
   ${SSHD_SERVICE}:
     build:
       context: ${LAYERS_PATH}/${SSHD_ID}
