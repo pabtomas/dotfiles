@@ -1,1 +1,2 @@
-*.in linguist-language=Dockerfile
+*.sh.in linguist-language=Shell
+*.yaml.in linguist-language=Dockerfile
