@@ -6,6 +6,14 @@ services:
     networks:
       ${_DOCKER_NET}: null
       ${PROXIFIED_DOCKER_SOCKET_NET}: null
+  ${GPU_MODEL}:
+    extends: ${RUNNER_MODEL}
+    devices:
+      - ${GPU_PATH}:${GPU_PATH}
+      - ${VGA_PATH}:${VGA_PATH}
+    group_add:
+      - render
+      - video
   ${MAN_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${MAN_LAYER_IMG}

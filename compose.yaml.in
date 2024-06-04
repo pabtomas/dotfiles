@@ -57,7 +57,7 @@ services:
         target: ${VAR_LOG_PATH}
   ${CARPENTER_RUNNER_SERVICE}:
     build:
-      context: ${RUNNERS_PATH}/${CARPENTER_ID}
+      context: ${CWD_PATH}/${CARPENTER_ID}
       <<: *default-dockerfile
       args:
         ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
@@ -383,20 +383,14 @@ services:
         source: ${RELAY_VAR_LOG_VOLUME}
         target: ${VAR_LOG_PATH}
   ${SPACEPORN_RUNNER_SERVICE}:
-    build:
-      context: ${RUNNERS_PATH}/${SPACEPORN_ID}
-      <<: *default-dockerfile
     container_name: ${SPACEPORN_RUNNER_HOST}
     depends_on:
       ${SPACEPORN_RELAY_SERVICE}:
         <<: *service-started
-    devices:
-      - ${GPU_PATH}:${GPU_PATH}
+    entrypoint: ${SPACEPORN_PATH}/${SPACEPORN_ID}/zig-out/bin/${SPACEPORN_ID}
     extends:
       file: ${MODELS_PATH}/compose.yaml
-      service: ${RUNNER_MODEL}
-    group_add:
-      - video
+      service: ${GPU_MODEL}
     hostname: ${SPACEPORN_RUNNER_HOST}
     image: ${SPACEPORN_RUNNER_IMG}
     volumes:

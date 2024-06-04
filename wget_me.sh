@@ -123,6 +123,7 @@ main ()
 
       ## the function fails later if matching executable are not available
       apt_get install xserver-xephyr -y
+      #apt_get install wmctrl -y
       set -e ;;
     ( 'alpine' )
       harden apk apk sudo
@@ -134,7 +135,7 @@ main ()
       apk upgrade
 
       ## the function fails later if matching executable are not available
-      apk add xorg-server-xephyr
+      apk add xorg-server-xephyr wmctrl
       set -e ;;
     ( * )
       printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
@@ -142,6 +143,7 @@ main ()
 
     ## check X utils
     harden Xephyr
+    harden wmctrl
   )
 
   ## Posix shell: no local variables => subshell instead of braces
@@ -248,7 +250,9 @@ EOF
     readonly XEPHYR_DISPLAY
     export XEPHYR_DISPLAY
 
-    Xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
+    set -- "Xephyr (:${XEPHYR_DISPLAY})"
+    Xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable -title "${1}" > /dev/null 2>&1 &
+    DISPLAY="${XEPHYR_DISPLAY}" wmctrl -a "${1}" -b add,maximized_vert,maximized_horz
   }
 
   ## Posix shell: no local variables => subshell instead of braces
