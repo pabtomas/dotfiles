@@ -1,12 +1,5 @@
 #! /bin/sh
 
-## factorize reusable code
-generate_variables ()
-{
-  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-  export API_TAG
-}
-
 ## Posix shell: no local variables => subshell instead of braces
 ## resolve shell templates
 templating ()
