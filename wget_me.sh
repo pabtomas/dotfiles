@@ -420,7 +420,9 @@ EOF
 
   open_display
 
-  . "${tmp}"/scripts/templating.sh "${tmp}"
+  set -- "${tmp}"
+  . "${tmp}"/scripts/templating.sh
+  set --
 
   config_host "${tmp}"
 
