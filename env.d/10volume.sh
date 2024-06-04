@@ -8,6 +8,7 @@ _volume "${REGISTRY_ID}"
 _volume "${SPACEPORN_ID}"
 _volume "${SAFEDEPOSIT_ID}"
 
+_delme_volume "${CARPENTER_ID}_${RELAY_ID}_${XSERVER_ID}_socket" "${CARPENTER_ID}-${RELAY_ID}-${XSERVER_ID}-socket"
 _delme_volume "${LISTENER_ID}_opt_data" "${LISTENER_ID}-opt-data-fs"
 _delme_volume "${LISTENER_ID}_opt_scripts" "${LISTENER_ID}-opt-scripts-fs"
 _delme_volume "${LISTENER_ID}_var_log" "${LISTENER_ID}-var-log-fs"

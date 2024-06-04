@@ -20,6 +20,7 @@ RUN <<END_OF_RUN
     pkg="${pkg} pass-doc gnupg-doc"
     pkg="${pkg} tmux-doc vim-doc"
     pkg="${pkg} bats-doc shellcheck-doc"
+    pkg="${pkg} spectrwm-doc"
     pkg="${pkg} cronie-doc man-db-doc"
     apk add --no-cache man-db man-pages ${pkg}
     _apk="$(command -v apk)"

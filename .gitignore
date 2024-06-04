@@ -4,3 +4,4 @@ tags
 /obj
 Session.vim
 compose.yaml
+daemon.json
