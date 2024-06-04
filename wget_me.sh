@@ -293,9 +293,13 @@ EOF
   ## parse exploded main compose.yaml to set check entrypoint variables
   parse_compose ()
   {
-    compose_file="$(IFS='
-'; while read -r line; do file="${file:-}${file:+
-}${line}"; done < "${1}/compose.yaml")"
+    IFS='
+'
+    while read -r line
+    do
+      compose_file="${compose_file:-}${compose_file:+
+}${line}"
+    done < "${1}/compose.yaml"
 
     ## resolve compose 'extends:' for entrypoint checks
     compose_file="$(printf '%s\n' "${compose_file}" | docker compose --file - config)"
