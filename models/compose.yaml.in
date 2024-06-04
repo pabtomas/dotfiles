@@ -27,6 +27,7 @@ services:
         source: ${REGISTRY_VOLUME}
         target: ${DATA_PATH}
   ${RUNNER_MODEL}:
+    image: ${ENTRYPOINT_LAYER_IMG}
     network_mode: none
   ${SSHD_MODEL}:
     expose:

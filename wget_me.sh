@@ -432,17 +432,19 @@ EOF
   docker compose --file "${tmp}/compose.yaml" create --no-recreate
 
   services="$(docker compose --file "${tmp}/compose.yaml" config --services)"
-  # shellcheck disable=2016
-  # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  runners_relays="$(source_env "${tmp}" \
-    'set -f; printf "%s\n" ${services} | grep "^${RELAY_ID}[${SERVICE_SEP}]\|^${RUNNER_ID}[${SERVICE_SEP}]"')"
+
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
   created_services="$(source_env "${tmp}" \
-    'set -f; printf "%s\n" ${runners_relays} | grep -v "[${SERVICE_SEP}]${CARPENTER_ID}$"')"
+    'set -f;
+     runners_relays="$(printf "%s\n" ${services} | grep "^${RELAY_ID}[${SERVICE_SEP}]\|^${RUNNER_ID}[${SERVICE_SEP}]")";
+     printf "%s\n" ${runners_relays} | grep -v "[${SERVICE_SEP}]${CARPENTER_ID}$"')"
+
+  # shellcheck disable=2086
+  # SC2086: Double quote to prevent globbing and word splitting => globbing disabled & word splitting needed
   started_services="$(set -f; printf '%s\n' ${services} ${created_services} | sort | uniq -u)"
   readonly started_services
-  unset services runners_relays created_services
+  unset services created_services
 
   set -f
   # shellcheck disable=2086
