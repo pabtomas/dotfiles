@@ -100,7 +100,7 @@ main ()
     shift 2
   done
 
-  [ -z "\$(for ip in \$(${_hostname} -i) \${routes:-}
+  [ -z "\$(for ip in \$(${_hostname} -i 2> /dev/null || :) \${routes:-}
            do
              ip="\${ip%.*}"
              ip="\${ip##*.}"
