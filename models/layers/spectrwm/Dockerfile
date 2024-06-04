@@ -7,7 +7,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    pkg='spectrwm'
+    pkg='spectrwm xterm'
     apk add --no-cache ${pkg}
     _apk="$(command -v apk)"
     _spectrwm="$(command -v spectrwm)"
