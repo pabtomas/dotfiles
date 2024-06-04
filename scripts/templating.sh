@@ -1,5 +1,12 @@
 #! /bin/sh
 
+## factorize reusable code
+generate_variables ()
+{
+  API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
+  export API_TAG
+}
+
 ## Posix shell: no local variables => subshell instead of braces
 ## resolve shell templates
 templating ()
@@ -7,7 +14,12 @@ templating ()
   ## oksh/loksh: debugtrace does not follow in functions
   if [ -n "${DEBUG:-}" ]; then set -x; fi
 
-  cwd="$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1; pwd)/.."
+  if [ -n "${1}" ]
+  then
+    cwd="${1}"
+  else
+    cwd="$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1; pwd)/.."
+  fi
   readonly cwd
 
   generate_variables
@@ -43,4 +55,4 @@ templating ()
   ' sh {} "${cwd}" \;
 )
 
-templating
+templating "${@}"

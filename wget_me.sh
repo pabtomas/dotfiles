@@ -251,13 +251,6 @@ EOF
     Xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable > /dev/null 2>&1 &
   }
 
-  ## factorize reusable code
-  generate_variables ()
-  {
-    API_TAG="$(docker version --format '{{ .Server.APIVersion }}')"
-    export API_TAG
-  }
-
   ## Posix shell: no local variables => subshell instead of braces
   ## Use local images if already downloaded: https://stackoverflow.com/a/70483395
   generate_local_tags ()
@@ -300,6 +293,7 @@ EOF
       compose_file="${compose_file:-}${compose_file:+
 }${line}"
     done < "${1}/compose.yaml"
+    unset line
 
     ## resolve compose 'extends:' for entrypoint checks
     compose_file="$(printf '%s\n' "${compose_file}" | docker compose --file - config)"
@@ -426,7 +420,7 @@ EOF
 
   open_display
 
-  "${tmp}"/scripts/templating.sh
+  . "${tmp}"/scripts/templating.sh "${tmp}"
 
   config_host "${tmp}"
 
