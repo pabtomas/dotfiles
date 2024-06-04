@@ -30,6 +30,10 @@ main ()
 
 main
 TEMPLATING
-    chmod 0700 "${CHECK_ENTRYPOINT_PATH}"
+    xterm="${BIN_PATH}/xterm"
+    xlock="${BIN_PATH}/xlock"
+    : > "${xterm}"
+    : > "${xlock}"
+    chmod 0700 "${CHECK_ENTRYPOINT_PATH}" "${xterm}" "${xlock}"
     unset http_proxy https_proxy
 END_OF_RUN
