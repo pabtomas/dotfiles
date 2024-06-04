@@ -415,7 +415,7 @@ EOF
 
   open_display
 
-  "${tmp}"/scripts/templating.sh
+  . "${tmp}"/scripts/templating.sh
 
   config_host "${tmp}"
 
