@@ -202,6 +202,7 @@ services:
     build:
       context: ${LAYERS_PATH}/${SPECTRWM_ID}
       args:
+        BIN_PATH: ${BIN_PATH}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SPECTRWM_ID}.sh
         ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
     depends_on:
