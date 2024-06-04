@@ -1,7 +1,10 @@
 ARG SPECTRWM_LAYER_IMG
+
 FROM ${SPECTRWM_LAYER_IMG}
 
 ARG ENTRYPOINTD_PATH
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
     set -eux
@@ -15,7 +18,6 @@ RUN <<END_OF_RUN
 main ()
 {
   set -eux
-
   exec ${_spectrwm}
 }
 
