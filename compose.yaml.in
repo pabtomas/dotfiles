@@ -411,6 +411,7 @@ services:
       context: ${CWD_PATH}/${XSERVER_ID}
       <<: *default-dockerfile
       args:
+        CARPENTER_RELAY_IP: ${CARPENTER_RELAY_IP}
         CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${XSERVER_ID}.sh
         ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
         ETC_NGINX_PATH: ${ETC_NGINX_PATH}

@@ -1,6 +1,7 @@
 ARG NGINX_LAYER_IMG
 FROM ${NGINX_LAYER_IMG}
 
+ARG CARPENTER_RELAY_IP
 ARG CHECK_ENTRYPOINT_PATH
 ARG ETC_NGINX_CONFD_PATH
 ARG ETC_NGINX_PATH
@@ -64,6 +65,7 @@ access_log ${VAR_LOG_NGINX_PATH}/access.log custom_stream;
 
 server {
     listen ${XSERVER_PORT};
+    allow ${CARPENTER_RELAY_IP};
     allow ${SPACEPORN_RELAY_IP};
     deny all;
     proxy_pass unix:${XSERVER_SOCKET_PATH};
