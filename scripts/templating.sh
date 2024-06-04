@@ -16,18 +16,18 @@ templating ()
 
   if [ -n "${1}" ]
   then
-    cwd="${1}"
+    root="${1}"
   else
-    cwd="$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1; pwd)/.."
+    root="$(CDPATH='' cd -- "$(dirname -- "${0}")" > /dev/null 2>&1; pwd)/.."
   fi
-  readonly cwd
+  readonly root
 
   generate_variables
-  set -a -- "${cwd}"
-  . "${cwd}/env.sh"
+  set -a -- "${root}"
+  . "${root}/env.sh"
 
   ## generate anchors first, then compose files and at the very end, other templates
-  for template in "${cwd}/anchors/compose.yaml.in" $(match="${cwd}" find "${cwd}" -type f -name 'compose.yaml.in' -not -path "${cwd}/anchors/*" -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${cwd}" find "${cwd}" -type f -name '*.in' -not -name '*.yaml.in')
+  for template in "${root}/anchors/compose.yaml.in" $(match="${root}" find "${root}" -type f -name 'compose.yaml.in' -not -path "${root}/anchors/*" -printf '%d %p\n' | sort -n -r | cut -d ' ' -f 2) $(match="${root}" find "${root}" -type f -name '*.in' -not -name '*.yaml.in')
   do
     cat="$(IFS='
 '; while read -r line; do printf '%s\n' "${line}"; done < "${template}")"
@@ -38,7 +38,7 @@ templating ()
   ## https://github.com/docker/compose/issues/5621
   # shellcheck disable=2016
   # SC2016: Expressions don't expand in single quotes, use double quotes for that => expansion not needed
-  match="${cwd}" find "${cwd}" -type f -name 'compose.yaml' -not -path "${cwd}/anchors/*" -exec sh -c '
+  match="${root}" find "${root}" -type f -name 'compose.yaml' -not -path "${root}/anchors/*" -exec sh -c '
     IFS="
 "
     while read -r line
@@ -52,7 +52,7 @@ templating ()
 }${line}"
     done < "${1}"
     printf "%s\n" "${file}" | yq "explode(.)" > "${1}"
-  ' sh {} "${cwd}" \;
+  ' sh {} "${root}" \;
 )
 
 templating "${@}"
