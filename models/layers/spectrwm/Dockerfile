@@ -17,7 +17,7 @@ main ()
   set -eux
 
   # check spectrwm availability
-  ${_spectrwm} --version
+  ${_spectrwm} -v
 }
 
 main
