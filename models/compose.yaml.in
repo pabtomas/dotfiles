@@ -14,6 +14,7 @@ services:
     group_add:
       - render
       - video
+    image: ${GPU_LAYER_IMG}
   ${MAN_MODEL}:
     extends: ${SSHD_MODEL}
     image: ${MAN_LAYER_IMG}
