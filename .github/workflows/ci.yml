@@ -50,10 +50,12 @@ jobs:
         ( 'zsh' ) EXE="${PKG} --emulate sh" ;;
         ( * ) EXE="${PKG}" ;;
         esac
-        sudo apt-get install xserver-xorg-core xvfb awesome -y
+        sudo apt-get install xvfb fluxbox -y
         DISPLAY=':0'
         export DISPLAY
         Xvfb "${DISPLAY}" &
+        while [ ! -e "/tmp/.X11-unix/X0" ]; do sleep 0.001; done
+        fluxbox &
         ${EXE} -x "${GITHUB_WORKSPACE}/wget_me.sh" --branch ${GITHUB_HEAD_REF} --runner-is-a-bot
   shellcheck:
     runs-on: ubuntu-latest

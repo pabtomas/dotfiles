@@ -5,6 +5,7 @@
 
 _model "${_BUILDKIT_ID}"
 _model "${_DOCKER_ID}"
+_model "${GPU_ID}"
 _model "${MAN_ID}"
 _model "${PASS_ID}"
 _model "${REGISTRY_ID}"

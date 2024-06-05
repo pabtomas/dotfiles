@@ -30,7 +30,7 @@
 - solve docker run 409
 - runners:
   - relay + GUI:
-    - window manager/Xephyr/xinit conf
+    - window manager/Xephyr conf
   - firefox:
     - dedicated service network
   - white-board:
