@@ -122,8 +122,7 @@ main ()
       apt_get upgrade -y
 
       ## the function fails later if matching executable are not available
-      apt_get install xserver-xephyr -y
-      #apt_get install wmctrl -y
+      apt_get install wmctrl xserver-xephyr -y
       set -e ;;
     ( 'alpine' )
       harden apk apk sudo
@@ -135,7 +134,8 @@ main ()
       apk upgrade
 
       ## the function fails later if matching executable are not available
-      apk add xorg-server-xephyr wmctrl
+      apk add xorg-server-xephyr
+      # apk add wmctrl
       set -e ;;
     ( * )
       printf 'Can not update Docker or install Xephyr packages: unknown OS: %s\n' "${dist}" >&2 ;;
