@@ -392,7 +392,6 @@ services:
       file: ${MODELS_PATH}/compose.yaml
       service: ${GPU_MODEL}
     hostname: ${SPACEPORN_RUNNER_HOST}
-    image: ${SPACEPORN_RUNNER_IMG}
     volumes:
       - <<: *readonly-volume
         source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
