@@ -253,7 +253,7 @@ EOF
     set -- "Xephyr (:${XEPHYR_DISPLAY})"
     Xephyr ":${XEPHYR_DISPLAY}" -extension MIT-SHM -extension XTEST -resizeable -title "${1}" > /dev/null 2>&1 &
     while [ ! -e "/tmp/.X11-unix/X${XEPHYR_DISPLAY}" ]; do sleep 0.001; done
-    DISPLAY="${XEPHYR_DISPLAY}" wmctrl -a "${1}" -b add,maximized_vert,maximized_horz
+    wmctrl -a "${1}" -b add,maximized_vert,maximized_horz
   }
 
   ## Posix shell: no local variables => subshell instead of braces
