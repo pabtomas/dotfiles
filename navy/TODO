@@ -1,0 +1,192 @@
+- anchors
+- networks:
+  - create
+- volumes:
+  - create
+- images:
+  - pull
+  - tag
+  - build:
+    - depends_on other builds
+- services:
+  - models:
+    - extends models
+  - create
+    - depends_on services
+    - extends models
+    - for each create: add volumes & networks as variables
+  - start
+  - attach
+  - stop:
+    - keep order from start/create
+  - remove
+
+- volumes:
+  - remove
+- networks-rm:
+  - remove
+
+------------------------------------------------------------------------------
+
+extends for:
+  - query: yes
+  - path: yes
+  - context: yes
+  - depends_on: only for virtual
+  - extends ?
+
+------------------------------------------------------------------------------
+
+regular:
+curl -s --unix-socket /var/run/docker.sock -X DELETE http://v1.45/containers/hardcore_jang?force=true 
+
+build:
+tar c -f context.tar -C /tmp .
+curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar
+
+--- [docker network create] --------------------------------------------------
+
+endpoint: /networks/create
+method: POST
+requests:
+  - query:
+      Name: my-network
+      Driver: bridge
+      IPAM:
+        Driver: default
+        Config:
+          - Subnet: 172.28.0.0/16
+            IPRange: 172.28.5.0/24
+            Gateway: 172.28.5.1
+
+--- [docker volume create] ---------------------------------------------------
+
+endpoint: /volumes/create
+method: POST
+requests:
+  - query:
+      Name: my-volume
+
+--- [docker image pull] ------------------------------------------------------
+
+endpoint: /images/create
+method: POST
+requests:
+  - query:
+      fromImage: my-image
+      tag: my-tag
+
+--- [docker image tag] -------------------------------------------------------
+
+endpoint: /images/{name}/tag
+method: POST
+requests:
+  - query:
+      repo: target-registry%2target-project%2/target-image
+      tag: target-tag
+    path:
+      name: source-registry/source-project/source-image:source-tag
+
+--- [docker builx builx] -----------------------------------------------------
+
+endpoint: /build
+method: POST
+requests:
+  - query:
+      buildargs: '{"HTTP_PROXY":"${HTTP_PROXY}","HTTPS_PROXY":"${HTTPS_PROXY}"}'
+    id: my-virtual-build
+    virtual: true
+  - query:
+      buildargs: '{"MY_VAR":"${MY_VALUE}"}'
+      t: my-registry/my-project/my-image:my-tag
+    context: /dir/of/my/dockerfile
+    id: my-build
+    depends_on:
+      - my-other-build
+    extends:
+      - my-virtual-build
+
+--- [docker container create] ------------------------------------------------
+
+endpoint: /containers/create
+method: POST
+requests:
+  - query:
+      NetworkConfig:
+        EndpointsConfig:
+          my-network:
+            IPv4Address: 172.17.1.2
+    id: my-virtual-container
+    virtual: true
+  - query:
+      name: my-container
+      Hostname: my-container
+      Image: my-registry/my-project/my-image:my-tag
+      NetworkConfig:
+        EndpointsConfig:
+          my-other-network:
+            IPv4Address: 172.17.2.2
+    id: my-container
+    depends_on:
+      - my-other-container
+    extends:
+      - my-virtual-container
+
+--- [docker container start] -------------------------------------------------
+
+endpoint: /containers/{id}/start
+method: POST
+requests:
+  - path:
+      - my-container
+
+--- [docker container attach] ------------------------------------------------
+
+endpoint: /containers/{id}/attach
+method: POST
+requests:
+  - path:
+      id: my-container
+    query:
+      stream: true
+      stdin: true
+      stdout: true
+      stderr: true
+
+--- [docker container stop] --------------------------------------------------
+
+endpoint: /containers/{id}/stop
+method: POST
+requests:
+  - path:
+      id: my-container
+    query:
+      t: 0
+
+--- [docker container remove] ------------------------------------------------
+
+endpoint: /containers/{id}
+method: DELETE
+requests:
+  - path:
+      id: my-container
+    query:
+      force: true
+
+--- [docker volume remove] ---------------------------------------------------
+
+endpoint: /volumes/{name}
+method: DELETE
+requests:
+  - path:
+      name: my-container
+    query:
+      force: true
+
+--- [docker network remove] --------------------------------------------------
+
+endpoint: /containers/{id}
+method: DELETE
+requests:
+  - path:
+      id: my-network

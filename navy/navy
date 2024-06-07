@@ -1,0 +1,34 @@
+#! /bin/sh
+
+main ()
+{
+  set -eux
+
+  # define default values
+  local include_files include_overwrite
+  include_overwrite='true'
+
+  yq '.include' navy.yaml
+  # resolve includes
+  # resolve anchors (public / private ?)
+  # resolve extends
+  # envsubst
+  # yq script to generate sh script. Keywords:
+  # - include
+  # - include.files
+  # - include.overwrite
+  # - version
+  # - endpoint
+  # - method
+  # - requests
+  # - requests[].query
+  # - requests[].path
+  # - requests[].id
+  # - requests[].virtual
+  # - requests[].context
+  # - requests[].depends_on
+  # - requests[].extends
+  # run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script
+}
+
+main "${@}"

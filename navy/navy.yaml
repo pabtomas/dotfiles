@@ -1,0 +1,457 @@
+version: 1.45
+
+include:
+  - networks/create.yaml
+  - volumes/create.yaml
+  - images/pull.yaml
+  - images/tag.yaml
+  - images/build.yaml
+  - containers/create.yaml
+  - containers/start.yaml
+  - containers/attach.yaml
+  - containers/stop.yaml
+  - containers/remove.yaml
+  - volumes/remove.yaml
+  - networks/remove.yaml
+
+services:
+  ${BUILDER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${BUILDER_ID}
+      <<: *default-dockerfile
+      args:
+        _BUILDKIT_CONF_PATH: ${_BUILDKIT_CONF_PATH}
+        _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}
+        <<: *proxy-environment
+        REGISTRY_TARGET: ${REGISTRY_TARGET}
+    command:
+      - --addr
+      - tcp://0.0.0.0:${BUILDER_PORT}
+      - --config
+      - ${_BUILDKIT_CONF_PATH}
+      - --oci-worker-no-process-sandbox
+    container_name: ${BUILDER_HOST}
+    expose:
+      - "\"${BUILDER_PORT}\""
+    hostname: ${BUILDER_HOST}
+    image: ${BUILDER_IMG}
+    networks:
+      ${_DOCKER_NET}:
+        ipv4_address: ${BUILDER_IP}
+    security_opt:
+      - apparmor:unconfined
+      - seccomp:unconfined
+  ${CARPENTER_RELAY_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${RELAY_ID}
+      <<: *default-dockerfile
+      args:
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+        LOG_ID: ${CARPENTER_ID}
+        SOCAT_LAYER_IMG: ${SOCAT_LAYER_IMG}
+        TMP_XSERVER_SOCKETS_PATH: ${TMP_XSERVER_SOCKETS_PATH}
+        XSERVER_IP: ${XSERVER_IP}
+        XSERVER_PORT: "\"${XSERVER_PORT}\""
+    container_name: ${CARPENTER_RELAY_HOST}
+    depends_on:
+      ${XSERVER_SERVICE}:
+        <<: *service-started
+    hostname: ${CARPENTER_RELAY_HOST}
+    image: ${CARPENTER_RELAY_IMG}
+    networks:
+      ${PROXIFIED_XSERVER_SOCKET_NET}:
+        ipv4_address: ${CARPENTER_RELAY_IP}
+    read_only: true
+    volumes:
+      - <<: *volume
+        source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+      - <<: *volume
+        source: ${RELAY_VAR_LOG_VOLUME}
+        target: ${VAR_LOG_PATH}
+  ${CARPENTER_RUNNER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${CARPENTER_ID}
+      <<: *default-dockerfile
+      args:
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+        SPECTRWM_LAYER_IMG: ${SPECTRWM_LAYER_IMG}
+    container_name: ${CARPENTER_RUNNER_HOST}
+    depends_on:
+      ${CARPENTER_RELAY_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${RUNNER_MODEL}
+    hostname: ${CARPENTER_RUNNER_HOST}
+    image: ${CARPENTER_RUNNER_IMG}
+    volumes:
+      - <<: *readonly-volume
+        source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+  ${CONTROLLER_SERVICE}:
+    container_name: ${CONTROLLER_HOST}
+    depends_on:
+      ${BUILDER_SERVICE}:
+        <<: *service-started
+      ${LISTENER_SERVICE}:
+        <<: *service-started
+      ${PROXY_SERVICE}:
+        <<: *service-started
+      ${REGISTRY_SERVICE}:
+        <<: *service-started
+      ${XSERVER_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${_DOCKER_MODEL}
+    hostname: ${CONTROLLER_HOST}
+    networks:
+      ${_DOCKER_NET}:
+        ipv4_address: ${CLIENT_IP}
+      ${PROXIFIED_DOCKER_SOCKET_NET}:
+        ipv4_address: ${CONTROLLER_IP}
+    volumes:
+      - <<: *volume
+        source: ${MYWHALEFLEET_VOLUME}
+        target: ${MYWHALEFLEET_PATH}
+  ${EDITOR_SERVICE}:
+    container_name: ${EDITOR_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${VIM_MODEL}
+    hostname: ${EDITOR_HOST}
+    volumes:
+      - <<: *volume
+        source: ${MYWHALEFLEET_VOLUME}
+        target: ${MYWHALEFLEET_PATH}
+      - <<: *volume
+        source: ${SPACEPORN_VOLUME}
+        target: ${SPACEPORN_PATH}
+  ${SHELL_EXPLORER_SERVICE}:
+    container_name: ${SHELL_EXPLORER_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${SHELL_MODEL}
+    hostname: ${SHELL_EXPLORER_HOST}
+    volumes:
+      - <<: *volume
+        source: ${MYWHALEFLEET_VOLUME}
+        target: ${MYWHALEFLEET_PATH}
+  ${ZIG_EXPLORER_SERVICE}:
+    container_name: ${ZIG_EXPLORER_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${ZIG_MODEL}
+    hostname: ${ZIG_EXPLORER_HOST}
+    volumes:
+      - <<: *volume
+        source: ${SPACEPORN_VOLUME}
+        target: ${SPACEPORN_PATH}
+  ${JUMPER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${JUMPER_ID}
+      <<: *default-dockerfile
+      args:
+        BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+        BASH_THEME_PATH: ${BASH_THEME_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${JUMPER_ID}.sh
+        COMPLETION_PATH: /opt/${LISTENER_ID}${COMPLETION_PATH}
+        CONTROLLER_ID: ${CONTROLLER_ID}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+        NET_PFX: ${JUMP_AREA_PFX}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        OPT_SSH_PATH: ${OPT_SSH_PATH}
+        SSH_PORT: "\"${SSH_PORT}\""
+        SSH_ROOT_PATH: ${SSH_ROOT_PATH}
+        TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
+        TMUX_LAYER_IMG: ${TMUX_LAYER_IMG}
+    container_name: ${JUMPER_HOST}
+    depends_on:
+      ${CONTROLLER_SERVICE}:
+        <<: *service-started
+      ${EDITOR_SERVICE}:
+        <<: *service-started
+      ${SHELL_EXPLORER_SERVICE}:
+        <<: *service-started
+      ${ZIG_EXPLORER_SERVICE}:
+        <<: *service-started
+      ${LISTENER_SERVICE}:
+        <<: *service-started
+      ${SAFEDEPOSIT_SERVICE}:
+        <<: *service-started
+      ${SCHOLAR_SERVICE}:
+        <<: *service-started
+    hostname: ${JUMPER_HOST}
+    image: ${JUMPER_IMG}
+    networks:
+      ${JUMP_AREA_NET}: null
+    stdin_open: true
+    tty: true
+    volumes:
+      - <<: *readonly-volume
+        source: ${LISTENER_OPT_DATA_VOLUME}
+        target: /opt/${LISTENER_ID}${DATA_PATH}
+      - <<: *readonly-volume
+        source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+        target: /opt/${LISTENER_ID}${OPT_SCRIPTS_PATH}
+      - <<: *readonly-volume
+        source: ${LISTENER_VAR_LOG_VOLUME}
+        target: /opt/${LISTENER_ID}${VAR_LOG_PATH}
+      - <<: *readonly-volume
+        source: ${PROXY_ETC_NGINX_VOLUME}
+        target: /opt/${PROXY_ID}${ETC_NGINX_PATH}
+      - <<: *readonly-volume
+        source: ${PROXY_OPT_SCRIPTS_VOLUME}
+        target: /opt/${PROXY_ID}${OPT_SCRIPTS_PATH}
+      - <<: *readonly-volume
+        source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+        target: /opt/${PROXY_ID}${VAR_LOG_NGINX_PATH}
+      - <<: *readonly-volume
+        source: ${RELAY_VAR_LOG_VOLUME}
+        target: /opt/${RELAY_ID}${VAR_LOG_PATH}
+      - <<: *readonly-volume
+        source: ${SSH_VOLUME}
+        target: ${OPT_SSH_PATH}
+      - <<: *volume
+        source: ${THEME_VOLUME}
+        target: ${BASH_THEME_PATH}
+      - <<: *readonly-volume
+        source: ${XSERVER_ETC_NGINX_VOLUME}
+        target: /opt/${XSERVER_ID}${ETC_NGINX_PATH}
+      - <<: *readonly-volume
+        source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+        target: /opt/${XSERVER_ID}${OPT_SCRIPTS_PATH}
+      - <<: *readonly-volume
+        source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+        target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
+  ${LISTENER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${LISTENER_ID}
+      <<: *default-dockerfile
+      args:
+        _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LISTENER_ID}.sh
+        COMPLETION_PATH: ${COMPLETION_PATH}
+        DATA_PATH: ${DATA_PATH}
+        ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
+        <<: *proxy-environment
+        NET: ${JUMP_AREA_NET}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        VAR_LOG_PATH: ${VAR_LOG_PATH}
+    container_name: ${LISTENER_HOST}
+    depends_on:
+      ${PROXY_SERVICE}:
+        <<: *service-started
+    hostname: ${LISTENER_HOST}
+    image: ${LISTENER_IMG}
+    networks:
+      ${PROXIFIED_DOCKER_SOCKET_NET}:
+        ipv4_address: ${LISTENER_IP}
+    read_only: true
+    volumes:
+      - <<: *volume
+        source: ${LISTENER_OPT_DATA_VOLUME}
+        target: ${DATA_PATH}
+      - <<: *readonly-volume
+        source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+        target: ${OPT_SCRIPTS_PATH}
+      - <<: *volume
+        source: ${LISTENER_VAR_LOG_VOLUME}
+        target: ${VAR_LOG_PATH}
+  ${PROXY_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${PROXY_ID}
+      <<: *default-dockerfile
+      args:
+        _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
+        ${API_PFX}_PING: "\"${TRUE}\""
+        ${API_PFX}BUILD: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_CREATE: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_ARCHIVE: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_ATTACH: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_EXEC: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_JSON: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_KILL: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_LOGS: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_START: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_STOP: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_ID_WAIT: "\"${TRUE}\""
+        ${API_PFX}CONTAINERS_JSON: "\"${TRUE}\""
+        ${API_PFX}EVENTS: "\"${TRUE}\""
+        ${API_PFX}IMAGES_CREATE: "\"${TRUE}\""
+        ${API_PFX}IMAGES_JSON: "\"${TRUE}\""
+        ${API_PFX}IMAGES_NAME: "\"${TRUE}\""
+        ${API_PFX}NETWORKS: "\"${TRUE}\""
+        ${API_PFX}VERSION: "\"${TRUE}\""
+        ${API_PFX}VOLUMES: "\"${TRUE}\""
+        API_PFX: ${API_PFX}
+        API_TAG: "\"${API_TAG}\""
+        API_URL: ${API_URL}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PROXY_ID}.sh
+        CONTROLLER_IP: ${CONTROLLER_IP}
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
+        HTTP_LAYER_IMG: ${HTTP_LAYER_IMG}
+        <<: *proxy-environment
+        LISTENER_IP: ${LISTENER_IP}
+        OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+        PROXY_PORT: "\"${PROXY_PORT}\""
+    container_name: ${PROXY_HOST}
+    expose:
+      - "\"${PROXY_PORT}\""
+    hostname: ${PROXY_HOST}
+    image: ${PROXY_IMG}
+    networks:
+      ${PROXIFIED_DOCKER_SOCKET_NET}:
+        ipv4_address: ${PROXY_IP}
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - <<: *readonly-bind
+        source: ${_DOCKER_SOCKET_PATH}
+        target: ${_DOCKER_SOCKET_PATH}
+      - <<: *readonly-volume
+        source: ${PROXY_ETC_NGINX_VOLUME}
+        target: ${ETC_NGINX_PATH}
+      - <<: *readonly-volume
+        source: ${PROXY_OPT_SCRIPTS_VOLUME}
+        target: ${OPT_SCRIPTS_PATH}
+      - <<: *volume
+        source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+        target: ${VAR_LOG_NGINX_PATH}
+  ${REGISTRY_SERVICE}:
+    container_name: ${REGISTRY_HOST}
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${REGISTRY_MODEL}
+    hostname: ${REGISTRY_HOST}
+    networks:
+      ${_DOCKER_NET}:
+        ipv4_address: ${REGISTRY_IP}
+  ${SAFEDEPOSIT_SERVICE}:
+    container_name: ${SAFEDEPOSIT_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${PASS_MODEL}
+    hostname: ${SAFEDEPOSIT_HOST}
+    volumes:
+      - <<: *volume
+        source: ${SAFEDEPOSIT_VOLUME}
+        target: ${SAFEDEPOSIT_PATH}
+  ${SCHOLAR_SERVICE}:
+    container_name: ${SCHOLAR_HOST}
+    depends_on:
+      ${LISTENER_SERVICE}:
+        <<: *service-started
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${MAN_MODEL}
+    hostname: ${SCHOLAR_HOST}
+  ${SPACEPORN_RELAY_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${RELAY_ID}
+      <<: *default-dockerfile
+      args:
+        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        <<: *proxy-environment
+        LOG_ID: ${SPACEPORN_ID}
+        SOCAT_LAYER_IMG: ${SOCAT_LAYER_IMG}
+        TMP_XSERVER_SOCKETS_PATH: ${TMP_XSERVER_SOCKETS_PATH}
+        XSERVER_IP: ${XSERVER_IP}
+        XSERVER_PORT: "\"${XSERVER_PORT}\""
+    container_name: ${SPACEPORN_RELAY_HOST}
+    depends_on:
+      ${XSERVER_SERVICE}:
+        <<: *service-started
+    hostname: ${SPACEPORN_RELAY_HOST}
+    image: ${SPACEPORN_RELAY_IMG}
+    networks:
+      ${PROXIFIED_XSERVER_SOCKET_NET}:
+        ipv4_address: ${SPACEPORN_RELAY_IP}
+    read_only: true
+    volumes:
+      - <<: *volume
+        source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+      - <<: *volume
+        source: ${RELAY_VAR_LOG_VOLUME}
+        target: ${VAR_LOG_PATH}
+  ${SPACEPORN_RUNNER_SERVICE}:
+    container_name: ${SPACEPORN_RUNNER_HOST}
+    depends_on:
+      ${SPACEPORN_RELAY_SERVICE}:
+        <<: *service-started
+    entrypoint: ${SPACEPORN_PATH}/${SPACEPORN_ID}/zig-out/bin/${SPACEPORN_ID}
+    extends:
+      file: ${MODELS_PATH}/compose.yaml
+      service: ${GPU_MODEL}
+    hostname: ${SPACEPORN_RUNNER_HOST}
+    volumes:
+      - <<: *readonly-volume
+        source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+        target: ${TMP_XSERVER_SOCKETS_PATH}
+      - <<: *readonly-volume
+        source: ${SPACEPORN_VOLUME}
+        target: ${SPACEPORN_PATH}
+  ${XSERVER_SERVICE}:
+    build:
+      context: ${CWD_PATH}/${XSERVER_ID}
+      <<: *default-dockerfile
+      args:
+        CARPENTER_RELAY_IP: ${CARPENTER_RELAY_IP}
+        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${XSERVER_ID}.sh
+        ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
+        ETC_NGINX_PATH: ${ETC_NGINX_PATH}
+        <<: *proxy-environment
+        NGINX_LAYER_IMG: ${NGINX_LAYER_IMG}
+        SPACEPORN_RELAY_IP: ${SPACEPORN_RELAY_IP}
+        VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
+        XSERVER_PORT: "\"${XSERVER_PORT}\""
+        XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
+    container_name: ${XSERVER_HOST}
+    expose:
+      - "\"${XSERVER_PORT}\""
+    hostname: ${XSERVER_HOST}
+    image: ${XSERVER_IMG}
+    networks:
+      ${PROXIFIED_XSERVER_SOCKET_NET}:
+        ipv4_address: ${XSERVER_IP}
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /run
+    volumes:
+      - <<: *readonly-bind
+        source: ${XSERVER_SOCKET_PATH}
+        target: ${XSERVER_SOCKET_PATH}
+      - <<: *readonly-volume
+        source: ${XSERVER_ETC_NGINX_VOLUME}
+        target: ${ETC_NGINX_PATH}
+      - <<: *readonly-volume
+        source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+        target: ${OPT_SCRIPTS_PATH}
+      - <<: *volume
+        source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+        target: ${VAR_LOG_NGINX_PATH}

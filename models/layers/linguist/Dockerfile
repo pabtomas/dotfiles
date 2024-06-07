@@ -10,7 +10,7 @@ RUN <<END_OF_RUN
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
     apk add --no-cache --virtual __install_linguist ruby-dev build-base cmake
-    apk add --no-cache ruby cmake icu-dev zlib-dev openssl-dev libcurl
+    apk add --no-cache ruby cmake icu-dev zlib-dev openssl-dev libcurl cloc
     gem install github-linguist
     apk del __install_linguist
     _linguist="$(command -v github-linguist)"
