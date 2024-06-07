@@ -1,14 +1,8 @@
 endpoint: /containers/create
 method: POST
 requests:
-  - query:
-      NetworkConfig:
-        EndpointsConfig:
-          my-network:
-            IPv4Address: 172.17.1.2
-    id: my-virtual-container
-    virtual: true
-  - query:
+  - id: containers.create.builder
+    query:
       name: my-container
       Hostname: my-container
       Image: my-registry/my-project/my-image:my-tag

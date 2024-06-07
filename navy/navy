@@ -20,6 +20,10 @@ main ()
   # - version
   # - endpoint
   # - method
+  # - register
+  # - from
+  # - from.registered
+  # - from.template
   # - requests
   # - requests[].query
   # - requests[].path

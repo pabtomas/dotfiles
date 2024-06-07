@@ -33,7 +33,6 @@ extends for:
   - path: yes
   - context: yes
   - depends_on: only for virtual
-  - extends ?
 
 ------------------------------------------------------------------------------
 
