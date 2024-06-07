@@ -4,34 +4,20 @@ main ()
 {
   set -eux
 
-  # define default values
-  local include_files include_overwrite
-  include_overwrite='true'
+  # parse options:
+  #   * --no-cache
 
-  yq '.include' navy.yaml
-  # resolve includes
-  # resolve anchors (public / private ?)
-  # resolve extends
-  # envsubst
-  # yq script to generate sh script. Keywords:
-  # - include
-  # - include.files
-  # - include.overwrite
-  # - version
-  # - endpoint
-  # - method
-  # - register
-  # - from
-  # - from.registered
-  # - from.template
-  # - requests
-  # - requests[].query
-  # - requests[].path
-  # - requests[].id
-  # - requests[].virtual
-  # - requests[].context
-  # - requests[].depends_on
-  # - requests[].extends
+  # define default values
+
+  # if cache not found:
+  #   resolve private anchors
+  #   resolve includes
+  #   change loop requests and requests[].loop into dictionnaries
+  #   resolve extends (replace them with anchors and aliases then use yq explode)
+  #   envsubst
+  #   yq script to generate sh script.
+  #   generate cache: sha256sum <(find . -type -f -exec sha256sum {} \; | sort  | cut -d' ' -f1)
+  # fi
   # run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script
 }
 

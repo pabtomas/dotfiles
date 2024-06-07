@@ -1,51 +1,56 @@
-endpoint: /images/{name}/tag
-method: POST
+---
+
 requests:
-  - id: tag.alpine
-    query:
-      repo: ${ALPINE_LOCAL_IMG}
-      tag: ${ALPINE_TAG}
-    path:
-      name: ${ALPINE_IMG}:${ALPINE_TAG}
-    depends_on:
-      - pull.alpine
-  - id: tag.bash
-    query:
-      repo: ${BASH_LOCAL_IMG}
-      tag: ${BASH_TAG}
-    path:
-      name: ${BASH_IMG}:${BASH_TAG}
-    depends_on:
-      - pull.bash
-  - id: tag.buildkit
-    query:
-      repo: ${_BUILDKIT_LOCAL_IMG}
-      tag: ${_BUILDKIT_TAG}
-    path:
-      name: ${_BUILDKIT_IMG}:${_BUILDKIT_TAG}
-    depends_on:
-      - pull.buildkit
-  - id: tag.docker
-    query:
-      repo: ${_DOCKER_LOCAL_IMG}
-      tag: ${_DOCKER_TAG}
-    path:
-      name: ${_DOCKER_IMG}:${_DOCKER_TAG}
-    depends_on:
-      - pull.docker
-  - id: tag.proxy
-    query:
-      repo: ${LINUXSERVER_PROXY_LOCAL_IMG}
-      tag: ${LINUXSERVER_PROXY_TAG}
-    path:
-      name: ${LINUXSERVER_PROXY_IMG}:${LINUXSERVER_PROXY_TAG}
-    depends_on:
-      - pull.proxy
-  - id: tag.registry
-    query:
-      repo: ${REGISTRY_LOCAL_IMG}
-      tag: ${REGISTRY_TAG}
-    path:
-      name: ${REGISTRY_IMG}:${REGISTRY_TAG}
-    depends_on:
-      - pull.registry
+  - endpoint: /images/{name}/tag
+    method: POST
+    loop:
+      - id: tag.alpine
+        query:
+          repo: ${ALPINE_LOCAL_IMG}
+          tag: ${ALPINE_TAG}
+        path:
+          name: ${ALPINE_IMG}:${ALPINE_TAG}
+        depends_on:
+          - pull.alpine
+      - id: tag.bash
+        query:
+          repo: ${BASH_LOCAL_IMG}
+          tag: ${BASH_TAG}
+        path:
+          name: ${BASH_IMG}:${BASH_TAG}
+        depends_on:
+          - pull.bash
+      - id: tag.buildkit
+        query:
+          repo: ${_BUILDKIT_LOCAL_IMG}
+          tag: ${_BUILDKIT_TAG}
+        path:
+          name: ${_BUILDKIT_IMG}:${_BUILDKIT_TAG}
+        depends_on:
+          - pull.buildkit
+      - id: tag.docker
+        query:
+          repo: ${_DOCKER_LOCAL_IMG}
+          tag: ${_DOCKER_TAG}
+        path:
+          name: ${_DOCKER_IMG}:${_DOCKER_TAG}
+        depends_on:
+          - pull.docker
+      - id: tag.proxy
+        query:
+          repo: ${LINUXSERVER_PROXY_LOCAL_IMG}
+          tag: ${LINUXSERVER_PROXY_TAG}
+        path:
+          name: ${LINUXSERVER_PROXY_IMG}:${LINUXSERVER_PROXY_TAG}
+        depends_on:
+          - pull.proxy
+      - id: tag.registry
+        query:
+          repo: ${REGISTRY_LOCAL_IMG}
+          tag: ${REGISTRY_TAG}
+        path:
+          name: ${REGISTRY_IMG}:${REGISTRY_TAG}
+        depends_on:
+          - pull.registry
+
+...

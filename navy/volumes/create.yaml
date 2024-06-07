@@ -1,57 +1,62 @@
-endpoint: /volumes/create
-method: POST
+---
+
 requests:
-  - id: volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
-    query:
-      Name: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
-  - id: volumes.create.${LISTENER_OPT_DATA_VOLUME}
-    query:
-      Name: ${LISTENER_OPT_DATA_VOLUME}
-  - id: volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
-    query:
-      Name: ${LISTENER_OPT_SCRIPTS_VOLUME}
-  - id: volumes.create.${LISTENER_VAR_LOG_VOLUME}
-    query:
-      Name: ${LISTENER_VAR_LOG_VOLUME}
-  - id: volumes.create.${MYWHALEFLEET_VOLUME}
-    query:
-      Name: ${MYWHALEFLEET_VOLUME}
-  - id: volumes.create.${PROXY_ETC_NGINX_VOLUME}
-    query:
-      Name: ${PROXY_ETC_NGINX_VOLUME}
-  - id: volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
-    query:
-      Name: ${PROXY_OPT_SCRIPTS_VOLUME}
-  - id: volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
-    query:
-      Name: ${PROXY_VAR_LOG_NGINX_VOLUME}
-  - id: volumes.create.${REGISTRY_VOLUME}
-    query:
-      Name: ${REGISTRY_VOLUME}
-  - id: volumes.create.${RELAY_VAR_LOG_VOLUME}
-    query:
-      Name: ${RELAY_VAR_LOG_VOLUME}
-  - id: volumes.create.${SAFEDEPOSIT_VOLUME}
-    query:
-      Name: ${SAFEDEPOSIT_VOLUME}
-  - id: volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
-    query:
-      Name: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
-  - id: volumes.create.${SSH_VOLUME}
-    query:
-      Name: ${SSH_VOLUME}
-  - id: volumes.create.${SPACEPORN_VOLUME}
-    query:
-      Name: ${SPACEPORN_VOLUME}
-  - id: volumes.create.${THEME_VOLUME}
-    query:
-      Name: ${THEME_VOLUME}
-  - id: volumes.create.${XSERVER_ETC_NGINX_VOLUME}
-    query:
-      Name: ${XSERVER_ETC_NGINX_VOLUME}
-  - id: volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
-    query:
-      Name: ${XSERVER_OPT_SCRIPTS_VOLUME}
-  - id: volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}
-    query:
-      Name: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+  - endpoint: /volumes/create
+    method: POST
+    loop:
+      - id: volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+        query:
+          Name: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+      - id: volumes.create.${LISTENER_OPT_DATA_VOLUME}
+        query:
+          Name: ${LISTENER_OPT_DATA_VOLUME}
+      - id: volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
+        query:
+          Name: ${LISTENER_OPT_SCRIPTS_VOLUME}
+      - id: volumes.create.${LISTENER_VAR_LOG_VOLUME}
+        query:
+          Name: ${LISTENER_VAR_LOG_VOLUME}
+      - id: volumes.create.${MYWHALEFLEET_VOLUME}
+        query:
+          Name: ${MYWHALEFLEET_VOLUME}
+      - id: volumes.create.${PROXY_ETC_NGINX_VOLUME}
+        query:
+          Name: ${PROXY_ETC_NGINX_VOLUME}
+      - id: volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
+        query:
+          Name: ${PROXY_OPT_SCRIPTS_VOLUME}
+      - id: volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
+        query:
+          Name: ${PROXY_VAR_LOG_NGINX_VOLUME}
+      - id: volumes.create.${REGISTRY_VOLUME}
+        query:
+          Name: ${REGISTRY_VOLUME}
+      - id: volumes.create.${RELAY_VAR_LOG_VOLUME}
+        query:
+          Name: ${RELAY_VAR_LOG_VOLUME}
+      - id: volumes.create.${SAFEDEPOSIT_VOLUME}
+        query:
+          Name: ${SAFEDEPOSIT_VOLUME}
+      - id: volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+        query:
+          Name: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+      - id: volumes.create.${SSH_VOLUME}
+        query:
+          Name: ${SSH_VOLUME}
+      - id: volumes.create.${SPACEPORN_VOLUME}
+        query:
+          Name: ${SPACEPORN_VOLUME}
+      - id: volumes.create.${THEME_VOLUME}
+        query:
+          Name: ${THEME_VOLUME}
+      - id: volumes.create.${XSERVER_ETC_NGINX_VOLUME}
+        query:
+          Name: ${XSERVER_ETC_NGINX_VOLUME}
+      - id: volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
+        query:
+          Name: ${XSERVER_OPT_SCRIPTS_VOLUME}
+      - id: volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}
+        query:
+          Name: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+
+...

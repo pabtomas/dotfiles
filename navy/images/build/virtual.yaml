@@ -1,66 +1,71 @@
-endpoint: /build
-method: POST
+---
+
 requests:
-  - id: build.virtual
-    virtual: true
-    query:
-      nocache: false
-      buildargs:
-        HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-        HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
-  - id: build.virtual.entrypoint
-    virtual: true
-    query:
-      buildargs:
-        CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
-        CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
-        ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
-        ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
-    context: ${LAYERS_PATH}/${ENTRYPOINT_ID}
-    extends:
-      - build.virtual
-  - id: build.virtual.alpine.entrypoint
-    virtual: true
-    query:
-      buildargs:
-        ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
-    depends_on:
-      - build.alpine.entrypoint
-    extends:
-      - build.virtual
-  - id: build.virtual.bash
-    virtual: true
-    query:
-      buildargs:
-        BASH_LAYER_IMG: ${BASH_LAYER_IMG}
-    depends_on:
-      - build.bash
-    extends:
-      - build.virtual
-  - id: build.virtual.workspaces
-    virtual: true
-    query:
-      buildargs:
-        WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}
-    depends_on:
-      - build.workspaces
-    extends:
-      - build.virtual
-  - id: build.virtual.sshd
-    virtual: true
-    query:
-      buildargs:
-        SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}
-    depends_on:
-      - build.sshd
-    extends:
-      - build.virtual
-  - id: build.virtual.git
-    virtual: true
-    query:
-      buildargs:
-        GIT_LAYER_IMG: ${GIT_LAYER_IMG}
-    depends_on:
-      - build.git
-    extends:
-      - build.virtual
+  - endpoint: /build
+    method: POST
+    loop:
+      - id: build.virtual
+        virtual: true
+        query:
+          nocache: false
+          buildargs:
+            HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
+            HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+      - id: build.virtual.entrypoint
+        virtual: true
+        query:
+          buildargs:
+            CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINT_PATH}
+            CHECK_ENTRYPOINTD_PATH: ${CHECK_ENTRYPOINTD_PATH}
+            ENTRYPOINT_PATH: ${ENTRYPOINT_PATH}
+            ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+        context: ${LAYERS_PATH}/${ENTRYPOINT_ID}
+        extends:
+          - build.virtual
+      - id: build.virtual.alpine.entrypoint
+        virtual: true
+        query:
+          buildargs:
+            ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
+        depends_on:
+          - build.alpine.entrypoint
+        extends:
+          - build.virtual
+      - id: build.virtual.bash
+        virtual: true
+        query:
+          buildargs:
+            BASH_LAYER_IMG: ${BASH_LAYER_IMG}
+        depends_on:
+          - build.bash
+        extends:
+          - build.virtual
+      - id: build.virtual.workspaces
+        virtual: true
+        query:
+          buildargs:
+            WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}
+        depends_on:
+          - build.workspaces
+        extends:
+          - build.virtual
+      - id: build.virtual.sshd
+        virtual: true
+        query:
+          buildargs:
+            SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}
+        depends_on:
+          - build.sshd
+        extends:
+          - build.virtual
+      - id: build.virtual.git
+        virtual: true
+        query:
+          buildargs:
+            GIT_LAYER_IMG: ${GIT_LAYER_IMG}
+        depends_on:
+          - build.git
+        extends:
+          - build.virtual
+
+...

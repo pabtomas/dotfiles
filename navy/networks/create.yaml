@@ -1,43 +1,48 @@
-endpoint: /networks/create
-method: POST
+---
+
 requests:
-  - id: networks.create.${_DOCKER_NET}
-    query:
-      Name: ${_DOCKER_NET}
-      Driver: bridge
-      IPAM:
-        Driver: default
-        Config:
-          - Subnet: ${_DOCKER_SUB}
-            IPRange: ${_DOCKER_SUB}
-            Gateway: ${_DOCKER_GATEWAY_IP}
-  - id: networks.create.${JUMP_AREA_NET}
-    query:
-      Name: ${JUMP_AREA_NET}
-      Driver: bridge
-      IPAM:
-        Driver: default
-        Config:
-          - Subnet: ${JUMP_AREA_SUB}
-            IPRange: ${JUMP_AREA_SUB}
-            Gateway: ${JUMP_AREA_GATEWAY_IP}
-  - id: networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
-    query:
-      Name: ${PROXIFIED_DOCKER_SOCKET_NET}
-      Driver: bridge
-      IPAM:
-        Driver: default
-        Config:
-          - Subnet: ${PROXIFIED_DOCKER_SOCKET_SUB}
-            IPRange: ${PROXIFIED_DOCKER_SOCKET_SUB}
-            Gateway: ${PROXIFIED_DOCKER_SOCKET_GATEWAY_IP}
-  - id: networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
-    query:
-      Name: ${PROXIFIED_XSERVER_SOCKET_NET}
-      Driver: bridge
-      IPAM:
-        Driver: default
-        Config:
-          - Subnet: ${PROXIFIED_XSERVER_SOCKET_SUB}
-            IPRange: ${PROXIFIED_XSERVER_SOCKET_SUB}
-            Gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
+  - endpoint: /networks/create
+    method: POST
+    loop:
+      - id: networks.create.${_DOCKER_NET}
+        query:
+          Name: ${_DOCKER_NET}
+          Driver: bridge
+          IPAM:
+            Driver: default
+            Config:
+              - Subnet: ${_DOCKER_SUB}
+                IPRange: ${_DOCKER_SUB}
+                Gateway: ${_DOCKER_GATEWAY_IP}
+      - id: networks.create.${JUMP_AREA_NET}
+        query:
+          Name: ${JUMP_AREA_NET}
+          Driver: bridge
+          IPAM:
+            Driver: default
+            Config:
+              - Subnet: ${JUMP_AREA_SUB}
+                IPRange: ${JUMP_AREA_SUB}
+                Gateway: ${JUMP_AREA_GATEWAY_IP}
+      - id: networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
+        query:
+          Name: ${PROXIFIED_DOCKER_SOCKET_NET}
+          Driver: bridge
+          IPAM:
+            Driver: default
+            Config:
+              - Subnet: ${PROXIFIED_DOCKER_SOCKET_SUB}
+                IPRange: ${PROXIFIED_DOCKER_SOCKET_SUB}
+                Gateway: ${PROXIFIED_DOCKER_SOCKET_GATEWAY_IP}
+      - id: networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
+        query:
+          Name: ${PROXIFIED_XSERVER_SOCKET_NET}
+          Driver: bridge
+          IPAM:
+            Driver: default
+            Config:
+              - Subnet: ${PROXIFIED_XSERVER_SOCKET_SUB}
+                IPRange: ${PROXIFIED_XSERVER_SOCKET_SUB}
+                Gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
+
+...

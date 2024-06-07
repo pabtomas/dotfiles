@@ -20,7 +20,7 @@ Navy was written with 4 priorities in mind:
   - No way to specify a service purpose in a compose.yaml file. I am using some services only for building and tagging images and I do not want to create or run these services. But I can only specify this with the Compose CLI.
   - No extends list: https://github.com/docker/compose/issues/3167
   - Anchors & Aliases with multifiles: https://github.com/docker/compose/issues/5621
-- Minimal specification: the Navy specification contains less than 20 keywords (in the majority inspired from Compose and Ansible)
+- Minimal specification: the Navy specification contains less than 20 keywords (some of them are literally coming from Compose and Ansible)
 - Docker Engine API version agnostic: It does not mean that your `navy.yaml` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `navy.yaml` file whatever the Docker Engine API version you are targeting:
   - See here to know how Docker Engine works when a requests is submitted with an other version
   - Here the command line to check your Docker Engine API version:
@@ -29,3 +29,22 @@ docker version --format '{{ .Server.APIVersion }}'
 ```
 
 ## Specification
+
+Keywords:
+- versions
+- include
+- requests
+- requests[].endpoint
+- requests[].method
+- requests[].register
+- requests[].from
+- requests[].from.registered
+- requests[].from.template
+- requests[].loop
+- requests[].loop[].query
+- requests[].loop[].path
+- requests[].loop[].id
+- requests[].loop[].virtual
+- requests[].loop[].context
+- requests[].loop[].depends_on
+- requests[].loop[].extends

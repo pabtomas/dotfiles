@@ -1,4 +1,9 @@
-version: 1.45
+---
+
+versions:
+  - 1.45
+  - 1.44
+  - 1.43
 
 include:
   - networks/create.yaml
@@ -19,3 +24,5 @@ include:
   - volumes/remove.yaml
   - networks/list.yaml
   - networks/remove.yaml
+
+...

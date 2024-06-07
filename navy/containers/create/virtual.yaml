@@ -1,87 +1,92 @@
-endpoint: /containers/create
-method: POST
+---
+
 requests:
-  - id: containers.create.virtual.docker
-    virtual: true
-    query:
-      Image: ${_DOCKER_LAYER_IMG}
-      NetworkingConfig:
-        EndpointsConfig:
-          ${_DOCKER_NET}: {}
-          ${PROXIFIED_DOCKER_SOCKET_NET}: {}
-  - id: containers.create.virtual.gpu
-    virtual: true
-    query:
-      Image: ${GPU_LAYER_IMG}
-      Devices:
-        - PathOnHost: ${GPU_PATH}
-          PathInContainer: ${GPU_PATH}
-          CgroupPermissions: rwm
-        - PathOnHost: ${VGA_PATH}
-          PathInContainer: ${VGA_PATH}
-          CgroupPermissions: rwm
-      GroupAdd:
-        - render
-        - video
-      HostConfig:
-        NetworkMode: none
-  - id: containers.create.virtual.man
-    virtual: true
-    query:
-      Image: ${MAN_LAYER_IMG}
-    extends:
-      - containers.create.virtual.sshd
-  - id: containers.create.virtual.pass
-    virtual: true
-    query:
-      Image: ${PASS_LAYER_IMG}
-    extends:
-      - containers.create.virtual.sshd
-  - id: containers.create.virtual.registry
-    virtual: true
-    query:
-      Image: ${REGISTRY_LAYER_IMG}
-      Env:
-        - REGISTRY_LOG_ACCESSLOG_DISABLED=false
-        - REGISTRY_LOG_FORMATTER=text
-        - REGISTRY_LOG_LEVEL=info
-        - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=${DATA_PATH}
-      HostConfig:
-        Binds:
-          - ${REGISTRY_VOLUME}:${DATA_PATH}:rw
-        ReadonlyPaths:
-          - "/"
-      NetworkingConfig:
-        EndpointsConfig:
-          ${_DOCKER_NET}: {}
-  - id: containers.create.virtual.sshd
-    virtual: true
-    query:
-      Image: ${SSHD_LAYER_IMG}
-      ExposedPorts:
-        - ${SSH_PORT}/tcp
-      HostConfig:
-        Binds:
-          - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-          - ${THEME_VOLUME}:${BASH_THEME_PATH}:ro
-      NetworkingConfig:
-        EndpointsConfig:
-          ${JUMP_AREA_NET}: {}
-  - id: containers.create.virtual.shell
-    virtual: true
-    query:
-      Image: ${SHELL_LAYER_IMG}
-    extends:
-      - containers.create.virtual.sshd
-  - id: containers.create.virtual.vim
-    virtual: true
-    query:
-      Image: ${VIM_LAYER_IMG}
-    extends:
-      - containers.create.virtual.sshd
-  - id: containers.create.virtual.zig
-    virtual: true
-    query:
-      Image: ${ZIG_LAYER_IMG}
-    extends:
-      - containers.create.virtual.sshd
+  - endpoint: /containers/create
+    method: POST
+    loop:
+      - id: containers.create.virtual.docker
+        virtual: true
+        query:
+          Image: ${_DOCKER_LAYER_IMG}
+          NetworkingConfig:
+            EndpointsConfig:
+              ${_DOCKER_NET}: {}
+              ${PROXIFIED_DOCKER_SOCKET_NET}: {}
+      - id: containers.create.virtual.gpu
+        virtual: true
+        query:
+          Image: ${GPU_LAYER_IMG}
+          Devices:
+            - PathOnHost: ${GPU_PATH}
+              PathInContainer: ${GPU_PATH}
+              CgroupPermissions: rwm
+            - PathOnHost: ${VGA_PATH}
+              PathInContainer: ${VGA_PATH}
+              CgroupPermissions: rwm
+          GroupAdd:
+            - render
+            - video
+          HostConfig:
+            NetworkMode: none
+      - id: containers.create.virtual.man
+        virtual: true
+        query:
+          Image: ${MAN_LAYER_IMG}
+        extends:
+          - containers.create.virtual.sshd
+      - id: containers.create.virtual.pass
+        virtual: true
+        query:
+          Image: ${PASS_LAYER_IMG}
+        extends:
+          - containers.create.virtual.sshd
+      - id: containers.create.virtual.registry
+        virtual: true
+        query:
+          Image: ${REGISTRY_LAYER_IMG}
+          Env:
+            - REGISTRY_LOG_ACCESSLOG_DISABLED=false
+            - REGISTRY_LOG_FORMATTER=text
+            - REGISTRY_LOG_LEVEL=info
+            - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=${DATA_PATH}
+          HostConfig:
+            Binds:
+              - ${REGISTRY_VOLUME}:${DATA_PATH}:rw
+            ReadonlyPaths:
+              - "/"
+          NetworkingConfig:
+            EndpointsConfig:
+              ${_DOCKER_NET}: {}
+      - id: containers.create.virtual.sshd
+        virtual: true
+        query:
+          Image: ${SSHD_LAYER_IMG}
+          ExposedPorts:
+            - ${SSH_PORT}/tcp
+          HostConfig:
+            Binds:
+              - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
+              - ${THEME_VOLUME}:${BASH_THEME_PATH}:ro
+          NetworkingConfig:
+            EndpointsConfig:
+              ${JUMP_AREA_NET}: {}
+      - id: containers.create.virtual.shell
+        virtual: true
+        query:
+          Image: ${SHELL_LAYER_IMG}
+        extends:
+          - containers.create.virtual.sshd
+      - id: containers.create.virtual.vim
+        virtual: true
+        query:
+          Image: ${VIM_LAYER_IMG}
+        extends:
+          - containers.create.virtual.sshd
+      - id: containers.create.virtual.zig
+        virtual: true
+        query:
+          Image: ${ZIG_LAYER_IMG}
+        extends:
+          - containers.create.virtual.sshd
+
+...

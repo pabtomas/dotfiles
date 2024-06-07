@@ -1,17 +1,22 @@
-endpoint: /containers/create
-method: POST
+---
+
 requests:
-  - id: containers.create.builder
-    query:
-      name: my-container
-      Hostname: my-container
-      Image: my-registry/my-project/my-image:my-tag
-      NetworkConfig:
-        EndpointsConfig:
-          my-other-network:
-            IPv4Address: 172.17.2.2
-    id: my-container
-    depends_on:
-      - my-other-container
-    extends:
-      - my-virtual-container
+  - endpoint: /containers/create
+    method: POST
+    loop:
+      - id: containers.create.builder
+        query:
+          name: my-container
+          Hostname: my-container
+          Image: my-registry/my-project/my-image:my-tag
+          NetworkConfig:
+            EndpointsConfig:
+              my-other-network:
+                IPv4Address: 172.17.2.2
+        id: my-container
+        depends_on:
+          - my-other-container
+        extends:
+          - my-virtual-container
+
+...
