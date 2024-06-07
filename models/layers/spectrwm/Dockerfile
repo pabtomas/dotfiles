@@ -12,6 +12,7 @@ RUN <<END_OF_RUN
     export https_proxy="${HTTPS_PROXY:-}"
     pkg='spectrwm xterm slock'
     apk add --no-cache ${pkg}
+    ln -s /usr/local/bin/xlock "$(command -v slock)"
     _apk="$(command -v apk)"
     _spectrwm="$(command -v spectrwm)"
     cat << TEMPLATING >> "${CHECK_ENTRYPOINT_PATH}"
