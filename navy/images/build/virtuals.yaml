@@ -4,7 +4,7 @@ requests:
   - endpoint: /build
     method: POST
     loop:
-      - id: build.virtual
+      - id: build.virtual.base
         virtual: true
         query:
           nocache: false
@@ -21,7 +21,7 @@ requests:
             ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         context: ${LAYERS_PATH}/${ENTRYPOINT_ID}
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.virtual.alpine.entrypoint
         virtual: true
         query:
@@ -30,7 +30,7 @@ requests:
         depends_on:
           - build.alpine.entrypoint
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.virtual.bash
         virtual: true
         query:
@@ -39,7 +39,7 @@ requests:
         depends_on:
           - build.bash
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.virtual.workspaces
         virtual: true
         query:
@@ -48,7 +48,7 @@ requests:
         depends_on:
           - build.workspaces
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.virtual.sshd
         virtual: true
         query:
@@ -57,7 +57,7 @@ requests:
         depends_on:
           - build.sshd
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.virtual.git
         virtual: true
         query:
@@ -66,6 +66,20 @@ requests:
         depends_on:
           - build.git
         extends:
-          - build.virtual
+          - build.virtual.base
+      - id: build.virtual.relay
+        virtual: true
+        query:
+          buildargs:
+            ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+            SOCAT_LAYER_IMG: ${SOCAT_LAYER_IMG}
+            TMP_XSERVER_SOCKETS_PATH: ${TMP_XSERVER_SOCKETS_PATH}
+            XSERVER_IP: ${XSERVER_IP}
+            XSERVER_PORT: ${XSERVER_PORT}
+        context: ${CWD_PATH}/${RELAY_ID}
+        depends_on:
+          - build.socat
+        extends:
+          - build.virtual.base
 
 ...

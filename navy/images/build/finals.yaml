@@ -1,0 +1,27 @@
+---
+
+requests:
+  - endpoint: /build
+    method: POST
+    loop:
+      - id: build.builder
+        query:
+          buildargs:
+            _BUILDKIT_CONF_PATH: ${_BUILDKIT_CONF_PATH}
+            _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}
+            REGISTRY_TARGET: ${REGISTRY_TARGET}
+          t: ${BUILDER_IMG}
+        context: ${CWD_PATH}/${BUILDER_ID}
+        depends_on:
+          - tag.buildkit
+        extends:
+          - build.virtual.base
+      - id: build.carpenter.relay
+        query:
+          buildargs:
+            LOG_ID: ${CARPENTER_ID}
+          t: ${CARPENTER_RELAY_IMG}
+        extends:
+          - build.virtual.relay
+
+...

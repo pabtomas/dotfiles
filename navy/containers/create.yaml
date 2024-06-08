@@ -1,5 +1,8 @@
 ---
 
+include:
+  - create/virtual.yaml
+
 requests:
   - endpoint: /containers/create
     method: POST

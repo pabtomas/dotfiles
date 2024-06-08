@@ -10,10 +10,7 @@ include:
   - volumes/create.yaml
   - images/pull.yaml
   - images/tag.yaml
-  - images/build/virtual.yaml
-  - images/build/layers.yaml
-  - images/build/finals.yaml
-  - containers/create/virtual.yaml
+  - images/build.yaml
   - containers/create.yaml
   - containers/start.yaml
   - containers/attach.yaml

@@ -1,8 +1,10 @@
-#! /bin/sh
+#! /usr/bin/env dash
 
 main ()
 {
   set -eux
+
+  # catch DOCKER_HOST var
 
   # parse options:
   #   * --no-cache
@@ -11,6 +13,7 @@ main ()
 
   # if cache not found:
   #   resolve private anchors
+  #   check circular dependencies between includes
   #   resolve includes
   #   change loop requests and requests[].loop into dictionnaries
   #   resolve extends (replace them with anchors and aliases then use yq explode)

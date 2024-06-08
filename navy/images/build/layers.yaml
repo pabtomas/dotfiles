@@ -1,7 +1,5 @@
 ---
 
-include:
-  - build/virtual.yml
 requests:
   - endpoint: /build
     method: POST
@@ -83,7 +81,7 @@ requests:
           - tag.proxy
           - build.nginx
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.bash
         query:
           buildargs:
@@ -99,7 +97,7 @@ requests:
         depends_on:
           - build.bash.entrypoint
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.tmux
         query:
           buildargs:
@@ -207,7 +205,7 @@ requests:
         depends_on:
           - build.explorer
         extends:
-          - build.virtual
+          - build.virtual.base
       - id: build.shell
         query:
           buildargs:
