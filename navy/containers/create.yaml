@@ -45,16 +45,49 @@ requests:
               ${PROXIFIED_XSERVER_SOCKET_NET}:
                 IPv4Address: ${CARPENTER_RELAY_IP}
         depends_on:
-          - containers.create.xserver
+          - build.carpenter.relay
           - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${RELAY_VAR_LOG_VOLUME}
-      # TODO: CONTINUE
       - id: containers.create.carpenter.runner
           name: ${CARPENTER_RUNNER_HOST}
           Hostname: ${CARPENTER_RUNNER_HOST}
           Image: ${CARPENTER_RUNNER_IMG}
+          HostConfig:
+            Binds:
+              - ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}:${TMP_XSERVER_SOCKETS_PATH}:ro
+        depends_on:
+          - build.carpenter.runner
+          - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
         extends:
           - containers.create.virtual.isolated
+      - id: containers.create.controller
+          name: ${CONTROLLER_HOST}
+          Hostname: ${CONTROLLER_HOST}
+          HostConfig:
+            Binds:
+              - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
+          NetworkConfig:
+            EndpointsConfig:
+              ${_DOCKER_NET}:
+                IPv4Address: ${CLIENT_IP}
+              ${PROXIFIED_DOCKER_SOCKET_NET}:
+                IPv4Address: ${CONTROLLER_IP}
+        depends_on:
+          - volumes.create.${MYWHALEFLEET_VOLUME}
+        extends:
+          - containers.create.virtual.docker
+      - id: containers.create.editor
+          name: ${EDITOR_HOST}
+          Hostname: ${EDITOR_HOST}
+          HostConfig:
+            Binds:
+              - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
+              - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
+        depends_on:
+          - volumes.create.${MYWHALEFLEET_VOLUME}
+          - volumes.create.${SPACEPORN_VOLUME}
+        extends:
+          - containers.create.virtual.vim
 
 ...
