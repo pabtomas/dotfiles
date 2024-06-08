@@ -50,6 +50,7 @@ If you want to install Navy directly I assume that you have at least Busybox uti
   - [yq](https://github.com/mikefarah/yq)
   - [curl](https://github.com/curl/curl)
   - [gomplate](https://github.com/hairyhenderson/gomplate)
+  - [gum](https://github.com/charmbracelet/gum)
   - [dash](https://git.kernel.org/pub/scm/utils/dash/dash.git/)
 - Clone this repository
 - Add configuration (TODO: more details)
