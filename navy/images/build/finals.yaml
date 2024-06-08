@@ -23,5 +23,118 @@ requests:
           t: ${CARPENTER_RELAY_IMG}
         extends:
           - build.virtual.relay
+      - id: build.carpenter.runner
+        query:
+          buildargs:
+            ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+            SPECTRWM_LAYER_IMG: ${SPECTRWM_LAYER_IMG}
+          t: ${CARPENTER_RUNNER_IMG}
+        context: ${CWD_PATH}/${CARPENTER_ID}
+        depends_on:
+          - build.spectrwm
+        extends:
+          - build.virtual.base
+      - id: build.jumper
+        query:
+          buildargs:
+            BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
+            BASH_THEME_PATH: ${BASH_THEME_PATH}
+            CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${JUMPER_ID}.sh
+            COMPLETION_PATH: /opt/${LISTENER_ID}${COMPLETION_PATH}
+            CONTROLLER_ID: ${CONTROLLER_ID}
+            ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+            NET_PFX: ${JUMP_AREA_PFX}
+            OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+            OPT_SSH_PATH: ${OPT_SSH_PATH}
+            SSH_PORT: ${SSH_PORT}
+            SSH_ROOT_PATH: ${SSH_ROOT_PATH}
+            TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
+            TMUX_LAYER_IMG: ${TMUX_LAYER_IMG}
+          t: ${JUMPER_IMG}
+        context: ${CWD_PATH}/${JUMPER_ID}
+        depends_on:
+          - build.tmux
+        extends:
+          - build.virtual.base
+      - id: build.listener
+        query:
+          buildargs:
+            _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
+            CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LISTENER_ID}.sh
+            COMPLETION_PATH: ${COMPLETION_PATH}
+            DATA_PATH: ${DATA_PATH}
+            ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+            HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
+            NET: ${JUMP_AREA_NET}
+            OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+            VAR_LOG_PATH: ${VAR_LOG_PATH}
+          t: ${LISTENER_IMG}
+        context: ${CWD_PATH}/${LISTENER_ID}
+        extends:
+          - build.virtual.alpine.entrypoint
+      - id: build.proxy
+        query:
+          buildargs:
+            _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
+            ${API_PFX}_PING: true
+            ${API_PFX}BUILD: true
+            ${API_PFX}CONTAINERS_CREATE: true
+            ${API_PFX}CONTAINERS_ID: true
+            ${API_PFX}CONTAINERS_ID_ARCHIVE: true
+            ${API_PFX}CONTAINERS_ID_ATTACH: true
+            ${API_PFX}CONTAINERS_ID_EXEC: true
+            ${API_PFX}CONTAINERS_ID_JSON: true
+            ${API_PFX}CONTAINERS_ID_KILL: true
+            ${API_PFX}CONTAINERS_ID_LOGS: true
+            ${API_PFX}CONTAINERS_ID_START: true
+            ${API_PFX}CONTAINERS_ID_STOP: true
+            ${API_PFX}CONTAINERS_ID_WAIT: true
+            ${API_PFX}CONTAINERS_JSON: true
+            ${API_PFX}EVENTS: true
+            ${API_PFX}IMAGES_CREATE: true
+            ${API_PFX}IMAGES_JSON: true
+            ${API_PFX}IMAGES_NAME: true
+            ${API_PFX}NETWORKS: true
+            ${API_PFX}VERSION: true
+            ${API_PFX}VOLUMES: true
+            API_PFX: ${API_PFX}
+            API_TAG: ${API_TAG}
+            API_URL: ${API_URL}
+            CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PROXY_ID}.sh
+            CONTROLLER_IP: ${CONTROLLER_IP}
+            ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
+            ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
+            HTTP_LAYER_IMG: ${HTTP_LAYER_IMG}
+            LISTENER_IP: ${LISTENER_IP}
+            OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
+            PROXY_PORT: ${PROXY_PORT}
+          t: ${PROXY_IMG}
+        context: ${CWD_PATH}/${PROXY_ID}
+        depends_on:
+          - build.http
+        extends:
+          - build.virtual.base
+      - id: build.spaceporn.relay
+        query:
+          buildargs:
+            LOG_ID: ${SPACEPORN_ID}
+          t: ${SPACEPORN_RELAY_IMG}
+        extends:
+          - build.virtual.relay
+      - id: build.xserver
+        query:
+          buildargs:
+            CARPENTER_RELAY_IP: ${CARPENTER_RELAY_IP}
+            CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${XSERVER_ID}.sh
+            ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
+            ETC_NGINX_PATH: ${ETC_NGINX_PATH}
+            SPACEPORN_RELAY_IP: ${SPACEPORN_RELAY_IP}
+            VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
+            XSERVER_PORT: ${XSERVER_PORT}
+            XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}
+          t: ${XSERVER_IMG}
+        context: ${CWD_PATH}/${XSERVER_ID}
+        extends:
+          - build.virtual.nginx
 
 ...

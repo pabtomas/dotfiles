@@ -74,14 +74,12 @@ requests:
             ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
             ETC_NGINX_PATH: ${ETC_NGINX_PATH}
             LINUXSERVER_PROXY_LOCAL_IMG: ${LINUXSERVER_PROXY_LOCAL_IMG}
-            NGINX_LAYER_IMG: ${NGINX_LAYER_IMG}
           t: ${HTTP_LAYER_IMG}
         context: ${LAYERS_PATH}/${HTTP_ID}
         depends_on:
           - tag.proxy
-          - build.nginx
         extends:
-          - build.virtual.base
+          - build.virtual.nginx
       - id: build.bash
         query:
           buildargs:

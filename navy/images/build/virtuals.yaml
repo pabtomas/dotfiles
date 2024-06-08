@@ -67,6 +67,15 @@ requests:
           - build.git
         extends:
           - build.virtual.base
+      - id: build.virtual.nginx
+        virtual: true
+        query:
+          buildargs:
+            NGINX_LAYER_IMG: ${NGINX_LAYER_IMG}
+        depends_on:
+          - build.nginx
+        extends:
+          - build.virtual.base
       - id: build.virtual.relay
         virtual: true
         query:

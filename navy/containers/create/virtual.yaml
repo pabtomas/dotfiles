@@ -12,6 +12,11 @@ requests:
             EndpointsConfig:
               ${_DOCKER_NET}: {}
               ${PROXIFIED_DOCKER_SOCKET_NET}: {}
+      - id: containers.create.virtual.isolated
+        virtual: true
+        query:
+          HostConfig:
+            NetworkMode: none
       - id: containers.create.virtual.gpu
         virtual: true
         query:
@@ -26,8 +31,6 @@ requests:
           GroupAdd:
             - render
             - video
-          HostConfig:
-            NetworkMode: none
       - id: containers.create.virtual.man
         virtual: true
         query:
@@ -52,8 +55,7 @@ requests:
           HostConfig:
             Binds:
               - ${REGISTRY_VOLUME}:${DATA_PATH}:rw
-            ReadonlyPaths:
-              - "/"
+            ReadonlyRootfs: true
           NetworkingConfig:
             EndpointsConfig:
               ${_DOCKER_NET}: {}

@@ -9,17 +9,52 @@ requests:
     loop:
       - id: containers.create.builder
         query:
-          name: my-container
-          Hostname: my-container
-          Image: my-registry/my-project/my-image:my-tag
+          name: ${BUILDER_HOST}
+          Hostname: ${BUILDER_HOST}
+          Image: ${BUILDER_IMG}
+          Cmd:
+            - --addr
+            - tcp://0.0.0.0:${BUILDER_PORT}
+            - --config
+            - ${_BUILDKIT_CONF_PATH}
+            - --oci-worker-no-process-sandbox
+          ExposedPorts:
+            - ${BUILDER_PORT}/tcp
+          HostConfig:
+            SecurityOpt:
+              - apparmor:unconfined
+              - seccomp:unconfined
           NetworkConfig:
             EndpointsConfig:
-              my-other-network:
-                IPv4Address: 172.17.2.2
-        id: my-container
+              ${_DOCKER_NET}:
+                IPv4Address: ${BUILDER_IP}
         depends_on:
-          - my-other-container
+          - build.builder
+          - networks.create.${_DOCKER_NET}
+      - id: containers.create.carpenter.relay
+          name: ${CARPENTER_RELAY_HOST}
+          Hostname: ${CARPENTER_RELAY_HOST}
+          Image: ${CARPENTER_RELAY_IMG}
+          HostConfig:
+            Binds:
+              - ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}:${TMP_XSERVER_SOCKETS_PATH}:rw
+              - ${RELAY_VAR_LOG_VOLUME}:${VAR_LOG_PATH}:rw
+            ReadonlyRootfs: true
+          NetworkConfig:
+            EndpointsConfig:
+              ${PROXIFIED_XSERVER_SOCKET_NET}:
+                IPv4Address: ${CARPENTER_RELAY_IP}
+        depends_on:
+          - containers.create.xserver
+          - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
+          - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+          - volumes.create.${RELAY_VAR_LOG_VOLUME}
+      # TODO: CONTINUE
+      - id: containers.create.carpenter.runner
+          name: ${CARPENTER_RUNNER_HOST}
+          Hostname: ${CARPENTER_RUNNER_HOST}
+          Image: ${CARPENTER_RUNNER_IMG}
         extends:
-          - my-virtual-container
+          - containers.create.virtual.isolated
 
 ...
