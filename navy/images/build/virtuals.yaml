@@ -11,6 +11,7 @@ requests:
           buildargs:
             HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
             HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+          dockerfile: Dockerfile
       - id: build.virtual.entrypoint
         virtual: true
         query:

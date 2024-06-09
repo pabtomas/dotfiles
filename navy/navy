@@ -12,12 +12,13 @@ main ()
   # define default values
 
   # if cache not found:
-  #   resolve private anchors
+  #   resolve 'anchors' keywords
+  #   explode anchors and aliases
   #   check circular dependencies between includes
-  #   resolve includes
+  #   resolve 'includes' keywords
   #   change loop requests and requests[].loop into dictionnaries
-  #   resolve extends (replace them with anchors and aliases then use yq explode)
-  #   envsubst
+  #   resolve 'extends' (replace them with anchors and aliases then use yq explode)
+  #   gomplate
   #   yq script to generate sh script.
   #   generate cache: sha256sum <(find . -type -f -exec sha256sum {} \; | sort  | cut -d' ' -f1)
   # fi

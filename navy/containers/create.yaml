@@ -1,7 +1,7 @@
 ---
 
 include:
-  - create/virtual.yaml
+  - containers/create/virtual.yaml
 
 requests:
   - endpoint: /containers/create
@@ -31,14 +31,20 @@ requests:
         depends_on:
           - build.builder
           - networks.create.${_DOCKER_NET}
+        extends:
+          - containers.create.virtual.base
       - id: containers.create.carpenter.relay
           name: ${CARPENTER_RELAY_HOST}
           Hostname: ${CARPENTER_RELAY_HOST}
           Image: ${CARPENTER_RELAY_IMG}
           HostConfig:
-            Binds:
-              - ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}:${TMP_XSERVER_SOCKETS_PATH}:rw
-              - ${RELAY_VAR_LOG_VOLUME}:${VAR_LOG_PATH}:rw
+            Mounts:
+              - <<: *volume
+                Source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+                Target: ${TMP_XSERVER_SOCKETS_PATH}
+              - <<: *volume
+                Source: ${RELAY_VAR_LOG_VOLUME}
+                Target: ${VAR_LOG_PATH}
             ReadonlyRootfs: true
           NetworkConfig:
             EndpointsConfig:
@@ -49,13 +55,17 @@ requests:
           - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${RELAY_VAR_LOG_VOLUME}
+        extends:
+          - containers.create.virtual.base
       - id: containers.create.carpenter.runner
           name: ${CARPENTER_RUNNER_HOST}
           Hostname: ${CARPENTER_RUNNER_HOST}
           Image: ${CARPENTER_RUNNER_IMG}
           HostConfig:
-            Binds:
-              - ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}:${TMP_XSERVER_SOCKETS_PATH}:ro
+            Mounts:
+              - <<: *readonly-volume
+                Source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+                Target: ${TMP_XSERVER_SOCKETS_PATH}
         depends_on:
           - build.carpenter.runner
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
@@ -65,8 +75,10 @@ requests:
           name: ${CONTROLLER_HOST}
           Hostname: ${CONTROLLER_HOST}
           HostConfig:
-            Binds:
-              - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
+            Mounts:
+              - <<: *volume
+                Source: ${MYWHALEFLEET_VOLUME}
+                Target: ${MYWHALEFLEET_PATH}
           NetworkConfig:
             EndpointsConfig:
               ${_DOCKER_NET}:
@@ -81,13 +93,163 @@ requests:
           name: ${EDITOR_HOST}
           Hostname: ${EDITOR_HOST}
           HostConfig:
-            Binds:
-              - ${MYWHALEFLEET_VOLUME}:${MYWHALEFLEET_PATH}:rw
-              - ${SPACEPORN_VOLUME}:${SPACEPORN_PATH}:rw
+            Mounts:
+              - <<: *volume
+                Source: ${MYWHALEFLEET_VOLUME}
+                Target: ${MYWHALEFLEET_PATH}
+              - <<: *volume
+                Source: ${SPACEPORN_VOLUME}
+                Target: ${SPACEPORN_PATH}
         depends_on:
           - volumes.create.${MYWHALEFLEET_VOLUME}
           - volumes.create.${SPACEPORN_VOLUME}
         extends:
           - containers.create.virtual.vim
+      - id: containers.create.explorer.shell
+          name: ${SHELL_EXPLORER_HOST}
+          Hostname: ${SHELL_EXPLORER_HOST}
+          HostConfig:
+            Mounts:
+              - <<: *volume
+                Source: ${MYWHALEFLEET_VOLUME}
+                Target: ${MYWHALEFLEET_PATH}
+        depends_on:
+          - volumes.create.${MYWHALEFLEET_VOLUME}
+        extends:
+          - containers.create.virtual.shell
+      - id: containers.create.explorer.zig
+          name: ${ZIG_EXPLORER_HOST}
+          Hostname: ${ZIG_EXPLORER_HOST}
+          HostConfig:
+            Mounts:
+              - <<: *volume
+                Source: ${SPACEPORN_VOLUME}
+                Target: ${SPACEPORN_PATH}
+        depends_on:
+          - volumes.create.${SPACEPORN_VOLUME}
+        extends:
+          - containers.create.virtual.zig
+      - id: containers.create.jumper
+          name: ${JUMPER_HOST}
+          Hostname: ${JUMPER_HOST}
+          Image: ${JUMPER_IMG}
+          Tty: true
+          AttachStdout: true
+          AttachStderr: true
+          NetworkConfig:
+            EndpointsConfig:
+              ${JUMP_AREA_NET}: {}
+          HostConfig:
+            Mounts:
+              - <<: *readonly-volume
+                Source: ${LISTENER_OPT_DATA_VOLUME}
+                Target: /opt/${LISTENER_ID}${DATA_PATH}
+              - <<: *readonly-volume
+                Source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+                Target: /opt/${LISTENER_ID}${OPT_SCRIPTS_PATH}
+              - <<: *readonly-volume
+                Source: ${LISTENER_VAR_LOG_VOLUME}
+                Target: /opt/${LISTENER_ID}${VAR_LOG_PATH}
+              - <<: *readonly-volume
+                Source: ${PROXY_ETC_NGINX_VOLUME}
+                Target: /opt/${PROXY_ID}${ETC_NGINX_PATH}
+              - <<: *readonly-volume
+                Source: ${PROXY_OPT_SCRIPTS_VOLUME}
+                Target: /opt/${PROXY_ID}${OPT_SCRIPTS_PATH}
+              - <<: *readonly-volume
+                Source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+                Target: /opt/${PROXY_ID}${VAR_LOG_NGINX_PATH}
+              - <<: *readonly-volume
+                Source: ${RELAY_VAR_LOG_VOLUME}
+                Target: /opt/${RELAY_ID}${VAR_LOG_PATH}
+              - <<: *readonly-volume
+                Source: ${SSH_VOLUME}
+                Target: ${OPT_SSH_PATH}
+              - <<: *volume
+                Source: ${THEME_VOLUME}
+                Target: ${BASH_THEME_PATH}
+              - <<: *readonly-volume
+                Source: ${XSERVER_ETC_NGINX_VOLUME}
+                Target: /opt/${XSERVER_ID}${ETC_NGINX_PATH}
+              - <<: *readonly-volume
+                Source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+                Target: /opt/${XSERVER_ID}${OPT_SCRIPTS_PATH}
+              - <<: *readonly-volume
+                Source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+                Target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
+        depends_on:
+          - build.jumper
+          - networks.create.${JUMP_AREA_NET}
+          - volumes.create.${LISTENER_OPT_DATA_VOLUME}
+          - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
+          - volumes.create.${LISTENER_VAR_LOG_VOLUME}
+          - volumes.create.${PROXY_ETC_NGINX_VOLUME}
+          - volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
+          - volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
+          - volumes.create.${RELAY_VAR_LOG_VOLUME}
+          - volumes.create.${SSH_VOLUME}
+          - volumes.create.${XSERVER_ETC_NGINX_VOLUME}
+          - volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
+          - volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}
+        extends:
+          - containers.create.virtual.base
+      - id: containers.create.listener
+          name: ${LISTENER_HOST}
+          Hostname: ${LISTENER_HOST}
+          Image: ${LISTENER_IMG}
+          NetworkConfig:
+            EndpointsConfig:
+              ${PROXIFIED_DOCKER_SOCKET_NET}:
+                IPv4Address: ${LISTENER_IP}
+          HostConfig:
+            Mounts:
+              - <<: *volume
+                Source: ${LISTENER_OPT_DATA_VOLUME}
+                Target: ${DATA_PATH}
+              - <<: *readonly-volume
+                Source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+                Target: ${OPT_SCRIPTS_PATH}
+              - <<: *volume
+                Source: ${LISTENER_VAR_LOG_VOLUME}
+                Target: ${VAR_LOG_PATH}
+            ReadonlyRootfs: true
+        depends_on:
+          - build.jumper
+          - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
+          - volumes.create.${LISTENER_OPT_DATA_VOLUME}
+          - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
+          - volumes.create.${LISTENER_VAR_LOG_VOLUME}
+        extends:
+          - containers.create.virtual.base
+      - id: containers.create.proxy
+          name: ${PROXY_HOST}
+          Hostname: ${PROXY_HOST}
+          Image: ${PROXY_IMG}
+          ExposedPorts:
+            - ${PROXY_PORT}/tcp
+          NetworkConfig:
+            EndpointsConfig:
+              ${PROXIFIED_DOCKER_SOCKET_NET}:
+                IPv4Address: ${PROXY_IP}
+          HostConfig:
+            Mounts:
+              - <<: *readonly-bind
+                Source: ${_DOCKER_SOCKET_PATH}
+                Target: ${_DOCKER_SOCKET_PATH}
+              - <<: *readonly-volume
+                Source: ${PROXY_ETC_NGINX_VOLUME}
+                Target: ${ETC_NGINX_PATH}
+              - <<: *readonly-volume
+                Source: ${PROXY_OPT_SCRIPTS_VOLUME}
+                Target: ${OPT_SCRIPTS_PATH}
+              - <<: *volume
+                Source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+                Target: ${VAR_LOG_NGINX_PATH}
+            ReadonlyRootfs: true
+            Tmpfs:
+              /run: ""
+              /tmp: ""
+        extends:
+          - containers.create.virtual.base
 
 ...

@@ -4,6 +4,11 @@ requests:
   - endpoint: /containers/create
     method: POST
     loop:
+      - id: containers.create.virtual.base
+        virtual: true
+        query:
+          HostConfig:
+            Privileged: false
       - id: containers.create.virtual.docker
         virtual: true
         query:
@@ -16,11 +21,15 @@ requests:
           - build.docker
           - networks.create.${_DOCKER_NET}
           - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
+        extends:
+          - containers.create.virtual.base
       - id: containers.create.virtual.isolated
         virtual: true
         query:
           HostConfig:
             NetworkMode: none
+        extends:
+          - containers.create.virtual.base
       - id: containers.create.virtual.gpu
         virtual: true
         query:
@@ -37,6 +46,8 @@ requests:
             - video
         depends_on:
           - build.gpu
+        extends:
+          - containers.create.virtual.base
       - id: containers.create.virtual.man
         virtual: true
         query:
@@ -63,8 +74,10 @@ requests:
             - REGISTRY_LOG_LEVEL=info
             - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=${DATA_PATH}
           HostConfig:
-            Binds:
-              - ${REGISTRY_VOLUME}:${DATA_PATH}:rw
+            Mounts:
+              - <<: *volume
+                source: ${REGISTRY_VOLUME}
+                target: ${DATA_PATH}
             ReadonlyRootfs: true
           NetworkingConfig:
             EndpointsConfig:
@@ -73,6 +86,8 @@ requests:
           - build.registry
           - networks.create.${_DOCKER_NET}
           - volumes.create.${REGISTRY_VOLUME}
+        extends:
+          - containers.create.virtual.base
       - id: containers.create.virtual.sshd
         virtual: true
         query:
@@ -80,9 +95,13 @@ requests:
           ExposedPorts:
             - ${SSH_PORT}/tcp
           HostConfig:
-            Binds:
-              - ${SSH_VOLUME}:${SSH_ROOT_PATH}:ro
-              - ${THEME_VOLUME}:${BASH_THEME_PATH}:ro
+            Mounts:
+              - <<: *readonly-volume
+                Source: ${SSH_VOLUME}
+                Target: ${SSH_ROOT_PATH}
+              - <<: *readonly-volume
+                Source: ${THEME_VOLUME}
+                Target: ${BASH_THEME_PATH}
           NetworkingConfig:
             EndpointsConfig:
               ${JUMP_AREA_NET}: {}
@@ -91,6 +110,8 @@ requests:
           - networks.create.${JUMP_AREA_NET}
           - volume.create.${SSH_VOLUME}
           - volume.create.${THEME_VOLUME}
+        extends:
+          - containers.create.virtual.base
       - id: containers.create.virtual.shell
         virtual: true
         query:

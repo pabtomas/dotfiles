@@ -5,6 +5,12 @@ versions:
   - 1.44
   - 1.43
 
+anchors:
+  - source: anchors/volumes.yaml
+    in:
+      - containers/create/virtual.yaml
+      - containers/create.yaml
+
 include:
   - networks/create.yaml
   - volumes/create.yaml
