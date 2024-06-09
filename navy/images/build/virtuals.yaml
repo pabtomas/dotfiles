@@ -4,7 +4,7 @@ requests:
   - endpoint: /build
     method: POST
     loop:
-      - id: build.virtual.base
+      - id: images.build.virtual.base
         virtual: true
         query:
           nocache: false
@@ -12,7 +12,7 @@ requests:
             HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
             HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
           dockerfile: Dockerfile
-      - id: build.virtual.entrypoint
+      - id: images.build.virtual.entrypoint
         virtual: true
         query:
           buildargs:
@@ -22,62 +22,62 @@ requests:
             ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
         context: ${LAYERS_PATH}/${ENTRYPOINT_ID}
         extends:
-          - build.virtual.base
-      - id: build.virtual.alpine.entrypoint
+          - images.build.virtual.base
+      - id: images.build.virtual.alpine.entrypoint
         virtual: true
         query:
           buildargs:
             ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}
         depends_on:
-          - build.alpine.entrypoint
+          - images.build.alpine.entrypoint
         extends:
-          - build.virtual.base
-      - id: build.virtual.bash
+          - images.build.virtual.base
+      - id: images.build.virtual.bash
         virtual: true
         query:
           buildargs:
             BASH_LAYER_IMG: ${BASH_LAYER_IMG}
         depends_on:
-          - build.bash
+          - images.build.bash
         extends:
-          - build.virtual.base
-      - id: build.virtual.workspaces
+          - images.build.virtual.base
+      - id: images.build.virtual.workspaces
         virtual: true
         query:
           buildargs:
             WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}
         depends_on:
-          - build.workspaces
+          - images.build.workspaces
         extends:
-          - build.virtual.base
-      - id: build.virtual.sshd
+          - images.build.virtual.base
+      - id: images.build.virtual.sshd
         virtual: true
         query:
           buildargs:
             SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}
         depends_on:
-          - build.sshd
+          - images.build.sshd
         extends:
-          - build.virtual.base
-      - id: build.virtual.git
+          - images.build.virtual.base
+      - id: images.build.virtual.git
         virtual: true
         query:
           buildargs:
             GIT_LAYER_IMG: ${GIT_LAYER_IMG}
         depends_on:
-          - build.git
+          - images.build.git
         extends:
-          - build.virtual.base
-      - id: build.virtual.nginx
+          - images.build.virtual.base
+      - id: images.build.virtual.nginx
         virtual: true
         query:
           buildargs:
             NGINX_LAYER_IMG: ${NGINX_LAYER_IMG}
         depends_on:
-          - build.nginx
+          - images.build.nginx
         extends:
-          - build.virtual.base
-      - id: build.virtual.relay
+          - images.build.virtual.base
+      - id: images.build.virtual.relay
         virtual: true
         query:
           buildargs:
@@ -88,8 +88,8 @@ requests:
             XSERVER_PORT: ${XSERVER_PORT}
         context: ${CWD_PATH}/${RELAY_ID}
         depends_on:
-          - build.socat
+          - images.build.socat
         extends:
-          - build.virtual.base
+          - images.build.virtual.base
 
 ...

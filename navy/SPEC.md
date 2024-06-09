@@ -42,7 +42,7 @@ Objects:
 **default**: `[]`
 **description**: List of Anchors.
 **good to know**:
-- The `anchors` keyword is the first thing Navy will processed when executed
+- The `anchors` keyword is the first thing Navy will processed when executed, so the location of this directive is in your main Navy file.
 **exemple**:
 ```yaml
 ```

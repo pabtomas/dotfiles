@@ -4,41 +4,41 @@ requests:
   - endpoint: /build
     method: POST
     loop:
-      - id: build.alpine.entrypoint
+      - id: images.build.alpine.entrypoint
         query:
           buildargs:
             BASE_IMG: ${OS_LOCAL_IMG}
           t: ${ENTRYPOINT_LAYER_IMG}
         depends_on:
-          - tag.alpine
+          - images.tag.alpine
         extends:
-          - build.virtual.entrypoint
-      - id: build.bash.entrypoint
+          - images.build.virtual.entrypoint
+      - id: images.build.bash.entrypoint
         query:
           buildargs:
             BASE_IMG: ${BASH_LOCAL_IMG}
           t: ${BASH_ENTRYPOINT_LAYER_IMG}
         depends_on:
-          - tag.bash
+          - images.tag.bash
         extends:
-          - build.virtual.entrypoint
-      - id: build.gpu
+          - images.build.virtual.entrypoint
+      - id: images.build.gpu
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${GPU_ID}.sh
           t: ${GPU_LAYER_IMG}
         context: ${LAYERS_PATH}/${GPU_ID}
         extends:
-          - build.virtual.alpine.entrypoint
-      - id: build.linguist
+          - images.build.virtual.alpine.entrypoint
+      - id: images.build.linguist
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${LINGUIST_ID}.sh
           t: ${LINGUIST_LAYER_IMG}
         context: ${LAYERS_PATH}/${LINGUIST_ID}
         extends:
-          - build.virtual.alpine.entrypoint
-      - id: build.nginx
+          - images.build.virtual.alpine.entrypoint
+      - id: images.build.nginx
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${NGINX_ID}.sh
@@ -49,16 +49,16 @@ requests:
           t: ${NGINX_LAYER_IMG}
         context: ${LAYERS_PATH}/${NGINX_ID}
         extends:
-          - build.virtual.alpine.entrypoint
-      - id: build.socat
+          - images.build.virtual.alpine.entrypoint
+      - id: images.build.socat
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SOCAT_ID}.sh
           t: ${SOCAT_LAYER_IMG}
         context: ${LAYERS_PATH}/${SOCAT_ID}
         extends:
-          - build.virtual.alpine.entrypoint
-      - id: build.spectrwm
+          - images.build.virtual.alpine.entrypoint
+      - id: images.build.spectrwm
         query:
           buildargs:
             BIN_PATH: ${BIN_PATH}
@@ -66,8 +66,8 @@ requests:
           t: ${SPECTRWM_LAYER_IMG}
         context: ${LAYERS_PATH}/${SPECTRWM_ID}
         extends:
-          - build.virtual.alpine.entrypoint
-      - id: build.http
+          - images.build.virtual.alpine.entrypoint
+      - id: images.build.http
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${HTTP_ID}.sh
@@ -77,10 +77,10 @@ requests:
           t: ${HTTP_LAYER_IMG}
         context: ${LAYERS_PATH}/${HTTP_ID}
         depends_on:
-          - tag.proxy
+          - images.tag.proxy
         extends:
-          - build.virtual.nginx
-      - id: build.bash
+          - images.build.virtual.nginx
+      - id: images.build.bash
         query:
           buildargs:
             BASH_ALIASES_PATH: ${BASH_ALIASES_PATH}
@@ -93,10 +93,10 @@ requests:
           t: ${BASH_LAYER_IMG}
         context: ${LAYERS_PATH}/${BASH_ID}
         depends_on:
-          - build.bash.entrypoint
+          - images.build.bash.entrypoint
         extends:
-          - build.virtual.base
-      - id: build.tmux
+          - images.build.virtual.base
+      - id: images.build.tmux
         query:
           buildargs:
             BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
@@ -107,8 +107,8 @@ requests:
           t: ${TMUX_LAYER_IMG}
         context: ${LAYERS_PATH}/${TMUX_ID}
         extends:
-          - build.virtual.bash
-      - id: build.sshd
+          - images.build.virtual.bash
+      - id: images.build.sshd
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SSHD_ID}.sh
@@ -117,8 +117,8 @@ requests:
           t: ${SSHD_LAYER_IMG}
         context: ${LAYERS_PATH}/${SSHD_ID}
         extends:
-          - build.virtual.bash
-      - id: build.docker
+          - images.build.virtual.bash
+      - id: images.build.docker
         query:
           buildargs:
             _DOCKER_LOCAL_IMG: ${_DOCKER_LOCAL_IMG}
@@ -140,26 +140,26 @@ requests:
           t: ${_DOCKER_LAYER_IMG}
         context: ${LAYERS_PATH}/${DOCKER_ID}
         depends_on:
-          - tag.docker
+          - images.tag.docker
         extends:
-          - build.virtual.sshd
-      - id: build.man
+          - images.build.virtual.sshd
+      - id: images.build.man
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${MAN_ID}.sh
           t: ${MAN_LAYER_IMG}
         context: ${LAYERS_PATH}/${MAN_ID}
         extends:
-          - build.virtual.sshd
-      - id: build.pass
+          - images.build.virtual.sshd
+      - id: images.build.pass
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PASS_ID}.sh
           t: ${PASS_LAYER_IMG}
         context: ${LAYERS_PATH}/${PASS_ID}
         extends:
-          - build.virtual.sshd
-      - id: build.workspaces
+          - images.build.virtual.sshd
+      - id: images.build.workspaces
         query:
           buildargs:
             OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
@@ -170,8 +170,8 @@ requests:
           t: ${WORKSPACES_LAYER_IMG}
         context: ${LAYERS_PATH}/${WORKSPACES_ID}
         extends:
-          - build.virtual.sshd
-      - id: build.vim
+          - images.build.virtual.sshd
+      - id: images.build.vim
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${VIM_ID}.sh
@@ -182,16 +182,16 @@ requests:
           t: ${VIM_LAYER_IMG}
         context: ${LAYERS_PATH}/${VIM_ID}
         extends:
-          - build.virtual.workspaces
-      - id: build.explorer
+          - images.build.virtual.workspaces
+      - id: images.build.explorer
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${EXPLORER_ID}.sh
           t: ${EXPLORER_LAYER_IMG}
         context: ${LAYERS_PATH}/${EXPLORER_ID}
         extends:
-          - build.virtual.workspaces
-      - id: build.git
+          - images.build.virtual.workspaces
+      - id: images.build.git
         query:
           buildargs:
             BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
@@ -201,18 +201,18 @@ requests:
           t: ${GIT_LAYER_IMG}
         context: ${LAYERS_PATH}/${GIT_ID}
         depends_on:
-          - build.explorer
+          - images.build.explorer
         extends:
-          - build.virtual.base
-      - id: build.shell
+          - images.build.virtual.base
+      - id: images.build.shell
         query:
           buildargs:
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${SHELL_ID}.sh
           t: ${SHELL_LAYER_IMG}
         context: ${LAYERS_PATH}/${SHELL_ID}
         extends:
-          - build.virtual.git
-      - id: build.zig
+          - images.build.virtual.git
+      - id: images.build.zig
         query:
           buildargs:
             BASH_COMPLETION_PATH: ${BASH_COMPLETION_PATH}
@@ -224,6 +224,6 @@ requests:
           t: ${ZIG_LAYER_IMG}
         context: ${LAYERS_PATH}/${ZIG_ID}
         extends:
-          - build.virtual.git
+          - images.build.virtual.git
 
 ...

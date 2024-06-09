@@ -4,27 +4,27 @@ requests:
   - endpoint: /images/create
     method: POST
     loop:
-      - id: pull.alpine
+      - id: images.pull.alpine
         query:
           fromImage: ${ALPINE_IMG}
           tag: ${ALPINE_TAG}
-      - id: pull.bash
+      - id: images.pull.bash
         query:
           fromImage: ${BASH_IMG}
           tag: ${BASH_TAG}
-      - id: pull.buildkit
+      - id: images.pull.buildkit
         query:
           fromImage: ${_BUILDKIT_IMG}
           tag: ${_BUILDKIT_TAG}
-      - id: pull.docker
+      - id: images.pull.docker
         query:
           fromImage: ${_DOCKER_IMG}
           tag: ${_DOCKER_TAG}
-      - id: pull.proxy
+      - id: images.pull.proxy
         query:
           fromImage: ${LINUXSERVER_PROXY_IMG}
           tag: ${LINUXSERVER_PROXY_TAG}
-      - id: pull.registry
+      - id: images.pull.registry
         query:
           fromImage: ${REGISTRY_IMG}
           tag: ${REGISTRY_TAG}

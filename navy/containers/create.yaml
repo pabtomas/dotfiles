@@ -29,7 +29,7 @@ requests:
               ${_DOCKER_NET}:
                 IPv4Address: ${BUILDER_IP}
         depends_on:
-          - build.builder
+          - images.build.builder
           - networks.create.${_DOCKER_NET}
         extends:
           - containers.create.virtual.base
@@ -51,7 +51,7 @@ requests:
               ${PROXIFIED_XSERVER_SOCKET_NET}:
                 IPv4Address: ${CARPENTER_RELAY_IP}
         depends_on:
-          - build.carpenter.relay
+          - images.build.carpenter.relay
           - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${RELAY_VAR_LOG_VOLUME}
@@ -67,7 +67,7 @@ requests:
                 Source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
                 Target: ${TMP_XSERVER_SOCKETS_PATH}
         depends_on:
-          - build.carpenter.runner
+          - images.build.carpenter.runner
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
         extends:
           - containers.create.virtual.isolated
@@ -178,7 +178,7 @@ requests:
                 Source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
                 Target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
         depends_on:
-          - build.jumper
+          - images.build.jumper
           - networks.create.${JUMP_AREA_NET}
           - volumes.create.${LISTENER_OPT_DATA_VOLUME}
           - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
@@ -214,7 +214,7 @@ requests:
                 Target: ${VAR_LOG_PATH}
             ReadonlyRootfs: true
         depends_on:
-          - build.jumper
+          - images.build.jumper
           - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
           - volumes.create.${LISTENER_OPT_DATA_VOLUME}
           - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
@@ -249,7 +249,118 @@ requests:
             Tmpfs:
               /run: ""
               /tmp: ""
+        depends_on:
+          - images.build.proxy
+          - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
+          - volumes.create.${PROXY_ETC_NGINX_VOLUME}
+          - volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
+          - volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
         extends:
           - containers.create.virtual.base
+      - id: containers.create.registry
+          name: ${REGISTRY_HOST}
+          Hostname: ${REGISTRY_HOST}
+          NetworkConfig:
+            EndpointsConfig:
+              ${_DOCKER_NET}:
+                IPv4Address: ${REGISTRY_IP}
+        extends:
+          - containers.create.virtual.registry
+      - id: containers.create.safedeposit
+          name: ${SAFEDEPOSIT_HOST}
+          Hostname: ${SAFEDEPOSIT_HOST}
+          HostConfig:
+            Mounts:
+              - <<: *volume
+                Source: ${SAFEDEPOSIT_VOLUME}
+                Target: ${SAFEDEPOSIT_PATH}
+        depends_on:
+          - images.build.pass
+          - volumes.create.${SAFEDEPOSIT_VOLUME}
+        extends:
+          - containers.create.virtual.pass
+      - id: containers.create.scholar
+          name: ${SCHOLAR_HOST}
+          Hostname: ${SCHOLAR_HOST}
+        extends:
+          - containers.create.virtual.man
+      - id: containers.create.spaceporn.relay
+          name: ${SPACEPORN_RELAY_HOST}
+          Hostname: ${SPACEPORN_RELAY_HOST}
+          Image: ${SPACEPORN_RELAY_IMG}
+          HostConfig:
+            ReadonlyRootfs: true
+            Mounts:
+              - <<: *volume
+                source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+                target: ${TMP_XSERVER_SOCKETS_PATH}
+              - <<: *volume
+                source: ${RELAY_VAR_LOG_VOLUME}
+                target: ${VAR_LOG_PATH}
+          NetworkConfig:
+            EndpointsConfig:
+              ${PROXIFIED_XSERVER_SOCKET_NET}:
+                IPv4Address: ${SPACEPORN_RELAY_IP}
+        depends_on:
+          - images.build.spaceporn.relay
+          - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
+          - volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+          - volumes.create.${RELAY_VAR_LOG_VOLUME}
+        extends:
+          - containers.create.virtual.base
+      - id: containers.create.spaceporn.runner
+          name: ${SPACEPORN_RUNNER_HOST}
+          Hostname: ${SPACEPORN_RUNNER_HOST}
+          Entrypoint:
+            - ${SPACEPORN_PATH}/${SPACEPORN_ID}/zig-out/bin/${SPACEPORN_ID}
+          HostConfig:
+            Mounts:
+              - <<: *readonly-volume
+                source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+                target: ${TMP_XSERVER_SOCKETS_PATH}
+              - <<: *readonly-volume
+                source: ${SPACEPORN_VOLUME}
+                target: ${SPACEPORN_PATH}
+        depends_on:
+          - volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+          - volumes.create.${SPACEPORN_VOLUME}
+        extends:
+          - containers.create.virtual.gpu
+          - containers.create.virtual.isolated
+      - id: containers.create.xserver
+          name: ${XSERVER_HOST}
+          Hostname: ${XSERVER_HOST}
+          Image: ${XSERVER_IMG}
+          ExposedPorts:
+            - ${XSERVER_PORT}/tcp
+          NetworkConfig:
+            EndpointsConfig:
+              ${PROXIFIED_XSERVER_SOCKET_NET}:
+                IPv4Address: ${XSERVER_IP}
+          HostConfig:
+            ReadonlyRootfs: true
+            SecurityOpt:
+              - no-new-privileges:true
+            Mounts:
+              - <<: *readonly-bind
+                source: ${XSERVER_SOCKET_PATH}
+                target: ${XSERVER_SOCKET_PATH}
+              - <<: *readonly-volume
+                source: ${XSERVER_ETC_NGINX_VOLUME}
+                target: ${ETC_NGINX_PATH}
+              - <<: *readonly-volume
+                source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+                target: ${OPT_SCRIPTS_PATH}
+              - <<: *volume
+                source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+                target: ${VAR_LOG_NGINX_PATH}
+            Tmpfs:
+              /run: ""
+        depends_on:
+          - images.build.xserver
+          - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
+          - volumes.create.${XSERVER_ETC_NGINX_VOLUME}
+          - volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
+          - volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}
 
 ...

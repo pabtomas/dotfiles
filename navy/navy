@@ -18,7 +18,7 @@ main ()
   #   resolve 'includes' keywords
   #   change loop requests and requests[].loop into dictionnaries
   #   resolve 'extends' (replace them with anchors and aliases then use yq explode)
-  #   gomplate
+  #   gomplate to resolve GO templates
   #   yq script to generate sh script.
   #   generate cache: sha256sum <(find . -type -f -exec sha256sum {} \; | sort  | cut -d' ' -f1)
   # fi

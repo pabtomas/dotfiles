@@ -18,7 +18,7 @@ requests:
               ${_DOCKER_NET}: {}
               ${PROXIFIED_DOCKER_SOCKET_NET}: {}
         depends_on:
-          - build.docker
+          - images.build.docker
           - networks.create.${_DOCKER_NET}
           - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
         extends:
@@ -45,7 +45,7 @@ requests:
             - render
             - video
         depends_on:
-          - build.gpu
+          - images.build.gpu
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.man
@@ -53,7 +53,7 @@ requests:
         query:
           Image: ${MAN_LAYER_IMG}
         depends_on:
-          - build.man
+          - images.build.man
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.pass
@@ -61,7 +61,7 @@ requests:
         query:
           Image: ${PASS_LAYER_IMG}
         depends_on:
-          - build.pass
+          - images.build.pass
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.registry
@@ -83,7 +83,7 @@ requests:
             EndpointsConfig:
               ${_DOCKER_NET}: {}
         depends_on:
-          - build.registry
+          - images.build.registry
           - networks.create.${_DOCKER_NET}
           - volumes.create.${REGISTRY_VOLUME}
         extends:
@@ -106,7 +106,7 @@ requests:
             EndpointsConfig:
               ${JUMP_AREA_NET}: {}
         depends_on:
-          - build.sshd
+          - images.build.sshd
           - networks.create.${JUMP_AREA_NET}
           - volume.create.${SSH_VOLUME}
           - volume.create.${THEME_VOLUME}
@@ -117,7 +117,7 @@ requests:
         query:
           Image: ${SHELL_LAYER_IMG}
         depends_on:
-          - build.shell
+          - images.build.shell
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.vim
@@ -125,7 +125,7 @@ requests:
         query:
           Image: ${VIM_LAYER_IMG}
         depends_on:
-          - build.vim
+          - images.build.vim
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.zig
@@ -133,7 +133,7 @@ requests:
         query:
           Image: ${ZIG_LAYER_IMG}
         depends_on:
-          - build.zig
+          - images.build.zig
         extends:
           - containers.create.virtual.sshd
 
