@@ -64,7 +64,7 @@ Objects:
 **type**: list
 **required**: false
 **default**: `[]`
-**description**: List of Datasources available in GO templates.
+**description**: List of Datasources available in GO templates. More details on how to use it with Navy into the [Datasource object section](#Datasource-object)
 **good to know**:
 - The `datasources` keyword is processed after the `include` keyword when Navy is executed
 **exemple**:
@@ -230,9 +230,22 @@ docker version --format '{{ .Server.APIVersion }}'
 
 ## Datasource object
 
-**description**: A gomplate datasource
+**description**: A gomplate YAML Datasource. **A Datasource have to be a YAML file to be correctly processed by Navy**.
 **exemples**:
+- Here an exemple of a Datasource object:
 ```yaml
+```
+- Here an exemple of what could be the YAML file used by the Datasource object shown above:
+```yaml
+---
+
+sender: Alice
+receiver: Bob
+
+# You can use the 'inventory' special datasource in your Datasource files to use your other variables (whatever the Datasource file it comes from and whatever the scope you define).
+message: 'Hello {{ (ds "inventory").receiver }}, you received a message from {{ (ds "inventory").sender }}'
+
+...
 ```
 
 ### `Datasource.input`
@@ -253,7 +266,7 @@ docker version --format '{{ .Server.APIVersion }}'
 **type**: string
 **required**: false
 **default**: `*`
-**description**: An extended regex pattern applied on Requests id that filters access to the datasource.
+**description**: An extended regex pattern applied on Requests id that filters access to the Datasource.
 
 ## Anchor object
 

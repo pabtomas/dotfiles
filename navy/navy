@@ -12,15 +12,19 @@ main ()
   # define default values
 
   # if cache not found:
-  #   resolve 'anchors' keywords
-  #   explode anchors and aliases
-  #   check circular dependencies between includes
-  #   resolve 'includes' keywords
-  #   change loop requests and requests[].loop into dictionnaries
-  #   resolve 'extends' (replace them with anchors and aliases then use yq explode)
-  #   gomplate to resolve GO templates
-  #   yq script to generate sh script.
-  #   generate cache: sha256sum <(find . -type -f -exec sha256sum {} \; | sort  | cut -d' ' -f1)
+  #   - resolve 'anchors' keywords
+  #       - explode anchors and aliases
+  #   - check circular dependencies between includes
+  #   - resolve 'includes' keywords
+  #   - change loop requests and requests[].loop into dictionnaries to:
+  #     - resolve 'extends' (replace them with anchors and aliases then use yq explode)
+  #   - gomplate to resolve GO templates with datasources:
+  #     - generate the 'inventory' datasource: gather all datasources in one file
+  #       then use this CLI to expand templates into values but not in keys (improve
+  #       it to works (recursively) with dictionnaries):
+  #       $ yq '. | to_entries[] | "{{ print \"" + .key + "\" }}:" + .value' bases.yaml | gomplate -d inventory=bases.yaml
+  #   - yq script to generate sh script.
+  #   - generate cache: sha256sum <(find . -type -f -exec sha256sum {} \; | sort  | cut -d' ' -f1)
   # fi
   # run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script
 }
