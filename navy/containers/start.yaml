@@ -1,0 +1,120 @@
+---
+
+tasks:
+  - endpoint: /containers/{id}/start
+    method: POST
+    loop:
+      - id: containers.start.virtual.listened
+        virtual: true
+        depends_on:
+          - containers.start.listener
+      - id: containers.start.builder
+        path:
+          id: ${BUILDER_HOST}
+        depends_on:
+          - containers.create.builder
+      - id: containers.start.carpenter.relay
+        path:
+          id: ${CARPENTER_RELAY_HOST}
+        depends_on:
+          - containers.create.carpenter.relay
+          - containers.start.xserver
+      - id: containers.start.carpenter.runner
+        path:
+          id: ${CARPENTER_RUNNER_HOST}
+        depends_on:
+          - containers.create.carpenter.runner
+          - containers.start.carpenter.relay
+      - id: containers.start.controller
+        path:
+          id: ${CONTROLLER_HOST}
+        depends_on:
+          - containers.create.controller
+          - containers.start.builder
+          - containers.start.proxy
+          - containers.start.registry
+          - containers.start.xserver
+        extends:
+          - containers.start.virtual.listened
+      - id: containers.start.editor
+        path:
+          id: ${EDITOR_HOST}
+        depends_on:
+          - containers.create.editor
+        extends:
+          - containers.start.virtual.listened
+      - id: containers.start.explorer.shell
+        path:
+          id: ${SHELL_EXPLORER_HOST}
+        depends_on:
+          - containers.create.explorer.shell
+        extends:
+          - containers.start.virtual.listened
+      - id: containers.start.explorer.zig
+        path:
+          id: ${ZIG_EXPLORER_HOST}
+        depends_on:
+          - containers.create.explorer.zig
+        extends:
+          - containers.start.virtual.listened
+      - id: containers.start.jumper
+        path:
+          id: ${JUMPER_HOST}
+        depends_on:
+          - containers.create.jumper
+          - containers.start.controller
+          - containers.start.explorer.shell
+          - containers.start.explorer.zig
+          - containers.start.safedeposit
+          - containers.start.scholar
+        extends:
+          - containers.start.virtual.listened
+      - id: containers.start.listener
+        path:
+          id: ${LISTENER_HOST}
+        depends_on:
+          - containers.create.listener
+          - containers.start.proxy
+      - id: containers.start.proxy
+        path:
+          id: ${PROXY_HOST}
+        depends_on:
+          - containers.create.proxy
+      - id: containers.start.registry
+        path:
+          id: ${REGISTRY_HOST}
+        depends_on:
+          - containers.create.registry
+      - id: containers.start.safedeposit
+        path:
+          id: ${SAFEDEPOSIT_HOST}
+        depends_on:
+          - containers.create.safedeposit
+        extends:
+          - containers.start.virtual.listened
+      - id: containers.start.scholar
+        path:
+          id: ${SCHOLAR_HOST}
+        depends_on:
+          - containers.create.scholar
+        extends:
+          - containers.start.virtual.listened
+      - id: containers.start.spaceporn.relay
+        path:
+          id: ${SPACEPORN_RELAY_HOST}
+        depends_on:
+          - containers.create.spaceporn.relay
+          - containers.start.xserver
+      - id: containers.start.spaceporn.runner
+        path:
+          id: ${SPACEPORN_RUNNER_HOST}
+        depends_on:
+          - containers.create.spaceporn.runner
+          - containers.start.spaceporn.relay
+      - id: containers.start.xserver
+        path:
+          id: ${XSERVER_HOST}
+        depends_on:
+          - containers.create.xserver
+
+...

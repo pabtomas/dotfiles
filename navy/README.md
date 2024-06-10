@@ -26,7 +26,7 @@ Navy was designed with 5 priorities in mind to solve all problems I had with Com
 1. Minimal process installation: Navy was conceived to run with a minimal set of dependencies into a minimal container (no extra daemon, no extra library installation, no extra configuration),
 2. No controller-nodes architecture,
 3. Minimal abstraction to the Docker Engine API to offer a full control,
-4. Minimal specification: the Navy specification contains about 25 keywords (some of them are literally coming from Compose or Ansible,
+4. Minimal specification: the Navy specification contains less than 30 keywords (some of them are literally coming from Compose or Ansible),
 5. Docker Engine API version agnostic: It does not mean that your `navy.yaml` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `navy.yaml` file whatever the Docker Engine API version you are targetting.
 
 ## How to start a Navy Project ?
@@ -40,7 +40,8 @@ As stated above, Navy was designed to be used in a container. But that does not 
 ### Why should you run Navy into a container ?
 
 1. Navy was written in Shell to keep it minimal: no compilation process, extra libraries or anything else a real programing language could need. The extra cost of this design decision is an environment sensitivity. Because Navy does not manage harsh environments (because it could lead to unmaintable code), the solution was to write a dedicated image.
-2. Navy needs access to your Docker socket to communicate with the Docker Engine. However the Docker socket needs can only be root accessed. So running Navy on your computer means running it as root. **And running scripts written by others as root on your system if the most unsafe thing you can do**. Again: the solution is to isolate the Navy process on its container.
+2. Navy needs access to your Docker socket to communicate with the Docker Engine. However the Docker socket can only be root accessed. So running Navy on your computer means running it as root. **And running scripts written by others as root on your system if the most unsafe thing you can do**. Again: the solution is to isolate the Navy process on its container.
+3. You can use the Navy dedicated image as a stage for your own images. It could be very useful if you want to extend Navy features for your own needs or/and to share it with others.
 
 ### How to run Navy in its dedicated box ?
 

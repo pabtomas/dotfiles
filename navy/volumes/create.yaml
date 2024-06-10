@@ -1,11 +1,11 @@
 ---
 
-requests:
+tasks:
   - endpoint: /volumes
     method: GET
     register:
       as:
-        input: volumes.json
+        id: volumes.json
         scope: volumes.create.*
   - if: '{{ $volumes := " " }}{{ range (datasource "volumes.json") }}{{ $volumes = print $volumes .Name " " }}{{ end }}
       {{ $volume1 = print " " (datasource "datasources/volumes.yaml").carpenter_relay_xserver_socket_volume " " }}
@@ -30,59 +30,102 @@ requests:
     endpoint: /volumes/create
     method: POST
     loop:
+      - id: volumes.create.virtual
+        virtual: true
+        query:
+          Labels:
+            navy: true
+        depends_on:
+          - volumes.json
       - id: volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
         query:
           Name: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${LISTENER_OPT_DATA_VOLUME}
         query:
           Name: ${LISTENER_OPT_DATA_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
         query:
           Name: ${LISTENER_OPT_SCRIPTS_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${LISTENER_VAR_LOG_VOLUME}
         query:
           Name: ${LISTENER_VAR_LOG_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${MYWHALEFLEET_VOLUME}
         query:
           Name: ${MYWHALEFLEET_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${PROXY_ETC_NGINX_VOLUME}
         query:
           Name: ${PROXY_ETC_NGINX_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
         query:
           Name: ${PROXY_OPT_SCRIPTS_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
         query:
           Name: ${PROXY_VAR_LOG_NGINX_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${REGISTRY_VOLUME}
         query:
           Name: ${REGISTRY_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${RELAY_VAR_LOG_VOLUME}
         query:
           Name: ${RELAY_VAR_LOG_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${SAFEDEPOSIT_VOLUME}
         query:
           Name: ${SAFEDEPOSIT_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
         query:
           Name: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${SSH_VOLUME}
         query:
           Name: ${SSH_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${SPACEPORN_VOLUME}
         query:
           Name: ${SPACEPORN_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${THEME_VOLUME}
         query:
           Name: ${THEME_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${XSERVER_ETC_NGINX_VOLUME}
         query:
           Name: ${XSERVER_ETC_NGINX_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
         query:
           Name: ${XSERVER_OPT_SCRIPTS_VOLUME}
+        extends:
+          - volumes.create.virtual
       - id: volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}
         query:
           Name: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+        extends:
+          - volumes.create.virtual
 
 ...

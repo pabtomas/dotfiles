@@ -3,7 +3,7 @@
 include:
   - containers/create/virtual.yaml
 
-requests:
+tasks:
   - endpoint: /containers/create
     method: POST
     loop:

@@ -1,11 +1,11 @@
 ---
 
-requests:
+tasks:
   - endpoint: /networks
     method: GET
     register:
       as:
-        input: networks.json
+        id: networks.json
         scope: networks.create.*
   - if: '{{ $net := " " }}{{ range (datasource "networks.json") }}{{ $net = print $net .Name " " }}{{ end }}
       {{ $docker_net = print " " (datasource "datasources/networks.yaml").docker_network " " }}
@@ -16,45 +16,55 @@ requests:
     endpoint: /networks/create
     method: POST
     loop:
-      - id: networks.create.${_DOCKER_NET}
+      - id: networks.create.virtual
+        virtual: true
         query:
-          Name: ${_DOCKER_NET}
           Driver: bridge
           IPAM:
             Driver: default
+          Labels:
+            navy: true
+        depends_on:
+          - networks.json
+      - id: networks.create.${_DOCKER_NET}
+        query:
+          Name: ${_DOCKER_NET}
+          IPAM:
             Config:
               - Subnet: ${_DOCKER_SUB}
                 IPRange: ${_DOCKER_SUB}
                 Gateway: ${_DOCKER_GATEWAY_IP}
+        extends:
+          - networks.create.virtual
       - id: networks.create.${JUMP_AREA_NET}
         query:
           Name: ${JUMP_AREA_NET}
-          Driver: bridge
           IPAM:
-            Driver: default
             Config:
               - Subnet: ${JUMP_AREA_SUB}
                 IPRange: ${JUMP_AREA_SUB}
                 Gateway: ${JUMP_AREA_GATEWAY_IP}
+        extends:
+          - networks.create.virtual
       - id: networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
         query:
           Name: ${PROXIFIED_DOCKER_SOCKET_NET}
-          Driver: bridge
           IPAM:
-            Driver: default
             Config:
               - Subnet: ${PROXIFIED_DOCKER_SOCKET_SUB}
                 IPRange: ${PROXIFIED_DOCKER_SOCKET_SUB}
                 Gateway: ${PROXIFIED_DOCKER_SOCKET_GATEWAY_IP}
+        extends:
+          - networks.create.virtual
       - id: networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
         query:
           Name: ${PROXIFIED_XSERVER_SOCKET_NET}
-          Driver: bridge
           IPAM:
-            Driver: default
             Config:
               - Subnet: ${PROXIFIED_XSERVER_SOCKET_SUB}
                 IPRange: ${PROXIFIED_XSERVER_SOCKET_SUB}
                 Gateway: ${PROXIFIED_XSERVER_SOCKET_GATEWAY_IP}
+        extends:
+          - networks.create.virtual
 
 ...

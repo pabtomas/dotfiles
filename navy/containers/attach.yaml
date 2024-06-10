@@ -1,0 +1,10 @@
+---
+
+tasks:
+  - id: commands.attach
+    argv:
+      - docker attach ${JUMPER_HOST}
+    depends_on:
+      - containers.start.jumper
+
+...

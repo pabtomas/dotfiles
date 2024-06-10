@@ -1,6 +1,6 @@
 ---
 
-requests:
+tasks:
   - endpoint: /build
     method: POST
     loop:

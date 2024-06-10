@@ -1,3 +1,4 @@
+FROM docker:cli AS docker_image
 FROM alpine:3.20
 
 ARG HTTP_PROXY
@@ -13,5 +14,6 @@ RUN <<END_OF_RUN
 END_OF_RUN
 
 COPY ./navy /usr/local/bin/
+COPY --from=docker_img /usr/local/bin/docker /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/navy"]

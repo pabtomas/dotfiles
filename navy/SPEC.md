@@ -5,7 +5,7 @@ Keywords:
 2. [anchors](#anchors)
 3. [include](#include)
 4. [versions](#versions)
-5. [requests](#requests)
+5. [tasks](#tasks)
 6. [handlers](#handlers)
 
 Objects:
@@ -16,24 +16,26 @@ Objects:
     4. [from](#Requestfrom)
     5. [loop](#Requestloop)
     6. [if](#Requestif)
-8. [Register](#Register-object)
-    1. [query](#Registerquery)
-    2. [as](#Registeras)
-9. [Body](#Body-object)
-    1. [path](#Bodypath)
-    2. [query](#Bodyquery)
-    3. [id](#Bodyid)
-    4. [virtual](#Bodyvirtual)
-    5. [depends_on](#Bodydepends_on)
+8. [Body](#Body-object)
+    1. [id](#Bodyid)
+    2. [depends_on](#Bodydepends_on)
+    3. [path](#Bodypath)
+    4. [query](#Bodyquery)
+    5. [virtual](#Bodyvirtual)
     6. [extends](#Bodyextends)
     7. [context](#Bodycontext)
-10. [Datasource](#Datasource-object)
-    1. [input](#Datasourceinput)
-    3. [scope](#Datasourcescope)
-11. [Anchor](#Anchor-object)
+9. [Register](#Register-object)
+    1. [as](#Registeras)
+10. [From](#From-object)
+    1. [filter](#Fromfilter)
+11. [Command](#Command-object)
+    1. [argv](#Commandargv)
+12. [Datasource](#Datasource-object)
+    1. [scope](#Datasourcescope)
+13. [Anchor](#Anchor-object)
     1. [source](#Anchorsource)
     2. [in](#Anchorin)
-12. [Query & Path](#Query-amp-Path-dictionnaries)
+14. [Query & Path](#Query-amp-Path-dictionnaries)
 
 ## `datasources`
 
@@ -89,12 +91,12 @@ docker version --format '{{ .Server.APIVersion }}'
 ```yaml
 ```
 
-## `requests`
+## `tasks`
 
 **type**: list
 **required**: false
 **default**: `[]`
-**description**: A list of Requests. If a Request in this list fails, Navy stops other Requests in this list and run Requests in the `handlers` list.
+**description**: A list of Requests and Commands. If a Request (or Command) in this list fails, Navy skips the rest of the list and run the `handlers` list.
 **exemple**:
 ```yaml
 ```
@@ -104,7 +106,7 @@ docker version --format '{{ .Server.APIVersion }}'
 **type**: list
 **required**: false
 **default**: `[]`
-**description**: A list of Requests reserved for cleanup actions. Navy will run Requests in this list after running Requests from the `requests` list. Navy will run every Request in this list whatever happens.
+**description**: A list of Requests and Commands reserved for cleanup actions. Navy will run every Request (or Command) in this list whatever happens.
 
 ## Request object
 
@@ -140,10 +142,10 @@ docker version --format '{{ .Server.APIVersion }}'
 
 ### `Request.from`
 
-**type**: string
+**type**: From
 **required**: false
 **default**: `""`
-**description**: A GO template filter returning a list of Body objects. Each element of this list will be used to run a matching Request.
+**description**:
 
 ### `Request.loop`
 
@@ -159,32 +161,25 @@ docker version --format '{{ .Server.APIVersion }}'
 **default**: true
 **description**:
 
-## Register object
-
-**description**:
-**exemples**:
-```yaml
-```
-
-### `Register.query`
-
-**type**: dictionnary
-**required**: false
-**default**: `{}`
-**description**:
-
-### `Register.as`
-
-**type**: Datasource
-**required**: true
-**description**:
-
 ## Body object
 
 **description**:
 **exemples**:
 ```yaml
 ```
+
+### `Body.id`
+
+**type**: string
+**required**: true
+**description**:
+
+### `Body.depends_on`
+
+**type**: list
+**required**: false
+**default**: `[]`
+**description**:
 
 ### `Body.query`
 
@@ -200,25 +195,11 @@ docker version --format '{{ .Server.APIVersion }}'
 **default**: `{}`
 **description**:
 
-### `Body.id`
-
-**type**: string
-**required**: false
-**default**: `""`
-**description**:
-
 ### `Body.virtual`
 
 **type**: boolean
 **required**: false
 **default**: false
-**description**:
-
-### `Body.depends_on`
-
-**type**: list
-**required**: false
-**default**: `[]`
 **description**:
 
 ### `Body.extends`
@@ -233,6 +214,53 @@ docker version --format '{{ .Server.APIVersion }}'
 **type**: string
 **required**: false
 **default**: `"."`
+**description**:
+
+## Register object
+
+**description**:
+- depends_on
+- query
+**exemples**:
+```yaml
+```
+
+### `Register.as`
+
+**type**: Datasource
+**required**: true
+**description**:
+- Datasource id is the id of the Register
+
+## From object
+
+**description**:
+- id
+- depends_on
+**exemples**:
+```yaml
+```
+
+### `From.filter`
+
+**type**: string
+**required**: true
+**description**: A GO template filter returning a list of Body objects. Each element of this list will be used to run a matching Request.
+
+## Command object
+
+**description**: A custom command for specific needs or to compensate some Navy's lacks.
+- id
+- depends_on
+**exemples**:
+```yaml
+```
+
+### `Command.argv`
+
+**type**: list
+**required**: false
+**default**: `[]`
 **description**:
 
 ## Datasource object
@@ -256,19 +284,12 @@ message: 'Hello {{ (ds "datasources.exemple.yaml").receiver }}, you received a m
 ...
 ```
 
-### `Datasource.input`
-
-**type**: string
-**required**: true
-**default**: `""`
-**description**:
-
 ### `Datasource.scope`
 
 **type**: string
 **required**: false
 **default**: `*`
-**description**: An extended regex pattern applied on Requests id that filters access to the Datasource.
+**description**: An extended regex pattern applied on Requests and Commands id that filters access to the Datasource.
 
 ## Anchor object
 

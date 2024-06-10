@@ -1,6 +1,6 @@
 ---
 
-requests:
+tasks:
   - endpoint: /containers/create
     method: POST
     loop:
@@ -9,6 +9,8 @@ requests:
         query:
           HostConfig:
             Privileged: false
+          Labels:
+            navy: true
       - id: containers.create.virtual.docker
         virtual: true
         query:
