@@ -18,8 +18,8 @@ RUN <<END_OF_RUN
     cat << TEMPLATING > "${ETC_NGINX_HTTPD_PATH}/logging.conf"
 log_format custom_http '\$remote_addr - \$remote_user [\$time_local] '
                        '"\$request" \$status \$body_bytes_sent '
-                       '"\$http_referer" "\$http_user_agent"'
-                       'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time"';
+                       '"\$http_referer" "\$http_user_agent" '
+                       'rt=\$request_time uct="\$upstream_connect_time" uht="\$upstream_header_time" urt="\$upstream_response_time" body="\$request_body"';
 
 access_log ${VAR_LOG_NGINX_PATH}/access.log custom_http;
 error_log ${VAR_LOG_NGINX_PATH}/error.log info;
