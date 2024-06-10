@@ -5,6 +5,9 @@ versions:
   - 1.44
   - 1.43
 
+datasources:
+  -
+
 anchors:
   - source: anchors/volumes.yaml
     in:

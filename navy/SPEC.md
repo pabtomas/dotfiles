@@ -15,6 +15,7 @@ Objects:
     3. [register](#Requestregister)
     4. [from](#Requestfrom)
     5. [loop](#Requestloop)
+    6. [if](#Requestif)
 8. [Register](#Register-object)
     1. [query](#Registerquery)
     2. [as](#Registeras)
@@ -28,7 +29,6 @@ Objects:
     7. [context](#Bodycontext)
 10. [Datasource](#Datasource-object)
     1. [input](#Datasourceinput)
-    2. [name](#Datasourcename)
     3. [scope](#Datasourcescope)
 11. [Anchor](#Anchor-object)
     1. [source](#Anchorsource)
@@ -152,6 +152,13 @@ docker version --format '{{ .Server.APIVersion }}'
 **default**: `[]`
 **description**:
 
+### `Request.if`
+
+**type**: boolean
+**required**: false
+**default**: true
+**description**:
+
 ## Register object
 
 **description**:
@@ -251,14 +258,8 @@ message: 'Hello {{ (ds "inventory").receiver }}, you received a message from {{ 
 ### `Datasource.input`
 
 **type**: string
-**required**: required in `datasources` list, not in `Register.as`
-**default**: `""`
-**description**:
-
-### `Datasource.name`
-
-**type**: string
 **required**: true
+**default**: `""`
 **description**:
 
 ### `Datasource.scope`

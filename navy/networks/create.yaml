@@ -1,7 +1,19 @@
 ---
 
 requests:
-  - endpoint: /networks/create
+  - endpoint: /networks
+    method: GET
+    register:
+      as:
+        input: networks.json
+        scope: networks.create.*
+  - if: '{{ $net := " " }}{{ range (datasource "networks.json") }}{{ $net = print $net .Name " " }}{{ end }}
+      {{ $docker_net = print " " (datasource "datasources/networks.yaml").docker_network " " }}
+      {{ $jumper_net = print " " (datasource "datasources/networks.yaml").jumper_network " " }}
+      {{ $proxy_net = print " " (datasource "datasources/networks.yaml").proxy_network " " }}
+      {{ $xserver_net = print " " (datasource "datasources/networks.yaml").xserver_network " " }}
+      {{ or (not (strings.Contains $docker_net $net)) (not (strings.Contains $jumper_net $net)) (not (strings.Contains $xserver_net $net)) (not (strings.Contains $proxy_net $net)) }}'
+    endpoint: /networks/create
     method: POST
     loop:
       - id: networks.create.${_DOCKER_NET}

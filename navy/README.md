@@ -26,7 +26,7 @@ Navy was designed with 5 priorities in mind to solve all problems I had with Com
 1. Minimal process installation: Navy was conceived to run with a minimal set of dependencies into a minimal container (no extra daemon, no extra library installation, no extra configuration),
 2. No controller-nodes architecture,
 3. Minimal abstraction to the Docker Engine API to offer a full control,
-4. Minimal specification: the Navy specification contains about 20 keywords (some of them are literally coming from Compose and Ansible,
+4. Minimal specification: the Navy specification contains about 25 keywords (some of them are literally coming from Compose or Ansible,
 5. Docker Engine API version agnostic: It does not mean that your `navy.yaml` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `navy.yaml` file whatever the Docker Engine API version you are targetting.
 
 ## How to start a Navy Project ?

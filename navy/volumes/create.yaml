@@ -1,7 +1,33 @@
 ---
 
 requests:
-  - endpoint: /volumes/create
+  - endpoint: /volumes
+    method: GET
+    register:
+      as:
+        input: volumes.json
+        scope: volumes.create.*
+  - if: '{{ $volumes := " " }}{{ range (datasource "volumes.json") }}{{ $volumes = print $volumes .Name " " }}{{ end }}
+      {{ $volume1 = print " " (datasource "datasources/volumes.yaml").carpenter_relay_xserver_socket_volume " " }}
+      {{ $volume2 = print " " (datasource "datasources/volumes.yaml").listener_opt_data_volume " " }}
+      {{ $volume3 = print " " (datasource "datasources/volumes.yaml").listener_opt_scripts_volume " " }}
+      {{ $volume4 = print " " (datasource "datasources/volumes.yaml").listener_var_log_volume " " }}
+      {{ $volume5 = print " " (datasource "datasources/volumes.yaml").mywhalefleet_volume " " }}
+      {{ $volume6 = print " " (datasource "datasources/volumes.yaml").proxy_etc_nginx_volume " " }}
+      {{ $volume7 = print " " (datasource "datasources/volumes.yaml").proxy_opt_scripts_volume " " }}
+      {{ $volume8 = print " " (datasource "datasources/volumes.yaml").proxy_var_log_nginx_volume " " }}
+      {{ $volume9 = print " " (datasource "datasources/volumes.yaml").registry_volume " " }}
+      {{ $volume10 = print " " (datasource "datasources/volumes.yaml").relay_var_log_volume " " }}
+      {{ $volume11 = print " " (datasource "datasources/volumes.yaml").safedeposit_volume " " }}
+      {{ $volume12 = print " " (datasource "datasources/volumes.yaml").spaceporn_relay_xserver_socket_volume " " }}
+      {{ $volume13 = print " " (datasource "datasources/volumes.yaml").ssh_volume " " }}
+      {{ $volume14 = print " " (datasource "datasources/volumes.yaml").spaceporn_volume " " }}
+      {{ $volume15 = print " " (datasource "datasources/volumes.yaml").theme_volume " " }}
+      {{ $volume16 = print " " (datasource "datasources/volumes.yaml").xserver_etc_nginx_volume " " }}
+      {{ $volume17 = print " " (datasource "datasources/volumes.yaml").xserver_opt_scripts_volume " " }}
+      {{ $volume18 = print " " (datasource "datasources/volumes.yaml").xserver_var_log_nginx_volume " " }}
+      {{ or (not (strings.Contains $volume1 $volumes)) (not (strings.Contains $volume2 $volumes)) (not (strings.Contains $volume3 $volumes)) (not (strings.Contains $volume4 $volumes)) (not (strings.Contains $volume5 $volumes)) (not (strings.Contains $volume6 $volumes)) (not (strings.Contains $volume7 $volumes)) (not (strings.Contains $volume8 $volumes)) (not (strings.Contains $volume9 $volumes)) (not (strings.Contains $volume10 $volumes)) (not (strings.Contains $volume11 $volumes)) (not (strings.Contains $volume12 $volumes)) (not (strings.Contains $volume13 $volumes)) (not (strings.Contains $volume14 $volumes)) (not (strings.Contains $volume15 $volumes)) (not (strings.Contains $volume16 $volumes)) (not (strings.Contains $volume17 $volumes)) (not (strings.Contains $volume18 $volumes)) }}'
+    endpoint: /volumes/create
     method: POST
     loop:
       - id: volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}

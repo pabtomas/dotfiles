@@ -1,7 +1,18 @@
 ---
 
 requests:
-  - endpoint: /images/create
+  - endpoint: /images/json
+    method: GET
+    register:
+      query:
+        all: true
+        filters:
+          reference=172.17.2.3:5000/mywhalefleet/tiawl.local.*
+      as:
+        input: images.json
+        scope: images.pull.*
+  - if:
+    endpoint: /images/create
     method: POST
     loop:
       - id: images.pull.alpine
