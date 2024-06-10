@@ -5,13 +5,11 @@ requests:
     method: GET
     register:
       query:
-        all: true
-        filters:
-          reference=172.17.2.3:5000/mywhalefleet/tiawl.local.*
+        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").alpine }}":true}}'
       as:
-        input: images.json
-        scope: images.pull.*
-  - if:
+        input: local.alpine.image.json
+        scope: images.pull.alpine
+  - if: '{{ ne 1 (len (datasource "local.alpine.image.json")) }}'
     endpoint: /images/create
     method: POST
     loop:
@@ -19,22 +17,82 @@ requests:
         query:
           fromImage: ${ALPINE_IMG}
           tag: ${ALPINE_TAG}
+  - endpoint: /images/json
+    method: GET
+    register:
+      query:
+        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").bash }}":true}}'
+      as:
+        input: local.bash.image.json
+        scope: images.pull.bash.
+  - if: '{{ ne 1 (len (datasource "local.bash.image.json")) }}'
+    endpoint: /images/create
+    method: POST
+    loop:
       - id: images.pull.bash
         query:
           fromImage: ${BASH_IMG}
           tag: ${BASH_TAG}
+  - endpoint: /images/json
+    method: GET
+    register:
+      query:
+        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").buildkit }}":true}}'
+      as:
+        input: local.buildkit.image.json
+        scope: images.pull.buildkit
+  - if: '{{ ne 1 (len (datasource "local.buildkit.image.json")) }}'
+    endpoint: /images/create
+    method: POST
+    loop:
       - id: images.pull.buildkit
         query:
           fromImage: ${_BUILDKIT_IMG}
           tag: ${_BUILDKIT_TAG}
+  - endpoint: /images/json
+    method: GET
+    register:
+      query:
+        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").docker }}":true}}'
+      as:
+        input: local.docker.image.json
+        scope: images.pull.docker
+  - if: '{{ ne 1 (len (datasource "local.docker.image.json")) }}'
+    endpoint: /images/create
+    method: POST
+    loop:
       - id: images.pull.docker
         query:
           fromImage: ${_DOCKER_IMG}
           tag: ${_DOCKER_TAG}
+  - endpoint: /images/json
+    method: GET
+    register:
+      query:
+        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").proxy }}":true}}'
+      as:
+        input: local.proxy.image.json
+        scope: images.pull.proxy
+  - if: '{{ ne 1 (len (datasource "local.proxy.image.json")) }}'
+    endpoint: /images/create
+    method: POST
+    loop:
       - id: images.pull.proxy
         query:
           fromImage: ${LINUXSERVER_PROXY_IMG}
           tag: ${LINUXSERVER_PROXY_TAG}
+  - endpoint: /images/json
+    method: GET
+    register:
+      query:
+        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").registry }}":true}}'
+      as:
+        input: local.registry.image.json
+        scope: images.pull.registry
+  - if: '{{ ne 1 (len (datasource "local.registry.image.json")) }}'
+    endpoint: /images/create
+    method: POST
+    loop:
       - id: images.pull.registry
         query:
           fromImage: ${REGISTRY_IMG}

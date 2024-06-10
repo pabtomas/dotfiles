@@ -26,9 +26,7 @@ include:
   - containers/list.yaml
   - containers/stop.yaml
   - containers/remove.yaml
-  - volumes/list.yaml
   - volumes/remove.yaml
-  - networks/list.yaml
   - networks/remove.yaml
 
 ...

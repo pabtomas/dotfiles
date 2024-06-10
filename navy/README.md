@@ -37,9 +37,14 @@ TODO
 
 As stated above, Navy was designed to be used in a container. But that does not mean that you can not use it outside of a container.
 
-### Why should I run Navy into a container ?
+### Why should you run Navy into a container ?
 
-To keep it minimal Navy was written in Shell: no compilation process, extra libraries or anything else a real programing language could need. The extra cost of this design decision is an environment sensitivity. Because Navy does not manage harsh environments (because it could lead to unmaintable code), the solution was to write a dedicated image. Here the command line you can use to run Navy in a safe environment:
+1. Navy was written in Shell to keep it minimal: no compilation process, extra libraries or anything else a real programing language could need. The extra cost of this design decision is an environment sensitivity. Because Navy does not manage harsh environments (because it could lead to unmaintable code), the solution was to write a dedicated image.
+2. Navy needs access to your Docker socket to communicate with the Docker Engine. However the Docker socket needs can only be root accessed. So running Navy on your computer means running it as root. **And running scripts written by others as root on your system if the most unsafe thing you can do**. Again: the solution is to isolate the Navy process on its container.
+
+### How to run Navy in its dedicated box ?
+
+Here the command line you can use to run Navy in a safe environment:
 ```
 docker run --rm -v .:/workspace:ro -v ~/.cache/navy:/cache:rw tiawl/navy:0.0.0
 ```

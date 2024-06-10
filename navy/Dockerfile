@@ -8,7 +8,7 @@ RUN <<END_OF_RUN
     http_proxy="${HTTP_PROXY:-}"
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
-    apk add --no-cache dash yq curl gomplate gum
+    apk add --no-cache dash yq curl gomplate gum git
     unset http_proxy https_proxy
 END_OF_RUN
 

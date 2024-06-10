@@ -1,9 +1,9 @@
 # Specification
 
 Keywords:
-1. [anchors](#anchors)
-2. [include](#include)
-3. [datasources](#datasources)
+1. [datasources](#datasources)
+2. [anchors](#anchors)
+3. [include](#include)
 4. [versions](#versions)
 5. [requests](#requests)
 6. [handlers](#handlers)
@@ -35,6 +35,18 @@ Objects:
     2. [in](#Anchorin)
 12. [Query & Path](#Query-amp-Path-dictionnaries)
 
+## `datasources`
+
+**type**: list
+**required**: false
+**default**: `[]`
+**description**: List of Datasources available in GO templates. More details on how to use it with Navy into the [Datasource object section](#Datasource-object)
+**good to know**:
+- The `datasources` keyword is the first thing Navy will processed when executed, its location is in your main Navy file.
+**exemple**:
+```yaml
+```
+
 ## `anchors`
 
 **type**: list
@@ -42,7 +54,7 @@ Objects:
 **default**: `[]`
 **description**: List of Anchors.
 **good to know**:
-- The `anchors` keyword is the first thing Navy will processed when executed, so the location of this directive is in your main Navy file.
+- The `anchors` keyword is processed after the `datasources` keyword when Navy is executed and before the `include` keyword. Its location is in your main Navy file.
 **exemple**:
 ```yaml
 ```
@@ -55,18 +67,6 @@ Objects:
 **description**: List of files. Including files in another will merge their contents.
 **good to know**:
 - The `include` keyword is processed after the `anchors` keyword when Navy is executed
-**exemple**:
-```yaml
-```
-
-## `datasources`
-
-**type**: list
-**required**: false
-**default**: `[]`
-**description**: List of Datasources available in GO templates. More details on how to use it with Navy into the [Datasource object section](#Datasource-object)
-**good to know**:
-- The `datasources` keyword is processed after the `include` keyword when Navy is executed
 **exemple**:
 ```yaml
 ```
@@ -245,12 +245,13 @@ docker version --format '{{ .Server.APIVersion }}'
 - Here an exemple of what could be the YAML file used by the Datasource object shown above:
 ```yaml
 ---
+# datasources/exemple.yaml
 
 sender: Alice
 receiver: Bob
 
-# You can use the 'inventory' special datasource in your Datasource files to use your other variables (whatever the Datasource file it comes from and whatever the scope you define).
-message: 'Hello {{ (ds "inventory").receiver }}, you received a message from {{ (ds "inventory").sender }}'
+# You can use the other defined Datasources in your Datasource files (whatever the defined scope).
+message: 'Hello {{ (ds "datasources.exemple.yaml").receiver }}, you received a message from {{ (ds "datasources.exemple.yaml").sender }}'
 
 ...
 ```

@@ -39,6 +39,9 @@ extends for:
 regular:
 curl -s --unix-socket /var/run/docker.sock -X DELETE http://v1.45/containers/hardcore_jang?force=true
 
+filters/urlencode:
+curl -s --unix-socket /var/run/docker.sock 'http://1.45/images/json' -X GET -G --data-urlencode 'filters={"reference":{"172.17.2.3:5000/mywhalefleet/tiawl.local.*":true}}'
+
 build:
 tar c -f context.tar -C /tmp .
 curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar
