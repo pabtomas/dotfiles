@@ -13,4 +13,4 @@ _tag "${REGISTRY_ID}" '2'
 _tag 'owner' 'latest'
 
 _layer_tag "${DOCKLE_ID}" '0.4.14'
-_layer_tag "${ZIG_ID}" '0.12.0'
+_layer_tag "${ZIG_ID}" '0.13.0'
