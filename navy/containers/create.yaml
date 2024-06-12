@@ -11,7 +11,7 @@ run:
         query:
           name: {{ (datasource "datasources/builder.yaml" ).host }}
           Hostname: {{ (datasource "datasources/builder.yaml" ).host }}
-          Image: ${BUILDER_IMG}
+          Image: ${BUILDER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           Cmd:
             - --addr
             - tcp://0.0.0.0:${BUILDER_PORT}
@@ -36,7 +36,7 @@ run:
       - id: containers.create.carpenter.relay
           name: {{ (datasource "datasources/carpenter/relay.yaml" ).host }}
           Hostname: {{ (datasource "datasources/carpenter/relay.yaml" ).host }}
-          Image: ${CARPENTER_RELAY_IMG}
+          Image: ${CARPENTER_RELAY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -60,7 +60,7 @@ run:
       - id: containers.create.carpenter.runner
           name: {{ (datasource "datasources/carpenter/runner.yaml" ).host }}
           Hostname: {{ (datasource "datasources/carpenter/runner.yaml" ).host }}
-          Image: ${CARPENTER_RUNNER_IMG}
+          Image: ${CARPENTER_RUNNER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           HostConfig:
             Mounts:
               - <<: *readonly-volume
@@ -132,7 +132,7 @@ run:
       - id: containers.create.jumper
           name: {{ (datasource "datasources/jumper.yaml" ).host }}
           Hostname: {{ (datasource "datasources/jumper.yaml" ).host }}
-          Image: ${JUMPER_IMG}
+          Image: ${JUMPER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           Tty: true
           AttachStdout: true
           AttachStderr: true
@@ -196,7 +196,7 @@ run:
       - id: containers.create.listener
           name: {{ (datasource "datasources/listener.yaml" ).host }}
           Hostname: {{ (datasource "datasources/listener.yaml" ).host }}
-          Image: ${LISTENER_IMG}
+          Image: ${LISTENER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           NetworkConfig:
             EndpointsConfig:
               {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}:
@@ -224,7 +224,7 @@ run:
       - id: containers.create.proxy
           name: {{ (datasource "datasources/proxy.yaml" ).host }}
           Hostname: {{ (datasource "datasources/proxy.yaml" ).host }}
-          Image: ${PROXY_IMG}
+          Image: ${PROXY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           ExposedPorts:
             - ${PROXY_PORT}/tcp
           NetworkConfig:
@@ -287,7 +287,7 @@ run:
       - id: containers.create.spaceporn.relay
           name: {{ (datasource "datasources/spaceporn/relay.yaml" ).host }}
           Hostname: {{ (datasource "datasources/spaceporn/relay.yaml" ).host }}
-          Image: ${SPACEPORN_RELAY_IMG}
+          Image: ${SPACEPORN_RELAY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           HostConfig:
             ReadonlyRootfs: true
             Mounts:
@@ -330,7 +330,7 @@ run:
       - id: containers.create.xserver
           name: {{ (datasource "datasources/xserver.yaml" ).host }}
           Hostname: {{ (datasource "datasources/xserver.yaml" ).host }}
-          Image: ${XSERVER_IMG}
+          Image: ${XSERVER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           ExposedPorts:
             - ${XSERVER_PORT}/tcp
           NetworkConfig:

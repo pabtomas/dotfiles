@@ -1,6 +1,6 @@
 ---
 
-id: '{{ (datasource "datasources/spaceporn.yaml").id }}{{ (datasource "separators.yaml").id }}{{ (datasource "datasources/runner.yaml").id }}'
+id: '{{ (datasource "datasources/spaceporn.yaml").id }}{{ (datasource "all.yaml").sep.id }}{{ (datasource "datasources/runner.yaml").id }}'
 host: '{{ (datasource "datasources/spaceporn/runner.yaml").id }}'
 
 ...

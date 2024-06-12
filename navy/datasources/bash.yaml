@@ -1,9 +1,13 @@
 ---
 
 id: 'bash'
+tag: '5.2-{{ (datasource "datasources/all.yaml").os.id }}{{ (datasource "datasources/all.yaml").os.tag }}'
 path:
-  aliases: '/etc/profile.d/99aliases.d'
-  completion: '/etc/profile.d/99completion.d'
-  theme: '/etc/profile.d/10theme.d'
+  etc:
+    profile:
+      d: '/etc/profile.d'
+  aliases: '{{ (datasource "datasources/bash.yaml").path.etc.profile.d }}/99aliases.d'
+  completion: '{{ (datasource "datasources/bash.yaml").path.etc.profile.d }}/99completion.d'
+  theme: '{{ (datasource "datasources/bash.yaml").path.etc.profile.d }}/10theme.d'
 
 ...

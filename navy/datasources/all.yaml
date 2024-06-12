@@ -1,17 +1,12 @@
 ---
 
-alpine: 'alpine'
 bash_entrypoint: '{{ (datasource "datasources/all.yaml").bash }}_{{ (datasource "datasources/all.yaml").entrypoint }}'
-dockle: 'dockle'
 git: 'git'
 http: 'http'
 layer: 'layer'
 linguist: 'linguist'
-linuxserver_proxy: 'linuxserver_proxy'
 local: 'local'
 man: 'man'
-os: '{{ (datasource "datasources/all.yaml").alpine }}'
-owner: 'tiawl'
 pass: 'pass'
 socat: 'socat'
 spectrwm: 'spectrwm'
@@ -19,8 +14,28 @@ sshd: 'sshd'
 vim: 'vim'
 virtual: 'virtual'
 
+api:
+  tag: '{{ (datasource "context.version").ApiVersion }}'
+
 project: 'mywhalefleet'
-unprivileged_user: 'visitor'
+
+user:
+  unprivileged: 'visitor'
+
+os:
+  id: '{{ (datasource "datasources/alpine.yaml").id }}'
+  tag: '{{ (datasource "datasources/alpine.yaml").tag }}'
+
+sep:
+  id: '/'
+  registry: '/'
+  image: '.'
+  tag: ':'
+  host: '.'
+
+owner:
+  name: 'tiawl'
+  tag: 'latest'
 
 path:
   bin: '/usr/local/bin'

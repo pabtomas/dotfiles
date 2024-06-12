@@ -6,7 +6,7 @@ ARG BIN_PATH
 ARG CHECK_ENTRYPOINT_PATH
 ARG ZIG_BUILDS_URL
 ARG ZIG_COMPLETION_URL
-ARG ZIG_LAYER_TAG
+ARG ZIG_TAG
 
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -15,7 +15,7 @@ RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
     export https_proxy="${HTTPS_PROXY:-}"
-    xz="zig-linux-$(arch)-${ZIG_LAYER_TAG}.tar.xz"
+    xz="zig-linux-$(arch)-${ZIG_TAG}.tar.xz"
     tmp_xz="/tmp/${xz}"
     tmp_zig='/tmp/zig'
     wget -O "${tmp_xz}" "${ZIG_BUILDS_URL}/${xz}"

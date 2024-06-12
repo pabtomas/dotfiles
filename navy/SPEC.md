@@ -278,8 +278,11 @@ docker version --format '{{ .Server.APIVersion }}'
 sender: Alice
 receiver: Bob
 
-# You can use the other defined Datasources in your Datasource files (whatever the defined scope).
-message: 'Hello {{ (ds "datasources.exemple.yaml").receiver }}, you received a message from {{ (ds "datasources.exemple.yaml").sender }}'
+# You can use the other Datasources in your Datasource files (whatever the defined scope).
+message: 'Hello {{ (ds "datasources/exemple.yaml").receiver }}, you received a message from {{ (ds "datasources/exemple.yaml").sender }}'
+
+# You can use the special context Datasources in your Datasource files
+message2: 'Your Docker Engine is using the {{ (ds "context.version").ApiVersion }} version of the API and is already running {{ (ds "context.info").Containers }} container(s) !'
 
 ...
 ```

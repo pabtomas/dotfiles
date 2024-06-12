@@ -16,7 +16,7 @@ run:
       - id: images.pull.alpine
         query:
           fromImage: ${ALPINE_IMG}
-          tag: ${ALPINE_TAG}
+          tag: {{ (datasource "datasources/alpine.yaml").tag }}
         depends_on:
           - local.alpine.image.json
   - endpoint: /images/json
@@ -34,7 +34,7 @@ run:
       - id: images.pull.bash
         query:
           fromImage: ${BASH_IMG}
-          tag: ${BASH_TAG}
+          tag: {{ (datasource "datasources/bash.yaml").tag }}
         depends_on:
           - local.bash.image.json
   - endpoint: /images/json
@@ -52,7 +52,7 @@ run:
       - id: images.pull.buildkit
         query:
           fromImage: ${_BUILDKIT_IMG}
-          tag: ${_BUILDKIT_TAG}
+          tag: {{ (datasource "datasources/buildkit.yaml").tag }}
         depends_on:
           - local.buildkit.image.json
   - endpoint: /images/json
@@ -70,7 +70,7 @@ run:
       - id: images.pull.docker
         query:
           fromImage: ${_DOCKER_IMG}
-          tag: ${_DOCKER_TAG}
+          tag: {{ (datasource "datasources/docker.yaml").tag }}
         depends_on:
           - local.docker.image.json
   - endpoint: /images/json
@@ -88,7 +88,7 @@ run:
       - id: images.pull.proxy
         query:
           fromImage: ${LINUXSERVER_PROXY_IMG}
-          tag: ${LINUXSERVER_PROXY_TAG}
+          tag: {{ (datasource "datasources/proxy.yaml").linuxserver.tag }}
         depends_on:
           - local.proxy.image.json
   - endpoint: /images/json
@@ -106,7 +106,7 @@ run:
       - id: images.pull.registry
         query:
           fromImage: ${REGISTRY_IMG}
-          tag: ${REGISTRY_TAG}
+          tag: {{ (datasource "datasources/registry.yaml").tag }}
         depends_on:
           - local.registry.image.json
 

@@ -1,9 +1,0 @@
----
-
-id: '/'
-registry: '/'
-image: '.'
-tag: ':'
-host: '.'
-
-...

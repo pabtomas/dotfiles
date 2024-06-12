@@ -1,6 +1,7 @@
 ---
 
-docker: 'docker'
+id: 'docker'
+tag: 'cli'
 path:
   plugins: '/usr/local/libexec/docker/cli-plugins'
   socket: '/var/run/docker.sock'

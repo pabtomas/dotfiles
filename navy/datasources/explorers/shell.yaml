@@ -1,6 +1,6 @@
 ---
 
-id: '{{ (datasource "datasources/explorer.yaml").id }}{{ (datasource "separators.yaml").id }}{{ (datasource "datasources/shell.yaml").id }}'
+id: '{{ (datasource "datasources/explorer.yaml").id }}{{ (datasource "all.yaml").sep.id }}{{ (datasource "datasources/shell.yaml").id }}'
 host: '{{ (datasource "datasources/explorers/shell.yaml").id }}'
 
 ...

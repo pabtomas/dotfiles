@@ -1,6 +1,7 @@
 ---
 
 id: 'buildkit'
+tag: 'buildx-stable-1-rootless'
 path:
   conf: '/etc/buildkit/buildkitd.toml'
 

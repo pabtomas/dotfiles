@@ -14,7 +14,7 @@ run:
       - id: containers.create.virtual.docker
         virtual: true
         query:
-          Image: ${_DOCKER_LAYER_IMG}
+          Image: ${_DOCKER_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           NetworkingConfig:
             EndpointsConfig:
               {{ (datasource "datasources/networks.yaml").docker_utils_network }}: {}
@@ -35,7 +35,7 @@ run:
       - id: containers.create.virtual.gpu
         virtual: true
         query:
-          Image: ${GPU_LAYER_IMG}
+          Image: ${GPU_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           Devices:
             - PathOnHost: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
               PathInContainer: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
@@ -53,7 +53,7 @@ run:
       - id: containers.create.virtual.man
         virtual: true
         query:
-          Image: ${MAN_LAYER_IMG}
+          Image: ${MAN_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
         depends_on:
           - images.build.man
         extends:
@@ -61,7 +61,7 @@ run:
       - id: containers.create.virtual.pass
         virtual: true
         query:
-          Image: ${PASS_LAYER_IMG}
+          Image: ${PASS_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
         depends_on:
           - images.build.pass
         extends:
@@ -69,7 +69,7 @@ run:
       - id: containers.create.virtual.registry
         virtual: true
         query:
-          Image: ${REGISTRY_LAYER_IMG}
+          Image: ${REGISTRY_LOCAL_IMG}:{{ (datasource "datasources/registry.yaml").tag }}
           Env:
             - REGISTRY_LOG_ACCESSLOG_DISABLED=false
             - REGISTRY_LOG_FORMATTER=text
@@ -93,7 +93,7 @@ run:
       - id: containers.create.virtual.sshd
         virtual: true
         query:
-          Image: ${SSHD_LAYER_IMG}
+          Image: ${SSHD_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
           ExposedPorts:
             - ${SSH_PORT}/tcp
           HostConfig:
@@ -117,7 +117,7 @@ run:
       - id: containers.create.virtual.shell
         virtual: true
         query:
-          Image: ${SHELL_LAYER_IMG}
+          Image: ${SHELL_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
         depends_on:
           - images.build.shell
         extends:
@@ -125,7 +125,7 @@ run:
       - id: containers.create.virtual.vim
         virtual: true
         query:
-          Image: ${VIM_LAYER_IMG}
+          Image: ${VIM_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
         depends_on:
           - images.build.vim
         extends:
@@ -133,7 +133,7 @@ run:
       - id: containers.create.virtual.zig
         virtual: true
         query:
-          Image: ${ZIG_LAYER_IMG}
+          Image: ${ZIG_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
         depends_on:
           - images.build.zig
         extends:

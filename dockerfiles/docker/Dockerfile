@@ -11,7 +11,7 @@ COPY --from=docker_img ${_DOCKER_PLUGINS_PATH}/ ${_DOCKER_PLUGINS_PATH}/
 
 ARG CHECK_ENTRYPOINT_PATH
 ARG DOCKLE_DOWNLOAD_URL
-ARG DOCKLE_LAYER_TAG
+ARG DOCKLE_TAG
 ARG ENTRYPOINTD_PATH
 ARG HTTP_DOCKER_TARGET
 ARG NET
@@ -35,10 +35,10 @@ RUN <<END_OF_RUN
     wget -q -O "${BIN_PATH}/regctl" "${REGCTL_URL}" https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64
     wget -q -O "${BIN_PATH}/regsync" "${REGSYNC_URL}" https://github.com/regclient/regclient/releases/latest/download/regsync-linux-amd64
     chmod 0755 "${BIN_PATH}/regbot" "${BIN_PATH}/regctl" "${BIN_PATH}/regsync"
-    gz="dockle_${DOCKLE_LAYER_TAG}_Linux-64bit.tar.gz"
+    gz="dockle_${DOCKLE_TAG}_Linux-64bit.tar.gz"
     tmp_gz="/tmp/${gz}"
     tmp_dockle='/tmp/dockle'
-    wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${DOCKLE_LAYER_TAG}/${gz}"
+    wget -q -O "${tmp_gz}" "${DOCKLE_DOWNLOAD_URL}/v${DOCKLE_TAG}/${gz}"
     mkdir -p "${tmp_dockle}"
     tar -zxvf "${tmp_gz}" -C "${tmp_dockle}"
     mv "${tmp_dockle}/dockle" "${BIN_PATH}"
