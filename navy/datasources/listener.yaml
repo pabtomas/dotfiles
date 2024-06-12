@@ -1,0 +1,9 @@
+---
+
+id: 'listener'
+host: '{{ (datasource "datasources/listener.yaml").id }}'
+image:
+tag:
+ip:
+
+...

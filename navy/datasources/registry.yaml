@@ -1,0 +1,9 @@
+---
+
+id: 'registry'
+host: '{{ (datasource "datasources/registry.yaml").id }}'
+image:
+tag:
+ip:
+
+...

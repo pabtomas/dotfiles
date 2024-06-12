@@ -10,24 +10,24 @@ tasks:
           - containers.start.listener
       - id: containers.start.builder
         path:
-          id: ${BUILDER_HOST}
+          id: {{ (datasource "datasources/builder.yaml").host }}
         depends_on:
           - containers.create.builder
       - id: containers.start.carpenter.relay
         path:
-          id: ${CARPENTER_RELAY_HOST}
+          id: {{ (datasource "datasources/carpenter/relay.yaml").host }}
         depends_on:
           - containers.create.carpenter.relay
           - containers.start.xserver
       - id: containers.start.carpenter.runner
         path:
-          id: ${CARPENTER_RUNNER_HOST}
+          id: {{ (datasource "datasources/carpenter/runner.yaml").host }}
         depends_on:
           - containers.create.carpenter.runner
           - containers.start.carpenter.relay
       - id: containers.start.controller
         path:
-          id: ${CONTROLLER_HOST}
+          id: {{ (datasource "datasources/controller.yaml").host }}
         depends_on:
           - containers.create.controller
           - containers.start.builder
@@ -38,28 +38,28 @@ tasks:
           - containers.start.virtual.listened
       - id: containers.start.editor
         path:
-          id: ${EDITOR_HOST}
+          id: {{ (datasource "datasources/editor.yaml").host }}
         depends_on:
           - containers.create.editor
         extends:
           - containers.start.virtual.listened
       - id: containers.start.explorer.shell
         path:
-          id: ${SHELL_EXPLORER_HOST}
+          id: {{ (datasource "datasources/explorers/shell.yaml").host }}
         depends_on:
           - containers.create.explorer.shell
         extends:
           - containers.start.virtual.listened
       - id: containers.start.explorer.zig
         path:
-          id: ${ZIG_EXPLORER_HOST}
+          id: {{ (datasource "datasources/explorers/zig.yaml").host }}
         depends_on:
           - containers.create.explorer.zig
         extends:
           - containers.start.virtual.listened
       - id: containers.start.jumper
         path:
-          id: ${JUMPER_HOST}
+          id: {{ (datasource "datasources/jumper.yaml").host }}
         depends_on:
           - containers.create.jumper
           - containers.start.controller
@@ -71,49 +71,49 @@ tasks:
           - containers.start.virtual.listened
       - id: containers.start.listener
         path:
-          id: ${LISTENER_HOST}
+          id: {{ (datasource "datasources/listener.yaml").host }}
         depends_on:
           - containers.create.listener
           - containers.start.proxy
       - id: containers.start.proxy
         path:
-          id: ${PROXY_HOST}
+          id: {{ (datasource "datasources/proxy.yaml").host }}
         depends_on:
           - containers.create.proxy
       - id: containers.start.registry
         path:
-          id: ${REGISTRY_HOST}
+          id: {{ (datasource "datasources/registry.yaml").host }}
         depends_on:
           - containers.create.registry
       - id: containers.start.safedeposit
         path:
-          id: ${SAFEDEPOSIT_HOST}
+          id: {{ (datasource "datasources/safedeposit.yaml").host }}
         depends_on:
           - containers.create.safedeposit
         extends:
           - containers.start.virtual.listened
       - id: containers.start.scholar
         path:
-          id: ${SCHOLAR_HOST}
+          id: {{ (datasource "datasources/scholar.yaml").host }}
         depends_on:
           - containers.create.scholar
         extends:
           - containers.start.virtual.listened
       - id: containers.start.spaceporn.relay
         path:
-          id: ${SPACEPORN_RELAY_HOST}
+          id: {{ (datasource "datasources/spaceporn/relay.yaml").host }}
         depends_on:
           - containers.create.spaceporn.relay
           - containers.start.xserver
       - id: containers.start.spaceporn.runner
         path:
-          id: ${SPACEPORN_RUNNER_HOST}
+          id: {{ (datasource "datasources/spaceporn/runner.yaml").host }}
         depends_on:
           - containers.create.spaceporn.runner
           - containers.start.spaceporn.relay
       - id: containers.start.xserver
         path:
-          id: ${XSERVER_HOST}
+          id: {{ (datasource "datasources/xserver.yaml").host }}
         depends_on:
           - containers.create.xserver
 

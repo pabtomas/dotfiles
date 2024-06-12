@@ -1,0 +1,9 @@
+---
+
+id: 'jumper'
+host: '{{ (datasource "datasources/jumper.yaml").id }}'
+image:
+tag:
+ip:
+
+...

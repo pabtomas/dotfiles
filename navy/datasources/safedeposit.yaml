@@ -1,0 +1,9 @@
+---
+
+id: 'safedeposit'
+host: '{{ (datasource "datasources/safedeposit.yaml").id }}'
+image:
+tag:
+ip:
+
+...

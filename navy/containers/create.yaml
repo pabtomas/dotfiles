@@ -9,8 +9,8 @@ tasks:
     loop:
       - id: containers.create.builder
         query:
-          name: ${BUILDER_HOST}
-          Hostname: ${BUILDER_HOST}
+          name: {{ (datasource "datasources/builder.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/builder.yaml" ).host }}
           Image: ${BUILDER_IMG}
           Cmd:
             - --addr
@@ -34,8 +34,8 @@ tasks:
         extends:
           - containers.create.virtual.base
       - id: containers.create.carpenter.relay
-          name: ${CARPENTER_RELAY_HOST}
-          Hostname: ${CARPENTER_RELAY_HOST}
+          name: {{ (datasource "datasources/carpenter/relay.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/carpenter/relay.yaml" ).host }}
           Image: ${CARPENTER_RELAY_IMG}
           HostConfig:
             Mounts:
@@ -58,8 +58,8 @@ tasks:
         extends:
           - containers.create.virtual.base
       - id: containers.create.carpenter.runner
-          name: ${CARPENTER_RUNNER_HOST}
-          Hostname: ${CARPENTER_RUNNER_HOST}
+          name: {{ (datasource "datasources/carpenter/runner.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/carpenter/runner.yaml" ).host }}
           Image: ${CARPENTER_RUNNER_IMG}
           HostConfig:
             Mounts:
@@ -72,8 +72,8 @@ tasks:
         extends:
           - containers.create.virtual.isolated
       - id: containers.create.controller
-          name: ${CONTROLLER_HOST}
-          Hostname: ${CONTROLLER_HOST}
+          name: {{ (datasource "datasources/controller.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/controller.yaml" ).host }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -90,8 +90,8 @@ tasks:
         extends:
           - containers.create.virtual.docker
       - id: containers.create.editor
-          name: ${EDITOR_HOST}
-          Hostname: ${EDITOR_HOST}
+          name: {{ (datasource "datasources/editor.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/editor.yaml" ).host }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -106,8 +106,8 @@ tasks:
         extends:
           - containers.create.virtual.vim
       - id: containers.create.explorer.shell
-          name: ${SHELL_EXPLORER_HOST}
-          Hostname: ${SHELL_EXPLORER_HOST}
+          name: {{ (datasource "datasources/explorers/shell.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/explorers/shell.yaml" ).host }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -118,8 +118,8 @@ tasks:
         extends:
           - containers.create.virtual.shell
       - id: containers.create.explorer.zig
-          name: ${ZIG_EXPLORER_HOST}
-          Hostname: ${ZIG_EXPLORER_HOST}
+          name: {{ (datasource "datasources/explorers/zig.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/explorers/zig.yaml" ).host }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -130,8 +130,8 @@ tasks:
         extends:
           - containers.create.virtual.zig
       - id: containers.create.jumper
-          name: ${JUMPER_HOST}
-          Hostname: ${JUMPER_HOST}
+          name: {{ (datasource "datasources/jumper.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/jumper.yaml" ).host }}
           Image: ${JUMPER_IMG}
           Tty: true
           AttachStdout: true
@@ -194,8 +194,8 @@ tasks:
         extends:
           - containers.create.virtual.base
       - id: containers.create.listener
-          name: ${LISTENER_HOST}
-          Hostname: ${LISTENER_HOST}
+          name: {{ (datasource "datasources/listener.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/listener.yaml" ).host }}
           Image: ${LISTENER_IMG}
           NetworkConfig:
             EndpointsConfig:
@@ -222,8 +222,8 @@ tasks:
         extends:
           - containers.create.virtual.base
       - id: containers.create.proxy
-          name: ${PROXY_HOST}
-          Hostname: ${PROXY_HOST}
+          name: {{ (datasource "datasources/proxy.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/proxy.yaml" ).host }}
           Image: ${PROXY_IMG}
           ExposedPorts:
             - ${PROXY_PORT}/tcp
@@ -258,8 +258,8 @@ tasks:
         extends:
           - containers.create.virtual.base
       - id: containers.create.registry
-          name: ${REGISTRY_HOST}
-          Hostname: ${REGISTRY_HOST}
+          name: {{ (datasource "datasources/registry.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/registry.yaml" ).host }}
           NetworkConfig:
             EndpointsConfig:
               ${_DOCKER_NET}:
@@ -267,8 +267,8 @@ tasks:
         extends:
           - containers.create.virtual.registry
       - id: containers.create.safedeposit
-          name: ${SAFEDEPOSIT_HOST}
-          Hostname: ${SAFEDEPOSIT_HOST}
+          name: {{ (datasource "datasources/safedeposit.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/safedeposit.yaml" ).host }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -280,13 +280,13 @@ tasks:
         extends:
           - containers.create.virtual.pass
       - id: containers.create.scholar
-          name: ${SCHOLAR_HOST}
-          Hostname: ${SCHOLAR_HOST}
+          name: {{ (datasource "datasources/scholar.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/scholar.yaml" ).host }}
         extends:
           - containers.create.virtual.man
       - id: containers.create.spaceporn.relay
-          name: ${SPACEPORN_RELAY_HOST}
-          Hostname: ${SPACEPORN_RELAY_HOST}
+          name: {{ (datasource "datasources/spaceporn/relay.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/spaceporn/relay.yaml" ).host }}
           Image: ${SPACEPORN_RELAY_IMG}
           HostConfig:
             ReadonlyRootfs: true
@@ -309,8 +309,8 @@ tasks:
         extends:
           - containers.create.virtual.base
       - id: containers.create.spaceporn.runner
-          name: ${SPACEPORN_RUNNER_HOST}
-          Hostname: ${SPACEPORN_RUNNER_HOST}
+          name: {{ (datasource "datasources/spaceporn/runner.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/spaceporn/runner.yaml" ).host }}
           Entrypoint:
             - ${SPACEPORN_PATH}/${SPACEPORN_ID}/zig-out/bin/${SPACEPORN_ID}
           HostConfig:
@@ -328,8 +328,8 @@ tasks:
           - containers.create.virtual.gpu
           - containers.create.virtual.isolated
       - id: containers.create.xserver
-          name: ${XSERVER_HOST}
-          Hostname: ${XSERVER_HOST}
+          name: {{ (datasource "datasources/xserver.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/xserver.yaml" ).host }}
           Image: ${XSERVER_IMG}
           ExposedPorts:
             - ${XSERVER_PORT}/tcp

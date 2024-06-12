@@ -1,0 +1,9 @@
+---
+
+id: '{{ (datasource "datasources/explorer.yaml").id }}{{ (datasource "separators.yaml").id }}{{ (datasource "datasources/zig.yaml").id }}'
+host: '{{ (datasource "datasources/explorers/zig.yaml").id }}'
+image:
+tag:
+ip:
+
+...
