@@ -16,7 +16,7 @@ run:
             - --addr
             - tcp://0.0.0.0:${BUILDER_PORT}
             - --config
-            - ${_BUILDKIT_CONF_PATH}
+            - {{ (datasource "datasources/buildkit.yaml" ).path.conf }}
             - --oci-worker-no-process-sandbox
           ExposedPorts:
             - ${BUILDER_PORT}/tcp
@@ -41,10 +41,10 @@ run:
             Mounts:
               - <<: *volume
                 Source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
-                Target: ${TMP_XSERVER_SOCKETS_PATH}
+                Target: {{ (datasource "datasources/xserver.yaml" ).path.sockets }}
               - <<: *volume
                 Source: ${RELAY_VAR_LOG_VOLUME}
-                Target: ${VAR_LOG_PATH}
+                Target: {{ (datasource "datasources/all.yaml" ).path.var.log }}
             ReadonlyRootfs: true
           NetworkConfig:
             EndpointsConfig:
@@ -65,7 +65,7 @@ run:
             Mounts:
               - <<: *readonly-volume
                 Source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
-                Target: ${TMP_XSERVER_SOCKETS_PATH}
+                Target: {{ (datasource "datasources/xserver.yaml" ).path.sockets }}
         depends_on:
           - images.build.carpenter.runner
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
@@ -78,7 +78,7 @@ run:
             Mounts:
               - <<: *volume
                 Source: ${MYWHALEFLEET_VOLUME}
-                Target: ${MYWHALEFLEET_PATH}
+                Target: {{ (datasource "datasources/workspaces.yaml").path.project }}
           NetworkConfig:
             EndpointsConfig:
               {{ (datasource "datasources/networks.yaml").docker_utils_network }}:
@@ -96,10 +96,10 @@ run:
             Mounts:
               - <<: *volume
                 Source: ${MYWHALEFLEET_VOLUME}
-                Target: ${MYWHALEFLEET_PATH}
+                Target: {{ (datasource "datasources/workspaces.yaml").path.project }}
               - <<: *volume
                 Source: ${SPACEPORN_VOLUME}
-                Target: ${SPACEPORN_PATH}
+                Target: {{ (datasource "datasources/workspaces.yaml").path.spaceporn }}
         depends_on:
           - volumes.create.${MYWHALEFLEET_VOLUME}
           - volumes.create.${SPACEPORN_VOLUME}
@@ -112,7 +112,7 @@ run:
             Mounts:
               - <<: *volume
                 Source: ${MYWHALEFLEET_VOLUME}
-                Target: ${MYWHALEFLEET_PATH}
+                Target: {{ (datasource "datasources/workspaces.yaml").path.project }}
         depends_on:
           - volumes.create.${MYWHALEFLEET_VOLUME}
         extends:
@@ -124,7 +124,7 @@ run:
             Mounts:
               - <<: *volume
                 Source: ${SPACEPORN_VOLUME}
-                Target: ${SPACEPORN_PATH}
+                Target: {{ (datasource "datasources/workspaces.yaml").path.spaceporn }}
         depends_on:
           - volumes.create.${SPACEPORN_VOLUME}
         extends:
@@ -143,40 +143,40 @@ run:
             Mounts:
               - <<: *readonly-volume
                 Source: ${LISTENER_OPT_DATA_VOLUME}
-                Target: /opt/${LISTENER_ID}${DATA_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.listener.opt.data }}
               - <<: *readonly-volume
                 Source: ${LISTENER_OPT_SCRIPTS_VOLUME}
-                Target: /opt/${LISTENER_ID}${OPT_SCRIPTS_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.listener.opt.scripts }}
               - <<: *readonly-volume
                 Source: ${LISTENER_VAR_LOG_VOLUME}
-                Target: /opt/${LISTENER_ID}${VAR_LOG_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.listener.var.log }}
               - <<: *readonly-volume
                 Source: ${PROXY_ETC_NGINX_VOLUME}
-                Target: /opt/${PROXY_ID}${ETC_NGINX_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.proxy.etc }}
               - <<: *readonly-volume
                 Source: ${PROXY_OPT_SCRIPTS_VOLUME}
-                Target: /opt/${PROXY_ID}${OPT_SCRIPTS_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.proxy.opt.scripts }}
               - <<: *readonly-volume
                 Source: ${PROXY_VAR_LOG_NGINX_VOLUME}
-                Target: /opt/${PROXY_ID}${VAR_LOG_NGINX_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.proxy.var.log }}
               - <<: *readonly-volume
                 Source: ${RELAY_VAR_LOG_VOLUME}
-                Target: /opt/${RELAY_ID}${VAR_LOG_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.relay.var.log }}
               - <<: *readonly-volume
                 Source: ${SSH_VOLUME}
-                Target: ${OPT_SSH_PATH}
+                Target: {{ (datasource "datasources/all.yaml").path.opt.ssh }}
               - <<: *volume
                 Source: ${THEME_VOLUME}
-                Target: ${BASH_THEME_PATH}
+                Target: {{ (datasource "datasources/bash.yaml").path.theme }}
               - <<: *readonly-volume
                 Source: ${XSERVER_ETC_NGINX_VOLUME}
-                Target: /opt/${XSERVER_ID}${ETC_NGINX_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.xserver.etc }}
               - <<: *readonly-volume
                 Source: ${XSERVER_OPT_SCRIPTS_VOLUME}
-                Target: /opt/${XSERVER_ID}${OPT_SCRIPTS_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.xserver.opt.scripts }}
               - <<: *readonly-volume
                 Source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
-                Target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
+                Target: {{ (datasource "datasources/jumper.yaml").path.xserver.var.log }}
         depends_on:
           - images.build.jumper
           - networks.create.{{ (datasource "datasources/networks.yaml").jump_area_network }}
@@ -205,13 +205,13 @@ run:
             Mounts:
               - <<: *volume
                 Source: ${LISTENER_OPT_DATA_VOLUME}
-                Target: ${DATA_PATH}
+                Target: {{ (datasource "datasources/all.yaml").path.opt.data }}
               - <<: *readonly-volume
                 Source: ${LISTENER_OPT_SCRIPTS_VOLUME}
-                Target: ${OPT_SCRIPTS_PATH}
+                Target: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
               - <<: *volume
                 Source: ${LISTENER_VAR_LOG_VOLUME}
-                Target: ${VAR_LOG_PATH}
+                Target: {{ (datasource "datasources/all.yaml").path.var.log }}
             ReadonlyRootfs: true
         depends_on:
           - images.build.jumper
@@ -234,17 +234,17 @@ run:
           HostConfig:
             Mounts:
               - <<: *readonly-bind
-                Source: ${_DOCKER_SOCKET_PATH}
-                Target: ${_DOCKER_SOCKET_PATH}
+                Source: {{ (datasource "datasources/docker.yaml").path.socket }}
+                Target: {{ (datasource "datasources/docker.yaml").path.socket }}
               - <<: *readonly-volume
                 Source: ${PROXY_ETC_NGINX_VOLUME}
-                Target: ${ETC_NGINX_PATH}
+                Target: {{ (datasource "datasources/nginx.yaml").path.etc }}
               - <<: *readonly-volume
                 Source: ${PROXY_OPT_SCRIPTS_VOLUME}
-                Target: ${OPT_SCRIPTS_PATH}
+                Target: {{ (datasource "datasources/nginx.yaml").path.opt.scripts }}
               - <<: *volume
                 Source: ${PROXY_VAR_LOG_NGINX_VOLUME}
-                Target: ${VAR_LOG_NGINX_PATH}
+                Target: {{ (datasource "datasources/nginx.yaml").path.var.log }}
             ReadonlyRootfs: true
             Tmpfs:
               /run: ""
@@ -273,7 +273,7 @@ run:
             Mounts:
               - <<: *volume
                 Source: ${SAFEDEPOSIT_VOLUME}
-                Target: ${SAFEDEPOSIT_PATH}
+                Target: {{ (datasource "datasources/all.yaml").path.root.passwd }}
         depends_on:
           - images.build.pass
           - volumes.create.${SAFEDEPOSIT_VOLUME}
@@ -293,10 +293,10 @@ run:
             Mounts:
               - <<: *volume
                 source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
-                target: ${TMP_XSERVER_SOCKETS_PATH}
+                target: {{ (datasource "datasources/xserver.yaml").path.sockets }}
               - <<: *volume
                 source: ${RELAY_VAR_LOG_VOLUME}
-                target: ${VAR_LOG_PATH}
+                target: {{ (datasource "datasources/all.yaml").path.var.log }}
           NetworkConfig:
             EndpointsConfig:
               {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}:
@@ -312,15 +312,15 @@ run:
           name: {{ (datasource "datasources/spaceporn/runner.yaml" ).host }}
           Hostname: {{ (datasource "datasources/spaceporn/runner.yaml" ).host }}
           Entrypoint:
-            - ${SPACEPORN_PATH}/${SPACEPORN_ID}/zig-out/bin/${SPACEPORN_ID}
+            - {{ (datasource "datasources/workspaces.yaml").path.spaceporn }}/${SPACEPORN_ID}/zig-out/bin/${SPACEPORN_ID}
           HostConfig:
             Mounts:
               - <<: *readonly-volume
                 source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
-                target: ${TMP_XSERVER_SOCKETS_PATH}
+                target: {{ (datasource "datasources/xserver.yaml").path.sockets }}
               - <<: *readonly-volume
                 source: ${SPACEPORN_VOLUME}
-                target: ${SPACEPORN_PATH}
+                target: {{ (datasource "datasources/workspaces.yaml").path.spaceporn }}
         depends_on:
           - volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${SPACEPORN_VOLUME}
@@ -343,17 +343,17 @@ run:
               - no-new-privileges:true
             Mounts:
               - <<: *readonly-bind
-                source: ${XSERVER_SOCKET_PATH}
-                target: ${XSERVER_SOCKET_PATH}
+                source: {{ (datasource "datasources/xserver.yaml").path.display }}
+                target: {{ (datasource "datasources/xserver.yaml").path.display }}
               - <<: *readonly-volume
                 source: ${XSERVER_ETC_NGINX_VOLUME}
-                target: ${ETC_NGINX_PATH}
+                target: {{ (datasource "datasources/nginx.yaml").path.etc }}
               - <<: *readonly-volume
                 source: ${XSERVER_OPT_SCRIPTS_VOLUME}
-                target: ${OPT_SCRIPTS_PATH}
+                target: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
               - <<: *volume
                 source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
-                target: ${VAR_LOG_NGINX_PATH}
+                target: {{ (datasource "datasources/all.yaml").path.var.log }}
             Tmpfs:
               /run: ""
         depends_on:

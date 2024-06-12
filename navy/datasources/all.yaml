@@ -33,9 +33,6 @@ path:
     passwd: '/root/.password-store'
   var:
     log: '/var/log'
-  docker_socket: '/var/run/docker.sock'
-  xserver_sockets: '/tmp/.X11-unix'
-  xephyr_socket: '{{ (datasource "datasources/all.yaml").path.xserver_sockets }}/X{{ .Env.XEPHYR_DISPLAY }}'
   cwd: '{{ .Env.CWD }}'
   dockerfiles: '{{ .Env.CWD }}/dockerfiles'
 

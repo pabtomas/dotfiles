@@ -2,13 +2,11 @@
 
 id: 'nginx'
 path:
-  etc:
-    nginx: '/etc/nginx'
-    confd: '{{ (datasource "datasources/nginx.yaml").path.etc.nginx }}/conf.d'
-    httpd: '{{ (datasource "datasources/nginx.yaml").path.etc.nginx }}/http.d'
+  etc: '/etc/nginx'
+  confd: '{{ (datasource "datasources/nginx.yaml").path.etc }}/conf.d'
+  httpd: '{{ (datasource "datasources/nginx.yaml").path.etc }}/http.d'
 
   var:
-    log:
-      nginx: '/var/log/nginx'
+    log: '/var/log/nginx'
 
 ...

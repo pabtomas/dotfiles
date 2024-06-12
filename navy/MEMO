@@ -10,4 +10,5 @@ build:
 tar c -f context.tar -C /tmp .
 curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar
 
-http request details & answer: curl --verbose --silent
+http request details & answer: curl --verbose -o /dev/null --silent
+only http return code: curl -o /dev/null -s -w "%{http_code}\n"

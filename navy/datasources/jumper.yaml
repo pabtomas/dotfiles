@@ -2,5 +2,27 @@
 
 id: 'jumper'
 host: '{{ (datasource "datasources/jumper.yaml").id }}'
+path:
+  listener:
+    opt:
+      data: '/opt/{{ (datasource "datasources/listener.yaml").id }}{{ (datasource "datasources/all.yaml").path.opt.data }}'
+      scripts: '/opt/{{ (datasource "datasources/listener.yaml").id }}{{ (datasource "datasources/all.yaml").path.opt.scripts }}'
+    var:
+      log: '/opt/{{ (datasource "datasources/listener.yaml").id }}{{ (datasource "datasources/all.yaml").path.var.log }}'
+  proxy:
+    etc: '/opt/{{ (datasource "datasources/proxy.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.etc }}'
+    opt:
+      scripts: '/opt/{{ (datasource "datasources/proxy.yaml").id }}{{ (datasource "datasources/all.yaml").path.opt.scripts }}'
+    var:
+      log: '/opt/{{ (datasource "datasources/proxy.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.var.log }}'
+  relay:
+    var:
+      log: '/opt/{{ (datasource "datasources/relay.yaml").id }}{{ (datasource "datasources/all.yaml").path.var.log }}'
+  xserver:
+    etc: '/opt/{{ (datasource "datasources/xserver.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.etc }}'
+    opt:
+      scripts: '/opt/{{ (datasource "datasources/xserver.yaml").id }}{{ (datasource "datasources/all.yaml").path.opt.scripts }}'
+    var:
+      log: '/opt/{{ (datasource "datasources/xserver.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.var.log }}'
 
 ...
