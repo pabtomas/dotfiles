@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - id: commands.attach
     argv:
       - docker attach {{ (datasource "datasources/jumper.yaml").host }}

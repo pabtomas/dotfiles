@@ -2,8 +2,5 @@
 
 id: 'controller'
 host: '{{ (datasource "datasources/controller.yaml").id }}'
-image:
-tag:
-ip:
 
 ...

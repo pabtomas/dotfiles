@@ -1,0 +1,9 @@
+---
+
+id: 'workspaces'
+path:
+  root: '/{{ (datasource "datasources/workspaces.yaml").id }}'
+  spaceporn: '{{ (datasource "datasources/workspaces.yaml").root }}/{{ (datasource "datasources/spaceporn.yaml").id }}'
+  project: '{{ (datasource "datasources/workspaces.yaml").root }}/{{ (datasource "datasources/all.yaml").project }}'
+
+...

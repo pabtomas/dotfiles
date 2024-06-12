@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - endpoint: /build
     method: POST
     loop:
@@ -65,7 +65,7 @@ tasks:
             DATA_PATH: ${DATA_PATH}
             ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
             HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
-            NET: ${JUMP_AREA_NET}
+            NET: {{ (datasource "datasources/networks.yaml").jump_area_network }}
             OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
             VAR_LOG_PATH: ${VAR_LOG_PATH}
           t: ${LISTENER_IMG}
@@ -101,11 +101,11 @@ tasks:
             API_TAG: ${API_TAG}
             API_URL: ${API_URL}
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${PROXY_ID}.sh
-            CONTROLLER_IP: ${CONTROLLER_IP}
+            CONTROLLER_IP: {{ (datasource "datasources/networks.yaml").controller_ip }}
             ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
             ETC_NGINX_HTTPD_PATH: ${ETC_NGINX_HTTPD_PATH}
             HTTP_LAYER_IMG: ${HTTP_LAYER_IMG}
-            LISTENER_IP: ${LISTENER_IP}
+            LISTENER_IP: {{ (datasource "datasources/networks.yaml").listener_ip }}
             OPT_SCRIPTS_PATH: ${OPT_SCRIPTS_PATH}
             PROXY_PORT: ${PROXY_PORT}
           t: ${PROXY_IMG}
@@ -124,11 +124,11 @@ tasks:
       - id: images.build.xserver
         query:
           buildargs:
-            CARPENTER_RELAY_IP: ${CARPENTER_RELAY_IP}
+            CARPENTER_RELAY_IP: {{ (datasource "datasources/networks.yaml").carpenter_relay_ip }}
             CHECK_ENTRYPOINT_PATH: ${CHECK_ENTRYPOINTD_PATH}/99${XSERVER_ID}.sh
             ETC_NGINX_CONFD_PATH: ${ETC_NGINX_CONFD_PATH}
             ETC_NGINX_PATH: ${ETC_NGINX_PATH}
-            SPACEPORN_RELAY_IP: ${SPACEPORN_RELAY_IP}
+            SPACEPORN_RELAY_IP: {{ (datasource "datasources/networks.yaml").spaceporn_relay_ip }}
             VAR_LOG_NGINX_PATH: ${VAR_LOG_NGINX_PATH}
             XSERVER_PORT: ${XSERVER_PORT}
             XSERVER_SOCKET_PATH: ${XSERVER_SOCKET_PATH}

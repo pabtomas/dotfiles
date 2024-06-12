@@ -2,8 +2,7 @@
 
 id: 'listener'
 host: '{{ (datasource "datasources/listener.yaml").id }}'
-image:
-tag:
-ip:
+path:
+  completion: '{{ (datasource "datasources/all.yaml").path.opt.data }}/99completion'
 
 ...

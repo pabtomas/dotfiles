@@ -1,18 +1,18 @@
 ---
 
-handlers:
+post:
   - endpoint: /volumes
     method: GET
     register:
       query:
         filters: '{"label":{"navy":true}}'
       as:
-        id: handlers.volumes.json
+        id: post.volumes.json
   - endpoint: /volumes/{name}
     method: DELETE
     from:
-      filter: '{{ $array := "" }}{{ range (datasource "handlers.volumes.json") }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+      filter: '{{ $array := "" }}{{ range (datasource "post.volumes.json") }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - handlers.volumes.json
+        - post.volumes.json
 
 ...

@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - endpoint: /images/json
     method: GET
     register:

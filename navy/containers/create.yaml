@@ -3,7 +3,7 @@
 include:
   - containers/create/virtual.yaml
 
-tasks:
+run:
   - endpoint: /containers/create
     method: POST
     loop:
@@ -26,11 +26,11 @@ tasks:
               - seccomp:unconfined
           NetworkConfig:
             EndpointsConfig:
-              ${_DOCKER_NET}:
-                IPv4Address: ${BUILDER_IP}
+              {{ (datasource "datasources/networks.yaml").docker_utils_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").builder_ip }}
         depends_on:
           - images.build.builder
-          - networks.create.${_DOCKER_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils_network }}
         extends:
           - containers.create.virtual.base
       - id: containers.create.carpenter.relay
@@ -48,11 +48,11 @@ tasks:
             ReadonlyRootfs: true
           NetworkConfig:
             EndpointsConfig:
-              ${PROXIFIED_XSERVER_SOCKET_NET}:
-                IPv4Address: ${CARPENTER_RELAY_IP}
+              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").carpenter_relay_ip }}
         depends_on:
           - images.build.carpenter.relay
-          - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${RELAY_VAR_LOG_VOLUME}
         extends:
@@ -81,10 +81,10 @@ tasks:
                 Target: ${MYWHALEFLEET_PATH}
           NetworkConfig:
             EndpointsConfig:
-              ${_DOCKER_NET}:
-                IPv4Address: ${CLIENT_IP}
-              ${PROXIFIED_DOCKER_SOCKET_NET}:
-                IPv4Address: ${CONTROLLER_IP}
+              {{ (datasource "datasources/networks.yaml").docker_utils_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").client_ip }}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").controller_ip }}
         depends_on:
           - volumes.create.${MYWHALEFLEET_VOLUME}
         extends:
@@ -138,7 +138,7 @@ tasks:
           AttachStderr: true
           NetworkConfig:
             EndpointsConfig:
-              ${JUMP_AREA_NET}: {}
+              {{ (datasource "datasources/networks.yaml").jump_area_network }}: {}
           HostConfig:
             Mounts:
               - <<: *readonly-volume
@@ -179,7 +179,7 @@ tasks:
                 Target: /opt/${XSERVER_ID}${VAR_LOG_NGINX_PATH}
         depends_on:
           - images.build.jumper
-          - networks.create.${JUMP_AREA_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").jump_area_network }}
           - volumes.create.${LISTENER_OPT_DATA_VOLUME}
           - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
           - volumes.create.${LISTENER_VAR_LOG_VOLUME}
@@ -199,8 +199,8 @@ tasks:
           Image: ${LISTENER_IMG}
           NetworkConfig:
             EndpointsConfig:
-              ${PROXIFIED_DOCKER_SOCKET_NET}:
-                IPv4Address: ${LISTENER_IP}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").listener_ip }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -215,7 +215,7 @@ tasks:
             ReadonlyRootfs: true
         depends_on:
           - images.build.jumper
-          - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
           - volumes.create.${LISTENER_OPT_DATA_VOLUME}
           - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
           - volumes.create.${LISTENER_VAR_LOG_VOLUME}
@@ -229,8 +229,8 @@ tasks:
             - ${PROXY_PORT}/tcp
           NetworkConfig:
             EndpointsConfig:
-              ${PROXIFIED_DOCKER_SOCKET_NET}:
-                IPv4Address: ${PROXY_IP}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").proxy_ip }}
           HostConfig:
             Mounts:
               - <<: *readonly-bind
@@ -251,7 +251,7 @@ tasks:
               /tmp: ""
         depends_on:
           - images.build.proxy
-          - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
           - volumes.create.${PROXY_ETC_NGINX_VOLUME}
           - volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
           - volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
@@ -262,8 +262,8 @@ tasks:
           Hostname: {{ (datasource "datasources/registry.yaml" ).host }}
           NetworkConfig:
             EndpointsConfig:
-              ${_DOCKER_NET}:
-                IPv4Address: ${REGISTRY_IP}
+              {{ (datasource "datasources/networks.yaml").docker_utils_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").registry_ip }}
         extends:
           - containers.create.virtual.registry
       - id: containers.create.safedeposit
@@ -299,11 +299,11 @@ tasks:
                 target: ${VAR_LOG_PATH}
           NetworkConfig:
             EndpointsConfig:
-              ${PROXIFIED_XSERVER_SOCKET_NET}:
-                IPv4Address: ${SPACEPORN_RELAY_IP}
+              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").spaceporn_relay_ip }}
         depends_on:
           - images.build.spaceporn.relay
-          - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
           - volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${RELAY_VAR_LOG_VOLUME}
         extends:
@@ -335,8 +335,8 @@ tasks:
             - ${XSERVER_PORT}/tcp
           NetworkConfig:
             EndpointsConfig:
-              ${PROXIFIED_XSERVER_SOCKET_NET}:
-                IPv4Address: ${XSERVER_IP}
+              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}:
+                IPv4Address: {{ (datasource "datasources/networks.yaml").xserver_ip }}
           HostConfig:
             ReadonlyRootfs: true
             SecurityOpt:
@@ -358,7 +358,7 @@ tasks:
               /run: ""
         depends_on:
           - images.build.xserver
-          - networks.create.${PROXIFIED_XSERVER_SOCKET_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
           - volumes.create.${XSERVER_ETC_NGINX_VOLUME}
           - volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
           - volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}

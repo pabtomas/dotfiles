@@ -1,0 +1,7 @@
+---
+
+docker: 'docker'
+path:
+  plugins: '/usr/local/libexec/docker/cli-plugins'
+
+...

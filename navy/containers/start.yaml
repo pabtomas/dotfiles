@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - endpoint: /containers/{id}/start
     method: POST
     loop:

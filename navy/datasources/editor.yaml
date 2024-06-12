@@ -2,8 +2,5 @@
 
 id: 'editor'
 host: '{{ (datasource "datasources/editor.yaml").id }}'
-image:
-tag:
-ip:
 
 ...

@@ -1,0 +1,10 @@
+---
+
+entrypoint: 'entrypoint'
+path:
+  exec: '{{ (datasource "datasources/all.yaml").opt.scripts }}/docker_entrypoint.sh'
+  execd: '{{ (datasource "datasources/entrypoint.yaml").path.exec | strings.ReplaceAll ".sh" ".d" }}'
+  check: '{{ (datasource "datasources/entrypoint.yaml").path.execd }}/98check.sh'
+  checkd: '{{ (datasource "datasources/entrypoint.yaml").path.check | strings.ReplaceAll ".sh" ".d" }}'
+
+...

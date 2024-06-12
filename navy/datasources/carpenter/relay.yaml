@@ -2,8 +2,5 @@
 
 id: '{{ (datasource "datasources/carpenter.yaml").id }}{{ (datasource "separators.yaml").id }}{{ (datasource "datasources/relay.yaml").id }}'
 host: '{{ (datasource "datasources/carpenter/relay.yaml").id }}'
-image:
-tag:
-ip:
 
 ...

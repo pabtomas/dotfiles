@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - endpoint: /build
     method: POST
     loop:
@@ -129,7 +129,7 @@ tasks:
             DOCKLE_LAYER_TAG: ${DOCKLE_LAYER_TAG}
             ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
             HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
-            NET: ${JUMP_AREA_NET}
+            NET: {{ (datasource "datasources/networks.yaml").jump_area_network }}
             REGBOT_URL: ${REGBOT_URL}
             REGCTL_URL: ${REGCTL_URL}
             REGISTRY_TARGET: ${REGISTRY_TARGET}

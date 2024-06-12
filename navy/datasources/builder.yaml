@@ -2,8 +2,5 @@
 
 id: 'builder'
 host: '{{ (datasource "datasources/builder.yaml").id }}'
-image:
-tag:
-ip:
 
 ...

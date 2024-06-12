@@ -1,6 +1,6 @@
 ---
 
-handlers:
+post:
   - endpoint: /containers/json
     method: GET
     register:

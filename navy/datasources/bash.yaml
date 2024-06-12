@@ -1,0 +1,9 @@
+---
+
+id: 'bash'
+path:
+  aliases: '/etc/profile.d/99aliases.d'
+  completion: '/etc/profile.d/99completion.d'
+  theme: '/etc/profile.d/10theme.d'
+
+...

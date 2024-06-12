@@ -2,8 +2,5 @@
 
 id: 'proxy'
 host: '{{ (datasource "datasources/proxy.yaml").id }}'
-image:
-tag:
-ip:
 
 ...

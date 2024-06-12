@@ -5,8 +5,8 @@ Keywords:
 2. [anchors](#anchors)
 3. [include](#include)
 4. [versions](#versions)
-5. [tasks](#tasks)
-6. [handlers](#handlers)
+5. [run](#run)
+6. [post](#post)
 
 Objects:
 7. [Request](#Request-object)
@@ -91,17 +91,17 @@ docker version --format '{{ .Server.APIVersion }}'
 ```yaml
 ```
 
-## `tasks`
+## `run`
 
 **type**: list
 **required**: false
 **default**: `[]`
-**description**: A list of Requests and Commands. If a Request (or Command) in this list fails, Navy skips the rest of the list and run the `handlers` list.
+**description**: A list of Requests and Commands. If a Request (or Command) in this list fails, Navy skips the rest of the list and run the `post` list.
 **exemple**:
 ```yaml
 ```
 
-## `handlers`
+## `post`
 
 **type**: list
 **required**: false

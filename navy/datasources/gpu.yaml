@@ -1,0 +1,9 @@
+---
+
+id: 'gpu'
+path:
+  dev:
+    gpu: '/dev/dri'
+    vga: '/dev/vga_arbiter'
+
+...

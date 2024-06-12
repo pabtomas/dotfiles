@@ -1,0 +1,7 @@
+---
+
+id: 'tmux'
+path:
+  tpm: '/root/.tmux/plugins/tpm'
+
+...

@@ -2,8 +2,5 @@
 
 id: 'scholar'
 host: '{{ (datasource "datasources/scholar.yaml").id }}'
-image:
-tag:
-ip:
 
 ...

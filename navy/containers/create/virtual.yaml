@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - endpoint: /containers/create
     method: POST
     loop:
@@ -17,12 +17,12 @@ tasks:
           Image: ${_DOCKER_LAYER_IMG}
           NetworkingConfig:
             EndpointsConfig:
-              ${_DOCKER_NET}: {}
-              ${PROXIFIED_DOCKER_SOCKET_NET}: {}
+              {{ (datasource "datasources/networks.yaml").docker_utils_network }}: {}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}: {}
         depends_on:
           - images.build.docker
-          - networks.create.${_DOCKER_NET}
-          - networks.create.${PROXIFIED_DOCKER_SOCKET_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.isolated
@@ -37,11 +37,11 @@ tasks:
         query:
           Image: ${GPU_LAYER_IMG}
           Devices:
-            - PathOnHost: ${GPU_PATH}
-              PathInContainer: ${GPU_PATH}
+            - PathOnHost: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
+              PathInContainer: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
               CgroupPermissions: rwm
-            - PathOnHost: ${VGA_PATH}
-              PathInContainer: ${VGA_PATH}
+            - PathOnHost: {{ (datasource "datasources/gpu.yaml").path.dev.vga }}
+              PathInContainer: {{ (datasource "datasources/gpu.yaml").path.dev.vga }}
               CgroupPermissions: rwm
           GroupAdd:
             - render
@@ -74,19 +74,19 @@ tasks:
             - REGISTRY_LOG_ACCESSLOG_DISABLED=false
             - REGISTRY_LOG_FORMATTER=text
             - REGISTRY_LOG_LEVEL=info
-            - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=${DATA_PATH}
+            - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY={{ (datasource "datasources/all.yaml").path.opt.data }}
           HostConfig:
             Mounts:
               - <<: *volume
                 source: ${REGISTRY_VOLUME}
-                target: ${DATA_PATH}
+                target: {{ (datasource "datasources/all.yaml").path.opt.data }}
             ReadonlyRootfs: true
           NetworkingConfig:
             EndpointsConfig:
-              ${_DOCKER_NET}: {}
+              {{ (datasource "datasources/networks.yaml").docker_utils_network }}: {}
         depends_on:
           - images.build.registry
-          - networks.create.${_DOCKER_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils_network }}
           - volumes.create.${REGISTRY_VOLUME}
         extends:
           - containers.create.virtual.base
@@ -100,16 +100,16 @@ tasks:
             Mounts:
               - <<: *readonly-volume
                 Source: ${SSH_VOLUME}
-                Target: ${SSH_ROOT_PATH}
+                Target: {{ (datasource "datasources/all.yaml").path.root.ssh }}
               - <<: *readonly-volume
                 Source: ${THEME_VOLUME}
-                Target: ${BASH_THEME_PATH}
+                Target: {{ (datasource "datasources/bash.yaml").path.theme }}
           NetworkingConfig:
             EndpointsConfig:
-              ${JUMP_AREA_NET}: {}
+              {{ (datasource "datasources/networks.yaml").jump_area_network }}: {}
         depends_on:
           - images.build.sshd
-          - networks.create.${JUMP_AREA_NET}
+          - networks.create.{{ (datasource "datasources/networks.yaml").jump_area_network }}
           - volume.create.${SSH_VOLUME}
           - volume.create.${THEME_VOLUME}
         extends:

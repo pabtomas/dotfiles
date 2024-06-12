@@ -27,7 +27,7 @@ main ()
   #       - explode anchors and aliases
   #   - check circular dependencies between includes
   #   - resolve 'includes' keywords
-  #   - change loop tasks and tasks[].loop into dictionnaries to:
+  #   - change loop run and run[].loop into dictionnaries to:
   #     - resolve 'extends' (replace them with anchors and aliases then use yq explode)
   #   - yq script to generate sh script.
   #   - generate cache: sha256sum <(find . -type -f -exec sha256sum {} \; | sort  | cut -d' ' -f1)

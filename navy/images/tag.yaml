@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - endpoint: /images/{name}/tag
     method: POST
     loop:

@@ -2,8 +2,5 @@
 
 id: 'xserver'
 host: '{{ (datasource "datasources/xserver.yaml").id }}'
-image:
-tag:
-ip:
 
 ...

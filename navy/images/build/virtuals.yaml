@@ -1,6 +1,6 @@
 ---
 
-tasks:
+run:
   - endpoint: /build
     method: POST
     loop:
@@ -84,7 +84,7 @@ tasks:
             ENTRYPOINTD_PATH: ${ENTRYPOINTD_PATH}
             SOCAT_LAYER_IMG: ${SOCAT_LAYER_IMG}
             TMP_XSERVER_SOCKETS_PATH: ${TMP_XSERVER_SOCKETS_PATH}
-            XSERVER_IP: ${XSERVER_IP}
+            XSERVER_IP: {{ (datasource "datasources/networks.yaml").xserver_ip }}
             XSERVER_PORT: ${XSERVER_PORT}
         context: ${CWD_PATH}/${RELAY_ID}
         depends_on:

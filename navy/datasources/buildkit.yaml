@@ -1,0 +1,7 @@
+---
+
+id: 'buildkit'
+path:
+  conf: '/etc/buildkit/buildkitd.toml'
+
+...

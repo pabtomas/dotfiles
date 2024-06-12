@@ -1,18 +1,18 @@
 ---
 
-handlers:
+post:
   - endpoint: /networks
     method: GET
     register:
       query:
         filters: '{"label":{"navy":true}}'
       as:
-        id: handlers.networks.json
+        id: post.networks.json
   - endpoint: /networks/{id}
     method: DELETE
     from:
-      filter: '{{ $array := "" }}{{ range (datasource "handlers.networks.json") }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+      filter: '{{ $array := "" }}{{ range (datasource "post.networks.json") }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - handlers.networks.json
+        - post.networks.json
 
 ...
