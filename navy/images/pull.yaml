@@ -5,7 +5,7 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").alpine }}":true}}'
+        filters: '{"reference":{"{{ (datasource "datasources/alpine.yaml").image.source }}":true}}'
       as:
         id: local.alpine.image.json
         scope: images.pull.alpine
@@ -15,7 +15,7 @@ run:
     loop:
       - id: images.pull.alpine
         query:
-          fromImage: ${ALPINE_IMG}
+          fromImage: {{ (datasource "datasources/alpine.yaml").image.source }}
           tag: {{ (datasource "datasources/alpine.yaml").tag }}
         depends_on:
           - local.alpine.image.json
@@ -23,7 +23,7 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").bash }}":true}}'
+        filters: '{"reference":{"{{ (datasource "datasources/bash.yaml").image.source }}":true}}'
       as:
         id: local.bash.image.json
         scope: images.pull.bash.
@@ -33,7 +33,7 @@ run:
     loop:
       - id: images.pull.bash
         query:
-          fromImage: ${BASH_IMG}
+          fromImage: {{ (datasource "datasources/bash.yaml").image.source }}
           tag: {{ (datasource "datasources/bash.yaml").tag }}
         depends_on:
           - local.bash.image.json
@@ -41,7 +41,7 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").buildkit }}":true}}'
+        filters: '{"reference":{"{{ (datasource "datasources/buildkit.yaml").image.source }}":true}}'
       as:
         id: local.buildkit.image.json
         scope: images.pull.buildkit
@@ -51,7 +51,7 @@ run:
     loop:
       - id: images.pull.buildkit
         query:
-          fromImage: ${_BUILDKIT_IMG}
+          fromImage: {{ (datasource "datasources/buildkit.yaml").image.source }}
           tag: {{ (datasource "datasources/buildkit.yaml").tag }}
         depends_on:
           - local.buildkit.image.json
@@ -59,7 +59,7 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").docker }}":true}}'
+        filters: '{"reference":{"{{ (datasource "datasources/docker.yaml").image.source }}":true}}'
       as:
         id: local.docker.image.json
         scope: images.pull.docker
@@ -69,7 +69,7 @@ run:
     loop:
       - id: images.pull.docker
         query:
-          fromImage: ${_DOCKER_IMG}
+          fromImage: {{ (datasource "datasources/docker.yaml").image.source }}
           tag: {{ (datasource "datasources/docker.yaml").tag }}
         depends_on:
           - local.docker.image.json
@@ -77,7 +77,7 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").proxy }}":true}}'
+        filters: '{"reference":{"{{ (datasource "datasources/socket-proxy.yaml").linuxserver.image.source }}":true}}'
       as:
         id: local.proxy.image.json
         scope: images.pull.proxy
@@ -87,7 +87,7 @@ run:
     loop:
       - id: images.pull.proxy
         query:
-          fromImage: ${LINUXSERVER_PROXY_IMG}
+          fromImage: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.image.source }}
           tag: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
         depends_on:
           - local.proxy.image.json
@@ -95,7 +95,7 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/images.yaml").registry }}":true}}'
+        filters: '{"reference":{"{{ (datasource "datasources/registry.yaml").image.source }}":true}}'
       as:
         id: local.registry.image.json
         scope: images.pull.registry
@@ -105,7 +105,7 @@ run:
     loop:
       - id: images.pull.registry
         query:
-          fromImage: ${REGISTRY_IMG}
+          fromImage: {{ (datasource "datasources/registry.yaml").image.source }}
           tag: {{ (datasource "datasources/registry.yaml").tag }}
         depends_on:
           - local.registry.image.json

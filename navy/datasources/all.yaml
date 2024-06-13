@@ -1,8 +1,5 @@
 ---
 
-api:
-  tag: '{{ (datasource "/context/version.json").ApiVersion }}'
-
 project: 'mywhalefleet'
 
 user:
@@ -10,6 +7,8 @@ user:
 
 os:
   id: '{{ (datasource "datasources/alpine.yaml").id }}'
+  image:
+    local: '{{ (datasource "datasources/alpine.yaml").image.local }}'
   tag: '{{ (datasource "datasources/alpine.yaml").tag }}'
 
 sep:
@@ -23,6 +22,7 @@ sep:
 owner:
   name: 'tiawl'
   tag: 'latest'
+  url: 'https://github.com/{{ (datasource "datasources/all.yaml").owner.name }}'
 
 path:
   bin: '/usr/local/bin'

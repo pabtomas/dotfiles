@@ -9,7 +9,7 @@ run:
           buildargs:
             _BUILDKIT_CONF_PATH: {{ (datasource "datasources/buildkit.yaml").path.conf }}
             _BUILDKIT_LOCAL_IMG: {{ (datasource "datasources/buildkit.yaml").image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/buildkit.yaml").tag }}
-            REGISTRY_TARGET: ${REGISTRY_TARGET}
+            REGISTRY_TARGET: {{ (datasource "datasources/registry.yaml").target }}
           t: {{ (datasource "datasources/builder.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${BUILDER_ID}
         depends_on:
@@ -46,9 +46,9 @@ run:
             NET_PFX: ${JUMP_AREA_PFX}
             OPT_SCRIPTS_PATH: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
             OPT_SSH_PATH: {{ (datasource "datasources/all.yaml").path.opt.ssh }}
-            SSH_PORT: ${SSH_PORT}
+            SSH_PORT: {{ (datasource "datasources/sshd.yaml").port }}
             SSH_ROOT_PATH: {{ (datasource "datasources/all.yaml").path.root.ssh }}
-            TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
+            TCP_DOCKER_TARGET: {{ (datasource "datasources/docker.yaml").target.tcp }}
             TMUX_LAYER_IMG: {{ (datasource "datasources/tmux.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
           t: {{ (datasource "datasources/jumper.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${JUMPER_ID}
@@ -64,7 +64,7 @@ run:
             COMPLETION_PATH: {{ (datasource "datasources/listener.yaml").path.completion }}
             DATA_PATH: {{ (datasource "datasources/all.yaml").path.opt.data }}
             ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
-            HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
+            HTTP_DOCKER_TARGET: {{ (datasource "datasources/docker.yaml").target.http }}
             NET: {{ (datasource "datasources/networks.yaml").jump_area.name }}
             OPT_SCRIPTS_PATH: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
             VAR_LOG_PATH: {{ (datasource "datasources/all.yaml").path.var.log }}
@@ -98,8 +98,8 @@ run:
             ${API_PFX}VERSION: true
             ${API_PFX}VOLUMES: true
             API_PFX: ${API_PFX}
-            API_TAG: {{ (datasource "datasources/all.yaml").api.tag }}
-            API_URL: ${API_URL}
+            API_TAG: {{ (datasource "datasources/api.yaml").tag }}
+            API_URL: {{ (datasource "datasources/api.yaml").url.spec }}
             CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${PROXY_ID}.sh
             CONTROLLER_IP: {{ (datasource "datasources/controller.yaml").ip }}
             ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
@@ -107,7 +107,7 @@ run:
             HTTP_LAYER_IMG: {{ (datasource "datasources/http.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
             LISTENER_IP: {{ (datasource "datasources/listener.yaml").ip }}
             OPT_SCRIPTS_PATH: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
-            PROXY_PORT: ${PROXY_PORT}
+            PROXY_PORT: {{ (datasource "datasources/proxy.yaml").port }}
           t: {{ (datasource "datasources/socket-proxy.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${PROXY_ID}
         depends_on:
@@ -130,7 +130,7 @@ run:
             ETC_NGINX_PATH: {{ (datasource "datasources/nginx.yaml").path.etc }}
             SPACEPORN_RELAY_IP: {{ (datasource "datasources/spaceporn/relay.yaml").ip }}
             VAR_LOG_NGINX_PATH: {{ (datasource "datasources/nginx.yaml").path.var.log }}
-            XSERVER_PORT: ${XSERVER_PORT}
+            XSERVER_PORT: {{ (datasource "datasources/xserver.yaml").port }}
             XSERVER_SOCKET_PATH: {{ (datasource "datasources/xserver.yaml").path.display }}
           t: {{ (datasource "datasources/xserver.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${XSERVER_ID}

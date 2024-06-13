@@ -1,0 +1,7 @@
+---
+
+tag: '{{ (datasource "/context/version.json").ApiVersion }}'
+url:
+  spec: 'https://raw.githubusercontent.com/moby/moby/master/docs/api/v{{ (datasource "/context/version.json").ApiVersion }}.yaml'
+
+...

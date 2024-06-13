@@ -14,7 +14,7 @@ run:
       - id: containers.create.virtual.docker
         virtual: true
         query:
-          Image: ${_DOCKER_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/docker.yaml").image.layer }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
           NetworkingConfig:
             EndpointsConfig:
               {{ (datasource "datasources/networks.yaml").docker_utils.name }}: {}
@@ -35,7 +35,7 @@ run:
       - id: containers.create.virtual.gpu
         virtual: true
         query:
-          Image: ${GPU_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/gpu.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
           Devices:
             - PathOnHost: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
               PathInContainer: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
@@ -53,7 +53,7 @@ run:
       - id: containers.create.virtual.man
         virtual: true
         query:
-          Image: ${MAN_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/man.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.man
         extends:
@@ -61,7 +61,7 @@ run:
       - id: containers.create.virtual.pass
         virtual: true
         query:
-          Image: ${PASS_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/pass.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.pass
         extends:
@@ -69,7 +69,7 @@ run:
       - id: containers.create.virtual.registry
         virtual: true
         query:
-          Image: ${REGISTRY_LOCAL_IMG}:{{ (datasource "datasources/registry.yaml").tag }}
+          Image: {{ (datasource "datasources/registry.yaml").image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/registry.yaml").tag }}
           Env:
             - REGISTRY_LOG_ACCESSLOG_DISABLED=false
             - REGISTRY_LOG_FORMATTER=text
@@ -93,9 +93,9 @@ run:
       - id: containers.create.virtual.sshd
         virtual: true
         query:
-          Image: ${SSHD_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/sshd.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
           ExposedPorts:
-            - ${SSH_PORT}/tcp
+            - {{ (datasource "datasources/sshd.yaml").port }}/tcp
           HostConfig:
             Mounts:
               - <<: *readonly-volume
@@ -117,7 +117,7 @@ run:
       - id: containers.create.virtual.shell
         virtual: true
         query:
-          Image: ${SHELL_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/shell.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.shell
         extends:
@@ -125,7 +125,7 @@ run:
       - id: containers.create.virtual.vim
         virtual: true
         query:
-          Image: ${VIM_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/vim.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.vim
         extends:
@@ -133,7 +133,7 @@ run:
       - id: containers.create.virtual.zig
         virtual: true
         query:
-          Image: ${ZIG_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+          Image: {{ (datasource "datasources/zig.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.zig
         extends:

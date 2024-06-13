@@ -27,7 +27,7 @@ run:
         virtual: true
         query:
           buildargs:
-            ENTRYPOINT_LAYER_IMG: ${ENTRYPOINT_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+            ENTRYPOINT_LAYER_IMG: {{ (datasource "datasources/entrypoint/alpine.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.alpine.entrypoint
         extends:
@@ -36,7 +36,7 @@ run:
         virtual: true
         query:
           buildargs:
-            BASH_LAYER_IMG: ${BASH_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+            BASH_LAYER_IMG: {{ (datasource "datasources/bash.yaml").image.layer }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.bash
         extends:
@@ -45,7 +45,7 @@ run:
         virtual: true
         query:
           buildargs:
-            WORKSPACES_LAYER_IMG: ${WORKSPACES_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+            WORKSPACES_LAYER_IMG: {{ (datasource "datasources/workspaces.yaml").image.layer }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.workspaces
         extends:
@@ -54,7 +54,7 @@ run:
         virtual: true
         query:
           buildargs:
-            SSHD_LAYER_IMG: ${SSHD_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+            SSHD_LAYER_IMG: {{ (datasource "datasources/sshd.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.sshd
         extends:
@@ -63,7 +63,7 @@ run:
         virtual: true
         query:
           buildargs:
-            GIT_LAYER_IMG: ${GIT_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+            GIT_LAYER_IMG: {{ (datasource "datasources/git.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.git
         extends:
@@ -72,7 +72,7 @@ run:
         virtual: true
         query:
           buildargs:
-            NGINX_LAYER_IMG: ${NGINX_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+            NGINX_LAYER_IMG: {{ (datasource "datasources/nginx.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.nginx
         extends:
@@ -82,10 +82,10 @@ run:
         query:
           buildargs:
             ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
-            SOCAT_LAYER_IMG: ${SOCAT_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
+            SOCAT_LAYER_IMG: {{ (datasource "datasources/socat.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
             TMP_XSERVER_SOCKETS_PATH: {{ (datasource "datasources/xserver.yaml").path.sockets }}
             XSERVER_IP: {{ (datasource "datasources/xserver.yaml").ip }}
-            XSERVER_PORT: ${XSERVER_PORT}
+            XSERVER_PORT: {{ (datasource "datasources/xserver.yaml").port }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${RELAY_ID}
         depends_on:
           - images.build.socat

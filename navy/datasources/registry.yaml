@@ -2,7 +2,6 @@
 
 id: 'registry'
 host: '{{ (datasource "datasources/registry.yaml").id }}'
-port: 5000
 ip: '{{ (datasource "datasources/networks.yaml").docker_utils.prefix }}.3'
 target: '{{ (datasource "datasources/registry.yaml").ip }}:{{ (datasource "datasources/registry.yaml").port }}'
 prefix:
@@ -15,6 +14,8 @@ prefix:
 image:
   source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/registry.yaml").id }}'
   local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/registry.yaml").id }}'
+port: 5000
 tag: '2'
+target: '{{ (datasource "datasources/registry.yaml").ip }}{{ (datasource "datasources/all.yaml").sep.target }}{{ (datasource "datasources/registry.yaml").port }}'
 
 ...

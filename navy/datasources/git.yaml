@@ -2,5 +2,8 @@
 
 id: 'git'
 image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/git.yaml").id }}'
+url:
+  tig:
+    completion: 'https://raw.githubusercontent.com/jonas/tig/master/contrib/tig-completion.bash'
 
 ...

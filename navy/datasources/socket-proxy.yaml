@@ -9,5 +9,6 @@ linuxserver:
     source: 'lscr.io{{ (datasource "datasources/all.yaml").sep.registry }}linuxserver{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/socket-proxy.yaml").id }}'
     local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/socket-proxy.yaml").id }}'
   tag: 'latest'
+port: 2363
 
 ...

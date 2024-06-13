@@ -3,5 +3,8 @@
 id: 'zig'
 image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/zig.yaml").id }}'
 tag: '0.13.0'
+url:
+  builds: 'https://ziglang.org/builds'
+  completion: 'https://raw.githubusercontent.com/ziglang/shell-completions/master/_zig.bash'
 
 ...

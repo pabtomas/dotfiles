@@ -7,5 +7,6 @@ ip: '{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.prefix
 path:
   sockets: '/tmp/.X11-unix'
   display: '{{ (datasource "datasources/xephyr.yaml").path.sockets }}/X{{ .Env.XEPHYR_DISPLAY }}'
+port: 2365
 
 ...
