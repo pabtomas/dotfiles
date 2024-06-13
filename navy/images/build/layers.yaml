@@ -7,8 +7,8 @@ run:
       - id: images.build.alpine.entrypoint
         query:
           buildargs:
-            BASE_IMG: {{ (datasource "datasources/all.yaml").os.image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ datasource "datasources/all.yaml".os.tag }}
-          t: {{ (datasource "datasources/entrypoint/alpine.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            BASE_IMG: '{{ $all.os.image.local }}{{ $all.sep.tag }}{{ $all.os.tag }}'
+          t: '{{ $entrypointalpine.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.tag.alpine
         extends:
@@ -16,8 +16,8 @@ run:
       - id: images.build.bash.entrypoint
         query:
           buildargs:
-            BASE_IMG: {{ (datasource "datasources/bash.yaml").image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/bash.yaml").tag }}
-          t: {{ (datasource "datasources/entrypoint/bash.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            BASE_IMG: '{{ $bash.image.local }}{{ $all.sep.tag }}{{ $bash.tag }}'
+          t: '{{ $entrypointbash.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.tag.bash
         extends:
@@ -25,57 +25,57 @@ run:
       - id: images.build.gpu
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${GPU_ID}.sh
-          t: {{ (datasource "datasources/gpu.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${GPU_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${GPU_ID}.sh
+          t: '{{ $gpu.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${GPU_ID}
         extends:
           - images.build.virtual.alpine.entrypoint
       - id: images.build.linguist
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${LINGUIST_ID}.sh
-          t: {{ (datasource "datasources/linguist.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${LINGUIST_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${LINGUIST_ID}.sh
+          t: '{{ $linguist.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${LINGUIST_ID}
         extends:
           - images.build.virtual.alpine.entrypoint
       - id: images.build.nginx
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${NGINX_ID}.sh
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
-            ETC_NGINX_CONFD_PATH: {{ (datasource "datasources/nginx.yaml").path.confd }}
-            ETC_NGINX_HTTPD_PATH: {{ (datasource "datasources/nginx.yaml").path.httpd }}
-            VAR_LOG_NGINX_PATH: {{ (datasource "datasources/nginx.yaml").path.var.log }}
-          t: {{ (datasource "datasources/nginx.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${NGINX_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${NGINX_ID}.sh
+            ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
+            ETC_NGINX_CONFD_PATH: '{{ $nginx.path.confd }}'
+            ETC_NGINX_HTTPD_PATH: '{{ $nginx.path.httpd }}'
+            VAR_LOG_NGINX_PATH: '{{ $nginx.path.var.log }}'
+          t: '{{ $nginx.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${NGINX_ID}
         extends:
           - images.build.virtual.alpine.entrypoint
       - id: images.build.socat
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${SOCAT_ID}.sh
-          t: {{ (datasource "datasources/socat.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${SOCAT_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${SOCAT_ID}.sh
+          t: '{{ $socat.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${SOCAT_ID}
         extends:
           - images.build.virtual.alpine.entrypoint
       - id: images.build.spectrwm
         query:
           buildargs:
-            BIN_PATH: {{ (datasource "datasources/all.yaml").path.bin }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${SPECTRWM_ID}.sh
-          t: {{ (datasource "datasources/spectrwm.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${SPECTRWM_ID}
+            BIN_PATH: '{{ $all.path.bin }}'
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${SPECTRWM_ID}.sh
+          t: '{{ $spectrwm.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${SPECTRWM_ID}
         extends:
           - images.build.virtual.alpine.entrypoint
       - id: images.build.http
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${HTTP_ID}.sh
-            ETC_NGINX_HTTPD_PATH: {{ (datasource "datasources/nginx.yaml").path.httpd }}
-            ETC_NGINX_PATH: {{ (datasource "datasources/nginx.yaml").path.etc }}
-            LINUXSERVER_PROXY_LOCAL_IMG: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
-          t: {{ (datasource "datasources/http.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${HTTP_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${HTTP_ID}.sh
+            ETC_NGINX_HTTPD_PATH: '{{ $nginx.path.httpd }}'
+            ETC_NGINX_PATH: '{{ $nginx.path.etc }}'
+            LINUXSERVER_PROXY_LOCAL_IMG: '{{ $socketproxy.linuxserver.image.local }}{{ all.sep.tag }}{{ $socketproxy.linuxserver.tag }}'
+          t: '{{ $http.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${HTTP_ID}
         depends_on:
           - images.tag.proxy
         extends:
@@ -83,15 +83,15 @@ run:
       - id: images.build.bash
         query:
           buildargs:
-            BASH_ALIASES_PATH: {{ (datasource "datasources/bash.yaml").path.aliases }}
-            BASH_COMPLETION_PATH: {{ (datasource "datasources/bash.yaml").path.completion }}
-            BASH_ENTRYPOINT_LAYER_IMG: {{ (datasource "datasources/entrypoint/bash.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-            BASH_LOCAL_IMG: {{ (datasource "datasources/bash.yaml").image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/bash.yaml").tag }}
-            BASH_THEME_PATH: {{ (datasource "datasources/bash.yaml").path.theme }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${BASH_ID}.sh
-            ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.sh }}
-          t: {{ (datasource "datasources/bash.yaml").image.layer }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${BASH_ID}
+            BASH_ALIASES_PATH: '{{ $bash.path.aliases }}'
+            BASH_COMPLETION_PATH: '{{ $bash.path.completion }}'
+            BASH_ENTRYPOINT_LAYER_IMG: '{{ $entrypointbash.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+            BASH_LOCAL_IMG: '{{ $bash.image.local }}{{ $all.sep.tag }}{{ $bash.tag }}'
+            BASH_THEME_PATH: '{{ $bash.path.theme }}'
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${BASH_ID}.sh
+            ENTRYPOINT_PATH: '{{ $entrypoint.path.entrypoint.sh }}'
+          t: '{{ $bash.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${BASH_ID}
         depends_on:
           - images.build.bash.entrypoint
         extends:
@@ -99,46 +99,46 @@ run:
       - id: images.build.tmux
         query:
           buildargs:
-            BASH_COMPLETION_PATH: {{ (datasource "datasources/bash.yaml").path.completion }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${TMUX_ID}.sh
-            TMUX_COMPLETION_URL: {{ (datasource "datasources/tmux.yaml").url.completion }}
-            TPM_PATH: {{ (datasource "datasources/tmux.yaml").path.tpm }}
-            TPM_URL: {{ (datasource "datasources/tmux.yaml").url.tpm }}
-          t: {{ (datasource "datasources/tmux.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${TMUX_ID}
+            BASH_COMPLETION_PATH: '{{ $bash.path.completion }}'
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${TMUX_ID}.sh
+            TMUX_COMPLETION_URL: '{{ $tmux.url.completion }}'
+            TPM_PATH: '{{ $tmux.path.tpm }}'
+            TPM_URL: '{{ $tmux.url.tpm }}'
+          t: '{{ $tmux.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${TMUX_ID}
         extends:
           - images.build.virtual.bash
       - id: images.build.sshd
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${SSHD_ID}.sh
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
-            SSH_PORT: {{ (datasource "datasources/sshd.yaml").port }}
-          t: {{ (datasource "datasources/sshd.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${SSHD_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${SSHD_ID}.sh
+            ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
+            SSH_PORT: '{{ $sshd.port }}'
+          t: '{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${SSHD_ID}
         extends:
           - images.build.virtual.bash
       - id: images.build.docker
         query:
           buildargs:
-            _DOCKER_LOCAL_IMG: {{ (datasource "datasources/docker.yaml").image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/docker.yaml").tag }}
-            _DOCKER_PLUGINS_PATH: {{ (datasource "datasources/docker.yaml").path.plugins }}
-            BIN_PATH: {{ (datasource "datasources/all.yaml").path.bin }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${_DOCKER_ID}.sh
-            DOCKLE_DOWNLOAD_URL: {{ (datasource "datasources/dockle.yaml").url.download }}
-            DOCKLE_TAG: {{ datasource "datasources/dockle.yaml".tag }}
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
-            HTTP_DOCKER_TARGET: {{ (datasource "datasources/docker.yaml").target.http }}
-            NET: {{ (datasource "datasources/networks.yaml").jump_area.name }}
-            REGBOT_URL: {{ (datasource "datasources/docker.yaml").url.regbot }}
-            REGCTL_URL: {{ (datasource "datasources/docker.yaml").url.regctl }}
-            REGISTRY_TARGET: {{ (datasource "datasources/registry.yaml").target }}
-            REGSYNC_URL: {{ (datasource "datasources/docker.yaml").url.regsync }}
-            TCP_BUILDKIT_TARGET: {{ (datasource "datasources/buildkit.yaml").target.tcp }}
-            TCP_DOCKER_TARGET: {{ (datasource "datasources/docker.yaml").target.tcp }}
+            _DOCKER_LOCAL_IMG: '{{ $docker.image.local }}{{ $all.sep.tag }}{{ $docker.tag }}'
+            _DOCKER_PLUGINS_PATH: '{{ docker.path.plugins }}'
+            BIN_PATH: '{{ $all.path.bin }}'
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${_DOCKER_ID}.sh
+            DOCKLE_DOWNLOAD_URL: '{{ $dockle.url.download }}'
+            DOCKLE_TAG: '{{ $dockle.tag }}'
+            ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
+            HTTP_DOCKER_TARGET: '{{ $docker.target.http }}'
+            NET: '{{ $networks.jump_area.name }}'
+            REGBOT_URL: '{{ $docker.url.regbot }}'
+            REGCTL_URL: '{{ $docker.url.regctl }}'
+            REGISTRY_TARGET: '{{ $registry.target }}'
+            REGSYNC_URL: '{{ $docker.url.regsync }}'
+            TCP_BUILDKIT_TARGET: '{{ $buildkit.target.tcp }}'
+            TCP_DOCKER_TARGET: '{{ $docker.target.tcp }}'
             XEPHYR_DISPLAY: ${XEPHYR_DISPLAY}
-          t: {{ (datasource "datasources/docker.yaml").image.layer }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${DOCKER_ID}
+          t: '{{ $docker.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${DOCKER_ID}
         depends_on:
           - images.tag.docker
         extends:
@@ -146,60 +146,60 @@ run:
       - id: images.build.man
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${MAN_ID}.sh
-          t: {{ (datasource "datasources/man.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${MAN_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${MAN_ID}.sh
+          t: '{{ $man.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${MAN_ID}
         extends:
           - images.build.virtual.sshd
       - id: images.build.pass
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${PASS_ID}.sh
-          t: {{ (datasource "datasources/pass.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${PASS_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${PASS_ID}.sh
+          t: '{{ $pass.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${PASS_ID}
         extends:
           - images.build.virtual.sshd
       - id: images.build.workspaces
         query:
           buildargs:
-            OPT_SCRIPTS_PATH: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
-            OWNER_URL: {{ (datasource "datasources/all.yaml").owner.url }}
+            OPT_SCRIPTS_PATH: '{{ $all.path.opt.scripts }}'
+            OWNER_URL: '{{ $all.owner.url }}'
             SPACEPORN_ID: ${SPACEPORN_ID}
-            SSHD_LAYER_IMG: {{ (datasource "datasources/sshd.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-            WORKSPACES_PATH: {{ (datasource "datasources/workspaces.yaml").path.root }}
-          t: {{ (datasource "datasources/workspaces.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${WORKSPACES_ID}
+            SSHD_LAYER_IMG: '{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+            WORKSPACES_PATH: '{{ $workspaces.path.root }}'
+          t: '{{ $workspaces.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${WORKSPACES_ID}
         extends:
           - images.build.virtual.sshd
       - id: images.build.vim
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${VIM_ID}.sh
-            NERDTREE_URL: {{ (datasource "datasources/vim.yaml").url.plugin.nerdtree }}
-            POLYGLOT_URL: {{ (datasource "datasources/vim.yaml").url.plugin.polyglot }}
-            RAINBOW_URL: {{ (datasource "datasources/vim.yaml").url.plugin.rainbow }}
-            UNDOTREE_URL: {{ (datasource "datasources/vim.yaml").url.plugin.undotree }}
-          t: {{ (datasource "datasources/vim.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${VIM_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${VIM_ID}.sh
+            NERDTREE_URL: '{{ $vim.url.plugin.nerdtree }}'
+            POLYGLOT_URL: '{{ $vim.url.plugin.polyglot }}'
+            RAINBOW_URL: '{{ $vim.url.plugin.rainbow }}'
+            UNDOTREE_URL: '{{ $vim.url.plugin.undotree }}'
+          t: '{{ $vim.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${VIM_ID}
         extends:
           - images.build.virtual.workspaces
       - id: images.build.explorer
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${EXPLORER_ID}.sh
-          t: {{ (datasource "datasources/explorer.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${EXPLORER_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${EXPLORER_ID}.sh
+          t: '{{ $explorer.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${EXPLORER_ID}
         extends:
           - images.build.virtual.workspaces
       - id: images.build.git
         query:
           buildargs:
-            BASH_COMPLETION_PATH: {{ (datasource "datasources/bash.yaml").path.completion }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${GIT_ID}.sh
-            EXPLORER_LAYER_IMG: {{ (datasource "datasources/explorer.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-            TIG_COMPLETION_URL: {{ (datasource "datasources/git.yaml").url.tig.completion }}
-          t: {{ (datasource "datasources/git.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${GIT_ID}
+            BASH_COMPLETION_PATH: '{{ $bash.path.completion }}'
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${GIT_ID}.sh
+            EXPLORER_LAYER_IMG: '{{ $explorer.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+            TIG_COMPLETION_URL: '{{ $git.url.tig.completion }}'
+          t: '{{ $git.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${GIT_ID}
         depends_on:
           - images.build.explorer
         extends:
@@ -207,22 +207,22 @@ run:
       - id: images.build.shell
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${SHELL_ID}.sh
-          t: {{ (datasource "datasources/shell.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${SHELL_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${SHELL_ID}.sh
+          t: '{{ $shell.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${SHELL_ID}
         extends:
           - images.build.virtual.git
       - id: images.build.zig
         query:
           buildargs:
-            BASH_COMPLETION_PATH: {{ (datasource "datasources/bash.yaml").path.completion }}
-            BIN_PATH: {{ (datasource "datasources/all.yaml").path.bin }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${ZIG_ID}.sh
-            ZIG_BUILDS_URL: {{ (datasource "datasources/zig.yaml").url.builds }}
-            ZIG_COMPLETION_URL: {{ (datasource "datasources/zig.yaml").url.completion }}
-            ZIG_TAG: {{ datasource "datasources/zig.yaml".tag }}
-          t: {{ (datasource "datasources/zig.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${ZIG_ID}
+            BASH_COMPLETION_PATH: '{{ $bash.path.completion }}'
+            BIN_PATH: '{{ $all.path.bin }}'
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${ZIG_ID}.sh
+            ZIG_BUILDS_URL: '{{ $zig.url.builds }}'
+            ZIG_COMPLETION_URL: '{{ $zig.url.completion }}'
+            ZIG_TAG: '{{ $zig.tag }}'
+          t: '{{ $zig.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+        context: '{{ $all.path.dockerfiles }}'/${ZIG_ID}
         extends:
           - images.build.virtual.git
 

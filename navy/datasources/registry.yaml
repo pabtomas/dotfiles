@@ -1,21 +1,21 @@
 ---
 
 id: 'registry'
-host: '{{ (datasource "datasources/registry.yaml").id }}'
-ip: '{{ (datasource "datasources/networks.yaml").docker_utils.prefix }}.3'
-target: '{{ (datasource "datasources/registry.yaml").ip }}:{{ (datasource "datasources/registry.yaml").port }}'
+host: '{{ $registry.id }}'
+ip: '{{ $networks.docker_utils.prefix }}.3'
+target: '{{ $registry.ip }}:{{ $registry.port }}'
 prefix:
-  global: '{{ (datasource "datasources/registry.yaml").target }}{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/all.yaml").project }}{{ (datasource "datasources/all.yaml").sep.registry }}'
-  owner: '{{ (datasource "datasources/registry.yaml").prefix.global }}{{ (datasource "datasources/all.yaml").owner }}{{ (datasource "datasources/all.yaml").sep.image }}'
-  local: '{{ (datasource "datasources/registry.yaml").prefix.owner }}local{{ (datasource "datasources/all.yaml").sep.image }}'
-  layer: '{{ (datasource "datasources/registry.yaml").prefix.owner }}layer{{ (datasource "datasources/all.yaml").sep.image }}'
-  relay: '{{ (datasource "datasources/registry.yaml").prefix.owner }}relay{{ (datasource "datasources/all.yaml").sep.image }}'
-  runner: '{{ (datasource "datasources/registry.yaml").prefix.owner }}runner{{ (datasource "datasources/all.yaml").sep.image }}'
+  global: '{{ $registry.target }}{{ $all.sep.registry }}{{ $all.project }}{{ $all.sep.registry }}'
+  owner: '{{ $registry.prefix.global }}{{ $all.owner }}{{ $all.sep.image }}'
+  local: '{{ $registry.prefix.owner }}local{{ $all.sep.image }}'
+  layer: '{{ $registry.prefix.owner }}layer{{ $all.sep.image }}'
+  relay: '{{ $registry.prefix.owner }}relay{{ $all.sep.image }}'
+  runner: '{{ $registry.prefix.owner }}runner{{ $all.sep.image }}'
 image:
-  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/registry.yaml").id }}'
-  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/registry.yaml").id }}'
+  source: 'docker.io{{ $all.sep.registry }}library{{ $all.sep.registry }}{{ $registry.id }}'
+  local: '{{ $registry.prefix.local }}{{ $registry.id }}'
 port: 5000
 tag: '2'
-target: '{{ (datasource "datasources/registry.yaml").ip }}{{ (datasource "datasources/all.yaml").sep.target }}{{ (datasource "datasources/registry.yaml").port }}'
+target: '{{ $registry.ip }}{{ $all.sep.target }}{{ $registry.port }}'
 
 ...

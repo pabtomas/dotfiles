@@ -7,17 +7,17 @@ post:
       query:
         filters: '{"label":{"navy":true}}'
       as:
-        id: containers.json
+        id: registerpostcontainers
   - endpoint: /containers/{id}/stop
     method: POST
     from:
-      filter: '{{ $array := "" }}{{ range (datasource "containers.json") }}{{ $array = print $array "{\"id\":\"containers.stop." .Id "\",\"path\":{\"id\":\"" .Id "\"},\"query\":{\"t\":0}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+      filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"id\":\"containers.stop." .Id "\",\"path\":{\"id\":\"" .Id "\"},\"query\":{\"t\":0}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
         - containers.json
   - endpoint: /containers/{id}
     method: DELETE
     from:
-      filter: '{{ $array := "" }}{{ range (datasource "containers.json") }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+      filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
         - containers.json
 

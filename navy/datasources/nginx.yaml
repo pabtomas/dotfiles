@@ -1,11 +1,11 @@
 ---
 
 id: 'nginx'
-image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/nginx.yaml").id }}'
+image: '{{ $registry.prefix.layer }}{{ $nginx.id }}'
 path:
   etc: '/etc/nginx'
-  confd: '{{ (datasource "datasources/nginx.yaml").path.etc }}/conf.d'
-  httpd: '{{ (datasource "datasources/nginx.yaml").path.etc }}/http.d'
+  confd: '{{ $nginx.path.etc }}/conf.d'
+  httpd: '{{ $nginx.path.etc }}/http.d'
 
   var:
     log: '/var/log/nginx'

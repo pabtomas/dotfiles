@@ -1,6 +1,6 @@
 ---
 
 id: 'safedeposit'
-host: '{{ (datasource "datasources/safedeposit.yaml").id }}'
+host: '{{ $safedeposit.id }}'
 
 ...

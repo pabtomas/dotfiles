@@ -1,8 +1,8 @@
 ---
 
-id: '{{ (datasource "datasources/carpenter.yaml").id }}{{ (datasource "datasources/all.yaml").sep.id }}{{ (datasource "datasources/relay.yaml").id }}'
-host: '{{ (datasource "datasources/carpenter/relay.yaml").id }}'
-image: '{{ (datasource "datasources/registry.yaml").prefix.relay }}{{ (datasource "datasources/carpenter.yaml").id }}'
-ip: '{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.prefix }}.3'
+id: '{{ $carpenter.id }}{{ $all.sep.id }}{{ $relay.id }}'
+host: '{{ $carpenterrelay.id }}'
+image: '{{ $registry.prefix.relay }}{{ carpenter.id }}'
+ip: '{{ networks.proxified_xserver_socket.prefix }}.3'
 
 ...

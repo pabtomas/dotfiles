@@ -1,10 +1,10 @@
 ---
 
 id: 'controller'
-host: '{{ (datasource "datasources/controller.yaml").id }}'
-image: '{{ (datasource "datasources/registry.yaml").prefix.owner }}{{ (datasource "datasources/controller.yaml").id }}'
+host: '{{ $controller.id }}'
+image: '{{ $registry.prefix.owner }}{{ $controller.id }}'
 ip:
-  docker_utils: '{{ (datasource "datasources/networks.yaml").docker_utils.prefix }}.2'
-  proxified_docker_socket: '{{ (datasource "datasources/networks.yaml").proxified_docker_socket.prefix }}.4'
+  docker_utils: '{{ $networks.docker_utils.prefix }}.2'
+  proxified_docker_socket: '{{ networks.proxified_docker_socket.prefix }}.4'
 
 ...

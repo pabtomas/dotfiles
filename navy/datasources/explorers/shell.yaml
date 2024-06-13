@@ -1,6 +1,6 @@
 ---
 
-id: '{{ (datasource "datasources/explorer.yaml").id }}{{ (datasource "datasources/all.yaml").sep.id }}{{ (datasource "datasources/shell.yaml").id }}'
-host: '{{ (datasource "datasources/explorers/shell.yaml").id }}'
+id: '{{ $explorer.id }}{{ $all.sep.id }}{{ $shell.id }}'
+host: '{{ $explorershell.id }}'
 
 ...

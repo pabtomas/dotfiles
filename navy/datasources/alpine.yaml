@@ -2,8 +2,8 @@
 
 id: 'alpine'
 image:
-  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/alpine.yaml").id }}'
-  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/alpine.yaml").id }}'
+  source: 'docker.io{{ $all.sep.registry }}library{{ $all.sep.registry }}{{ $alpine.id }}'
+  local: '{{ $registry.prefix.local }}{{ $alpine.id }}'
 tag: '3.20'
 
 ...

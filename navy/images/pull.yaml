@@ -5,109 +5,109 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/alpine.yaml").image.source }}":true}}'
+        filters: '{"reference":{"{{ $alpine.image.source }}":true}}'
       as:
-        id: local.alpine.image.json
+        id: localalpineimage
         scope: images.pull.alpine
-  - if: '{{ ne 1 (len (datasource "local.alpine.image.json")) }}'
+  - if: '{{ ne 1 (len $localalpineimage) }}'
     endpoint: /images/create
     method: POST
     loop:
       - id: images.pull.alpine
         query:
-          fromImage: {{ (datasource "datasources/alpine.yaml").image.source }}
-          tag: {{ (datasource "datasources/alpine.yaml").tag }}
+          fromImage: '{{ $alpine.image.source }}'
+          tag: '{{ $alpine.tag }}'
         depends_on:
-          - local.alpine.image.json
+          - localalpineimage
   - endpoint: /images/json
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/bash.yaml").image.source }}":true}}'
+        filters: '{"reference":{"{{ $bash.image.source }}":true}}'
       as:
-        id: local.bash.image.json
+        id: localbashimage
         scope: images.pull.bash.
-  - if: '{{ ne 1 (len (datasource "local.bash.image.json")) }}'
+  - if: {{ ne 1 (len $localbashimage) }}
     endpoint: /images/create
     method: POST
     loop:
       - id: images.pull.bash
         query:
-          fromImage: {{ (datasource "datasources/bash.yaml").image.source }}
-          tag: {{ (datasource "datasources/bash.yaml").tag }}
+          fromImage: '{{ $bash.image.source }}'
+          tag: '{{ $bash.tag }}'
         depends_on:
-          - local.bash.image.json
+          - localbashimage
   - endpoint: /images/json
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/buildkit.yaml").image.source }}":true}}'
+        filters: '{"reference":{"{{ $buildkit.image.source }}":true}}'
       as:
-        id: local.buildkit.image.json
+        id: localbuildkitimage
         scope: images.pull.buildkit
-  - if: '{{ ne 1 (len (datasource "local.buildkit.image.json")) }}'
+  - if: {{ ne 1 (len $localbuildkitimage) }}
     endpoint: /images/create
     method: POST
     loop:
       - id: images.pull.buildkit
         query:
-          fromImage: {{ (datasource "datasources/buildkit.yaml").image.source }}
-          tag: {{ (datasource "datasources/buildkit.yaml").tag }}
+          fromImage: '{{ $buildkit.image.source }}'
+          tag: '{{ $buildkit.tag }}'
         depends_on:
-          - local.buildkit.image.json
+          - localbuildkitimage
   - endpoint: /images/json
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/docker.yaml").image.source }}":true}}'
+        filters: '{"reference":{"{{ $docker.image.source }}":true}}'
       as:
-        id: local.docker.image.json
+        id: localdockerimage
         scope: images.pull.docker
-  - if: '{{ ne 1 (len (datasource "local.docker.image.json")) }}'
+  - if: {{ ne 1 (len $localdockerimage) }}
     endpoint: /images/create
     method: POST
     loop:
       - id: images.pull.docker
         query:
-          fromImage: {{ (datasource "datasources/docker.yaml").image.source }}
-          tag: {{ (datasource "datasources/docker.yaml").tag }}
+          fromImage: '{{ $docker.image.source }}'
+          tag: '{{ $docker.tag }}'
         depends_on:
-          - local.docker.image.json
+          - localdockerimage
   - endpoint: /images/json
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/socket-proxy.yaml").linuxserver.image.source }}":true}}'
+        filters: '{"reference":{"{{ $socketproxy.linuxserver.image.source }}":true}}'
       as:
-        id: local.proxy.image.json
+        id: localproxyimage
         scope: images.pull.proxy
-  - if: '{{ ne 1 (len (datasource "local.proxy.image.json")) }}'
+  - if: {{ ne 1 (len $localproxyimage) }}
     endpoint: /images/create
     method: POST
     loop:
       - id: images.pull.proxy
         query:
-          fromImage: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.image.source }}
-          tag: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
+          fromImage: '{{ $socketproxy.linuxserver.image.source }}'
+          tag: '{{ $socketproxy.linuxserver.tag }}'
         depends_on:
-          - local.proxy.image.json
+          - localproxyimage
   - endpoint: /images/json
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ (datasource "datasources/registry.yaml").image.source }}":true}}'
+        filters: '{"reference":{"{{ $registry.image.source }}":true}}'
       as:
-        id: local.registry.image.json
+        id: localregistryimage
         scope: images.pull.registry
-  - if: '{{ ne 1 (len (datasource "local.registry.image.json")) }}'
+  - if: {{ ne 1 (len $localregistryimage) }}
     endpoint: /images/create
     method: POST
     loop:
       - id: images.pull.registry
         query:
-          fromImage: {{ (datasource "datasources/registry.yaml").image.source }}
-          tag: {{ (datasource "datasources/registry.yaml").tag }}
+          fromImage: '{{ $registry.image.source }}'
+          tag: '{{ $registry.tag }}'
         depends_on:
-          - local.registry.image.json
+          - localregistryimage
 
 ...

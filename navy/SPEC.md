@@ -31,10 +31,10 @@ Objects:
 11. [Command](#Command-object)
     1. [argv](#Commandargv)
 12. [Datasource](#Datasource-object)
-    1. [scope](#Datasourcescope)
+    1. [source](#Datasourcesource)
+    2. [scope](#Datasourcescope)
 13. [Anchor](#Anchor-object)
-    1. [source](#Anchorsource)
-    2. [in](#Anchorin)
+    1. [in](#Anchorin)
 14. [Query & Path](#Query-amp-Path-dictionnaries)
 
 ## `datasources`
@@ -266,6 +266,7 @@ docker version --format '{{ .Server.APIVersion }}'
 ## Datasource object
 
 **description**: A gomplate YAML Datasource. **A Datasource have to be a YAML file to be correctly processed by Navy**.
+- id
 **exemples**:
 - Here an exemple of a Datasource object:
 ```yaml
@@ -287,6 +288,12 @@ message2: 'Your Docker Engine is using the {{ (ds "/context/version.json").ApiVe
 ...
 ```
 
+### `Datasource.source`
+
+**type**: string
+**required**: true
+**description**:
+
 ### `Datasource.scope`
 
 **type**: string
@@ -297,15 +304,10 @@ message2: 'Your Docker Engine is using the {{ (ds "/context/version.json").ApiVe
 ## Anchor object
 
 **description**: A YAML file containing anchors definitions.
+- source
 **exemples**:
 ```yaml
 ```
-
-### `Anchor.source`
-
-**type**: string
-**required**: true
-**description**:
 
 ### `Anchor.in`
 

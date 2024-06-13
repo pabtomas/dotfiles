@@ -2,16 +2,16 @@
 
 id: 'bash'
 image:
-  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/bash.yaml").id }}'
-  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/bash.yaml").id }}'
-  layer: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/bash.yaml").id }}'
-tag: '5.2-{{ (datasource "datasources/all.yaml").os.id }}{{ (datasource "datasources/all.yaml").os.tag }}'
+  source: 'docker.io{{ $all.sep.registry }}library{{ $all.sep.registry }}{{ $bash.id }}'
+  local: '{{ $registry.prefix.local }}{{ $bash.id }}'
+  layer: '{{ $registry.prefix.layer }}{{ $bash.id }}'
+tag: '5.2-{{ $all.os.id }}{{ $all.os.tag }}'
 path:
   etc:
     profile:
       d: '/etc/profile.d'
-  aliases: '{{ (datasource "datasources/bash.yaml").path.etc.profile.d }}/99aliases.d'
-  completion: '{{ (datasource "datasources/bash.yaml").path.etc.profile.d }}/99completion.d'
-  theme: '{{ (datasource "datasources/bash.yaml").path.etc.profile.d }}/10theme.d'
+  aliases: '{{ $bash.path.etc.profile.d }}/99aliases.d'
+  completion: '{{ $bash.path.etc.profile.d }}/99completion.d'
+  theme: '{{ $bash.path.etc.profile.d }}/10theme.d'
 
 ...

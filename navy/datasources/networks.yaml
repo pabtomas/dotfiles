@@ -3,34 +3,34 @@
 subnet_mask: '/24'
 id1: '172'
 id2: '17'
-prefix: '{{ (datasource "datasources/networks.yaml").id1 }}.{{ (datasource "datasources/networks.yaml").id2 }}'
+prefix: '{{ $networks.id1 }}.{{ $networks.id2 }}'
 
 docker_utils:
   name: 'docker-utils-net'
-  prefix: '{{ (datasource "datasources/networks.yaml").prefix }}.2'
-  subnet: '{{ (datasource "datasources/networks.yaml").docker_utils.prefix }}.0{{ (datasource "datasources/networks.yaml").subnet_mask }}'
+  prefix: '{{ $networks.prefix }}.2'
+  subnet: '{{ $networks.docker_utils.prefix }}.0{{ $networks.subnet_mask }}'
   gateway:
-    ip: '{{ (datasource "datasources/networks.yaml").docker_utils.prefix }}.1'
+    ip: '{{ $networks.docker_utils.prefix }}.1'
 
 jump_area:
   name: 'jump-area-net'
-  prefix: '{{ (datasource "datasources/networks.yaml").prefix }}.4'
-  subnet: '{{ (datasource "datasources/networks.yaml").jump_area.prefix }}.0{{ (datasource "datasources/networks.yaml").subnet_mask }}'
+  prefix: '{{ $networks.prefix }}.4'
+  subnet: '{{ $networks.jump_area.prefix }}.0{{ $networks.subnet_mask }}'
   gateway:
-    ip: '{{ (datasource "datasources/networks.yaml").jump_area.prefix }}.1'
+    ip: '{{ $networks.jump_area.prefix }}.1'
 
 proxified_docker_socket:
   name: 'profified-docker-socket-net'
-  prefix: '{{ (datasource "datasources/networks.yaml").prefix }}.1'
-  subnet: '{{ (datasource "datasources/networks.yaml").proxified_docker_socket.prefix }}.0{{ (datasource "datasources/networks.yaml").subnet_mask }}'
+  prefix: '{{ $networks.prefix }}.1'
+  subnet: '{{ $networks.proxified_docker_socket.prefix }}.0{{ $networks.subnet_mask }}'
   gateway:
-    ip: '{{ (datasource "datasources/networks.yaml").proxified_docker_socket.prefix }}.1'
+    ip: '{{ $networks.proxified_docker_socket.prefix }}.1'
 
 proxified_xserver_socket:
   name: 'profified-xserver-socket-net'
-  prefix: '{{ (datasource "datasources/networks.yaml").prefix }}.3'
-  subnet: '{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.prefix }}.0{{ (datasource "datasources/networks.yaml").subnet_mask }}'
+  prefix: '{{ $networks.prefix }}.3'
+  subnet: '{{ $networks.proxified_xserver_socket.prefix }}.0{{ $networks.subnet_mask }}'
   gateway:
-    ip: '{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.prefix }}.1'
+    ip: '{{ $networks.proxified_xserver_socket.prefix }}.1'
 
 ...

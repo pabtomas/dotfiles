@@ -1,13 +1,13 @@
 ---
 
 id: 'socket-proxy'
-host: '{{ (datasource "datasources/socket-proxy.yaml").id }}'
-image: '{{ (datasource "datasources/registry.yaml").prefix.owner }}{{ (datasource "datasources/socket-proxy.yaml").id }}'
-ip: '{{ (datasource "datasources/networks.yaml").proxified_docker_socket.prefix }}.2'
+host: '{{ $socketproxy.id }}'
+image: '{{ $registry.prefix.owner }}{{ $socketproxy.id }}'
+ip: '{{ $networks.proxified_docker_socket.prefix }}.2'
 linuxserver:
   image:
-    source: 'lscr.io{{ (datasource "datasources/all.yaml").sep.registry }}linuxserver{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/socket-proxy.yaml").id }}'
-    local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/socket-proxy.yaml").id }}'
+    source: 'lscr.io{{ $all.sep.registry }}linuxserver{{ $all.sep.registry }}{{ $socketproxy.id }}'
+    local: '{{ $registry.prefix.local }}{{ $socketproxy.id }}'
   tag: 'latest'
 port: 2363
 

@@ -3,7 +3,7 @@
 run:
   - id: commands.attach
     argv:
-      - docker attach {{ (datasource "datasources/jumper.yaml").host }}
+      - 'docker attach {{ $jumper.host }}'
     depends_on:
       - containers.start.jumper
 

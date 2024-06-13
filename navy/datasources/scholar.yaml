@@ -1,6 +1,6 @@
 ---
 
 id: 'scholar'
-host: '{{ (datasource "datasources/scholar.yaml").id }}'
+host: '{{ $scholar.id }}'
 
 ...

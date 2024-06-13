@@ -1,7 +1,7 @@
 ---
 
 id: 'sshd'
-image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/sshd.yaml").id }}'
+image: '{{ $registry.prefix.layer }}{{ $sshd.id }}'
 port: 22
 
 ...

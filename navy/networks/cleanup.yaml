@@ -7,11 +7,11 @@ post:
       query:
         filters: '{"label":{"navy":true}}'
       as:
-        id: post.networks.json
+        id: registerpostnetworks
   - endpoint: /networks/{id}
     method: DELETE
     from:
-      filter: '{{ $array := "" }}{{ range (datasource "post.networks.json") }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+      filter: '{{ $array := "" }}{{ range $registerpostnetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
         - post.networks.json
 

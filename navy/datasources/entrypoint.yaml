@@ -3,10 +3,10 @@
 id: 'entrypoint'
 path:
   entrypoint:
-    sh: '{{ (datasource "datasources/all.yaml").opt.scripts }}/docker_entrypoint.sh'
-    d: '{{ (datasource "datasources/entrypoint.yaml").path.entrypoint.sh | strings.ReplaceAll ".sh" ".d" }}'
+    sh: '{{ $all.opt.scripts }}/docker_entrypoint.sh'
+    d: '{{ entrypoint.path.entrypoint.sh | strings.ReplaceAll ".sh" ".d" }}'
   check:
-    sh: '{{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}/98check.sh'
-    d: '{{ (datasource "datasources/entrypoint.yaml").path.check.sh | strings.ReplaceAll ".sh" ".d" }}'
+    sh: '{{ entrypoint.path.entrypoint.d }}/98check.sh'
+    d: '{{ entrypoint.path.check.sh | strings.ReplaceAll ".sh" ".d" }}'
 
 ...

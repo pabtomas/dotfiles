@@ -5,9 +5,9 @@ run:
     method: GET
     register:
       as:
-        id: volumes.json
+        id: registervolumes
         scope: volumes.create.*
-  - if: '{{ $volumes := coll.Slice }}{{ range (datasource "volumes.json") }}{{ $volumes = $volumes | append .Name }}{{ end }}
+  - if: '{{ $volumes := coll.Slice }}{{ range $registervolumes }}{{ $volumes = $volumes | append .Name }}{{ end }}
       {{ or (not (has $net (datasource "datasources/volumes.yaml").carpenter_relay_xserver_socket_volume))
             (not (has $net (datasource "datasources/volumes.yaml").listener_opt_data_volume))
             (not (has $net (datasource "datasources/volumes.yaml").listener_opt_scripts_volume))

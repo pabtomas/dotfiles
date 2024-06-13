@@ -7,11 +7,11 @@ post:
       query:
         filters: '{"label":{"navy":true}}'
       as:
-        id: post.volumes.json
+        id: registerpostvolumes
   - endpoint: /volumes/{name}
     method: DELETE
     from:
-      filter: '{{ $array := "" }}{{ range (datasource "post.volumes.json") }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+      filter: '{{ $array := "" }}{{ range $registerpostvolumes }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
         - post.volumes.json
 

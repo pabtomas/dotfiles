@@ -2,13 +2,13 @@
 
 id: 'buildkit'
 image:
-  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}moby{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/buildkit.yaml").id }}'
-  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/buildkit.yaml").id }}'
+  source: 'docker.io{{ $all.sep.registry }}moby{{ $all.sep.registry }}{{ $buildkit.id }}'
+  local: '{{ $registry.prefix.local }}{{ $buildkit.id }}'
 tag: 'buildx-stable-1-rootless'
 path:
   conf: '/etc/buildkit/buildkitd.toml'
 target:
-  suffix: '{{ (datasource "datasources/builder.yaml").host }}{{ (datasource "datasources/all.yaml").sep.target }}{{ (datasource "datasources/builder.yaml").port }}'
-  tcp: 'tcp://{{ (datasource "datasources/buildkit.yaml").target.suffix }}'
+  suffix: '{{ $builder.host }}{{ $all.sep.target }}{{ $builder.port }}'
+  tcp: 'tcp://{{ $buildkit.target.suffix }}'
 
 ...

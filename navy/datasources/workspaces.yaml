@@ -1,10 +1,10 @@
 ---
 
 id: 'workspaces'
-image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/workspaces.yaml").id }}'
+image: '{{ $registry.prefix.layer }}{{ $workspaces.id }}'
 path:
-  root: '/{{ (datasource "datasources/workspaces.yaml").id }}'
-  spaceporn: '{{ (datasource "datasources/workspaces.yaml").root }}/{{ (datasource "datasources/spaceporn.yaml").id }}'
-  project: '{{ (datasource "datasources/workspaces.yaml").root }}/{{ (datasource "datasources/all.yaml").project }}'
+  root: '/{{ $workspaces.id }}'
+  spaceporn: '{{ $workspaces.root }}/{{ $spaceporn.id }}'
+  project: '{{ $workspaces.root }}/{{ $all.project }}'
 
 ...

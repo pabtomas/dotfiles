@@ -16,18 +16,18 @@ run:
         virtual: true
         query:
           buildargs:
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.sh }}
-            CHECK_ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}
-            ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.sh }}
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${ENTRYPOINT_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.sh }}'
+            CHECK_ENTRYPOINTD_PATH: '{{ $entrypoint.path.check.d }}'
+            ENTRYPOINT_PATH: '{{ $entrypoint.path.entrypoint.sh }}'
+            ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
+        context: '{{ $all.path.dockerfiles }}'/${ENTRYPOINT_ID}
         extends:
           - images.build.virtual.base
       - id: images.build.virtual.alpine.entrypoint
         virtual: true
         query:
           buildargs:
-            ENTRYPOINT_LAYER_IMG: {{ (datasource "datasources/entrypoint/alpine.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            ENTRYPOINT_LAYER_IMG: '{{ $entrypointalpine.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.build.alpine.entrypoint
         extends:
@@ -36,7 +36,7 @@ run:
         virtual: true
         query:
           buildargs:
-            BASH_LAYER_IMG: {{ (datasource "datasources/bash.yaml").image.layer }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            BASH_LAYER_IMG: '{{ $bash.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.build.bash
         extends:
@@ -45,7 +45,7 @@ run:
         virtual: true
         query:
           buildargs:
-            WORKSPACES_LAYER_IMG: {{ (datasource "datasources/workspaces.yaml").image.layer }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            WORKSPACES_LAYER_IMG: '{{ $workspaces.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.build.workspaces
         extends:
@@ -54,7 +54,7 @@ run:
         virtual: true
         query:
           buildargs:
-            SSHD_LAYER_IMG: {{ (datasource "datasources/sshd.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            SSHD_LAYER_IMG: '{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.build.sshd
         extends:
@@ -63,7 +63,7 @@ run:
         virtual: true
         query:
           buildargs:
-            GIT_LAYER_IMG: {{ (datasource "datasources/git.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            GIT_LAYER_IMG: '{{ $git.yaml").image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.build.git
         extends:
@@ -72,7 +72,7 @@ run:
         virtual: true
         query:
           buildargs:
-            NGINX_LAYER_IMG: {{ (datasource "datasources/nginx.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            NGINX_LAYER_IMG: '{{ $nginx.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - images.build.nginx
         extends:
@@ -81,12 +81,12 @@ run:
         virtual: true
         query:
           buildargs:
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
-            SOCAT_LAYER_IMG: {{ (datasource "datasources/socat.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
-            TMP_XSERVER_SOCKETS_PATH: {{ (datasource "datasources/xserver.yaml").path.sockets }}
-            XSERVER_IP: {{ (datasource "datasources/xserver.yaml").ip }}
-            XSERVER_PORT: {{ (datasource "datasources/xserver.yaml").port }}
-        context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${RELAY_ID}
+            ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
+            SOCAT_LAYER_IMG: '{{ $socat.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+            TMP_XSERVER_SOCKETS_PATH: '{{ $xserver.path.sockets }}'
+            XSERVER_IP: '{{ $xserver.ip }}'
+            XSERVER_PORT: '{{ $xserver.port }}'
+        context: '{{ $all.path.dockerfiles }}'/${RELAY_ID}
         depends_on:
           - images.build.socat
         extends:

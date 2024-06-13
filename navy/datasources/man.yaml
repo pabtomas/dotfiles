@@ -1,6 +1,6 @@
 ---
 
 id: 'man'
-image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/man.yaml").id }}'
+image: '{{ $registry.prefix.layer }}{{ $man.id }}'
 
 ...

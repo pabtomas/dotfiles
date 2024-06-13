@@ -2,14 +2,14 @@
 
 id: 'docker'
 image:
-  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/docker.yaml").id }}'
-  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/docker.yaml").id }}'
-  layer: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/docker.yaml").id }}'
+  source: 'docker.io{{ $all.sep.registry }}library{{ $all.sep.registry }}{{ $docker.id }}'
+  local: '{{ $registry.prefix.local }}{{ $docker.id }}'
+  layer: '{{ $registry.prefix.layer }}{{ $docker.id }}'
 tag: 'cli'
 target:
-  suffix: '{{ (datasource "datasources/socket-proxy.yaml").host }}{{ (datasource "datasources/all.yaml").sep.target }}{{ (datasource "datasources/socket-proxy.yaml").port }}'
-  http: 'http://{{ (datasource "datasources/docker.yaml").target.suffix }}'
-  tcp: 'tcp://{{ (datasource "datasources/docker.yaml").target.suffix }}'
+  suffix: '{{ $socketproxy.host }}{{ $all.sep.target }}{{ $socketproxy.port }}'
+  http: 'http://{{ $docker.target.suffix }}'
+  tcp: 'tcp://{{ $docker.target.suffix }}'
 path:
   plugins: '/usr/local/libexec/docker/cli-plugins'
   socket: '/var/run/docker.sock'

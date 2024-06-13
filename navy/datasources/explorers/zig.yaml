@@ -1,6 +1,6 @@
 ---
 
-id: '{{ (datasource "datasources/explorer.yaml").id }}{{ (datasource "datasources/all.yaml").sep.id }}{{ (datasource "datasources/zig.yaml").id }}'
-host: '{{ (datasource "datasources/explorers/zig.yaml").id }}'
+id: '{{ $explorer.id }}{{ $all.sep.id }}{{ $zig.id }}'
+host: '{{ $explorerzig.id }}'
 
 ...

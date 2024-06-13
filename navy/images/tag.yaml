@@ -6,50 +6,50 @@ run:
     loop:
       - id: images.tag.alpine
         query:
-          repo: {{ (datasource "datasources/alpine.yaml").image.local }}
-          tag: {{ (datasource "datasources/alpine.yaml").tag }}
+          repo: '{{ $alpine.image.local }}'
+          tag: '{{ $alpine.tag }}'
         path:
-          name: {{ (datasource "datasources/alpine.yaml").image.source }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/alpine.yaml").tag }}
+          name: '{{ $alpine.image.source }}{{ $all.sep.tag }}{{ $alpine.tag }}'
         depends_on:
           - images.pull.alpine
       - id: images.tag.bash
         query:
-          repo: {{ (datasource "datasources/bash.yaml").image.local }}
-          tag: {{ (datasource "datasources/bash.yaml").tag }}
+          repo: '{{ $bash.image.local }}'
+          tag: '{{ $bash.tag }}'
         path:
-          name: {{ (datasource "datasources/bash.yaml").image.source }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/bash.yaml").tag }}
+          name: '{{ $bash.image.source }}{{ $all.sep.tag }}{{ $bash.tag }}'
         depends_on:
           - images.pull.bash
       - id: images.tag.buildkit
         query:
-          repo: {{ (datasource "datasources/buildkit.yaml").image.local }}
-          tag: {{ (datasource "datasources/buildkit.yaml").tag }}
+          repo: '{{ $buildkit.image.local }}'
+          tag: '{{ $buildkit.tag }}'
         path:
-          name: {{ (datasource "datasources/buildkit.yaml").image.source }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/buildkit.yaml").tag }}
+          name: '{{ $buildkit.image.source }}{{ $all.sep.tag }}{{ $buildkit.tag }}'
         depends_on:
           - images.pull.buildkit
       - id: images.tag.docker
         query:
-          repo: {{ (datasource "datasources/docker.yaml").image.local }}
-          tag: {{ (datasource "datasources/docker.yaml").tag }}
+          repo: '{{ $docker.image.local }}'
+          tag: '{{ $docker.tag }}'
         path:
-          name: {{ (datasource "datasources/docker.yaml").image.source }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/docker.yaml").tag }}
+          name: '{{ $docker.image.source }}{{ $all.sep.tag }}{{ $docker.tag }}'
         depends_on:
           - images.pull.docker
       - id: images.tag.proxy
         query:
-          repo: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.image.local }}
-          tag: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
+          repo: '{{ $socketproxy.linuxserver.image.local }}'
+          tag: '{{ $socketproxy.linuxserver.tag }}'
         path:
-          name: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.image.source }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
+          name: '{{ $socketproxy.linuxserver.image.source }}{{ $all.sep.tag }}{{ $socketproxy.linuxserver.tag }}'
         depends_on:
           - images.pull.proxy
       - id: images.tag.registry
         query:
-          repo: {{ (datasource "datasources/registry.yaml").image.local }}
-          tag: {{ (datasource "datasources/registry.yaml").tag }}
+          repo: '{{ $registry.image.local }}'
+          tag: '{{ $registry.tag }}'
         path:
-          name: {{ (datasource "datasources/registry.yaml").image.source }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/registry.yaml").tag }}
+          name: '{{ $registry.image.source }}{{ $all.sep.tag }}{{ $registry.tag }}'
         depends_on:
           - images.pull.registry
 

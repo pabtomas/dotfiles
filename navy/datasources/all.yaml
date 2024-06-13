@@ -6,10 +6,10 @@ user:
   unprivileged: 'visitor'
 
 os:
-  id: '{{ (datasource "datasources/alpine.yaml").id }}'
+  id: '{{ $alpine.id }}'
   image:
-    local: '{{ (datasource "datasources/alpine.yaml").image.local }}'
-  tag: '{{ (datasource "datasources/alpine.yaml").tag }}'
+    local: '{{ $alpine.image.local }}'
+  tag: '{{ $alpine.tag }}'
 
 sep:
   id: '.'
@@ -22,7 +22,7 @@ sep:
 owner:
   name: 'tiawl'
   tag: 'latest'
-  url: 'https://github.com/{{ (datasource "datasources/all.yaml").owner.name }}'
+  url: 'https://github.com/{{ $all.owner.name }}'
 
 path:
   bin: '/usr/local/bin'
