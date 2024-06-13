@@ -2,6 +2,8 @@
 
 id: 'listener'
 host: '{{ (datasource "datasources/listener.yaml").id }}'
+image: '{{ (datasource "datasources/registry.yaml").prefix.owner }}{{ (datasource "datasources/listener.yaml").id }}'
+ip: '{{ (datasource "datasources/networks.yaml").proxified_docker_socket.prefix }}.3'
 path:
   completion: '{{ (datasource "datasources/all.yaml").path.opt.data }}/99completion'
 

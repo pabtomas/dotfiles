@@ -2,6 +2,19 @@
 
 id: 'registry'
 host: '{{ (datasource "datasources/registry.yaml").id }}'
+port: 5000
+ip: '{{ (datasource "datasources/networks.yaml").docker_utils.prefix }}.3'
+target: '{{ (datasource "datasources/registry.yaml").ip }}:{{ (datasource "datasources/registry.yaml").port }}'
+prefix:
+  global: '{{ (datasource "datasources/registry.yaml").target }}{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/all.yaml").project }}{{ (datasource "datasources/all.yaml").sep.registry }}'
+  owner: '{{ (datasource "datasources/registry.yaml").prefix.global }}{{ (datasource "datasources/all.yaml").owner }}{{ (datasource "datasources/all.yaml").sep.image }}'
+  local: '{{ (datasource "datasources/registry.yaml").prefix.owner }}local{{ (datasource "datasources/all.yaml").sep.image }}'
+  layer: '{{ (datasource "datasources/registry.yaml").prefix.owner }}layer{{ (datasource "datasources/all.yaml").sep.image }}'
+  relay: '{{ (datasource "datasources/registry.yaml").prefix.owner }}relay{{ (datasource "datasources/all.yaml").sep.image }}'
+  runner: '{{ (datasource "datasources/registry.yaml").prefix.owner }}runner{{ (datasource "datasources/all.yaml").sep.image }}'
+image:
+  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/registry.yaml").id }}'
+  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/registry.yaml").id }}'
 tag: '2'
 
 ...

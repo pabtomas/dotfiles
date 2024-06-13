@@ -1,6 +1,7 @@
 ---
 
 id: 'nginx'
+image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/nginx.yaml").id }}'
 path:
   etc: '/etc/nginx'
   confd: '{{ (datasource "datasources/nginx.yaml").path.etc }}/conf.d'

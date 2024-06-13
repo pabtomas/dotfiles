@@ -1,9 +1,0 @@
----
-
-linuxserver:
-  id: 'linuxserver_proxy'
-  tag: 'latest'
-id: 'proxy'
-host: '{{ (datasource "datasources/proxy.yaml").id }}'
-
-...

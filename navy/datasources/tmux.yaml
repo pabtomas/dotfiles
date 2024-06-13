@@ -1,6 +1,7 @@
 ---
 
 id: 'tmux'
+image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/tmux.yaml").id }}'
 path:
   tpm: '/root/.tmux/plugins/tpm'
 

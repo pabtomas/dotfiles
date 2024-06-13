@@ -1,5 +1,6 @@
 ---
 
-shell: 'shell'
+id: 'shell'
+image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/shell.yaml").id }}'
 
 ...

@@ -8,9 +8,9 @@ run:
         query:
           buildargs:
             _BUILDKIT_CONF_PATH: {{ (datasource "datasources/buildkit.yaml").path.conf }}
-            _BUILDKIT_LOCAL_IMG: ${_BUILDKIT_LOCAL_IMG}:{{ (datasource "datasources/buildkit.yaml").tag }}
+            _BUILDKIT_LOCAL_IMG: {{ (datasource "datasources/buildkit.yaml").image.local }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/buildkit.yaml").tag }}
             REGISTRY_TARGET: ${REGISTRY_TARGET}
-          t: ${BUILDER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          t: {{ (datasource "datasources/builder.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${BUILDER_ID}
         depends_on:
           - images.tag.buildkit
@@ -20,15 +20,15 @@ run:
         query:
           buildargs:
             LOG_ID: ${CARPENTER_ID}
-          t: ${CARPENTER_RELAY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          t: {{ (datasource "datasources/carpenter/relay.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         extends:
           - images.build.virtual.relay
       - id: images.build.carpenter.runner
         query:
           buildargs:
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.execd }}
-            SPECTRWM_LAYER_IMG: ${SPECTRWM_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
-          t: ${CARPENTER_RUNNER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
+            SPECTRWM_LAYER_IMG: {{ (datasource "datasources/spectrwm.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+          t: {{ (datasource "datasources/carpenter/runner.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${CARPENTER_ID}
         depends_on:
           - images.build.spectrwm
@@ -39,18 +39,18 @@ run:
           buildargs:
             BASH_COMPLETION_PATH: {{ (datasource "datasources/bash.yaml").path.completion }}
             BASH_THEME_PATH: {{ (datasource "datasources/bash.yaml").path.theme }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.checkd }}/99${JUMPER_ID}.sh
+            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${JUMPER_ID}.sh
             COMPLETION_PATH: /opt/${LISTENER_ID}{{ (datasource "datasources/listener.yaml").path.completion }}
             CONTROLLER_ID: ${CONTROLLER_ID}
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.execd }}
+            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
             NET_PFX: ${JUMP_AREA_PFX}
             OPT_SCRIPTS_PATH: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
             OPT_SSH_PATH: {{ (datasource "datasources/all.yaml").path.opt.ssh }}
             SSH_PORT: ${SSH_PORT}
             SSH_ROOT_PATH: {{ (datasource "datasources/all.yaml").path.root.ssh }}
             TCP_DOCKER_TARGET: ${TCP_DOCKER_TARGET}
-            TMUX_LAYER_IMG: ${TMUX_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
-          t: ${JUMPER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+            TMUX_LAYER_IMG: {{ (datasource "datasources/tmux.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+          t: {{ (datasource "datasources/jumper.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${JUMPER_ID}
         depends_on:
           - images.build.tmux
@@ -60,15 +60,15 @@ run:
         query:
           buildargs:
             _DOCKER_SOCKET_PATH: {{ (datasource "datasources/docker.yaml").path.socket }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.checkd }}/99${LISTENER_ID}.sh
+            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${LISTENER_ID}.sh
             COMPLETION_PATH: {{ (datasource "datasources/listener.yaml").path.completion }}
             DATA_PATH: {{ (datasource "datasources/all.yaml").path.opt.data }}
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.execd }}
+            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
             HTTP_DOCKER_TARGET: ${HTTP_DOCKER_TARGET}
-            NET: {{ (datasource "datasources/networks.yaml").jump_area_network }}
+            NET: {{ (datasource "datasources/networks.yaml").jump_area.name }}
             OPT_SCRIPTS_PATH: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
             VAR_LOG_PATH: {{ (datasource "datasources/all.yaml").path.var.log }}
-          t: ${LISTENER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          t: {{ (datasource "datasources/listener.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${LISTENER_ID}
         extends:
           - images.build.virtual.alpine.entrypoint
@@ -100,15 +100,15 @@ run:
             API_PFX: ${API_PFX}
             API_TAG: {{ (datasource "datasources/all.yaml").api.tag }}
             API_URL: ${API_URL}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.checkd }}/99${PROXY_ID}.sh
-            CONTROLLER_IP: {{ (datasource "datasources/networks.yaml").controller_ip }}
-            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.execd }}
+            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${PROXY_ID}.sh
+            CONTROLLER_IP: {{ (datasource "datasources/controller.yaml").ip }}
+            ENTRYPOINTD_PATH: {{ (datasource "datasources/entrypoint.yaml").path.entrypoint.d }}
             ETC_NGINX_HTTPD_PATH: {{ (datasource "datasources/nginx.yaml").path.httpd }}
-            HTTP_LAYER_IMG: ${HTTP_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
-            LISTENER_IP: {{ (datasource "datasources/networks.yaml").listener_ip }}
+            HTTP_LAYER_IMG: {{ (datasource "datasources/http.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
+            LISTENER_IP: {{ (datasource "datasources/listener.yaml").ip }}
             OPT_SCRIPTS_PATH: {{ (datasource "datasources/all.yaml").path.opt.scripts }}
             PROXY_PORT: ${PROXY_PORT}
-          t: ${PROXY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          t: {{ (datasource "datasources/socket-proxy.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${PROXY_ID}
         depends_on:
           - images.build.http
@@ -118,21 +118,21 @@ run:
         query:
           buildargs:
             LOG_ID: ${SPACEPORN_ID}
-          t: ${SPACEPORN_RELAY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          t: {{ (datasource "datasources/spaceporn/relay.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         extends:
           - images.build.virtual.relay
       - id: images.build.xserver
         query:
           buildargs:
-            CARPENTER_RELAY_IP: {{ (datasource "datasources/networks.yaml").carpenter_relay_ip }}
-            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.checkd }}/99${XSERVER_ID}.sh
+            CARPENTER_RELAY_IP: {{ (datasource "datasources/carpenter/relay.yaml").ip }}
+            CHECK_ENTRYPOINT_PATH: {{ (datasource "datasources/entrypoint.yaml").path.check.d }}/99${XSERVER_ID}.sh
             ETC_NGINX_CONFD_PATH: {{ (datasource "datasources/nginx.yaml").path.confd }}
             ETC_NGINX_PATH: {{ (datasource "datasources/nginx.yaml").path.etc }}
-            SPACEPORN_RELAY_IP: {{ (datasource "datasources/networks.yaml").spaceporn_relay_ip }}
+            SPACEPORN_RELAY_IP: {{ (datasource "datasources/spaceporn/relay.yaml").ip }}
             VAR_LOG_NGINX_PATH: {{ (datasource "datasources/nginx.yaml").path.var.log }}
             XSERVER_PORT: ${XSERVER_PORT}
             XSERVER_SOCKET_PATH: {{ (datasource "datasources/xserver.yaml").path.display }}
-          t: ${XSERVER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          t: {{ (datasource "datasources/xserver.yaml").image }}{{ (datasource "datasources/all.yaml").sep.tag }}{{ (datasource "datasources/all.yaml").owner.tag }}
         context: {{ (datasource "datasources/all.yaml").path.dockerfiles }}/${XSERVER_ID}
         extends:
           - images.build.virtual.nginx

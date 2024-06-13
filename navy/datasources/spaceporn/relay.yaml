@@ -1,6 +1,8 @@
 ---
 
-id: '{{ (datasource "datasources/spaceporn.yaml").id }}{{ (datasource "all.yaml").sep.id }}{{ (datasource "datasources/relay.yaml").id }}'
+id: '{{ (datasource "datasources/spaceporn.yaml").id }}{{ (datasource "datasources/all.yaml").sep.id }}{{ (datasource "datasources/relay.yaml").id }}'
 host: '{{ (datasource "datasources/spaceporn/relay.yaml").id }}'
+image: '{{ (datasource "datasources/registry.yaml").prefix.relay }}{{ (datasource "datasources/spaceporn.yaml").id }}'
+ip: '{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.prefix }}.4'
 
 ...

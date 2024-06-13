@@ -19,9 +19,9 @@ main ()
   # define default values
 
   # if cache not found:
-  #   - catch /info & /version endpoints as special context datasource:
-  #     - add warning if Register overrides context datasource
-  #     - add warning if user file overrides context datasource
+  #   - catch /info & /version endpoints as special /context datasource:
+  #     - add warning if Register overrides /context datasource
+  #     - add warning if user file overrides /context datasource
   #   - gomplate to resolve GO templates with datasources:
   #       Use this CLI to expand templates into values but not in keys (improve
   #       it to works (recursively) with dictionnaries):

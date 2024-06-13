@@ -1,21 +1,7 @@
 ---
 
-bash_entrypoint: '{{ (datasource "datasources/all.yaml").bash }}_{{ (datasource "datasources/all.yaml").entrypoint }}'
-git: 'git'
-http: 'http'
-layer: 'layer'
-linguist: 'linguist'
-local: 'local'
-man: 'man'
-pass: 'pass'
-socat: 'socat'
-spectrwm: 'spectrwm'
-sshd: 'sshd'
-vim: 'vim'
-virtual: 'virtual'
-
 api:
-  tag: '{{ (datasource "context.version").ApiVersion }}'
+  tag: '{{ (datasource "/context/version.json").ApiVersion }}'
 
 project: 'mywhalefleet'
 
@@ -27,11 +13,12 @@ os:
   tag: '{{ (datasource "datasources/alpine.yaml").tag }}'
 
 sep:
-  id: '/'
+  id: '.'
+  host: '.'
   registry: '/'
   image: '.'
   tag: ':'
-  host: '.'
+  target: ':'
 
 owner:
   name: 'tiawl'

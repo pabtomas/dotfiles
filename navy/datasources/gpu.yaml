@@ -1,6 +1,7 @@
 ---
 
 id: 'gpu'
+image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/gpu.yaml").id }}'
 path:
   dev:
     gpu: '/dev/dri'

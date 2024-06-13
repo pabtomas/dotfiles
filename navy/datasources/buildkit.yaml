@@ -1,6 +1,9 @@
 ---
 
 id: 'buildkit'
+image:
+  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}moby{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/buildkit.yaml").id }}'
+  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/buildkit.yaml").id }}'
 tag: 'buildx-stable-1-rootless'
 path:
   conf: '/etc/buildkit/buildkitd.toml'

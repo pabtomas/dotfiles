@@ -2,6 +2,7 @@
 
 id: 'jumper'
 host: '{{ (datasource "datasources/jumper.yaml").id }}'
+image: '{{ (datasource "datasources/registry.yaml").prefix.owner }}{{ (datasource "datasources/jumper.yaml").id }}'
 path:
   listener:
     opt:
@@ -10,11 +11,11 @@ path:
     var:
       log: '/opt/{{ (datasource "datasources/listener.yaml").id }}{{ (datasource "datasources/all.yaml").path.var.log }}'
   proxy:
-    etc: '/opt/{{ (datasource "datasources/proxy.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.etc }}'
+    etc: '/opt/{{ (datasource "datasources/socket-proxy.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.etc }}'
     opt:
-      scripts: '/opt/{{ (datasource "datasources/proxy.yaml").id }}{{ (datasource "datasources/all.yaml").path.opt.scripts }}'
+      scripts: '/opt/{{ (datasource "datasources/socket-proxy.yaml").id }}{{ (datasource "datasources/all.yaml").path.opt.scripts }}'
     var:
-      log: '/opt/{{ (datasource "datasources/proxy.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.var.log }}'
+      log: '/opt/{{ (datasource "datasources/socket-proxy.yaml").id }}{{ (datasource "datasources/nginx.yaml").path.var.log }}'
   relay:
     var:
       log: '/opt/{{ (datasource "datasources/relay.yaml").id }}{{ (datasource "datasources/all.yaml").path.var.log }}'

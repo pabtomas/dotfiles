@@ -88,7 +88,7 @@ run:
       - id: images.pull.proxy
         query:
           fromImage: ${LINUXSERVER_PROXY_IMG}
-          tag: {{ (datasource "datasources/proxy.yaml").linuxserver.tag }}
+          tag: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
         depends_on:
           - local.proxy.image.json
   - endpoint: /images/json

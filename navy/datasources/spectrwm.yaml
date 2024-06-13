@@ -1,0 +1,6 @@
+---
+
+id: 'spectrwm'
+image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/spectrwm.yaml").id }}'
+
+...

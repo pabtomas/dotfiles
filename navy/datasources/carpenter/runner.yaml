@@ -1,6 +1,7 @@
 ---
 
-id: '{{ (datasource "datasources/carpenter.yaml").id }}{{ (datasource "all.yaml").sep.id }}{{ (datasource "datasources/runner.yaml").id }}'
+id: '{{ (datasource "datasources/carpenter.yaml").id }}{{ (datasource "datasources/all.yaml").sep.id }}{{ (datasource "datasources/runner.yaml").id }}'
 host: '{{ (datasource "datasources/carpenter/runner.yaml").id }}'
+image: '{{ (datasource "datasources/registry.yaml").prefix.runner }}{{ (datasource "datasources/carpenter.yaml").id }}'
 
 ...

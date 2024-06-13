@@ -14,15 +14,15 @@ run:
       - id: containers.create.virtual.docker
         virtual: true
         query:
-          Image: ${_DOCKER_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${_DOCKER_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           NetworkingConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").docker_utils_network }}: {}
-              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}: {}
+              {{ (datasource "datasources/networks.yaml").docker_utils.name }}: {}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}: {}
         depends_on:
           - images.build.docker
-          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils_network }}
-          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils.name }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.isolated
@@ -35,7 +35,7 @@ run:
       - id: containers.create.virtual.gpu
         virtual: true
         query:
-          Image: ${GPU_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${GPU_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           Devices:
             - PathOnHost: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
               PathInContainer: {{ (datasource "datasources/gpu.yaml").path.dev.gpu }}
@@ -53,7 +53,7 @@ run:
       - id: containers.create.virtual.man
         virtual: true
         query:
-          Image: ${MAN_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${MAN_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.man
         extends:
@@ -61,7 +61,7 @@ run:
       - id: containers.create.virtual.pass
         virtual: true
         query:
-          Image: ${PASS_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${PASS_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.pass
         extends:
@@ -83,17 +83,17 @@ run:
             ReadonlyRootfs: true
           NetworkingConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").docker_utils_network }}: {}
+              {{ (datasource "datasources/networks.yaml").docker_utils.name }}: {}
         depends_on:
           - images.build.registry
-          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils.name }}
           - volumes.create.${REGISTRY_VOLUME}
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.sshd
         virtual: true
         query:
-          Image: ${SSHD_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${SSHD_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           ExposedPorts:
             - ${SSH_PORT}/tcp
           HostConfig:
@@ -106,10 +106,10 @@ run:
                 Target: {{ (datasource "datasources/bash.yaml").path.theme }}
           NetworkingConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").jump_area_network }}: {}
+              {{ (datasource "datasources/networks.yaml").jump_area.name }}: {}
         depends_on:
           - images.build.sshd
-          - networks.create.{{ (datasource "datasources/networks.yaml").jump_area_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").jump_area.name }}
           - volume.create.${SSH_VOLUME}
           - volume.create.${THEME_VOLUME}
         extends:
@@ -117,7 +117,7 @@ run:
       - id: containers.create.virtual.shell
         virtual: true
         query:
-          Image: ${SHELL_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${SHELL_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.shell
         extends:
@@ -125,7 +125,7 @@ run:
       - id: containers.create.virtual.vim
         virtual: true
         query:
-          Image: ${VIM_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${VIM_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.vim
         extends:
@@ -133,7 +133,7 @@ run:
       - id: containers.create.virtual.zig
         virtual: true
         query:
-          Image: ${ZIG_LAYER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${ZIG_LAYER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
         depends_on:
           - images.build.zig
         extends:

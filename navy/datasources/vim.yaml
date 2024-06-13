@@ -1,0 +1,6 @@
+---
+
+id: 'vim'
+image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/vim.yaml").id }}'
+
+...

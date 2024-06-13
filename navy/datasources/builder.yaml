@@ -2,5 +2,7 @@
 
 id: 'builder'
 host: '{{ (datasource "datasources/builder.yaml").id }}'
+image: '{{ (datasource "datasources/registry.yaml").prefix.owner }}{{ (datasource "datasources/builder.yaml").id }}'
+ip: '{{ (datasource "datasources/networks.yaml").docker_utils.prefix }}.4'
 
 ...

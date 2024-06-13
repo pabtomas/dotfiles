@@ -77,7 +77,7 @@ run:
           - containers.start.proxy
       - id: containers.start.proxy
         path:
-          id: {{ (datasource "datasources/proxy.yaml").host }}
+          id: {{ (datasource "datasources/socket-proxy.yaml").host }}
         depends_on:
           - containers.create.proxy
       - id: containers.start.registry

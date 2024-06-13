@@ -39,9 +39,9 @@ run:
       - id: images.tag.proxy
         query:
           repo: ${LINUXSERVER_PROXY_LOCAL_IMG}
-          tag: {{ (datasource "datasources/proxy.yaml").linuxserver.tag }}
+          tag: {{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
         path:
-          name: ${LINUXSERVER_PROXY_IMG}:{{ (datasource "datasources/proxy.yaml").linuxserver.tag }}
+          name: ${LINUXSERVER_PROXY_IMG}:{{ (datasource "datasources/socket-proxy.yaml").linuxserver.tag }}
         depends_on:
           - images.pull.proxy
       - id: images.tag.registry

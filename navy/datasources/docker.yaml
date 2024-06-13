@@ -1,6 +1,10 @@
 ---
 
 id: 'docker'
+image:
+  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/docker.yaml").id }}'
+  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/docker.yaml").id }}'
+  layer: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/docker.yaml").id }}'
 tag: 'cli'
 path:
   plugins: '/usr/local/libexec/docker/cli-plugins'

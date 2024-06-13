@@ -1,0 +1,6 @@
+---
+
+id: 'socat'
+image: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/socat.yaml").id }}'
+
+...

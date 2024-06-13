@@ -8,10 +8,10 @@ run:
         id: networks.json
         scope: networks.create.*
   - if: '{{ $net := coll.Slice }}{{ range (datasource "networks.json") }}{{ $net = $net | append .Name }}{{ end }}
-      {{ or (not (has $net (datasource "datasources/networks.yaml").docker_network))
-            (not (has $net (datasource "datasources/networks.yaml").proxified_docker_socket_network))
-            (not (has $net (datasource "datasources/networks.yaml").proxified_xserver_socket_network))
-            (not (has $net (datasource "datasources/networks.yaml").jum_area_network)) }}'
+      {{ or (not (has $net (datasource "datasources/networks.yaml").docker_utils.name))
+            (not (has $net (datasource "datasources/networks.yaml").proxified_docker_socket.name))
+            (not (has $net (datasource "datasources/networks.yaml").proxified_xserver_socket.name))
+            (not (has $net (datasource "datasources/networks.yaml").jum_area.name)) }}'
     endpoint: /networks/create
     method: POST
     loop:
@@ -25,44 +25,44 @@ run:
             navy: true
         depends_on:
           - networks.json
-      - id: networks.create.{{ (datasource "datasources/networks.yaml").docker_utils_network }}
+      - id: networks.create.{{ (datasource "datasources/networks.yaml").docker_utils.name }}
         query:
-          Name: {{ (datasource "datasources/networks.yaml").docker_utils_network }}
+          Name: {{ (datasource "datasources/networks.yaml").docker_utils.name }}
           IPAM:
             Config:
-              - Subnet: {{ (datasource "datasources/networks.yaml").docker_utils_subnet }}
-                IPRange: {{ (datasource "datasources/networks.yaml").docker_utils_subnet }}
-                Gateway: {{ (datasource "datasources/networks.yaml").docker_utils_gateway_ip }}
+              - Subnet: {{ (datasource "datasources/networks.yaml").docker_utils.subnet }}
+                IPRange: {{ (datasource "datasources/networks.yaml").docker_utils.subnet }}
+                Gateway: {{ (datasource "datasources/networks.yaml").docker_utils.gateway.ip }}
         extends:
           - networks.create.virtual
-      - id: networks.create.{{ (datasource "datasources/networks.yaml").jump_area_network }}
+      - id: networks.create.{{ (datasource "datasources/networks.yaml").jump_area.name }}
         query:
-          Name: {{ (datasource "datasources/networks.yaml").jump_area_network }}
+          Name: {{ (datasource "datasources/networks.yaml").jump_area.name }}
           IPAM:
             Config:
-              - Subnet: {{ (datasource "datasources/networks.yaml").jump_area_subnet }}
-                IPRange: {{ (datasource "datasources/networks.yaml").jump_area_subnet }}
-                Gateway: {{ (datasource "datasources/networks.yaml").jump_area_gateway_ip }}
+              - Subnet: {{ (datasource "datasources/networks.yaml").jump_area.subnet }}
+                IPRange: {{ (datasource "datasources/networks.yaml").jump_area.subnet }}
+                Gateway: {{ (datasource "datasources/networks.yaml").jump_area.gateway.ip }}
         extends:
           - networks.create.virtual
-      - id: networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
+      - id: networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}
         query:
-          Name: {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
+          Name: {{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}
           IPAM:
             Config:
-              - Subnet: {{ (datasource "datasources/networks.yaml").proxified_docker_socket_subnet }}
-                IPRange: {{ (datasource "datasources/networks.yaml").proxified_docker_socket_subnet }}
-                Gateway: {{ (datasource "datasources/networks.yaml").proxified_docker_socket_gateway_ip }}
+              - Subnet: {{ (datasource "datasources/networks.yaml").proxified_docker_socket.subnet }}
+                IPRange: {{ (datasource "datasources/networks.yaml").proxified_docker_socket.subnet }}
+                Gateway: {{ (datasource "datasources/networks.yaml").proxified_docker_socket.gateway.ip }}
         extends:
           - networks.create.virtual
-      - id: networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
+      - id: networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}
         query:
-          Name: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
+          Name: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}
           IPAM:
             Config:
-              - Subnet: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_subnet }}
-                IPRange: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_subnet }}
-                Gateway: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_gateway_ip }}
+              - Subnet: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket.subnet }}
+                IPRange: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket.subnet }}
+                Gateway: {{ (datasource "datasources/networks.yaml").proxified_xserver_socket.gateway.ip }}
         extends:
           - networks.create.virtual
 

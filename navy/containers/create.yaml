@@ -11,7 +11,7 @@ run:
         query:
           name: {{ (datasource "datasources/builder.yaml" ).host }}
           Hostname: {{ (datasource "datasources/builder.yaml" ).host }}
-          Image: ${BUILDER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${BUILDER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           Cmd:
             - --addr
             - tcp://0.0.0.0:${BUILDER_PORT}
@@ -26,17 +26,17 @@ run:
               - seccomp:unconfined
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").docker_utils_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").builder_ip }}
+              {{ (datasource "datasources/networks.yaml").docker_utils.name }}:
+                IPv4Address: {{ (datasource "datasources/builder.yaml").ip }}
         depends_on:
           - images.build.builder
-          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").docker_utils.name }}
         extends:
           - containers.create.virtual.base
       - id: containers.create.carpenter.relay
           name: {{ (datasource "datasources/carpenter/relay.yaml" ).host }}
           Hostname: {{ (datasource "datasources/carpenter/relay.yaml" ).host }}
-          Image: ${CARPENTER_RELAY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${CARPENTER_RELAY_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -48,11 +48,11 @@ run:
             ReadonlyRootfs: true
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").carpenter_relay_ip }}
+              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}:
+                IPv4Address: {{ (datasource "datasources/carpenter/relay.yaml").ip }}
         depends_on:
           - images.build.carpenter.relay
-          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}
           - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${RELAY_VAR_LOG_VOLUME}
         extends:
@@ -60,7 +60,7 @@ run:
       - id: containers.create.carpenter.runner
           name: {{ (datasource "datasources/carpenter/runner.yaml" ).host }}
           Hostname: {{ (datasource "datasources/carpenter/runner.yaml" ).host }}
-          Image: ${CARPENTER_RUNNER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${CARPENTER_RUNNER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           HostConfig:
             Mounts:
               - <<: *readonly-volume
@@ -81,10 +81,10 @@ run:
                 Target: {{ (datasource "datasources/workspaces.yaml").path.project }}
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").docker_utils_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").client_ip }}
-              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").controller_ip }}
+              {{ (datasource "datasources/networks.yaml").docker_utils.name }}:
+                IPv4Address: {{ (datasource "datasources/controller.yaml").ip.docker_utils }}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}:
+                IPv4Address: {{ (datasource "datasources/controller.yaml").ip.proxified_docker_socket }}
         depends_on:
           - volumes.create.${MYWHALEFLEET_VOLUME}
         extends:
@@ -132,13 +132,13 @@ run:
       - id: containers.create.jumper
           name: {{ (datasource "datasources/jumper.yaml" ).host }}
           Hostname: {{ (datasource "datasources/jumper.yaml" ).host }}
-          Image: ${JUMPER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${JUMPER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           Tty: true
           AttachStdout: true
           AttachStderr: true
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").jump_area_network }}: {}
+              {{ (datasource "datasources/networks.yaml").jump_area.name }}: {}
           HostConfig:
             Mounts:
               - <<: *readonly-volume
@@ -179,7 +179,7 @@ run:
                 Target: {{ (datasource "datasources/jumper.yaml").path.xserver.var.log }}
         depends_on:
           - images.build.jumper
-          - networks.create.{{ (datasource "datasources/networks.yaml").jump_area_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").jump_area.name }}
           - volumes.create.${LISTENER_OPT_DATA_VOLUME}
           - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
           - volumes.create.${LISTENER_VAR_LOG_VOLUME}
@@ -196,11 +196,11 @@ run:
       - id: containers.create.listener
           name: {{ (datasource "datasources/listener.yaml" ).host }}
           Hostname: {{ (datasource "datasources/listener.yaml" ).host }}
-          Image: ${LISTENER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${LISTENER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").listener_ip }}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}:
+                IPv4Address: {{ (datasource "datasources/listener.yaml").ip }}
           HostConfig:
             Mounts:
               - <<: *volume
@@ -215,22 +215,22 @@ run:
             ReadonlyRootfs: true
         depends_on:
           - images.build.jumper
-          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}
           - volumes.create.${LISTENER_OPT_DATA_VOLUME}
           - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
           - volumes.create.${LISTENER_VAR_LOG_VOLUME}
         extends:
           - containers.create.virtual.base
       - id: containers.create.proxy
-          name: {{ (datasource "datasources/proxy.yaml" ).host }}
-          Hostname: {{ (datasource "datasources/proxy.yaml" ).host }}
-          Image: ${PROXY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          name: {{ (datasource "datasources/socket-proxy.yaml" ).host }}
+          Hostname: {{ (datasource "datasources/socket-proxy.yaml" ).host }}
+          Image: ${PROXY_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           ExposedPorts:
             - ${PROXY_PORT}/tcp
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").proxy_ip }}
+              {{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}:
+                IPv4Address: {{ (datasource "datasources/socket-proxy.yaml").ip }}
           HostConfig:
             Mounts:
               - <<: *readonly-bind
@@ -251,7 +251,7 @@ run:
               /tmp: ""
         depends_on:
           - images.build.proxy
-          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_docker_socket.name }}
           - volumes.create.${PROXY_ETC_NGINX_VOLUME}
           - volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
           - volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
@@ -262,8 +262,8 @@ run:
           Hostname: {{ (datasource "datasources/registry.yaml" ).host }}
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").docker_utils_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").registry_ip }}
+              {{ (datasource "datasources/networks.yaml").docker_utils.name }}:
+                IPv4Address: {{ (datasource "datasources/registry.yaml").ip }}
         extends:
           - containers.create.virtual.registry
       - id: containers.create.safedeposit
@@ -287,7 +287,7 @@ run:
       - id: containers.create.spaceporn.relay
           name: {{ (datasource "datasources/spaceporn/relay.yaml" ).host }}
           Hostname: {{ (datasource "datasources/spaceporn/relay.yaml" ).host }}
-          Image: ${SPACEPORN_RELAY_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${SPACEPORN_RELAY_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           HostConfig:
             ReadonlyRootfs: true
             Mounts:
@@ -299,11 +299,11 @@ run:
                 target: {{ (datasource "datasources/all.yaml").path.var.log }}
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").spaceporn_relay_ip }}
+              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}:
+                IPv4Address: {{ (datasource "datasources/spaceporn/relay.yaml").ip }}
         depends_on:
           - images.build.spaceporn.relay
-          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}
           - volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
           - volumes.create.${RELAY_VAR_LOG_VOLUME}
         extends:
@@ -330,13 +330,13 @@ run:
       - id: containers.create.xserver
           name: {{ (datasource "datasources/xserver.yaml" ).host }}
           Hostname: {{ (datasource "datasources/xserver.yaml" ).host }}
-          Image: ${XSERVER_IMG}:{{ (datasource "datasources/all.yaml").os.tag }}
+          Image: ${XSERVER_IMG}:{{ (datasource "datasources/all.yaml").owner.tag }}
           ExposedPorts:
             - ${XSERVER_PORT}/tcp
           NetworkConfig:
             EndpointsConfig:
-              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}:
-                IPv4Address: {{ (datasource "datasources/networks.yaml").xserver_ip }}
+              {{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}:
+                IPv4Address: {{ (datasource "datasources/xserver.yaml").ip }}
           HostConfig:
             ReadonlyRootfs: true
             SecurityOpt:
@@ -358,7 +358,7 @@ run:
               /run: ""
         depends_on:
           - images.build.xserver
-          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket_network }}
+          - networks.create.{{ (datasource "datasources/networks.yaml").proxified_xserver_socket.name }}
           - volumes.create.${XSERVER_ETC_NGINX_VOLUME}
           - volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
           - volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}

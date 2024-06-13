@@ -1,6 +1,10 @@
 ---
 
 id: 'bash'
+image:
+  source: 'docker.io{{ (datasource "datasources/all.yaml").sep.registry }}library{{ (datasource "datasources/all.yaml").sep.registry }}{{ (datasource "datasources/bash.yaml").id }}'
+  local: '{{ (datasource "datasources/registry.yaml").prefix.local }}{{ (datasource "datasources/bash.yaml").id }}'
+  layer: '{{ (datasource "datasources/registry.yaml").prefix.layer }}{{ (datasource "datasources/bash.yaml").id }}'
 tag: '5.2-{{ (datasource "datasources/all.yaml").os.id }}{{ (datasource "datasources/all.yaml").os.tag }}'
 path:
   etc:
