@@ -131,6 +131,14 @@ versions:
 - **description**: A list of Requests and Commands. If a Request (or Command) in this list fails, Navy skips whatever comes after in this list and run the `post` list.
 - **exemple**:
 ```yaml
+run:
+  - endpoint: /volumes/create
+    method: POST
+    loop:
+      - query:
+          Name: my-volume
+      - query:
+          Name: my-volume-2
 ```
 
 ## `post`
@@ -139,6 +147,19 @@ versions:
 - **required**: false
 - **default**: `[]`
 - **description**: A list of Requests and Commands reserved for cleanup actions. Navy will run every Request (or Command) in this list whatever happens.
+- **exemple**:
+```yaml
+post:
+  - endpoint: /volumes/{name}
+    method: DELETE
+    from:
+      - path:
+          name: my-volume
+      - path:
+          name: my-volume-2
+        query:
+          force: true
+```
 
 ## Request object
 
