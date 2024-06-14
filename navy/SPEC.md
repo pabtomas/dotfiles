@@ -27,6 +27,7 @@
     - [extends](#bodyextends)
     - [context](#bodycontext)
 9. [Register](#register-object)
+    - [id](#registerid)
     - [depends_on](#registerdepends_on)
     - [query](#registerquery)
     - [as](#registeras)
@@ -189,6 +190,7 @@ Depending of what you choosed as a third field, the Request object will behave d
     endpoint: /networks
     method: GET
     register:
+      id: networks.json
       as:
         id: registernetworks
     ```
@@ -199,7 +201,7 @@ Depending of what you choosed as a third field, the Request object will behave d
     from:
       filter: '{{ $array := "" }}{{ range $registernetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - registernetworks
+        - networks.json
     ```
 
 ### `Request.endpoint`
@@ -219,7 +221,7 @@ Depending of what you choosed as a third field, the Request object will behave d
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: A list of Body objects. A request will be send to the Docker Engine for each element in this list. Each element in this list must match required (and optional) parameters used by the selected Docker Engine API request.
+- **description**: A list of Body objects. A Request will be send to the Docker Engine for each element in this list. Each element in this list must match required (and optional) parameters used by the selected Docker Engine API Request.
 
 ### `Request.register`
 
@@ -304,12 +306,18 @@ Depending of what you choosed as a third field, the Request object will behave d
 ```yaml
 ```
 
+### `Register.id`
+
+- **type**: string
+- **required**: true
+- **description**: See `Body.id`.
+
 ### `Register.depends_on`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**:
+- **description**: See `Body.depends_on`.
 
 ### `Register.query`
 
@@ -323,33 +331,30 @@ Depending of what you choosed as a third field, the Request object will behave d
 - **type**: Datasource
 - **required**: true
 - **description**:
-    - Datasource id is the id of the Register
 
 ## From object
 
-- **description**:
-- **exemples**:
-```yaml
-```
+- **description**: The only use case of this object is in `Request.from`. This object will be evaluated 2 times. The first one as a GO template to solve. The result of this first resolution is a list. Each element of this list will be evaluated as a `Request.loop` keyword.
+- **exemples**: See `Request object`.
 
 ### `From.id`
 
 - **type**: string
 - **required**: true
-- **description**:
+- **description**: See `Body.id`.
 
 ### `From.depends_on`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**:
+- **description**: See `Body.depends_on`.
 
 ### `From.filter`
 
 - **type**: string
 - **required**: true
-- **description**: A GO template filter returning a list of Body objects. Each element of this list will be used to run a matching Request.
+- **description**: A GO template filter returning a list of Body objects. Each element of this list will be used to run a matching Docker Engine API Request.
 
 ## Command object
 
@@ -362,14 +367,14 @@ Depending of what you choosed as a third field, the Request object will behave d
 
 - **type**: string
 - **required**: true
-- **description**:
+- **description**: See `Body.id`.
 
 ### `Command.depends_on`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**:
+- **description**: See `Body.depends_on`.
 
 ### `Command.if`
 
@@ -431,7 +436,7 @@ Depending of what you choosed as a third field, the Request object will behave d
         id: registercontainersjson
         scope: *
     ```
-    The result of the `/containers/json` request will be store into the `registercontainersjson` variable into your GO templates. It will be visible into all your Requests & Commands.
+    The result of the `/containers/json` Request will be store into the `registercontainersjson` variable into your GO templates. It will be visible into all your Requests & Commands.
 
 ### `Datasource.id`
 

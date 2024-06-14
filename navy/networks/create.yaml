@@ -4,6 +4,7 @@ run:
   - endpoint: /networks
     method: GET
     register:
+      id: networks.json
       as:
         id: registernetworks
         scope: '{{ $dependencies.prefix.networks.create }}*'

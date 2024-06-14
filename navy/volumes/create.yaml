@@ -4,6 +4,7 @@ run:
   - endpoint: /volumes
     method: GET
     register:
+      id: volumes.json
       as:
         id: registervolumes
         scope: '{{ $dependencies.prefix.volumes.create }}*'

@@ -6,6 +6,7 @@ run:
     register:
       query:
         filters: '{"reference":{"{{ $alpine.image.source }}":true}}'
+      id: local.alpine.image.json
       as:
         id: localalpineimage
         scope: '{{ $dependencies.images.pull.alpine }}'
@@ -18,12 +19,13 @@ run:
           fromImage: '{{ $alpine.image.source }}'
           tag: '{{ $alpine.tag }}'
         depends_on:
-          - localalpineimage
+          - local.alpine.image.json
   - endpoint: /images/json
     method: GET
     register:
       query:
         filters: '{"reference":{"{{ $bash.image.source }}":true}}'
+      id: local.bash.image.json
       as:
         id: localbashimage
         scope: '{{ $dependencies.images.pull.bash }}'
@@ -36,12 +38,13 @@ run:
           fromImage: '{{ $bash.image.source }}'
           tag: '{{ $bash.tag }}'
         depends_on:
-          - localbashimage
+          - local.bash.image.json
   - endpoint: /images/json
     method: GET
     register:
       query:
         filters: '{"reference":{"{{ $buildkit.image.source }}":true}}'
+      id: local.buildkit.image.json
       as:
         id: localbuildkitimage
         scope: '{{ $dependencies.images.pull.buildkit }}'
@@ -54,12 +57,13 @@ run:
           fromImage: '{{ $buildkit.image.source }}'
           tag: '{{ $buildkit.tag }}'
         depends_on:
-          - localbuildkitimage
+          - local.buildkit.image.json
   - endpoint: /images/json
     method: GET
     register:
       query:
         filters: '{"reference":{"{{ $docker.image.source }}":true}}'
+      id: local.docker.image.json
       as:
         id: localdockerimage
         scope: '{{ $dependencies.images.pull.docker }}'
@@ -72,12 +76,13 @@ run:
           fromImage: '{{ $docker.image.source }}'
           tag: '{{ $docker.tag }}'
         depends_on:
-          - localdockerimage
+          - local.docker.image.json
   - endpoint: /images/json
     method: GET
     register:
       query:
         filters: '{"reference":{"{{ $registry.image.source }}":true}}'
+      id: local.registry.image.json
       as:
         id: localregistryimage
         scope: '{{ $dependencies.images.pull.registry }}'
@@ -90,12 +95,13 @@ run:
           fromImage: '{{ $registry.image.source }}'
           tag: '{{ $registry.tag }}'
         depends_on:
-          - localregistryimage
+          - local.registry.image.json
   - endpoint: /images/json
     method: GET
     register:
       query:
         filters: '{"reference":{"{{ $socketproxy.linuxserver.image.source }}":true}}'
+      id: local.socketproxy.image.json
       as:
         id: localsocketproxyimage
         scope: '{{ $dependencies.images.pull.socketproxy }}'
@@ -108,6 +114,6 @@ run:
           fromImage: '{{ $socketproxy.linuxserver.image.source }}'
           tag: '{{ $socketproxy.linuxserver.tag }}'
         depends_on:
-          - localsocketproxyimage
+          - local.socketproxy.image.json
 
 ...

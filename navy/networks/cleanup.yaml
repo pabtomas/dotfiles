@@ -6,6 +6,7 @@ post:
     register:
       query:
         filters: '{"label":{"navy":{{ $project.id }}}}'
+      id: post.networks.json
       as:
         id: registerpostnetworks
   - endpoint: /networks/{id}
@@ -13,6 +14,6 @@ post:
     from:
       filter: '{{ $array := "" }}{{ range $registerpostnetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - registerpostnetworks
+        - post.networks.json
 
 ...
