@@ -88,11 +88,16 @@ anchors:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of files to include into the current file. Including files in another will merge their contents.
+- **description**: List of files to include into the current file. Including files in another will merge their contents. Each file can contain its own `include` list.
 - **good to know**:
     - The `include` keyword is processed after the `anchors` keyword when Navy is executed
 - **exemple**:
 ```yaml
+include:
+  - networks/create.yaml
+  - volumes/create.yaml
+  - images/pull.yaml
+  - containers/create.yaml
 ```
 
 ## `versions`
@@ -111,6 +116,11 @@ anchors:
     ```
 - **exemple**:
 ```yaml
+versions:
+  - 1.45
+  - 1.44
+  - 1.43
+  - '{{ $CONTEXTVERSION.ApiVersion }}
 ```
 
 ## `run`
