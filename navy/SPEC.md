@@ -14,9 +14,9 @@
 7. [Request](#request-object)
     - [endpoint](#requestendpoint)
     - [method](#requestmethod)
+    - [loop](#requestloop)
     - [register](#requestregister)
     - [from](#requestfrom)
-    - [loop](#requestloop)
     - [if](#requestif)
 8. [Body](#body-object)
     - [id](#bodyid)
@@ -37,6 +37,7 @@
 11. [Command](#command-object)
     - [id](#commandid)
     - [depends_on](#commanddepends_on)
+    - [if](#commandif)
     - [argv](#commandargv)
 12. [Datasource](#datasource-object)
     - [id](#datasourceid)
@@ -213,26 +214,26 @@ Depending of what you choosed as a third field, the Request object will behave d
 - **required**: true
 - **description**: The HTTP Request method to use (GET, POST, DELETE, ...).
 
+### `Request.loop`
+
+- **type**: list
+- **required**: false
+- **default**: `[]`
+- **description**: A list of Body objects. A request will be send to the Docker Engine for each element in this list. Each element in this list must match required (and optional) parameters used by the selected Docker Engine API request.
+
 ### `Request.register`
 
 - **type**: Register
 - **required**: false
 - **default**: `{}`
-- **description**: The Docker Engine answer of the Request will be stored as a JSON datasource. It is useful if you want to use the result of this Request for another Request or Command later  
+- **description**: The Docker Engine answer of the Request will be stored as a JSON Datasource. It is useful if you want to use the result of this Request for another Request or Command later.
 
 ### `Request.from`
 
 - **type**: From
 - **required**: false
 - **default**: `""`
-- **description**: 
-
-### `Request.loop`
-
-- **type**: list
-- **required**: false
-- **default**: `[]`
-- **description**:
+- **description**: A From object.
 
 ### `Request.if`
 
@@ -368,6 +369,13 @@ Depending of what you choosed as a third field, the Request object will behave d
 - **type**: list
 - **required**: false
 - **default**: `[]`
+- **description**:
+
+### `Command.if`
+
+- **type**: boolean
+- **required**: false
+- **default**: true
 - **description**:
 
 ### `Command.argv`
