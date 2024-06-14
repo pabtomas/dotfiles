@@ -27,15 +27,23 @@ Objects:
     - [extends](#bodyextends)
     - [context](#bodycontext)
 9. [Register](#register-object)
+    - [depends_on](#registerdepends_on)
+    - [query](#registerquery)
     - [as](#registeras)
 10. [From](#from-object)
+    - [id](#fromid)
+    - [depends_on](#fromdepends_on)
     - [filter](#fromfilter)
 11. [Command](#command-object)
+    - [id](#commandid)
+    - [depends_on](#commanddepends_on)
     - [argv](#commandargv)
 12. [Datasource](#datasource-object)
+    - [id](#datasourceid)
     - [source](#datasourcesource)
     - [scope](#datasourcescope)
 13. [Anchor](#anchor-object)
+    - [source](#anchorsource)
     - [in](#anchorin)
 14. [Query & Path](#query--path-dictionnaries)
 
@@ -44,11 +52,18 @@ Objects:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Datasources available in GO templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**.
+- **description**: List of Datasources available in GO templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**. More details on the Datasource available fields into the [Datasource object section](#datasource-object).
 - **good to know**:
     - The `datasources` keyword is the first thing Navy will processed when executed, its location can not be outside your main Navy file.
 - **exemple**:
 ```yaml
+datasources:
+  - source: datasources/first.yaml
+    id: my-first-datasource
+    scope: *
+  - source: datasources/second.yaml
+    id: my-second-datasource
+    scope: images.create.*
 ```
 
 ## `anchors`
@@ -221,11 +236,23 @@ Objects:
 ## Register object
 
 - **description**:
-    - depends_on
-    - query
 - **exemples**:
 ```yaml
 ```
+
+### `Register.depends_on`
+
+- **type**: list
+- **required**: false
+- **default**: `[]`
+- **description**:
+
+### `Register.query`
+
+- **type**: dictionnary
+- **required**: false
+- **default**: `{}`
+- **description**:
 
 ### `Register.as`
 
@@ -237,11 +264,22 @@ Objects:
 ## From object
 
 - **description**:
-    - id
-    - depends_on
 - **exemples**:
 ```yaml
 ```
+
+### `From.id`
+
+- **type**: string
+- **required**: true
+- **description**:
+
+### `From.depends_on`
+
+- **type**: list
+- **required**: false
+- **default**: `[]`
+- **description**:
 
 ### `From.filter`
 
@@ -252,11 +290,22 @@ Objects:
 ## Command object
 
 - **description**: A custom command for specific needs or to compensate some Navy's lacks.
-    - id
-    - depends_on
 - **exemples**:
 ```yaml
 ```
+
+### `Command.id`
+
+- **type**: string
+- **required**: true
+- **description**:
+
+### `Command.depends_on`
+
+- **type**: list
+- **required**: false
+- **default**: `[]`
+- **description**:
 
 ### `Command.argv`
 
@@ -267,11 +316,18 @@ Objects:
 
 ## Datasource object
 
-- **description**: A gomplate YAML Datasource.
-    - id
+- **description**:
+    - A Datasource is a gomplate concept. Most of the time, you will find everything you need in [the gomplate documentation](https://docs.gomplate.ca/) concerning this issue.
+    - Used with the `datasources` keyword, the Datasource object have to be YAML file. Used with the `Register.as` keyword, the Datasource object is a JSON answer from Docker Engine. A Datasource has 3 available fields (each of them is described in its own section):
+        - id
+        - source
+        - scope
 - **exemples**:
-    - Here an exemple of a Datasource object:
+    - Here an exemple of a Datasource object into the `datasources` list:
     ```yaml
+    source: datasources/exemple.yaml
+    id: exemple
+    scope: *
     ```
     - Here an exemple of what could be the YAML file used by the Datasource object shown above:
     ```yaml
@@ -284,32 +340,60 @@ Objects:
     # You can use the other Datasources in your Datasource files (whatever the defined scope).
     message: 'Hello {{ (ds "datasources/exemple.yaml").receiver }}, you received a message from {{ (ds "datasources/exemple.yaml").sender }}'
 
-    # You can use the special /context Datasources in your Datasource files
-    message2: 'Your Docker Engine is using the {{ (ds "/context/version.json").ApiVersion }} version of the API and is already running {{ (ds "/context/info.json").Containers }} container(s) !'
+    # You can use the Datasource.id field (if you used it) to have more readable code
+    same_message: 'Hello {{ $exemple.receiver }}, you received a message from {{ $exemple.sender }}'
+
+    # You can use the special CONTEXTVERSION/CONTEXTINFO Datasources in your Datasource files
+    message2: 'Your Docker Engine is using the {{ $CONTEXTVERSION.ApiVersion }} version of the API and is already running {{ $CONTEXTINFO.Containers }} container(s) !'
 
     ...
     ```
+    - Here an exemple of a Datasource object into the `Register.as` field:
+    ```yaml
+    endpoint: /containers/json
+    method: GET
+    register:
+      query:
+        filters: '{"label":{"navy":true}}'
+      as:
+        id: registercontainersjson
+        scope: *
+    ```
+
+### `Datasource.id`
+
+- **type**: string
+- **required**: false
+- **default value**: `""`
+- **description**: An **alphanumeric** string allowing you to access your Datasource in a more readable way in your Go templates.
 
 ### `Datasource.source`
 
 - **type**: string
-- **required**: true
-- **description**:
+- **required**:
+    - required if used into the `datasources` list,
+    - ignored if used into the `Register.as` field.
+- **description**: The path (relative to your main Navy file) of the YAML file you want to use as a Datasource.
 
 ### `Datasource.scope`
 
 - **type**: string
 - **required**: false
 - **default**: `*`
-- **description**: An extended regex pattern applied on Requests and Commands id that filters access to the Datasource.
+- **description**: An extended regex pattern applied on the `id` field of Requests and Commands. It allows you to filter access to the Datasource.
 
 ## Anchor object
 
 - **description**: A YAML file containing anchors definitions.
-    - source
 - **exemples**:
 ```yaml
 ```
+
+### `Anchor.source`
+
+- **type**: string
+- **required**: true
+- **description**: The path (relative to your main Navy file) of the YAML file that defines anchors you want to use outside.
 
 ### `Anchor.in`
 
