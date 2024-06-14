@@ -44,9 +44,9 @@ Objects:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Datasources available in GO templates. More details on how to use it with Navy into the [Datasource object section](#datasource-object)
+- **description**: List of Datasources available in GO templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**.
 - **good to know**:
-    - The `datasources` keyword is the first thing Navy will processed when executed, its location is in your main Navy file.
+    - The `datasources` keyword is the first thing Navy will processed when executed, its location can not be outside your main Navy file.
 - **exemple**:
 ```yaml
 ```
@@ -56,7 +56,7 @@ Objects:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Anchors.
+- **description**: List of Anchors. In this list, you can define a YAML file and share its anchors across multiple files.
 - **good to know**:
     - The `anchors` keyword is processed after the `datasources` keyword when Navy is executed and before the `include` keyword. Its location is in your main Navy file.
 - **exemple**:
@@ -68,7 +68,7 @@ Objects:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of files. Including files in another will merge their contents.
+- **description**: List of files to include into the current file. Including files in another will merge their contents.
 - **good to know**:
     - The `include` keyword is processed after the `anchors` keyword when Navy is executed
 - **exemple**:
@@ -98,7 +98,7 @@ Objects:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: A list of Requests and Commands. If a Request (or Command) in this list fails, Navy skips the rest of the list and run the `post` list.
+- **description**: A list of Requests and Commands. If a Request (or Command) in this list fails, Navy skips whatever comes after in this list and run the `post` list.
 - **exemple**:
 ```yaml
 ```
@@ -140,14 +140,14 @@ Objects:
 - **type**: Register
 - **required**: false
 - **default**: `{}`
-- **description**:
+- **description**: The Docker Engine answer of the Request will be stored as a JSON datasource. It is useful if you want to use the result of this Request for another Request or Command later  
 
 ### `Request.from`
 
 - **type**: From
 - **required**: false
 - **default**: `""`
-- **description**:
+- **description**: 
 
 ### `Request.loop`
 
@@ -267,7 +267,7 @@ Objects:
 
 ## Datasource object
 
-- **description**: A gomplate YAML Datasource. **A Datasource have to be a YAML file to be correctly processed by Navy**.
+- **description**: A gomplate YAML Datasource.
     - id
 - **exemples**:
     - Here an exemple of a Datasource object:
