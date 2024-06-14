@@ -249,7 +249,7 @@ A Request has also an optional attribute: `if`.
 ## Body object
 
 - **description**: Body of a Request. The only use case of this object is in the `Request.loop` attribute.
-- **exemples**:
+- **exemple**:
 ```yaml
 run:
   - endpoint: /containers/create
@@ -355,7 +355,7 @@ For convenience, Navy takes one (and only one) liberty on the Docker Engine API:
 - **required**: false
 - **default**: `"."`
 - **description**: This attribute is only useful when you are making a `/build` Request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Navy file. 
-- **exemples**:
+- **exemple**:
 ```yaml
 endpoint: /build
 method: POST
@@ -371,7 +371,7 @@ loop:
 ## Register object
 
 - **description**:
-- **exemples**:
+- **exemple**:
 ```yaml
 ```
 
@@ -404,7 +404,7 @@ loop:
 ## From object
 
 - **description**: The only use case of this object is in `Request.from`.
-- **exemples**: See `Request object`.
+- **exemple**: See `Request object`.
 
 ### `From.id`
 
@@ -428,7 +428,7 @@ loop:
 ## Command object
 
 - **description**: A custom command for specific needs or to compensate some Navy's lacks.
-- **exemples**:
+- **exemple**:
 ```yaml
 ```
 
