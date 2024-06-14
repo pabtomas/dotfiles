@@ -312,7 +312,7 @@ run:
           name: '{{ $spacepornrunner.host }}'
           Hostname: '{{ $spacepornrunner.host }}'
           Entrypoint:
-            - '{{ $workspaces.path.spaceporn }}'/${SPACEPORN_ID}/zig-out/bin/${SPACEPORN_ID}
+            - '{{ $workspaces.path.spaceporn }}/{{ $spaceporn.id }}/zig-out/bin/{{ $spaceporn.id }}'
           HostConfig:
             Mounts:
               - <<: *readonly-volume

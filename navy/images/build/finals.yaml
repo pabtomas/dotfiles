@@ -11,7 +11,7 @@ run:
             _BUILDKIT_LOCAL_IMG: '{{ $buildkit.image.local }}{{ $all.sep.tag }}{{ $buildkit.tag }}'
             REGISTRY_TARGET: '{{ $registry.target }}'
           t: '{{ $builder.yaml").image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-        context: '{{ $all.path.dockerfiles }}'/${BUILDER_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $builder.id }}'
         depends_on:
           - '{{ $dependencies.images.tag.buildkit }}'
         extends:
@@ -19,7 +19,7 @@ run:
       - id: '{{ $dependencies.images.build.carpenter.relay }}'
         query:
           buildargs:
-            LOG_ID: ${CARPENTER_ID}
+            LOG_ID: '{{ $carpenter.id }}'
           t: '{{ $carpenterrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         extends:
           - '{{ $dependencies.images.build.virtual.relay }}'
@@ -29,7 +29,7 @@ run:
             ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
             SPECTRWM_LAYER_IMG: '{{ $spectrwm.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
           t: '{{ $carpenterrunner.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-        context: '{{ $all.path.dockerfiles }}'/${CARPENTER_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $carpenter.id }}'
         depends_on:
           - '{{ $dependencies.images.build.spectrwm }}'
         extends:
@@ -39,11 +39,11 @@ run:
           buildargs:
             BASH_COMPLETION_PATH: '{{ $bash.path.completion }}'
             BASH_THEME_PATH: '{{ $bash.path.theme }}'
-            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${JUMPER_ID}.sh
-            COMPLETION_PATH: '/opt/${LISTENER_ID}{{ $listener.path.completion }}'
-            CONTROLLER_ID: ${CONTROLLER_ID}
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}/99{{ $jumper.id }}.sh'
+            COMPLETION_PATH: '/opt/{{ $listener.id }}{{ $listener.path.completion }}'
+            CONTROLLER_ID: '{{ $controller.id }}'
             ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
-            NET_PFX: ${JUMP_AREA_PFX}
+            NET_PFX: '{{ $networks.jump_area.prefix }}'
             OPT_SCRIPTS_PATH: '{{ $all.path.opt.scripts }}'
             OPT_SSH_PATH: '{{ $all.path.opt.ssh }}'
             SSH_PORT: '{{ $sshd.port }}'
@@ -51,7 +51,7 @@ run:
             TCP_DOCKER_TARGET: '{{ $docker.target.tcp }}'
             TMUX_LAYER_IMG: '{{ $tmux.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
           t: '{{ $jumper.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-        context: '{{ $all.path.dockerfiles }}'/${JUMPER_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $jumper.id }}'
         depends_on:
           - '{{ $dependencies.images.build.tmux }}'
         extends:
@@ -60,7 +60,7 @@ run:
         query:
           buildargs:
             _DOCKER_SOCKET_PATH: '{{ $docker.path.socket }}'
-            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${LISTENER_ID}.sh
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}/99{{ $listener.id }}.sh'
             COMPLETION_PATH: '{{ $listener.path.completion }}'
             DATA_PATH: '{{ $all.path.opt.data }}'
             ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
@@ -69,38 +69,38 @@ run:
             OPT_SCRIPTS_PATH: '{{ $all.path.opt.scripts }}'
             VAR_LOG_PATH: '{{ $all.path.var.log }}'
           t: '{{ $listener.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-        context: '{{ $all.path.dockerfiles }}'/${LISTENER_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $listener.id }}'
         extends:
           - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
       - id: '{{ $dependencies.images.build.socketproxy }}'
         query:
           buildargs:
             _DOCKER_SOCKET_PATH: '{{ $docker.path.socket }}'
-            ${API_PFX}_PING: true
-            ${API_PFX}BUILD: true
-            ${API_PFX}CONTAINERS_CREATE: true
-            ${API_PFX}CONTAINERS_ID: true
-            ${API_PFX}CONTAINERS_ID_ARCHIVE: true
-            ${API_PFX}CONTAINERS_ID_ATTACH: true
-            ${API_PFX}CONTAINERS_ID_EXEC: true
-            ${API_PFX}CONTAINERS_ID_JSON: true
-            ${API_PFX}CONTAINERS_ID_KILL: true
-            ${API_PFX}CONTAINERS_ID_LOGS: true
-            ${API_PFX}CONTAINERS_ID_START: true
-            ${API_PFX}CONTAINERS_ID_STOP: true
-            ${API_PFX}CONTAINERS_ID_WAIT: true
-            ${API_PFX}CONTAINERS_JSON: true
-            ${API_PFX}EVENTS: true
-            ${API_PFX}IMAGES_CREATE: true
-            ${API_PFX}IMAGES_JSON: true
-            ${API_PFX}IMAGES_NAME: true
-            ${API_PFX}NETWORKS: true
-            ${API_PFX}VERSION: true
-            ${API_PFX}VOLUMES: true
-            API_PFX: ${API_PFX}
+            '{{ $api.prefix }}_PING': true
+            '{{ $api.prefix }}BUILD': true
+            '{{ $api.prefix }}CONTAINERS_CREATE': true
+            '{{ $api.prefix }}CONTAINERS_ID': true
+            '{{ $api.prefix }}CONTAINERS_ID_ARCHIVE': true
+            '{{ $api.prefix }}CONTAINERS_ID_ATTACH': true
+            '{{ $api.prefix }}CONTAINERS_ID_EXEC': true
+            '{{ $api.prefix }}CONTAINERS_ID_JSON': true
+            '{{ $api.prefix }}CONTAINERS_ID_KILL': true
+            '{{ $api.prefix }}CONTAINERS_ID_LOGS': true
+            '{{ $api.prefix }}CONTAINERS_ID_START': true
+            '{{ $api.prefix }}CONTAINERS_ID_STOP': true
+            '{{ $api.prefix }}CONTAINERS_ID_WAIT': true
+            '{{ $api.prefix }}CONTAINERS_JSON': true
+            '{{ $api.prefix }}EVENTS': true
+            '{{ $api.prefix }}IMAGES_CREATE': true
+            '{{ $api.prefix }}IMAGES_JSON': true
+            '{{ $api.prefix }}IMAGES_NAME': true
+            '{{ $api.prefix }}NETWORKS': true
+            '{{ $api.prefix }}VERSION': true
+            '{{ $api.prefix }}VOLUMES': true
+            API_PFX: '{{ $api.prefix }}'
             API_TAG: '{{ $api.tag }}'
             API_URL: '{{ $api.url.spec }}'
-            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${PROXY_ID}.sh
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}/99{{ $proxy.id }}.sh'
             CONTROLLER_IP: '{{ $controller.ip }}'
             ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
             ETC_NGINX_HTTPD_PATH: '{{ $nginx.path.httpd }}'
@@ -109,7 +109,7 @@ run:
             OPT_SCRIPTS_PATH: '{{ $all.path.opt.scripts }}'
             PROXY_PORT: '{{ $socketproxy.port }}'
           t: '{{ $socketproxy.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-        context: '{{ $all.path.dockerfiles }}'/${PROXY_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $proxy.id }}'
         depends_on:
           - '{{ $dependencies.images.build.http }}'
         extends:
@@ -117,7 +117,7 @@ run:
       - id: '{{ $dependencies.images.build.spaceporn.relay }}'
         query:
           buildargs:
-            LOG_ID: ${SPACEPORN_ID}
+            LOG_ID: '{{ $spaceporn.id }}'
           t: '{{ $spacepornrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         extends:
           - '{{ $dependencies.images.build.virtual.relay }}'
@@ -125,7 +125,7 @@ run:
         query:
           buildargs:
             CARPENTER_RELAY_IP: '{{ $carpenterrelay.ip }}'
-            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}'/99${XSERVER_ID}.sh
+            CHECK_ENTRYPOINT_PATH: '{{ $entrypoint.path.check.d }}/99{{ $xserver.id }}.sh'
             ETC_NGINX_CONFD_PATH: '{{ $nginx.path.confd }}'
             ETC_NGINX_PATH: '{{ $nginx.path.etc }}'
             SPACEPORN_RELAY_IP: '{{ $spacepornrelay.ip }}'
@@ -133,7 +133,7 @@ run:
             XSERVER_PORT: '{{ $xserver.port }}'
             XSERVER_SOCKET_PATH: '{{ $xserver.path.display }}'
           t: '{{ $xserver.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-        context: '{{ $all.path.dockerfiles }}'/${XSERVER_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $xserver.id }}'
         extends:
           - '{{ $dependencies.images.build.virtual.nginx }}'
 

@@ -9,8 +9,8 @@ run:
         query:
           nocache: false
           buildargs:
-            HTTP_PROXY: ${http_proxy:-${HTTP_PROXY:-}}
-            HTTPS_PROXY: ${https_proxy:-${HTTPS_PROXY:-}}
+            HTTP_PROXY: '{{ if (and (has .Env "http_proxy") (.Env.http_proxy)) }}{{ .Env.http_proxy }}{{ else if (and (has .Env "HTTP_PROXY") (.Env.HTTP_PROXY)) }}{{ .Env.HTTP_PROXY }}{{ end }}'
+            HTTPS_PROXY: '{{ if (and (has .Env "https_proxy") (.Env.https_proxy)) }}{{ .Env.https_proxy }}{{ else if (and (has .Env "HTTPS_PROXY") (.Env.HTTPS_PROXY)) }}{{ .Env.HTTPS_PROXY }}{{ end }}'
           dockerfile: Dockerfile
       - id: '{{ $dependencies.images.build.virtual.entrypoint }}'
         virtual: true
@@ -20,7 +20,7 @@ run:
             CHECK_ENTRYPOINTD_PATH: '{{ $entrypoint.path.check.d }}'
             ENTRYPOINT_PATH: '{{ $entrypoint.path.entrypoint.sh }}'
             ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
-        context: '{{ $all.path.dockerfiles }}'/${ENTRYPOINT_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $entrypoint.id }}'
         extends:
           - '{{ $dependencies.images.build.virtual._ }}'
       - id: '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
@@ -86,7 +86,7 @@ run:
             TMP_XSERVER_SOCKETS_PATH: '{{ $xserver.path.sockets }}'
             XSERVER_IP: '{{ $xserver.ip }}'
             XSERVER_PORT: '{{ $xserver.port }}'
-        context: '{{ $all.path.dockerfiles }}'/${RELAY_ID}
+        context: '{{ $all.path.dockerfiles }}/{{ $relay.id }}'
         depends_on:
           - '{{ $dependencies.images.build.socat }}'
         extends:
