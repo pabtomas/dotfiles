@@ -54,7 +54,7 @@
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Datasources available in GO templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**. More details on the Datasource available fields into the [Datasource object section](#datasource-object).
+- **description**: List of Datasources available in GO templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**. More details on the Datasource available attributes into the [Datasource object section](#datasource-object).
 - **good to know**:
     - The `datasources` keyword is the first thing Navy will processed when executed, its location can not be outside your main Navy file.
 - **exemple**:
@@ -73,7 +73,7 @@ datasources:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Anchors. In this list, you can define a YAML file and share its anchors across multiple files. More details on the Anchor available fields into the [Anchor object section](#anchor-object).
+- **description**: List of Anchors. In this list, you can define a YAML file and share its anchors across multiple files. More details on the Anchor available attributes into the [Anchor object section](#anchor-object).
 - **good to know**:
     - The `anchors` keyword is processed after the `datasources` keyword when Navy is executed and before the `include` keyword. Its location is in your main Navy file.
 - **exemple**:
@@ -165,16 +165,16 @@ post:
 
 ## Request object
 
-- **description**: A Request has 3 mandatory fields:
+- **description**: A Request has 3 mandatory attributes:
     - `endpoint`,
     - `method`,
-    - one between these fields:
+    - one between these attributes:
         - `loop`
         - `register`
         - `from`
 
-Depending of what you choosed as a third field, the Request object will behave differently.
-A Request has alse an optional field: `if`.
+Depending of what you choosed as a third attribute, the Request object will behave differently.
+A Request has also an optional attribute: `if`.
 - **exemples**:
     - This Request object will send 2 networks creation to the Docker Engine:
     ```yaml
@@ -197,9 +197,9 @@ A Request has alse an optional field: `if`.
     ```
     - This Request object will send a network deletion to the Docker Engine for each network listed in the previously registered Datasource if its content is not empty:
     ```yaml
+    if: '{{ gt (len $registernetworks) 0 }}'
     endpoint: /networks/{id}
     method: DELETE
-    if: '{{ gt (len $registernetworks) 0 }}'
     from:
       filter: '{{ $array := "" }}{{ range $registernetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
@@ -248,58 +248,125 @@ A Request has alse an optional field: `if`.
 
 ## Body object
 
-- **description**:
+- **description**: Body of a Request. The only use case of this object is in the `Request.loop` attribute.
 - **exemples**:
 ```yaml
+run:
+  - endpoint: /containers/create
+    method: POST
+    loop:
+      - id: containers.create.mycontainer
+        query:
+          name: mycontainer
+  - endpoint: /containers/{id}/start
+    method: POST
+    loop:
+      - id: containers.start.mycontainer
+        path:
+          id: mycontainer
+        depends_on:
+          - containers.create.mycontainer
 ```
 
 ### `Body.id`
 
 - **type**: string
 - **required**: true
-- **description**:
+- **description**: A unique ID attributed to a Request.
 
 ### `Body.depends_on`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**:
+- **description**: Navy uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Navy will run the Request after the Requests and Commands listed here are executed.
 
 ### `Body.query`
 
 - **type**: dictionnary
 - **required**: false
 - **default**: `{}`
-- **description**:
+- **description**: Attributes in this dictionnary are listed [here](https://docs.docker.com/engine/api/latest) and depends of:
+    - the Docker Engine API you are targetting,
+    - the endpoint and method you want to submit to the Docker Engine.
+
+For convenience, Navy takes one (and only one) liberty on the Docker Engine API: the `buildargs` Query parameters of the `/build` Request needs a dictionnary instead of a string containing a JSON map of string pairs.
 
 ### `Body.path`
 
 - **type**: Path
 - **required**: false
 - **default**: `{}`
-- **description**:
+- **description**: [Here](https://docs.docker.com/engine/api/v1.45/#tag/Container/operation/ContainerInspect) a simple Docker Engine API endpoint to make quickly the distinction between Query and Path Request parameters. This attribute is required when the `Request.endpoint` contains variables. Attributes in this dictionnary must match all the variables in the Request endpoint.
 
 ### `Body.virtual`
 
 - **type**: boolean
 - **required**: false
 - **default**: false
-- **description**:
+- **description**: A virtual Body will not result as a Request execution by Navy. It is particularly useful when you want to reuse common attributes between Bodies.
 
 ### `Body.extends`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**:
+- **description**: This attribute lets you share common attributes among different Bodies.
+    - order in this list is not trivial: if 2 Bodies share a common attribute, the last one prevails. If a Body in this list shares a common attribute with the Body you are extending, the attribute of the Body you are extending prevails:
+    **exemple**:
+    ```yaml
+    endpoint: /build
+    method: POST
+    loop:
+      - id: images.build.virtual1
+        virtual: true
+        query:
+          buildargs:
+            FILEPATH: '/my/file/path'
+      - id: images.build.virtual2
+        virtual: true
+        query:
+          buildargs:
+            FILEPATH: '/my/other/file/path'
+            USER: 'myuser'
+      - id: images.build.myimage
+        query:
+          buildargs:
+            USER: 'root'
+        extends:
+          - images.build.virtual1
+          - images.build.virtual2
+    ```
+    will results as this requests for `images.build.myimage`:
+    ```yaml
+      - id: images.build.myimage
+        query:
+          buildargs:
+            FILEPATH: '/my/other/file/path' # images.build.virtual1 prevails on images.build.virtual2
+            USER: 'root' # images.build.myimage prevails on images.build.virtual1 and images.build.virtual2
+    ```
+    - extending from a virtual or a non-virtual Body will not share same attributes:
+        - from a non-virtual Body, the extended Body will inherit these attributes: `query`, `path`, `context`.
+        - from a virtual Body, the extended Body will inherit these attributes: `query`, `path`, `context`. `depends_on`.
 
 ### `Body.context`
 
 - **type**: string
 - **required**: false
 - **default**: `"."`
-- **description**:
+- **description**: This attribute is only useful when you are making a `/build` Request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Navy file. 
+- **exemples**:
+```yaml
+endpoint: /build
+method: POST
+loop:
+  - id: images.build.myimage
+    query:
+      buildargs:
+        USER: 'root'
+      t: 'myimage:latest'
+    context: 'dir/of/myimage'
+```
 
 ## Register object
 
@@ -396,7 +463,7 @@ A Request has alse an optional field: `if`.
 
 - **description**:
     - A Datasource is a gomplate concept. Most of the time, you will find everything you need in [the gomplate documentation](https://docs.gomplate.ca/).
-    - Used with the `datasources` keyword, the Datasource object have to be YAML file. Used with the `Register.as` keyword, the Datasource object is a JSON answer from Docker Engine. A Datasource has 3 available fields (each of them is described in its own section):
+    - Used with the `datasources` keyword, the Datasource object have to be YAML file. Used with the `Register.as` keyword, the Datasource object is a JSON answer from Docker Engine. A Datasource has 3 available attributes (each of them is described in its own section):
         - id
         - source
         - scope
@@ -419,7 +486,7 @@ A Request has alse an optional field: `if`.
     # You can use the other Datasources in your Datasource files (whatever the defined scope).
     message: 'Hello {{ (ds "datasources/message.yaml").receiver }}, you received a message from {{ (ds "datasources/message.yaml").sender }}'
 
-    # You can use the Datasource.id field (if you used it) to have more readable code
+    # You can use the Datasource.id attribute (if you used it) to have more readable code
     same_message: 'Hello {{ $message.receiver }}, you received a message from {{ $message.sender }}'
 
     # You can use the special CONTEXTVERSION/CONTEXTINFO Datasources in your Datasource files
@@ -427,7 +494,7 @@ A Request has alse an optional field: `if`.
 
     ...
     ```
-    - Here an exemple of a Datasource object into the `Register.as` field:
+    - Here an exemple of a Datasource object into the `Register.as` attribute:
     ```yaml
     endpoint: /containers/json
     method: GET
@@ -452,7 +519,7 @@ A Request has alse an optional field: `if`.
 - **type**: string
 - **required**:
     - required if used into the `datasources` list,
-    - ignored if used into the `Register.as` field.
+    - ignored if used into the `Register.as` attribute.
 - **description**: The path (relative to your main Navy file) of the YAML file you want to use as a Datasource.
 
 ### `Datasource.scope`
@@ -460,7 +527,7 @@ A Request has alse an optional field: `if`.
 - **type**: string
 - **required**: false
 - **default**: `*`
-- **description**: An extended regex pattern applied on the `id` field of Requests and Commands. It allows you to filter access to the Datasource.
+- **description**: An extended regex pattern applied on the `id` attribute of Requests and Commands. It allows you to filter access to the Datasource.
 
 ## Anchor object
 
@@ -501,15 +568,3 @@ A Request has alse an optional field: `if`.
 - **required**: false
 - **default**: `[]`
 - **description**: A list of YAML filepaths (relative to your main Navy file) where anchors from the `Anchor.source` path will be visible.
-
-## Query & Path dictionnaries
-
-[Here](https://docs.docker.com/engine/api/v1.45/#tag/Container/operation/ContainerInspect) a simple Docker Engine API endpoint to make quickly the distinction between both.
-
-Query fields are listed [here](https://docs.docker.com/engine/api/latest) and depends of:
-- the Docker Engine API you are targetting,
-- the endpoint and method you want to submit to the Docker Engine.
-
-### `Query.buildargs`
-
-TODO
