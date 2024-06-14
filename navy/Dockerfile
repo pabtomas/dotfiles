@@ -10,10 +10,13 @@ RUN <<END_OF_RUN
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
     apk add --no-cache dash yq curl gomplate gum git lolcat
+    mkdir -p /navy
     unset http_proxy https_proxy
 END_OF_RUN
 
 COPY ./navy /usr/local/bin/
 COPY --from=docker_img /usr/local/bin/docker /usr/local/bin/
+
+WORKDIR /navy
 
 ENTRYPOINT ["/usr/local/bin/navy"]

@@ -54,12 +54,12 @@ docker run --rm -v .:/workspace:ro -v ~/.cache/navy:/cache:rw tiawl/navy:0.0.0
 
 If you want to install Navy directly I assume that you have at least Busybox utilities on your system.
 - Install the dependencies (it should not be difficult if you are using a popular package manager):
-  - [yq](https://github.com/mikefarah/yq)
+  - [dash](https://git.kernel.org/pub/scm/utils/dash/dash.git/)
   - [curl](https://github.com/curl/curl)
+  - [yq](https://github.com/mikefarah/yq)
   - [gomplate](https://github.com/hairyhenderson/gomplate)
   - [gum](https://github.com/charmbracelet/gum)
-  - [lolcat](https://github.com/busyloop/lolcat)
-  - [dash](https://git.kernel.org/pub/scm/utils/dash/dash.git/)
+  - [lolcat](https://github.com/jaseg/lolcat)
 - Clone this repository
 - Add configuration (TODO: more details)
 - Install it (TODO: more details)

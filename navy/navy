@@ -1,34 +1,46 @@
 #! /usr/bin/env dash
 
-main ()
+parse_options ()
 {
-  set -eux
-
-  # catch DOCKER_HOST var
-
-  # catch env vars:
-  #   * NAVY_CACHE_PATH
-
-  # parse options:
+  # case:
   #   * --no-cache
   #   * --file
   #   * --help
   #   * --verbose
   #   * --tree-deps
+}
 
-  # define default values
+compute_checksum ()
+{
+  # compute checksum for:
+  #    * anchors files
+  #    * datasources files
+  #    * recursive included files:
+  #      - check circular dependencies between includes
+}
 
-  # if cache not found:
-  #   - catch /info & /version endpoints as special /context datasource:
-  #     - add warning if Register overrides /context datasource
-  #     - add warning if user file overrides /context datasource
+main ()
+{
+  set -eux
+
+  # catch environment vars:
+  #   * DOCKER_HOST: where curl will send its requests
+  #   * NAVY_CACHE_PATH: where the script will store its cache
+
+  parse_options "${@}"
+
+  # define default values for environment variables & options
+
+  compute_checksum
+
+  # if checksum not found in the cache:
+  #   - define $CONTEXTVERSION & $CONTEXTINFO datasources
   #   - gomplate to resolve GO templates with datasources:
   #       Use this CLI to expand templates into values but not in keys (improve
   #       it to works (recursively) with dictionnaries):
   #       $ yq '. | to_entries[] | "{{ print \"" + .key + "\" }}:" + .value' bases.yaml | gomplate -d bases.yaml=bases.yaml
   #   - resolve 'anchors' keywords
   #       - explode anchors and aliases
-  #   - check circular dependencies between includes
   #   - resolve 'includes' keywords
   #   - change loop run and run[].loop into dictionnaries to:
   #     - resolve 'extends' (replace them with anchors and aliases then use yq explode)
