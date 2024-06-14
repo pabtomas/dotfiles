@@ -1,6 +1,6 @@
 # Specification
 
-Keywords:
+### Keywords:
 
 1. [datasources](#datasources)
 2. [anchors](#anchors)
@@ -9,7 +9,7 @@ Keywords:
 5. [run](#run)
 6. [post](#post)
 
-Objects:
+### Objects:
 
 7. [Request](#request-object)
     - [endpoint](#requestendpoint)
