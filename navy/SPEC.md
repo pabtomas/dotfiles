@@ -47,7 +47,6 @@
 13. [Anchor](#anchor-object)
     - [source](#anchorsource)
     - [in](#anchorin)
-14. [Query & Path](#query--path-dictionnaries)
 
 ## `datasources`
 
