@@ -12,11 +12,15 @@ parse_options ()
 
 compute_checksum ()
 {
-  # compute checksum for:
-  #    * anchors files
-  #    * datasources files
-  #    * recursive included files:
-  #      - check circular dependencies between includes
+  # compute checksum for the cwd
+}
+
+define_context_datasources ()
+{
+  # define $CONTEXTVERSION & $CONTEXTINFO datasources
+  #   - send a /version curl on the 1.25 to get the last ApiVersion
+  #   - send a /version curl for the ApiVersion
+  #   - send a /info curl for the ApiVersion
 }
 
 main ()
@@ -33,23 +37,49 @@ main ()
 
   compute_checksum
 
-  # if checksum not found in the cache:
-  #   - define $CONTEXTVERSION & $CONTEXTINFO datasources
-  #   - gomplate to resolve GO templates with datasources:
-  #       Use this CLI to expand templates into values but not in keys (improve
-  #       it to works (recursively) with dictionnaries):
-  #       $ yq '. | to_entries[] | "{{ print \"" + .key + "\" }}:" + .value' bases.yaml | gomplate -d bases.yaml=bases.yaml
-  #   - resolve 'anchors' keywords
-  #       - explode anchors and aliases
-  #   - resolve 'includes' keywords
-  #   - change loop run and run[].loop into dictionnaries to:
-  #     - resolve 'extends' (replace them with anchors and aliases then use yq explode)
-  #   - yq script to generate sh script.
-  #   - generate cache: sha256sum <(find . -type -f -exec sha256sum {} \; | sort  | cut -d' ' -f1)
-  # fi
+  if [ ! -d "${NAVY_CACHE_PATH}/${checksum}" ]
+  then
+    define_context_datasources
+  # - gomplate to resolve GO templates with datasources:
+  #     Use this CLI to expand templates into values but not in keys (improve
+  #     it to works (recursively) with dictionnaries):
+  #     $ yq '. | to_entries[] | "{{ print \"" + .key + "\" }}:" + .value' bases.yaml | gomplate -d bases.yaml=bases.yaml
+  # - resolve 'anchors' keywords
+  #     - explode anchors and aliases
+  # - check circular dependencies between includes
+  # - resolve 'includes' keywords
+  # - change loop run and run[].loop into dictionnaries to:
+  #   - resolve 'extends' (replace them with anchors and aliases then use yq explode)
+  # - yq script to generate sh script.
+  # - generate cache: sha256sum <(find . -type -f -exec sha256sum {} \;)
+  fi
+
   # depending of parsed options:
   # - run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script
   # - or use git to see dependencies as a tree
 }
 
 main "${@}"
+
+# ----------------------------------------------------------------------------
+# MEMO
+# ----------------------------------------------------------------------------
+#
+# regular:
+# curl -s --unix-socket /var/run/docker.sock -X DELETE http://v1.45/containers/hardcore_jang?force=true
+# 
+# filters/urlencode:
+# curl -s --unix-socket /var/run/docker.sock 'http://1.45/images/json' -X GET -G --data-urlencode 'filters={"reference":{"172.17.2.3:5000/mywhalefleet/tiawl.local.*":true}}'
+# 
+# attach: curl -s -N -T - -X POST --unix-socket ./docker.sock 'http://1.45/containers/aaebdff75c380b80556b9c2ce65b2c62ba4cdd59427d3f269d5a61d7b8a087b0/attach?stdout=1&stdin=1&stderr=1&stream=1' -H 'Upgrade: tcp' -H 'Connection: Upgrade'
+# 
+# build:
+# tar c -f context.tar -C /tmp .
+# curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar
+# 
+# http request details & answer: curl --verbose -o /dev/null --silent
+# only http return code: curl -o /dev/null -s -w "%{http_code}\n"
+# 
+# characters:
+# - ▏▎▍▌▋▊▉
+# - ┏┓━┃┗┛
