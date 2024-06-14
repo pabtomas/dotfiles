@@ -1,7 +1,5 @@
 ---
 
-project: 'mywhalefleet'
-
 user:
   unprivileged: 'visitor'
 

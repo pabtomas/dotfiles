@@ -8,12 +8,12 @@ run:
         filters: '{"reference":{"{{ $alpine.image.source }}":true}}'
       as:
         id: localalpineimage
-        scope: images.pull.alpine
+        scope: '{{ $dependencies.images.pull.alpine }}'
   - if: '{{ ne 1 (len $localalpineimage) }}'
     endpoint: /images/create
     method: POST
     loop:
-      - id: images.pull.alpine
+      - id: '{{ $dependencies.images.pull.alpine }}'
         query:
           fromImage: '{{ $alpine.image.source }}'
           tag: '{{ $alpine.tag }}'
@@ -26,12 +26,12 @@ run:
         filters: '{"reference":{"{{ $bash.image.source }}":true}}'
       as:
         id: localbashimage
-        scope: images.pull.bash.
+        scope: '{{ $dependencies.images.pull.bash }}'
   - if: {{ ne 1 (len $localbashimage) }}
     endpoint: /images/create
     method: POST
     loop:
-      - id: images.pull.bash
+      - id: '{{ $dependencies.images.pull.bash }}'
         query:
           fromImage: '{{ $bash.image.source }}'
           tag: '{{ $bash.tag }}'
@@ -44,12 +44,12 @@ run:
         filters: '{"reference":{"{{ $buildkit.image.source }}":true}}'
       as:
         id: localbuildkitimage
-        scope: images.pull.buildkit
+        scope: '{{ $dependencies.images.pull.buildkit }}'
   - if: {{ ne 1 (len $localbuildkitimage) }}
     endpoint: /images/create
     method: POST
     loop:
-      - id: images.pull.buildkit
+      - id: '{{ $dependencies.images.pull.buildkit }}'
         query:
           fromImage: '{{ $buildkit.image.source }}'
           tag: '{{ $buildkit.tag }}'
@@ -62,12 +62,12 @@ run:
         filters: '{"reference":{"{{ $docker.image.source }}":true}}'
       as:
         id: localdockerimage
-        scope: images.pull.docker
+        scope: '{{ $dependencies.images.pull.docker }}'
   - if: {{ ne 1 (len $localdockerimage) }}
     endpoint: /images/create
     method: POST
     loop:
-      - id: images.pull.docker
+      - id: '{{ $dependencies.images.pull.docker }}'
         query:
           fromImage: '{{ $docker.image.source }}'
           tag: '{{ $docker.tag }}'
@@ -77,37 +77,37 @@ run:
     method: GET
     register:
       query:
-        filters: '{"reference":{"{{ $socketproxy.linuxserver.image.source }}":true}}'
-      as:
-        id: localproxyimage
-        scope: images.pull.proxy
-  - if: {{ ne 1 (len $localproxyimage) }}
-    endpoint: /images/create
-    method: POST
-    loop:
-      - id: images.pull.proxy
-        query:
-          fromImage: '{{ $socketproxy.linuxserver.image.source }}'
-          tag: '{{ $socketproxy.linuxserver.tag }}'
-        depends_on:
-          - localproxyimage
-  - endpoint: /images/json
-    method: GET
-    register:
-      query:
         filters: '{"reference":{"{{ $registry.image.source }}":true}}'
       as:
         id: localregistryimage
-        scope: images.pull.registry
+        scope: '{{ $dependencies.images.pull.registry }}'
   - if: {{ ne 1 (len $localregistryimage) }}
     endpoint: /images/create
     method: POST
     loop:
-      - id: images.pull.registry
+      - id: '{{ $dependencies.images.pull.registry }}'
         query:
           fromImage: '{{ $registry.image.source }}'
           tag: '{{ $registry.tag }}'
         depends_on:
           - localregistryimage
+  - endpoint: /images/json
+    method: GET
+    register:
+      query:
+        filters: '{"reference":{"{{ $socketproxy.linuxserver.image.source }}":true}}'
+      as:
+        id: localsocketproxyimage
+        scope: '{{ $dependencies.images.pull.socketproxy }}'
+  - if: {{ ne 1 (len $localsocketproxyimage) }}
+    endpoint: /images/create
+    method: POST
+    loop:
+      - id: '{{ $dependencies.images.pull.socketproxy }}'
+        query:
+          fromImage: '{{ $socketproxy.linuxserver.image.source }}'
+          tag: '{{ $socketproxy.linuxserver.tag }}'
+        depends_on:
+          - localsocketproxyimage
 
 ...

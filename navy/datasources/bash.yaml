@@ -13,5 +13,7 @@ path:
   aliases: '{{ $bash.path.etc.profile.d }}/99aliases.d'
   completion: '{{ $bash.path.etc.profile.d }}/99completion.d'
   theme: '{{ $bash.path.etc.profile.d }}/10theme.d'
+volume:
+  theme: 'theme{{ $volumes.suffix.delme }}'
 
 ...

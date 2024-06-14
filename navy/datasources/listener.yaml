@@ -6,5 +6,11 @@ image: '{{ $registry.prefix.owner }}{{ $listener.id }}'
 ip: '{{ $networks.proxified_docker_socket.prefix }}.3'
 path:
   completion: '{{ $all.path.opt.data }}/99completion'
+volume:
+  opt:
+    data: '{{ $listener.id }}-opt-data-fs{{ $volumes.suffix.delme }}'
+    scripts: '{{ $listener.id }}-opt-scripts-fs{{ $volumes.suffix.delme }}'
+  var:
+    log: '{{ $listener.id }}-var-log-fs{{ $volumes.suffix.delme }}'
 
 ...

@@ -4,7 +4,7 @@ run:
   - endpoint: /build
     method: POST
     loop:
-      - id: images.build.builder
+      - id: '{{ $dependencies.images.build.builder }}'
         query:
           buildargs:
             _BUILDKIT_CONF_PATH: '{{ $buildkit.path.conf }}'
@@ -13,17 +13,17 @@ run:
           t: '{{ $builder.yaml").image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         context: '{{ $all.path.dockerfiles }}'/${BUILDER_ID}
         depends_on:
-          - images.tag.buildkit
+          - '{{ $dependencies.images.tag.buildkit }}'
         extends:
-          - images.build.virtual.base
-      - id: images.build.carpenter.relay
+          - '{{ $dependencies.images.build.virtual._ }}'
+      - id: '{{ $dependencies.images.build.carpenter.relay }}'
         query:
           buildargs:
             LOG_ID: ${CARPENTER_ID}
           t: '{{ $carpenterrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         extends:
-          - images.build.virtual.relay
-      - id: images.build.carpenter.runner
+          - '{{ $dependencies.images.build.virtual.relay }}'
+      - id: '{{ $dependencies.images.build.carpenter.runner }}'
         query:
           buildargs:
             ENTRYPOINTD_PATH: '{{ $entrypoint.path.entrypoint.d }}'
@@ -31,10 +31,10 @@ run:
           t: '{{ $carpenterrunner.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         context: '{{ $all.path.dockerfiles }}'/${CARPENTER_ID}
         depends_on:
-          - images.build.spectrwm
+          - '{{ $dependencies.images.build.spectrwm }}'
         extends:
-          - images.build.virtual.base
-      - id: images.build.jumper
+          - '{{ $dependencies.images.build.virtual._ }}'
+      - id: '{{ $dependencies.images.build.jumper }}'
         query:
           buildargs:
             BASH_COMPLETION_PATH: '{{ $bash.path.completion }}'
@@ -53,10 +53,10 @@ run:
           t: '{{ $jumper.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         context: '{{ $all.path.dockerfiles }}'/${JUMPER_ID}
         depends_on:
-          - images.build.tmux
+          - '{{ $dependencies.images.build.tmux }}'
         extends:
-          - images.build.virtual.base
-      - id: images.build.listener
+          - '{{ $dependencies.images.build.virtual._ }}'
+      - id: '{{ $dependencies.images.build.listener }}'
         query:
           buildargs:
             _DOCKER_SOCKET_PATH: '{{ $docker.path.socket }}'
@@ -71,8 +71,8 @@ run:
           t: '{{ $listener.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         context: '{{ $all.path.dockerfiles }}'/${LISTENER_ID}
         extends:
-          - images.build.virtual.alpine.entrypoint
-      - id: images.build.proxy
+          - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
+      - id: '{{ $dependencies.images.build.socketproxy }}'
         query:
           buildargs:
             _DOCKER_SOCKET_PATH: '{{ $docker.path.socket }}'
@@ -111,17 +111,17 @@ run:
           t: '{{ $socketproxy.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         context: '{{ $all.path.dockerfiles }}'/${PROXY_ID}
         depends_on:
-          - images.build.http
+          - '{{ $dependencies.images.build.http }}'
         extends:
-          - images.build.virtual.base
-      - id: images.build.spaceporn.relay
+          - '{{ $dependencies.images.build.virtual._ }}'
+      - id: '{{ $dependencies.images.build.spaceporn.relay }}'
         query:
           buildargs:
             LOG_ID: ${SPACEPORN_ID}
           t: '{{ $spacepornrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         extends:
-          - images.build.virtual.relay
-      - id: images.build.xserver
+          - '{{ $dependencies.images.build.virtual.relay }}'
+      - id: '{{ $dependencies.images.build.xserver }}'
         query:
           buildargs:
             CARPENTER_RELAY_IP: '{{ $carpenterrelay.ip }}'
@@ -135,6 +135,6 @@ run:
           t: '{{ $xserver.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         context: '{{ $all.path.dockerfiles }}'/${XSERVER_ID}
         extends:
-          - images.build.virtual.nginx
+          - '{{ $dependencies.images.build.virtual.nginx }}'
 
 ...

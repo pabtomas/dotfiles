@@ -29,8 +29,8 @@ run:
               '{{ $networks.docker_utils.name }}':
                 IPv4Address: '{{ $builder.ip }}'
         depends_on:
-          - images.build.builder
-          - 'networks.create.{{ $networks.docker_utils.name }}'
+          - '{{ $dependencies.images.build.builder }}'
+          - '{{ $dependencies.networks.create.docker_utils }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.carpenter.relay
@@ -40,10 +40,10 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                Source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+                Source: '{{ $carpenterrelay.volume }}'
                 Target: '{{ $xserver.path.sockets }}'
               - <<: *volume
-                Source: ${RELAY_VAR_LOG_VOLUME}
+                Source: '{{ $relay.volume.var.log }}'
                 Target: '{{ $all.path.var.log }}'
             ReadonlyRootfs: true
           NetworkConfig:
@@ -51,10 +51,10 @@ run:
               '{{ $networks.proxified_xserver_socket.name }}':
                 IPv4Address: '{{ $carpenterrelay.ip }}'
         depends_on:
-          - images.build.carpenter.relay
-          - 'networks.create.{{ $networks.proxified_xserver_socket.name }}'
-          - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
-          - volumes.create.${RELAY_VAR_LOG_VOLUME}
+          - '{{ $dependencies.images.build.carpenter.relay }}'
+          - '{{ $dependencies.networks.create.proxified_xserver_socket }}'
+          - '{{ $dependencies.volumes.create.carpenterrelay }}'
+          - '{{ $dependencies.volumes.create.relay.var.log }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.carpenter.runner
@@ -64,11 +64,11 @@ run:
           HostConfig:
             Mounts:
               - <<: *readonly-volume
-                Source: ${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+                Source: '{{ $carpenterrelay.volume }}'
                 Target: '{{ $xserver.path.sockets }}'
         depends_on:
-          - images.build.carpenter.runner
-          - volumes.create.${CARPENTER_RELAY_XSERVER_SOCKET_VOLUME}
+          - '{{ $dependencies.images.build.carpenter.runner }}'
+          - '{{ $dependencies.volumes.create.carpenterrelay }}'
         extends:
           - containers.create.virtual.isolated
       - id: containers.create.controller
@@ -77,7 +77,7 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                Source: ${MYWHALEFLEET_VOLUME}
+                Source: '{{ $project.volume }}'
                 Target: '{{ $workspaces.path.project }}'
           NetworkConfig:
             EndpointsConfig:
@@ -86,7 +86,7 @@ run:
               '{{ $networks.proxified_docker_socket.name }}':
                 IPv4Address: '{{ $controller.ip.proxified_docker_socket }}'
         depends_on:
-          - volumes.create.${MYWHALEFLEET_VOLUME}
+          - '{{ $dependencies.volumes.create.project }}'
         extends:
           - containers.create.virtual.docker
       - id: containers.create.editor
@@ -95,14 +95,14 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                Source: ${MYWHALEFLEET_VOLUME}
+                Source: '{{ $project.volume }}'
                 Target: '{{ $workspaces.path.project }}'
               - <<: *volume
-                Source: ${SPACEPORN_VOLUME}
+                Source: '{{ $spaceporn.volume }}'
                 Target: '{{ $workspaces.path.spaceporn }}'
         depends_on:
-          - volumes.create.${MYWHALEFLEET_VOLUME}
-          - volumes.create.${SPACEPORN_VOLUME}
+          - '{{ $dependencies.volumes.create.project }}'
+          - '{{ $dependencies.volumes.create.spaceporn }}'
         extends:
           - containers.create.virtual.vim
       - id: containers.create.explorer.shell
@@ -111,10 +111,10 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                Source: ${MYWHALEFLEET_VOLUME}
+                Source: '{{ $project.volume }}'
                 Target: '{{ $workspaces.path.project }}'
         depends_on:
-          - volumes.create.${MYWHALEFLEET_VOLUME}
+          - '{{ $dependencies.volumes.create.project }}'
         extends:
           - containers.create.virtual.shell
       - id: containers.create.explorer.zig
@@ -123,10 +123,10 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                Source: ${SPACEPORN_VOLUME}
+                Source: '{{ $spaceporn.volume }}'
                 Target: '{{ $workspaces.path.spaceporn }}'
         depends_on:
-          - volumes.create.${SPACEPORN_VOLUME}
+          - '{{ $dependencies.volumes.create.spaceporn }}'
         extends:
           - containers.create.virtual.zig
       - id: containers.create.jumper
@@ -142,55 +142,55 @@ run:
           HostConfig:
             Mounts:
               - <<: *readonly-volume
-                Source: ${LISTENER_OPT_DATA_VOLUME}
+                Source: '{{ $listener.volume.opt.data }}'
                 Target: '{{ $jumper.path.listener.opt.data }}'
               - <<: *readonly-volume
-                Source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+                Source: '{{ $listener.volume.opt.scripts }}'
                 Target: '{{ $jumper.path.listener.opt.scripts }}'
               - <<: *readonly-volume
-                Source: ${LISTENER_VAR_LOG_VOLUME}
+                Source: '{{ $listener.volume.var.log }}'
                 Target: '{{ $jumper.path.listener.var.log }}'
               - <<: *readonly-volume
-                Source: ${PROXY_ETC_NGINX_VOLUME}
+                Source: '{{ $socketproxy.volume.etc.nginx }}'
                 Target: '{{ $jumper.path.proxy.etc }}'
               - <<: *readonly-volume
-                Source: ${PROXY_OPT_SCRIPTS_VOLUME}
+                Source: '{{ $socketproxy.volume.opt.scripts }}'
                 Target: '{{ $jumper.path.proxy.opt.scripts }}'
               - <<: *readonly-volume
-                Source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+                Source: '{{ $socketproxy.volume.var.log.nginx }}'
                 Target: '{{ $jumper.path.proxy.var.log }}'
               - <<: *readonly-volume
-                Source: ${RELAY_VAR_LOG_VOLUME}
+                Source: '{{ $relay.volume.var.log }}'
                 Target: '{{ $jumper.path.relay.var.log }}'
               - <<: *readonly-volume
-                Source: ${SSH_VOLUME}
+                Source: '{{ $sshd.volume }}'
                 Target: '{{ $all.path.opt.ssh }}'
               - <<: *volume
-                Source: ${THEME_VOLUME}
+                Source: '{{ $bash.volume.theme }}'
                 Target: '{{ $bash.path.theme }}'
               - <<: *readonly-volume
-                Source: ${XSERVER_ETC_NGINX_VOLUME}
+                Source: '{{ $xserver.volume.etc.nginx }}'
                 Target: '{{ $jumper.path.xserver.etc }}'
               - <<: *readonly-volume
-                Source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+                Source: '{{ $xserver.volume.opt.scripts }}'
                 Target: '{{ $jumper.path.xserver.opt.scripts }}'
               - <<: *readonly-volume
-                Source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+                Source: '{{ $xserver.volume.var.log.nginx }}'
                 Target: '{{ $jumper.path.xserver.var.log }}'
         depends_on:
-          - images.build.jumper
-          - 'networks.create.{{ $networks.jump_area.name }}'
-          - volumes.create.${LISTENER_OPT_DATA_VOLUME}
-          - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
-          - volumes.create.${LISTENER_VAR_LOG_VOLUME}
-          - volumes.create.${PROXY_ETC_NGINX_VOLUME}
-          - volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
-          - volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
-          - volumes.create.${RELAY_VAR_LOG_VOLUME}
-          - volumes.create.${SSH_VOLUME}
-          - volumes.create.${XSERVER_ETC_NGINX_VOLUME}
-          - volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
-          - volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}
+          - '{{ $dependencies.images.build.jumper }}'
+          - '{{ $dependencies.networks.create.jump_area }}'
+          - '{{ $dependencies.volumes.create.listener.opt.data }}'
+          - '{{ $dependencies.volumes.create.listener.opt.scripts }}'
+          - '{{ $dependencies.volumes.create.listener.var.log }}'
+          - '{{ $dependencies.volumes.create.socketproxy.etc.nginx }}'
+          - '{{ $dependencies.volumes.create.socketproxy.opt.scripts }}'
+          - '{{ $dependencies.volumes.create.socketproxy.var.log.nginx }}'
+          - '{{ $dependencies.volumes.create.relay.var.log }}'
+          - '{{ $dependencies.volumes.create.sshd }}'
+          - '{{ $dependencies.volumes.create.xserver.etc.nginx }}'
+          - '{{ $dependencies.volumes.create.xserver.opt.scripts }}'
+          - '{{ $dependencies.volumes.create.xserver.var.log.nginx }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.listener
@@ -204,21 +204,21 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                Source: ${LISTENER_OPT_DATA_VOLUME}
+                Source: '{{ $listener.volume.opt.data }}'
                 Target: '{{ $all.path.opt.data }}'
               - <<: *readonly-volume
-                Source: ${LISTENER_OPT_SCRIPTS_VOLUME}
+                Source: '{{ $listener.volume.opt.scripts }}'
                 Target: '{{ $all.path.opt.scripts }}'
               - <<: *volume
-                Source: ${LISTENER_VAR_LOG_VOLUME}
+                Source: '{{ $listener.volume.var.log }}'
                 Target: '{{ $all.path.var.log }}'
             ReadonlyRootfs: true
         depends_on:
-          - images.build.jumper
-          - 'networks.create.{{ $networks.proxified_docker_socket.name }}'
-          - volumes.create.${LISTENER_OPT_DATA_VOLUME}
-          - volumes.create.${LISTENER_OPT_SCRIPTS_VOLUME}
-          - volumes.create.${LISTENER_VAR_LOG_VOLUME}
+          - '{{ $dependencies.images.build.listener }}'
+          - '{{ $dependencies.networks.create.proxified_docker_socket }}'
+          - '{{ $dependencies.volumes.create.listener.opt.data }}'
+          - '{{ $dependencies.volumes.create.listener.opt.scripts }}'
+          - '{{ $dependencies.volumes.create.listener.var.log }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.proxy
@@ -237,24 +237,24 @@ run:
                 Source: '{{ $docker.path.socket }}'
                 Target: '{{ $docker.path.socket }}'
               - <<: *readonly-volume
-                Source: ${PROXY_ETC_NGINX_VOLUME}
+                Source: '{{ $socketproxy.volume.etc.nginx }}'
                 Target: '{{ $nginx.path.etc }}'
               - <<: *readonly-volume
-                Source: ${PROXY_OPT_SCRIPTS_VOLUME}
+                Source: '{{ $socketproxy.volume.opt.scripts }}'
                 Target: '{{ $nginx.path.opt.scripts }}'
               - <<: *volume
-                Source: ${PROXY_VAR_LOG_NGINX_VOLUME}
+                Source: '{{ $socketproxy.volume.var.log.nginx }}'
                 Target: '{{ $nginx.path.var.log }}'
             ReadonlyRootfs: true
             Tmpfs:
               /run: ""
               /tmp: ""
         depends_on:
-          - images.build.proxy
-          - 'networks.create.{{ $networks.proxified_docker_socket.name }}'
-          - volumes.create.${PROXY_ETC_NGINX_VOLUME}
-          - volumes.create.${PROXY_OPT_SCRIPTS_VOLUME}
-          - volumes.create.${PROXY_VAR_LOG_NGINX_VOLUME}
+          - '{{ $dependencies.images.build.socketproxy }}'
+          - '{{ $dependencies.networks.create.proxified_docker_socket }}'
+          - '{{ $dependencies.volumes.create.socketproxy.etc.nginx }}'
+          - '{{ $dependencies.volumes.create.socketproxy.opt.scripts }}'
+          - '{{ $dependencies.volumes.create.socketproxy.var.log.nginx }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.registry
@@ -272,11 +272,11 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                Source: ${SAFEDEPOSIT_VOLUME}
+                Source: '{{ $safedeposit.volume }}'
                 Target: '{{ $all.path.root.passwd }}'
         depends_on:
-          - images.build.pass
-          - volumes.create.${SAFEDEPOSIT_VOLUME}
+          - '{{ $dependencies.images.build.pass }}'
+          - '{{ $dependencies.volumes.create.safedeposit }}'
         extends:
           - containers.create.virtual.pass
       - id: containers.create.scholar
@@ -292,20 +292,20 @@ run:
             ReadonlyRootfs: true
             Mounts:
               - <<: *volume
-                source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+                source: '{{ $spacepornrelay.volume }}'
                 target: '{{ $xserver.path.sockets }}'
               - <<: *volume
-                source: ${RELAY_VAR_LOG_VOLUME}
+                source: '{{ $relay.volume.var.log }}'
                 target: '{{ $all.path.var.log }}'
           NetworkConfig:
             EndpointsConfig:
               '{{ $networks.proxified_xserver_socket.name }}':
                 IPv4Address: '{{ $spacepornrelay.ip }}'
         depends_on:
-          - images.build.spaceporn.relay
-          - 'networks.create.{{ $networks.proxified_xserver_socket.name }}'
-          - volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
-          - volumes.create.${RELAY_VAR_LOG_VOLUME}
+          - '{{ $dependencies.images.build.spaceporn.relay }}'
+          - '{{ $dependencies.networks.create.proxified_xserver_socket }}'
+          - '{{ $dependencies.volumes.create.spacepornrelay }}'
+          - '{{ $dependencies.volumes.create.relay.var.log }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.spaceporn.runner
@@ -316,14 +316,14 @@ run:
           HostConfig:
             Mounts:
               - <<: *readonly-volume
-                source: ${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
+                source: '{{ $spacepornrelay.volume }}'
                 target: '{{ $xserver.path.sockets }}'
               - <<: *readonly-volume
-                source: ${SPACEPORN_VOLUME}
+                source: '{{ $spaceporn.volume }}'
                 target: '{{ $workspaces.path.spaceporn }}'
         depends_on:
-          - volumes.create.${SPACEPORN_RELAY_XSERVER_SOCKET_VOLUME}
-          - volumes.create.${SPACEPORN_VOLUME}
+          - '{{ $dependencies.volumes.create.spacepornrelay }}'
+          - '{{ $dependencies.volumes.create.spaceporn }}'
         extends:
           - containers.create.virtual.gpu
           - containers.create.virtual.isolated
@@ -346,21 +346,21 @@ run:
                 source: '{{ $xserver.path.display }}'
                 target: '{{ $xserver.path.display }}'
               - <<: *readonly-volume
-                source: ${XSERVER_ETC_NGINX_VOLUME}
+                source: '{{ $xserver.volume.etc.nginx }}'
                 target: '{{ $nginx.path.etc }}'
               - <<: *readonly-volume
-                source: ${XSERVER_OPT_SCRIPTS_VOLUME}
+                source: '{{ $xserver.volume.opt.scripts }}'
                 target: '{{ $all.path.opt.scripts }}'
               - <<: *volume
-                source: ${XSERVER_VAR_LOG_NGINX_VOLUME}
+                source: '{{ $xserver.volume.var.log.nginx }}'
                 target: '{{ $all.path.var.log }}'
             Tmpfs:
               /run: ""
         depends_on:
-          - images.build.xserver
-          - 'networks.create.{{ $networks.proxified_xserver_socket.name }}'
-          - volumes.create.${XSERVER_ETC_NGINX_VOLUME}
-          - volumes.create.${XSERVER_OPT_SCRIPTS_VOLUME}
-          - volumes.create.${XSERVER_VAR_LOG_NGINX_VOLUME}
+          - '{{ $dependencies.images.build.xserver }}'
+          - '{{ $dependencies.networks.create.proxified_xserver_socket }}'
+          - '{{ $dependencies.volumes.create.xserver.etc.nginx }}'
+          - '{{ $dependencies.volumes.create.xserver.opt.scripts }}'
+          - '{{ $dependencies.volumes.create.xserver.var.log.nginx }}'
 
 ...

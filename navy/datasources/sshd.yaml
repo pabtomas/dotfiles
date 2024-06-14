@@ -3,5 +3,6 @@
 id: 'sshd'
 image: '{{ $registry.prefix.layer }}{{ $sshd.id }}'
 port: 22
+volume: 'shared-ssh{{ $volumes.suffix.delme }}'
 
 ...

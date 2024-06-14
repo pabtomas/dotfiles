@@ -15,17 +15,17 @@ run:
     endpoint: /networks/create
     method: POST
     loop:
-      - id: networks.create.virtual
+      - id: '{{ $dependencies.networks.create.virtual }}'
         virtual: true
         query:
           Driver: bridge
           IPAM:
             Driver: default
           Labels:
-            navy: true
+            navy: '{{ $project.id }}'
         depends_on:
           - networks.json
-      - id: 'networks.create.{{ $networks.docker_utils.name }}'
+      - id: '{{ $dependencies.networks.create.docker_utils }}'
         query:
           Name: '{{ $networks.docker_utils.name }}'
           IPAM:
@@ -34,8 +34,8 @@ run:
                 IPRange: '{{ $networks.docker_utils.subnet }}'
                 Gateway: '{{ $networks.docker_utils.gateway.ip }}'
         extends:
-          - networks.create.virtual
-      - id: 'networks.create.{{ $networks.jump_area.name }}'
+          - '{{ $dependencies.networks.create.virtual }}'
+      - id: '{{ $dependencies.networks.create.jump_area }}'
         query:
           Name: '{{ $networks.jump_area.name }}'
           IPAM:
@@ -44,8 +44,8 @@ run:
                 IPRange: '{{ $networks.jump_area.subnet }}'
                 Gateway: '{{ $networks.jump_area.gateway.ip }}'
         extends:
-          - networks.create.virtual
-      - id: 'networks.create.{{ $networks.proxified_docker_socket.name }}'
+          - '{{ $dependencies.networks.create.virtual }}'
+      - id: '{{ $dependencies.networks.create.proxified_docker_socket }}'
         query:
           Name: '{{ $networks.proxified_docker_socket.name }}'
           IPAM:
@@ -54,8 +54,8 @@ run:
                 IPRange: '{{ $networks.proxified_docker_socket.subnet }}'
                 Gateway: '{{ $networks.proxified_docker_socket.gateway.ip }}'
         extends:
-          - networks.create.virtual
-      - id: 'networks.create.{{ $networks.proxified_xserver_socket.name }}'
+          - '{{ $dependencies.networks.create.virtual }}'
+      - id: '{{ $dependencies.networks.create.proxified_xserver_socket }}'
         query:
           Name: '{{ $networks.proxified_xserver_socket.name }}'
           IPAM:
@@ -64,6 +64,6 @@ run:
                 IPRange: '{{ $networks.proxified_xserver_socket.subnet }}'
                 Gateway: '{{ $networks.proxified_xserver_socket.gateway.ip }}'
         extends:
-          - networks.create.virtual
+          - '{{ $dependencies.networks.create.virtual }}'
 
 ...

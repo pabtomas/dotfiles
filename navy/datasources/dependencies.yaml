@@ -1,0 +1,121 @@
+---
+
+prefix:
+  images:
+    pull: 'images{{ $all.sep.id }}pull{{ $all.sep.id }}'
+    tag: 'images{{ $all.sep.id }}tag{{ $all.sep.id }}'
+    build: 'images{{ $all.sep.id }}build{{ $all.sep.id }}'
+    virtual:
+      build: '{{ $dependencies.prefix.images.build }}virtual{{ $all.sep.id }}'
+  networks:
+    create: 'networks{{ $all.sep.id }}create{{ $all.sep.id }}'
+  volumes:
+    create: 'volumes{{ $all.sep.id }}create{{ $all.sep.id }}'
+
+images:
+  pull:
+    alpine: '{{ $dependencies.prefix.images.pull }}{{ $alpine.id }}'
+    bash: '{{ $dependencies.prefix.images.pull }}{{ $bash.id }}'
+    buildkit: '{{ $dependencies.prefix.images.pull }}{{ $buildkit.id }}'
+    docker: '{{ $dependencies.prefix.images.pull }}{{ $docker.id }}'
+    registry: '{{ $dependencies.prefix.images.pull }}{{ $registry.id }}'
+    socketproxy: '{{ $dependencies.prefix.images.pull }}{{ $socketproxy.id }}'
+  tag:
+    alpine: '{{ $dependencies.prefix.images.tag }}{{ $alpine.id }}'
+    bash: '{{ $dependencies.prefix.images.tag }}{{ $bash.id }}'
+    buildkit: '{{ $dependencies.prefix.images.tag }}{{ $buildkit.id }}'
+    docker: '{{ $dependencies.prefix.images.tag }}{{ $docker.id }}'
+    registry: '{{ $dependencies.prefix.images.tag }}{{ $registry.id }}'
+    socketproxy: '{{ $dependencies.prefix.images.tag }}{{ $socketproxy.id }}'
+  build:
+    virtual:
+      _: '{{ $dependencies.prefix.images.build }}virtual'
+      alpine:
+        entrypoint: '{{ $dependencies.prefix.images.virtual.build }}{{ $alpine.id }}{{ $all.sep.id }}{{ $entrypoint.id }}'
+      bash: '{{ $dependencies.prefix.images.virtual.build }}{{ $bash.id }}'
+      git: '{{ $dependencies.prefix.images.virtual.build }}{{ $git.id }}'
+      entrypoint: '{{ $dependencies.prefix.images.virtual.build }}{{ $entrypoint.id }}'
+      nginx: '{{ $dependencies.prefix.images.virtual.build }}{{ $nginx.id }}'
+      relay: '{{ $dependencies.prefix.images.virtual.build }}{{ $relay.id }}'
+      sshd: '{{ $dependencies.prefix.images.virtual.build }}{{ $sshd.id }}'
+      workspaces: '{{ $dependencies.prefix.images.virtual.build }}{{ $workspaces.id }}'
+    alpine:
+      entrypoint: '{{ $dependencies.prefix.images.build }}{{ $alpine.id }}{{ $all.sep.id }}{{ $entrypoint.id }}'
+    bash:
+      _: '{{ $dependencies.prefix.images.build }}{{ $bash.id }}'
+      entrypoint: '{{ $dependencies.prefix.images.build }}{{ $bash.id }}{{ $all.sep.id }}{{ $entrypoint.id }}'
+    builder: '{{ $dependencies.prefix.images.build }}{{ $builder.id }}'
+    carpenter:
+      relay: '{{ $dependencies.prefix.images.build }}{{ $carpenterrelay.id }}'
+      runner: '{{ $dependencies.prefix.images.build }}{{ $carpenterrunner.id }}'
+    docker: '{{ $dependencies.prefix.images.build }}{{ $docker.id }}'
+    explorer: '{{ $dependencies.prefix.images.build }}{{ $explorer.id }}'
+    git: '{{ $dependencies.prefix.images.build }}{{ $git.id }}'
+    gpu: '{{ $dependencies.prefix.images.build }}{{ $gpu.id }}'
+    http: '{{ $dependencies.prefix.images.build }}{{ $http.id }}'
+    jumper: '{{ $dependencies.prefix.images.build }}{{ $jumper.id }}'
+    linguist: '{{ $dependencies.prefix.images.build }}{{ $linguist.id }}'
+    listener: '{{ $dependencies.prefix.images.build }}{{ $listener.id }}'
+    man: '{{ $dependencies.prefix.images.build }}{{ $man.id }}'
+    nginx: '{{ $dependencies.prefix.images.build }}{{ $nginx.id }}'
+    pass: '{{ $dependencies.prefix.images.build }}{{ $pass.id }}'
+    shell: '{{ $dependencies.prefix.images.build }}{{ $shell.id }}'
+    socat: '{{ $dependencies.prefix.images.build }}{{ $socat.id }}'
+    socketproxy: '{{ $dependencies.prefix.images.build }}{{ $socketproxy.id }}'
+    spaceporn:
+      relay: '{{ $dependencies.prefix.images.build }}{{ $spacepornrelay.id }}'
+    spectrwm: '{{ $dependencies.prefix.images.build }}{{ $spectrwm.id }}'
+    sshd: '{{ $dependencies.prefix.images.build }}{{ $sshd.id }}'
+    tmux: '{{ $dependencies.prefix.images.build }}{{ $tmux.id }}'
+    vim: '{{ $dependencies.prefix.images.build }}{{ $vim.id }}'
+    workspaces: '{{ $dependencies.prefix.images.build }}{{ $workspaces.id }}'
+    xserver: '{{ $dependencies.prefix.images.build }}{{ $xserver.id }}'
+    zig: '{{ $dependencies.prefix.images.build }}{{ $zig.id }}'
+
+networks:
+  create:
+    virtual: '{{ $dependencies.prefix.networks.create }}virtual'
+    docker_utils: '{{ $dependencies.prefix.networks.create }}{{ $networks.docker_utils.name }}'
+    jump_area: '{{ $dependencies.prefix.networks.create }}{{ $networks.jump_area.name }}'
+    proxified_docker_socket: '{{ $dependencies.prefix.networks.create }}{{ $networks.proxified_docker_socket.name }}'
+    proxified_xserver_socket: '{{ $dependencies.prefix.networks.create }}{{ $networks.proxified_xserver_socket.name }}'
+
+volumes:
+  create:
+    virtual: '{{ $dependencies.prefix.volumes.create }}virtual'
+    bash:
+      theme: '{{ $dependencies.prefix.volumes.create }}{{ $bash.volume.theme }}'
+    carpenterrelay: '{{ $dependencies.prefix.volumes.create }}{{ $carpenterrelay.volume }}'
+    listener:
+      opt:
+        data: '{{ $dependencies.prefix.volumes.create }}{{ $listener.volume.opt.data }}'
+        scripts: '{{ $dependencies.prefix.volumes.create }}{{ $listener.volume.opt.scripts }}'
+      var:
+        log: '{{ $dependencies.prefix.volumes.create }}{{ $listener.volume.var.log }}'
+    project: '{{ $dependencies.prefix.volumes.create }}{{ $project.volume }}'
+    socketproxy:
+      etc:
+        nginx: '{{ $dependencies.prefix.volumes.create }}{{ $socketproxy.volume.etc.nginx }}'
+      opt:
+        scripts: '{{ $dependencies.prefix.volumes.create }}{{ $socketproxy.volume.opt.scripts }}'
+      var:
+        log:
+          nginx: '{{ $dependencies.prefix.volumes.create }}{{ $socketproxy.volume.var.log.nginx }}'
+    registry: '{{ $dependencies.prefix.volumes.create }}{{ $registry.volume }}'
+    relay:
+      var:
+        log: '{{ $dependencies.prefix.volumes.create }}{{ $relay.volume.var.log }}'
+    safedeposit: '{{ $dependencies.prefix.volumes.create }}{{ $safedeposit.volume }}'
+    spaceporn: '{{ $dependencies.prefix.volumes.create }}{{ $spaceporn.volume }}'
+    spacepornrelay: '{{ $dependencies.prefix.volumes.create }}{{ $spacepornrelay.volume }}'
+    sshd: '{{ $dependencies.prefix.volumes.create }}{{ $sshd.volume }}'
+    xserver:
+      etc:
+        nginx: '{{ $dependencies.prefix.volumes.create }}{{ $xserver.volume.etc.nginx }}'
+      opt:
+        scripts: '{{ $dependencies.prefix.volumes.create }}{{ $xserver.volume.opt.scripts }}'
+      var:
+        log:
+          nginx: '{{ $dependencies.prefix.volumes.create }}{{ $xserver.volume.var.log.nginx }}'
+
+...

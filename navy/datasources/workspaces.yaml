@@ -5,6 +5,6 @@ image: '{{ $registry.prefix.layer }}{{ $workspaces.id }}'
 path:
   root: '/{{ $workspaces.id }}'
   spaceporn: '{{ $workspaces.root }}/{{ $spaceporn.id }}'
-  project: '{{ $workspaces.root }}/{{ $all.project }}'
+  project: '{{ $workspaces.root }}/{{ $project.id }}'
 
 ...

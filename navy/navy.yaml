@@ -26,6 +26,8 @@ datasources:
     id: carpenterrunner
   - source: datasources/controller.yaml
     id: controller
+  - source: datasources/dependencies.yaml
+    id: dependencies
   - source: datasources/docker.yaml
     id: docker
   - source: datasources/dockle.yaml
@@ -66,6 +68,8 @@ datasources:
     id: nginx
   - source: datasources/pass.yaml
     id: pass
+  - source: datasources/project.yaml
+    id: project
   - source: datasources/registry.yaml
     id: registry
   - source: datasources/relay.yaml
@@ -96,6 +100,8 @@ datasources:
     id: tmux
   - source: datasources/vim.yaml
     id: vim
+  - source: datasources/volumes.yaml
+    id: volumes
   - source: datasources/workspaces.yaml
     id: workspaces
   - source: datasources/xserver.yaml

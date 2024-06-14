@@ -10,7 +10,7 @@ run:
           HostConfig:
             Privileged: false
           Labels:
-            navy: true
+            navy: '{{ $project.id }}'
       - id: containers.create.virtual.docker
         virtual: true
         query:
@@ -20,9 +20,9 @@ run:
               '{{ $networks.docker_utils.name }}': {}
               '{{ $networks.proxified_docker_socket.name }}': {}
         depends_on:
-          - images.build.docker
-          - 'networks.create.{{ $networks.docker_utils.name }}'
-          - 'networks.create.{{ $networks.proxified_docker_socket.name }}'
+          - '{{ $dependencies.images.build.docker }}'
+          - '{{ $dependencies.networks.create.docker_utils }}'
+          - '{{ $dependencies.networks.create.proxified_docker_socket }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.isolated
@@ -47,7 +47,7 @@ run:
             - render
             - video
         depends_on:
-          - images.build.gpu
+          - '{{ $dependencies.images.build.gpu }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.man
@@ -55,7 +55,7 @@ run:
         query:
           Image: '{{ $man.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
-          - images.build.man
+          - '{{ $dependencies.images.build.man }}'
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.pass
@@ -63,7 +63,7 @@ run:
         query:
           Image: '{{ $pass.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
-          - images.build.pass
+          - '{{ $dependencies.images.build.pass }}'
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.registry
@@ -78,16 +78,16 @@ run:
           HostConfig:
             Mounts:
               - <<: *volume
-                source: ${REGISTRY_VOLUME}
+                source: '{{ $registry.volume }}'
                 target: '{{ $all.path.opt.data }}'
             ReadonlyRootfs: true
           NetworkingConfig:
             EndpointsConfig:
               '{{ $networks.docker_utils.name }}': {}
         depends_on:
-          - images.build.registry
-          - 'networks.create.{{ $networks.docker_utils.name }}'
-          - volumes.create.${REGISTRY_VOLUME}
+          - '{{ $dependencies.images.tag.registry }}'
+          - '{{ $dependencies.networks.create.docker_utils }}'
+          - '{{ $dependencies.volumes.create.registry }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.sshd
@@ -99,19 +99,19 @@ run:
           HostConfig:
             Mounts:
               - <<: *readonly-volume
-                Source: ${SSH_VOLUME}
+                Source: '{{ $sshd.volume }}'
                 Target: '{{ $all.path.root.ssh }}'
               - <<: *readonly-volume
-                Source: ${THEME_VOLUME}
+                Source: '{{ $bash.volume.theme }}'
                 Target: '{{ $bash.path.theme }}'
           NetworkingConfig:
             EndpointsConfig:
               '{{ $networks.jump_area.name }}': {}
         depends_on:
-          - images.build.sshd
-          - 'networks.create.{{ $networks.jump_area.name }}'
-          - volume.create.${SSH_VOLUME}
-          - volume.create.${THEME_VOLUME}
+          - '{{ $dependencies.images.build.sshd }}'
+          - '{{ $dependencies.networks.create.jump_area }}'
+          - 'volume.create.{{ $sshd.volume }}'
+          - 'volume.create.{{ $bash.volume.theme }}'
         extends:
           - containers.create.virtual.base
       - id: containers.create.virtual.shell
@@ -119,7 +119,7 @@ run:
         query:
           Image: '{{ $shell.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
-          - images.build.shell
+          - '{{ $dependencies.images.build.shell }}'
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.vim
@@ -127,7 +127,7 @@ run:
         query:
           Image: '{{ $vim.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
-          - images.build.vim
+          - '{{ $dependencies.images.build.vim }}'
         extends:
           - containers.create.virtual.sshd
       - id: containers.create.virtual.zig
@@ -135,7 +135,7 @@ run:
         query:
           Image: '{{ $zig.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
-          - images.build.zig
+          - '{{ $dependencies.images.build.zig }}'
         extends:
           - containers.create.virtual.sshd
 

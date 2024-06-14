@@ -5,7 +5,7 @@ post:
     method: GET
     register:
       query:
-        filters: '{"label":{"navy":true}}'
+        filters: '{"label":{"navy":{{ $project.id }}}}'
       as:
         id: registerpostvolumes
   - endpoint: /volumes/{name}
