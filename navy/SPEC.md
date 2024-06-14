@@ -167,12 +167,39 @@ post:
     - `endpoint`,
     - `method`,
     - one between these fields:
+        - `loop`
         - `register`
         - `from`
-        - `loop`
+
+Depending of what you choosed as a third field, the Request object will behave differently.
 - **exemples**:
-```yaml
-```
+    - This Request object will send 2 networks creation to the Docker Engine:
+    ```yaml
+    endpoint: /networks/create
+    method: POST
+    loop:
+      - query:
+          Name: my-net
+      - query:
+          Name: my-net-2
+    ```
+    - This Request object will ask for the current network list and store the JSON answer from the Docker Engine as a Datasource:
+    ```yaml
+    endpoint: /networks
+    method: GET
+    register:
+      as:
+        id: registernetworks
+    ```
+    - This Request object will send a network deletion to the Docker Engine for each network listed in the previously registered Datasource:
+    ```yaml
+    endpoint: /networks/{id}
+    method: DELETE
+    from:
+      filter: '{{ $array := "" }}{{ range $registernetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+      depends_on:
+        - registernetworks
+    ```
 
 ### `Request.endpoint`
 
@@ -353,7 +380,7 @@ post:
 ## Datasource object
 
 - **description**:
-    - A Datasource is a gomplate concept. Most of the time, you will find everything you need in [the gomplate documentation](https://docs.gomplate.ca/) concerning this issue.
+    - A Datasource is a gomplate concept. Most of the time, you will find everything you need in [the gomplate documentation](https://docs.gomplate.ca/).
     - Used with the `datasources` keyword, the Datasource object have to be YAML file. Used with the `Register.as` keyword, the Datasource object is a JSON answer from Docker Engine. A Datasource has 3 available fields (each of them is described in its own section):
         - id
         - source
