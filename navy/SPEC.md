@@ -82,13 +82,13 @@ Objects:
 - **description**: List of Docker Engine API versions targetted by your project. Navy will run with the first available version. Navy will fail if the Docker Engine does not support any targetted version.
 - **good to know**:
     - For the Docker Engine API versions after 1.25 (included), the documentation specify this:
-```
-Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.
-```
+    ```
+    Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.
+    ```
     - Here the command line to check your Docker Engine API version:
-```
-docker version --format '{{ .Server.APIVersion }}'
-```
+    ```
+    docker version --format '{{ .Server.APIVersion }}'
+    ```
 - **exemple**:
 ```yaml
 ```
@@ -271,24 +271,24 @@ docker version --format '{{ .Server.APIVersion }}'
     - id
 - **exemples**:
     - Here an exemple of a Datasource object:
-```yaml
-```
+    ```yaml
+    ```
     - Here an exemple of what could be the YAML file used by the Datasource object shown above:
-```yaml
----
-# datasources/exemple.yaml
+    ```yaml
+    ---
+    # datasources/exemple.yaml
 
-sender: Alice
-receiver: Bob
+    sender: Alice
+    receiver: Bob
 
-# You can use the other Datasources in your Datasource files (whatever the defined scope).
-message: 'Hello {{ (ds "datasources/exemple.yaml").receiver }}, you received a message from {{ (ds "datasources/exemple.yaml").sender }}'
+    # You can use the other Datasources in your Datasource files (whatever the defined scope).
+    message: 'Hello {{ (ds "datasources/exemple.yaml").receiver }}, you received a message from {{ (ds "datasources/exemple.yaml").sender }}'
 
-# You can use the special /context Datasources in your Datasource files
-message2: 'Your Docker Engine is using the {{ (ds "/context/version.json").ApiVersion }} version of the API and is already running {{ (ds "/context/info.json").Containers }} container(s) !'
+    # You can use the special /context Datasources in your Datasource files
+    message2: 'Your Docker Engine is using the {{ (ds "/context/version.json").ApiVersion }} version of the API and is already running {{ (ds "/context/info.json").Containers }} container(s) !'
 
-...
-```
+    ...
+    ```
 
 ### `Datasource.source`
 
