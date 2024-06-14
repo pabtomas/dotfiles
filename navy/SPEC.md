@@ -71,11 +71,16 @@ datasources:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Anchors. In this list, you can define a YAML file and share its anchors across multiple files.
+- **description**: List of Anchors. In this list, you can define a YAML file and share its anchors across multiple files. More details on the Anchor available fields into the [Anchor object section](#anchor-object).
 - **good to know**:
     - The `anchors` keyword is processed after the `datasources` keyword when Navy is executed and before the `include` keyword. Its location is in your main Navy file.
 - **exemple**:
 ```yaml
+anchors:
+  - source: anchors/file.yaml
+    in:
+      - anchors-user1.yaml
+      - anchors-user2.yaml
 ```
 
 ## `include`
@@ -323,25 +328,26 @@ datasources:
         - source
         - scope
 - **exemples**:
-    - Here an exemple of a Datasource object into the `datasources` list:
+    - Here an exemple of a Datasource object used into the `datasources` list:
     ```yaml
-    source: datasources/exemple.yaml
-    id: exemple
+    source: datasources/message.yaml
+    id: message
     scope: *
     ```
-    - Here an exemple of what could be the YAML file used by the Datasource object shown above:
+    The `datasources/message.yaml` YAML file will be loaded as Datasource object. You can refer this Datasource as the `$message` variable into your GO templates. It will be visible into all your Requests & Commands.
+    - Here an exemple of the YAML file content used by the Datasource object shown above:
     ```yaml
     ---
-    # datasources/exemple.yaml
+    # datasources/message.yaml
 
     sender: Alice
     receiver: Bob
 
     # You can use the other Datasources in your Datasource files (whatever the defined scope).
-    message: 'Hello {{ (ds "datasources/exemple.yaml").receiver }}, you received a message from {{ (ds "datasources/exemple.yaml").sender }}'
+    message: 'Hello {{ (ds "datasources/message.yaml").receiver }}, you received a message from {{ (ds "datasources/message.yaml").sender }}'
 
     # You can use the Datasource.id field (if you used it) to have more readable code
-    same_message: 'Hello {{ $exemple.receiver }}, you received a message from {{ $exemple.sender }}'
+    same_message: 'Hello {{ $message.receiver }}, you received a message from {{ $message.sender }}'
 
     # You can use the special CONTEXTVERSION/CONTEXTINFO Datasources in your Datasource files
     message2: 'Your Docker Engine is using the {{ $CONTEXTVERSION.ApiVersion }} version of the API and is already running {{ $CONTEXTINFO.Containers }} container(s) !'
@@ -359,6 +365,7 @@ datasources:
         id: registercontainersjson
         scope: *
     ```
+    The result of the `/containers/json` request will be store into the `registercontainersjson` variable into your GO templates. It will be visible into all your Requests & Commands.
 
 ### `Datasource.id`
 
@@ -386,8 +393,28 @@ datasources:
 
 - **description**: A YAML file containing anchors definitions.
 - **exemples**:
-```yaml
-```
+    - Here an exemple of an Anchor object used into the `anchors` list:
+    ```yaml
+    source: anchors/volumes.yaml
+    in:
+      - volumes/create.yaml
+      - volumes/cleanup.yaml
+    ```
+    Anchors from `anchors/volumes.yaml` will be visible into `volumes/create.yaml` and `volumes/cleanup.yaml`
+    - Here an exemple of the YAML file content containing anchors you want to share with other files:
+    ```yaml
+    ---
+    # anchors/volumes.yaml
+
+    x-volume: &volume
+      Type: volume
+      VolumeOptions: {}
+    x-volume-ro: &readonly-volume
+      <<: *volume
+      ReadOnly: true
+
+    ...
+    ```
 
 ### `Anchor.source`
 
@@ -400,7 +427,7 @@ datasources:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**:
+- **description**: A list of YAML filepaths (relative to your main Navy file) where anchors from the `Anchor.source` path will be visible.
 
 ## Query & Path dictionnaries
 
