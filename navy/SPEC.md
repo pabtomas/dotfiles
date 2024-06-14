@@ -370,10 +370,8 @@ loop:
 
 ## Register object
 
-- **description**:
-- **exemple**:
-```yaml
-```
+- **description**: The only use case of this object is in `Request.register`.
+- **exemple**: See `Request object`.
 
 ### `Register.id`
 
@@ -393,13 +391,13 @@ loop:
 - **type**: dictionnary
 - **required**: false
 - **default**: `{}`
-- **description**:
+- **description**: See `Body.query`
 
 ### `Register.as`
 
 - **type**: Datasource
 - **required**: true
-- **description**:
+- **description**: The Datasource object where the JSON answer of the Docker Engine will be stored. The `Datasource.source` attribute is ignored.
 
 ## From object
 
@@ -427,9 +425,25 @@ loop:
 
 ## Command object
 
-- **description**: A custom command for specific needs or to compensate some Navy's lacks.
-- **exemple**:
+- **description**: A custom command for specific need or to compensate Navy's lacks.
+- **exemples**:
 ```yaml
+run:
+  - id: commands.install.docker-cli
+    argv:
+      - 'apk'
+      - 'add'
+      - '--no-cache'
+      - 'docker-cli'
+    depends_on:
+      - containers.start.my-container
+  - id: commands.attach
+    argv:
+      - 'docker'
+      - 'attach'
+      - 'my-container'
+    depends_on:
+      - commands.install.docker-cli
 ```
 
 ### `Command.id`
@@ -457,7 +471,7 @@ loop:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**:
+- **description**: The list of arguments of your command.
 
 ## Datasource object
 
