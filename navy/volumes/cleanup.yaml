@@ -13,6 +13,6 @@ post:
     from:
       filter: '{{ $array := "" }}{{ range $registerpostvolumes }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - post.volumes.json
+        - registerpostvolumes
 
 ...

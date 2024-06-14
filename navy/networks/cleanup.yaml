@@ -13,6 +13,6 @@ post:
     from:
       filter: '{{ $array := "" }}{{ range $registerpostnetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - post.networks.json
+        - registerpostnetworks
 
 ...

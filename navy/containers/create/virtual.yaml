@@ -4,14 +4,14 @@ run:
   - endpoint: /containers/create
     method: POST
     loop:
-      - id: containers.create.virtual.base
+      - id: '{{ $dependencies.containers.create.virtual._ }}'
         virtual: true
         query:
           HostConfig:
             Privileged: false
           Labels:
             navy: '{{ $project.id }}'
-      - id: containers.create.virtual.docker
+      - id: '{{ $dependencies.containers.create.virtual.docker }}'
         virtual: true
         query:
           Image: '{{ docker.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -24,15 +24,15 @@ run:
           - '{{ $dependencies.networks.create.docker_utils }}'
           - '{{ $dependencies.networks.create.proxified_docker_socket }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.virtual.isolated
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.virtual.isolated }}'
         virtual: true
         query:
           HostConfig:
             NetworkMode: none
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.virtual.gpu
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.virtual.gpu }}'
         virtual: true
         query:
           Image: '{{ $gpu.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -49,24 +49,24 @@ run:
         depends_on:
           - '{{ $dependencies.images.build.gpu }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.virtual.man
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.virtual.man }}'
         virtual: true
         query:
           Image: '{{ $man.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - '{{ $dependencies.images.build.man }}'
         extends:
-          - containers.create.virtual.sshd
-      - id: containers.create.virtual.pass
+          - '{{ $dependencies.containers.create.virtual.sshd }}'
+      - id: '{{ $dependencies.containers.create.virtual.pass }}'
         virtual: true
         query:
           Image: '{{ $pass.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - '{{ $dependencies.images.build.pass }}'
         extends:
-          - containers.create.virtual.sshd
-      - id: containers.create.virtual.registry
+          - '{{ $dependencies.containers.create.virtual.sshd }}'
+      - id: '{{ $dependencies.containers.create.virtual.registry }}'
         virtual: true
         query:
           Image: '{{ $registry.image.local }}{{ $all.sep.tag }}{{ $registry.tag }}'
@@ -89,8 +89,8 @@ run:
           - '{{ $dependencies.networks.create.docker_utils }}'
           - '{{ $dependencies.volumes.create.registry }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.virtual.sshd
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.virtual.sshd }}'
         virtual: true
         query:
           Image: '{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -113,30 +113,30 @@ run:
           - 'volume.create.{{ $sshd.volume }}'
           - 'volume.create.{{ $bash.volume.theme }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.virtual.shell
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.virtual.shell }}'
         virtual: true
         query:
           Image: '{{ $shell.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - '{{ $dependencies.images.build.shell }}'
         extends:
-          - containers.create.virtual.sshd
-      - id: containers.create.virtual.vim
+          - '{{ $dependencies.containers.create.virtual.sshd }}'
+      - id: '{{ $dependencies.containers.create.virtual.vim }}'
         virtual: true
         query:
           Image: '{{ $vim.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - '{{ $dependencies.images.build.vim }}'
         extends:
-          - containers.create.virtual.sshd
-      - id: containers.create.virtual.zig
+          - '{{ $dependencies.containers.create.virtual.sshd }}'
+      - id: '{{ $dependencies.containers.create.virtual.zig }}'
         virtual: true
         query:
           Image: '{{ $zig.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
         depends_on:
           - '{{ $dependencies.images.build.zig }}'
         extends:
-          - containers.create.virtual.sshd
+          - '{{ $dependencies.containers.create.virtual.sshd }}'
 
 ...

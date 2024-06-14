@@ -1,6 +1,12 @@
 ---
 
 prefix:
+  commands: 'commands{{ $all.sep.id }}'
+  containers:
+    create: 'containers{{ $all.sep.id }}create{{ $all.sep.id }}'
+    start: 'containers{{ $all.sep.id }}start{{ $all.sep.id }}'
+    virtual:
+      create: '{{ $dependencies.prefix.containers.create }}virtual{{ $all.sep.id }}'
   images:
     pull: 'images{{ $all.sep.id }}pull{{ $all.sep.id }}'
     tag: 'images{{ $all.sep.id }}tag{{ $all.sep.id }}'
@@ -11,6 +17,63 @@ prefix:
     create: 'networks{{ $all.sep.id }}create{{ $all.sep.id }}'
   volumes:
     create: 'volumes{{ $all.sep.id }}create{{ $all.sep.id }}'
+
+commands:
+  attach '{{ $dependencies.prefix.commands }}attach'
+
+containers:
+  create:
+    virtual:
+      _: '{{ $dependencies.prefix.containers.create }}virtual'
+      docker: '{{ $dependencies.prefix.containers.virtual.create }}{{ $docker.id }}'
+      gpu: '{{ $dependencies.prefix.containers.virtual.create }}{{ $gpu.id }}'
+      isolated: '{{ $dependencies.prefix.containers.virtual.create }}{{ $isolated.id }}'
+      man: '{{ $dependencies.prefix.containers.virtual.create }}{{ $man.id }}'
+      pass: '{{ $dependencies.prefix.containers.virtual.create }}{{ $pass.id }}'
+      registry: '{{ $dependencies.prefix.containers.virtual.create }}{{ $registry.id }}'
+      sshd: '{{ $dependencies.prefix.containers.virtual.create }}{{ $sshd.id }}'
+      shell: '{{ $dependencies.prefix.containers.virtual.create }}{{ $shell.id }}'
+      vim: '{{ $dependencies.prefix.containers.virtual.create }}{{ $vim.id }}'
+      zig: '{{ $dependencies.prefix.containers.virtual.create }}{{ $zig.id }}'
+    builder: '{{ $dependencies.prefix.containers.create }}{{ $builder.id }}'
+    carpenter:
+      relay: '{{ $dependencies.prefix.containers.create }}{{ $carpenterrelay.id }}'
+      runner: '{{ $dependencies.prefix.containers.create }}{{ $carpenterrunner.id }}'
+    controller: '{{ $dependencies.prefix.containers.create }}{{ $controller.id }}'
+    editor: '{{ $dependencies.prefix.containers.create }}{{ $editor.id }}'
+    explorer:
+      shell: '{{ $dependencies.prefix.containers.create }}{{ $explorershell.id }}'
+      zig: '{{ $dependencies.prefix.containers.create }}{{ $explorerzig.id }}'
+    jumper: '{{ $dependencies.prefix.containers.create }}{{ $jumper.id }}'
+    listener: '{{ $dependencies.prefix.containers.create }}{{ $listener.id }}'
+    registry: '{{ $dependencies.prefix.containers.create }}{{ $registry.id }}'
+    safedeposit: '{{ $dependencies.prefix.containers.create }}{{ $safedeposit.id }}'
+    scholar: '{{ $dependencies.prefix.containers.create }}{{ $scholar.id }}'
+    socketproxy: '{{ $dependencies.prefix.containers.create }}{{ $socketproxy.id }}'
+    spaceporn:
+      relay: '{{ $dependencies.prefix.containers.create }}{{ $spacepornrelay.id }}'
+      runner: '{{ $dependencies.prefix.containers.create }}{{ $spacepornrunner.id }}'
+    xserver: '{{ $dependencies.prefix.containers.create }}{{ $xserver.id }}'
+  start:
+    builder: '{{ $dependencies.prefix.containers.start }}{{ $builder.id }}'
+    carpenter:
+      relay: '{{ $dependencies.prefix.containers.start }}{{ $carpenterrelay.id }}'
+      runner: '{{ $dependencies.prefix.containers.start }}{{ $carpenterrunner.id }}'
+    controller: '{{ $dependencies.prefix.containers.start }}{{ $controller.id }}'
+    editor: '{{ $dependencies.prefix.containers.start }}{{ $editor.id }}'
+    explorer:
+      shell: '{{ $dependencies.prefix.containers.start }}{{ $explorershell.id }}'
+      zig: '{{ $dependencies.prefix.containers.start }}{{ $explorerzig.id }}'
+    jumper: '{{ $dependencies.prefix.containers.start }}{{ $jumper.id }}'
+    listened: '{{ $dependencies.prefix.containers.start }}virtual{{ $all.sep.id }}listened'
+    listener: '{{ $dependencies.prefix.containers.start }}{{ $listener.id }}'
+    registry: '{{ $dependencies.prefix.containers.start }}{{ $registry.id }}'
+    safedeposit: '{{ $dependencies.prefix.containers.start }}{{ $safedeposit.id }}'
+    scholar: '{{ $dependencies.prefix.containers.start }}{{ $scholar.id }}'
+    socketproxy: '{{ $dependencies.prefix.containers.start }}{{ $socketproxy.id }}'
+    spaceporn:
+      relay: '{{ $dependencies.prefix.containers.start }}{{ $spacepornrelay.id }}'
+      runner: '{{ $dependencies.prefix.containers.start }}{{ $spacepornrunner.id }}'
 
 images:
   pull:

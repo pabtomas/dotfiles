@@ -13,12 +13,12 @@ post:
     from:
       filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"id\":\"containers.stop." .Id "\",\"path\":{\"id\":\"" .Id "\"},\"query\":{\"t\":0}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - containers.json
+        - registerpostcontainers
   - endpoint: /containers/{id}
     method: DELETE
     from:
       filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
-        - containers.json
+        - registerpostcontainers
 
 ...

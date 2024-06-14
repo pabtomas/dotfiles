@@ -7,7 +7,7 @@ run:
   - endpoint: /containers/create
     method: POST
     loop:
-      - id: containers.create.builder
+      - id: '{{ $dependencies.containers.create.builder }}'
         query:
           name: '{{ $builder.host }}'
           Hostname: '{{ $builder.host }}'
@@ -32,8 +32,8 @@ run:
           - '{{ $dependencies.images.build.builder }}'
           - '{{ $dependencies.networks.create.docker_utils }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.carpenter.relay
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.carpenter.relay }}'
           name: '{{ $carpenterrelay.host }}'
           Hostname: '{{ $carpenterrelay.host }}'
           Image: '{{ $carpenterrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -56,8 +56,8 @@ run:
           - '{{ $dependencies.volumes.create.carpenterrelay }}'
           - '{{ $dependencies.volumes.create.relay.var.log }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.carpenter.runner
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.carpenter.runner }}'
           name: '{{ $carpenterrunner.host }}'
           Hostname: '{{ $carpenterrunner.host }}'
           Image: '{{ $carpenterrunner.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -70,8 +70,8 @@ run:
           - '{{ $dependencies.images.build.carpenter.runner }}'
           - '{{ $dependencies.volumes.create.carpenterrelay }}'
         extends:
-          - containers.create.virtual.isolated
-      - id: containers.create.controller
+          - '{{ $dependencies.containers.create.virtual.isolated }}'
+      - id: '{{ $dependencies.containers.create.controller }}'
           name: '{{ $controller.host }}'
           Hostname: '{{ $controller.host }}'
           HostConfig:
@@ -88,8 +88,8 @@ run:
         depends_on:
           - '{{ $dependencies.volumes.create.project }}'
         extends:
-          - containers.create.virtual.docker
-      - id: containers.create.editor
+          - '{{ $dependencies.containers.create.virtual.docker }}'
+      - id: '{{ $dependencies.containers.create.editor }}'
           name: '{{ $editor.host }}'
           Hostname: '{{ $editor.host }}'
           HostConfig:
@@ -104,8 +104,8 @@ run:
           - '{{ $dependencies.volumes.create.project }}'
           - '{{ $dependencies.volumes.create.spaceporn }}'
         extends:
-          - containers.create.virtual.vim
-      - id: containers.create.explorer.shell
+          - '{{ $dependencies.containers.create.virtual.vim }}'
+      - id: '{{ $dependencies.containers.create.explorer.shell }}'
           name: '{{ $explorershell.host }}'
           Hostname: '{{ $explorershell.host }}'
           HostConfig:
@@ -116,8 +116,8 @@ run:
         depends_on:
           - '{{ $dependencies.volumes.create.project }}'
         extends:
-          - containers.create.virtual.shell
-      - id: containers.create.explorer.zig
+          - '{{ $dependencies.containers.create.virtual.shell }}'
+      - id: '{{ $dependencies.containers.create.explorer.zig }}'
           name: '{{ $explorerzig.host }}'
           Hostname: '{{ $explorerzig.host }}'
           HostConfig:
@@ -128,8 +128,8 @@ run:
         depends_on:
           - '{{ $dependencies.volumes.create.spaceporn }}'
         extends:
-          - containers.create.virtual.zig
-      - id: containers.create.jumper
+          - '{{ $dependencies.containers.create.virtual.zig }}'
+      - id: '{{ $dependencies.containers.create.jumper }}'
           name: '{{ $jumper.host }}'
           Hostname: '{{ $jumper.host }}'
           Image: '{{ $jumper.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -192,8 +192,8 @@ run:
           - '{{ $dependencies.volumes.create.xserver.opt.scripts }}'
           - '{{ $dependencies.volumes.create.xserver.var.log.nginx }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.listener
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.listener }}'
           name: '{{ $listener.host }}'
           Hostname: '{{ $listener.host }}'
           Image: '{{ $listener.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -220,8 +220,8 @@ run:
           - '{{ $dependencies.volumes.create.listener.opt.scripts }}'
           - '{{ $dependencies.volumes.create.listener.var.log }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.proxy
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.socketproxy }}'
           name: '{{ $socketproxy.host }}'
           Hostname: '{{ $socketproxy.host }}'
           Image: '{{ $socketproxy.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -256,8 +256,8 @@ run:
           - '{{ $dependencies.volumes.create.socketproxy.opt.scripts }}'
           - '{{ $dependencies.volumes.create.socketproxy.var.log.nginx }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.registry
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.registry }}'
           name: '{{ $registry.host }}'
           Hostname: '{{ $registry.host }}'
           NetworkConfig:
@@ -265,8 +265,8 @@ run:
               '{{ $networks.docker_utils.name }}':
                 IPv4Address: '{{ $registry.ip }}'
         extends:
-          - containers.create.virtual.registry
-      - id: containers.create.safedeposit
+          - '{{ $dependencies.containers.create.virtual.registry }}'
+      - id: '{{ $dependencies.containers.create.safedeposit }}'
           name: '{{ $safedeposit.host }}'
           Hostname: '{{ $safedeposit.host }}'
           HostConfig:
@@ -278,13 +278,13 @@ run:
           - '{{ $dependencies.images.build.pass }}'
           - '{{ $dependencies.volumes.create.safedeposit }}'
         extends:
-          - containers.create.virtual.pass
-      - id: containers.create.scholar
+          - '{{ $dependencies.containers.create.virtual.pass }}'
+      - id: '{{ $dependencies.containers.create.scholar }}'
           name: '{{ $scholar.host }}'
           Hostname: '{{ $scholar.host }}'
         extends:
-          - containers.create.virtual.man
-      - id: containers.create.spaceporn.relay
+          - '{{ $dependencies.containers.create.virtual.man }}'
+      - id: '{{ $dependencies.containers.create.spaceporn.relay }}'
           name: '{{ $spacepornrelay.host }}'
           Hostname: '{{ $spacepornrelay.host }}'
           Image: '{{ $spacepornrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -307,8 +307,8 @@ run:
           - '{{ $dependencies.volumes.create.spacepornrelay }}'
           - '{{ $dependencies.volumes.create.relay.var.log }}'
         extends:
-          - containers.create.virtual.base
-      - id: containers.create.spaceporn.runner
+          - '{{ $dependencies.containers.create.virtual._ }}'
+      - id: '{{ $dependencies.containers.create.spaceporn.runner }}'
           name: '{{ $spacepornrunner.host }}'
           Hostname: '{{ $spacepornrunner.host }}'
           Entrypoint:
@@ -325,9 +325,9 @@ run:
           - '{{ $dependencies.volumes.create.spacepornrelay }}'
           - '{{ $dependencies.volumes.create.spaceporn }}'
         extends:
-          - containers.create.virtual.gpu
-          - containers.create.virtual.isolated
-      - id: containers.create.xserver
+          - '{{ $dependencies.containers.create.virtual.gpu }}'
+          - '{{ $dependencies.containers.create.virtual.isolated }}'
+      - id: '{{ $dependencies.containers.create.xserver }}'
           name: '{{ $xserver.host }}'
           Hostname: '{{ $xserver.host }}'
           Image: '{{ xserver.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'

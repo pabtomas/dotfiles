@@ -124,10 +124,8 @@ include:
   - containers/create.yaml
   - containers/start.yaml
   - containers/attach.yaml
-  - containers/list.yaml
-  - containers/stop.yaml
-  - containers/remove.yaml
-  - volumes/remove.yaml
-  - networks/remove.yaml
+  - containers/cleanup.yaml
+  - volumes/cleanup.yaml
+  - networks/cleanup.yaml
 
 ...

@@ -6,7 +6,7 @@ run:
     register:
       as:
         id: registervolumes
-        scope: volumes.create.*
+        scope: '{{ $dependencies.prefix.volumes.create }}*'
   - if: '{{ $volumes := coll.Slice }}{{ range $registervolumes }}{{ $volumes = $volumes | append .Name }}{{ end }}
       {{ or (not (has $net $carpenterrelay.volume))
             (not (has $net $listener.volume.opt.data))

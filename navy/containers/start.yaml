@@ -4,117 +4,117 @@ run:
   - endpoint: /containers/{id}/start
     method: POST
     loop:
-      - id: containers.start.virtual.listened
+      - id: '{{ $dependencies.containers.start.listened }}'
         virtual: true
         depends_on:
-          - containers.start.listener
-      - id: containers.start.builder
+          - '{{ $dependencies.containers.start.listener }}'
+      - id: '{{ $dependencies.containers.start.builder }}'
         path:
           id: '{{ $builder.host }}'
         depends_on:
-          - containers.create.builder
-      - id: containers.start.carpenter.relay
+          - '{{ $dependencies.containers.create.builder }}'
+      - id: '{{ $dependencies.containers.start.carpenter.relay }}'
         path:
           id: '{{ $carpenterrelay.host }}'
         depends_on:
-          - containers.create.carpenter.relay
-          - containers.start.xserver
-      - id: containers.start.carpenter.runner
+          - '{{ $dependencies.containers.create.carpenter.relay }}'
+          - '{{ $dependencies.containers.start.xserver }}'
+      - id: '{{ $dependencies.containers.start.carpenter.runner }}'
         path:
           id: '{{ $carpenterrunner.host }}'
         depends_on:
-          - containers.create.carpenter.runner
-          - containers.start.carpenter.relay
-      - id: containers.start.controller
+          - '{{ $dependencies.containers.create.carpenter.runner }}'
+          - '{{ $dependencies.containers.start.carpenter.relay }}'
+      - id: '{{ $dependencies.containers.start.controller }}'
         path:
           id: '{{ controller.host }}'
         depends_on:
-          - containers.create.controller
-          - containers.start.builder
-          - containers.start.proxy
-          - containers.start.registry
-          - containers.start.xserver
+          - '{{ $dependencies.containers.create.controller }}'
+          - '{{ $dependencies.containers.start.builder }}'
+          - '{{ $dependencies.containers.start.registry }}'
+          - '{{ $dependencies.containers.start.socketproxy }}'
+          - '{{ $dependencies.containers.start.xserver }}'
         extends:
-          - containers.start.virtual.listened
-      - id: containers.start.editor
+          - '{{ $dependencies.containers.start.listened }}'
+      - id: '{{ $dependencies.containers.start.editor }}'
         path:
           id: '{{ $editor.host }}'
         depends_on:
-          - containers.create.editor
+          - '{{ $dependencies.containers.create.editor }}'
         extends:
-          - containers.start.virtual.listened
-      - id: containers.start.explorer.shell
+          - '{{ $dependencies.containers.start.listened }}'
+      - id: '{{ $dependencies.containers.start.explorer.shell }}'
         path:
           id: '{{ $explorershell.host }}'
         depends_on:
-          - containers.create.explorer.shell
+          - '{{ $dependencies.containers.create.explorer.shell }}'
         extends:
-          - containers.start.virtual.listened
-      - id: containers.start.explorer.zig
+          - '{{ $dependencies.containers.start.listened }}'
+      - id: '{{ $dependencies.containers.start.explorer.zig }}'
         path:
           id: '{{ $explorerzig.host }}'
         depends_on:
-          - containers.create.explorer.zig
+          - '{{ $dependencies.containers.create.explorer.zig }}'
         extends:
-          - containers.start.virtual.listened
-      - id: containers.start.jumper
+          - '{{ $dependencies.containers.start.listened }}'
+      - id: '{{ $dependencies.containers.start.jumper }}'
         path:
           id: '{{ $jumper.host }}'
         depends_on:
-          - containers.create.jumper
-          - containers.start.controller
-          - containers.start.explorer.shell
-          - containers.start.explorer.zig
-          - containers.start.safedeposit
-          - containers.start.scholar
+          - '{{ $dependencies.containers.create.jumper }}'
+          - '{{ $dependencies.containers.start.controller }}'
+          - '{{ $dependencies.containers.start.explorer.shell }}'
+          - '{{ $dependencies.containers.start.explorer.zig }}'
+          - '{{ $dependencies.containers.start.safedeposit }}'
+          - '{{ $dependencies.containers.start.scholar }}'
         extends:
-          - containers.start.virtual.listened
-      - id: containers.start.listener
+          - '{{ $dependencies.containers.start.listened }}'
+      - id: '{{ $dependencies.containers.start.listener }}'
         path:
           id: '{{ $listener.host }}'
         depends_on:
-          - containers.create.listener
-          - containers.start.proxy
-      - id: containers.start.proxy
+          - '{{ $dependencies.containers.create.listener }}'
+          - '{{ $dependencies.containers.start.socketproxy }}'
+      - id: '{{ $dependencies.containers.start.socketproxy }}'
         path:
           id: '{{ $socketproxy.host }}'
         depends_on:
-          - containers.create.proxy
-      - id: containers.start.registry
+          - '{{ $dependencies.containers.create.socketproxy }}'
+      - id: '{{ $dependencies.containers.start.registry }}'
         path:
           id: '{{ $registry.host }}'
         depends_on:
-          - containers.create.registry
-      - id: containers.start.safedeposit
+          - '{{ $dependencies.containers.create.registry }}'
+      - id: '{{ $dependencies.containers.start.safedeposit }}'
         path:
           id: '{{ $safedeposit.host }}'
         depends_on:
-          - containers.create.safedeposit
+          - '{{ $dependencies.containers.create.safedeposit }}'
         extends:
-          - containers.start.virtual.listened
-      - id: containers.start.scholar
+          - '{{ $dependencies.containers.start.listened }}'
+      - id: '{{ $dependencies.containers.start.scholar }}'
         path:
           id: '{{ $scholar.host }}'
         depends_on:
-          - containers.create.scholar
+          - '{{ $dependencies.containers.create.scholar }}'
         extends:
-          - containers.start.virtual.listened
-      - id: containers.start.spaceporn.relay
+          - '{{ $dependencies.containers.start.listened }}'
+      - id: '{{ $dependencies.containers.start.spaceporn.relay }}'
         path:
           id: '{{ $spacepornrelay.host }}'
         depends_on:
-          - containers.create.spaceporn.relay
-          - containers.start.xserver
-      - id: containers.start.spaceporn.runner
+          - '{{ $dependencies.containers.create.spaceporn.relay }}'
+          - '{{ $dependencies.containers.start.xserver }}'
+      - id: '{{ $dependencies.containers.start.spaceporn.runner }}'
         path:
           id: '{{ spacepornrunner.host }}'
         depends_on:
-          - containers.create.spaceporn.runner
-          - containers.start.spaceporn.relay
-      - id: containers.start.xserver
+          - '{{ $dependencies.containers.create.spaceporn.runner }}'
+          - '{{ $dependencies.containers.start.spaceporn.relay }}'
+      - id: '{{ $dependencies.containers.start.xserver }}'
         path:
           id: '{{ xserver.host }}'
         depends_on:
-          - containers.create.xserver
+          - '{{ $dependencies.containers.create.xserver }}'
 
 ...

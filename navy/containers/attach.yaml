@@ -1,10 +1,10 @@
 ---
 
 run:
-  - id: commands.attach
+  - id: '{{ $dependencies.commands.attach }}'
     argv:
       - 'docker attach {{ $jumper.host }}'
     depends_on:
-      - containers.start.jumper
+      - '{{ $dependencies.containers.start.jumper }}'
 
 ...

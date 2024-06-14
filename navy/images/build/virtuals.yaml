@@ -4,7 +4,7 @@ run:
   - endpoint: /build
     method: POST
     loop:
-      - id: '{{ $dependencies.images.build.virtual.base }}'
+      - id: '{{ $dependencies.images.build.virtual._ }}'
         virtual: true
         query:
           nocache: false
