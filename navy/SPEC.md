@@ -174,6 +174,7 @@ post:
         - `from`
 
 Depending of what you choosed as a third field, the Request object will behave differently.
+A Request has alse an optional field: `if`.
 - **exemples**:
     - This Request object will send 2 networks creation to the Docker Engine:
     ```yaml
@@ -194,10 +195,11 @@ Depending of what you choosed as a third field, the Request object will behave d
       as:
         id: registernetworks
     ```
-    - This Request object will send a network deletion to the Docker Engine for each network listed in the previously registered Datasource:
+    - This Request object will send a network deletion to the Docker Engine for each network listed in the previously registered Datasource if its content is not empty:
     ```yaml
     endpoint: /networks/{id}
     method: DELETE
+    if: '{{ gt (len $registernetworks) 0 }}'
     from:
       filter: '{{ $array := "" }}{{ range $registernetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
@@ -235,14 +237,14 @@ Depending of what you choosed as a third field, the Request object will behave d
 - **type**: From
 - **required**: false
 - **default**: `""`
-- **description**: A From object.
+- **description**: A From object. This object will be evaluated 2 times. The first one as a GO template. The result of this first resolution is a list. Each element of this list will be evaluated as an element of a `Request.loop` keyword.
 
 ### `Request.if`
 
 - **type**: boolean
 - **required**: false
 - **default**: true
-- **description**:
+- **description**: The result of this expression must a boolean. It this expression is evaluated as true, the matching Request will be executed. Otherwise, it will not.
 
 ## Body object
 
@@ -334,7 +336,7 @@ Depending of what you choosed as a third field, the Request object will behave d
 
 ## From object
 
-- **description**: The only use case of this object is in `Request.from`. This object will be evaluated 2 times. The first one as a GO template to solve. The result of this first resolution is a list. Each element of this list will be evaluated as a `Request.loop` keyword.
+- **description**: The only use case of this object is in `Request.from`.
 - **exemples**: See `Request object`.
 
 ### `From.id`
@@ -381,7 +383,7 @@ Depending of what you choosed as a third field, the Request object will behave d
 - **type**: boolean
 - **required**: false
 - **default**: true
-- **description**:
+- **description**: See `Request.if`.
 
 ### `Command.argv`
 
