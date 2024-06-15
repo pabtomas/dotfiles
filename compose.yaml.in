@@ -266,6 +266,7 @@ services:
         _DOCKER_SOCKET_PATH: ${_DOCKER_SOCKET_PATH}
         ${API_PFX}_PING: "\"${TRUE}\""
         ${API_PFX}BUILD: "\"${TRUE}\""
+        ${API_PFX}INFO: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_CREATE: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_ID: "\"${TRUE}\""
         ${API_PFX}CONTAINERS_ID_ARCHIVE: "\"${TRUE}\""
