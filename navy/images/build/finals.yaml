@@ -94,6 +94,7 @@ run:
             '{{ $api.prefix }}IMAGES_CREATE': true
             '{{ $api.prefix }}IMAGES_JSON': true
             '{{ $api.prefix }}IMAGES_NAME': true
+            '{{ $api.prefix }}INFO': true
             '{{ $api.prefix }}NETWORKS': true
             '{{ $api.prefix }}VERSION': true
             '{{ $api.prefix }}VOLUMES': true
