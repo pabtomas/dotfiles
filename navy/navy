@@ -1,57 +1,216 @@
 #! /usr/bin/env dash
 
+help_option ()
+{
+  printf "\
+A Docker Engine orchestrator
+
+Usage:
+  navy [flags]
+
+Flags:
+  --file file        navy main file (default: ./navy.yaml).
+  --ignore-cache     ignores the cache.
+  -v                 prints only ERROR messages.
+  -v -v              prints ERROR and WARNING messages.
+  -v -v -v           prints ERROR, WARNING, and INFO messages (default).
+  -v -v -v -v        prints ERROR, WARNING, INFO and DEBUG messages.
+  --help             help for navy.
+  --version          version for navy.
+"
+  return 1
+}
+
+version_option ()
+{
+  printf 'navy 0.1.0\n'
+  return 1
+}
+
+ignore_cache_option ()
+{
+  ignore_cache='true'
+}
+
+file_option ()
+{
+  if [ -r "${1}" ]
+  then
+    file="${1}"
+  else
+    printf 'You do not have the permission to read %s\n' "${1}" >&2
+    exit 1
+  fi
+}
+
+v_option ()
+{
+  log_level="$(( ${log_level:--1} + 1 ))"
+}
+
+unknown_option ()
+{
+  printf 'Unknown option: "%s"\n' "${1}" >&2
+  return 1
+}
+
 parse_options ()
 {
-  # case:
-  #   * --no-cache
-  #   * --file
-  #   * --help
-  #   * --verbose
-  #   * --tree-deps
+  while [ "${#}" != '0' ]
+  do
+    case "${1}" in
+
+    # Handle '-abc' the same as '-a -bc' for short-form no-arg options
+    ( -[v]?* )
+      IFS=' '
+      set -f
+      set -- "${1%"${1#??}"}" "-${1#??}" $(shift; printf '%s\n' "${@}")
+      set +f
+      IFS="${ifs}"
+      continue ;;
+
+    # Handle '--file=file1' the same as '--file file1' for long-form 1-arg options
+    ( --file=* )
+      IFS=' '
+      set -f
+      set -- "${1%%=*}" "${1#*=}" $(shift; printf '%s\n' "${@}")
+      set +f
+      IFS="${ifs}"
+      continue ;;
+
+    ( --ignore-cache ) ignore_cache_option ;;
+    ( --file ) file_option "${2}"; shift ;;
+    ( -v ) v_option ;;
+    ( --help ) help_option ;;
+    ( --version ) version_option ;;
+    ( * ) unknown_option "${1}" ;;
+    esac
+    shift
+  done
+}
+
+default_values ()
+{
+  # define default values for
+  #   * ${DOCKER_HOST}: where curl will send its requests
+  #   * ${file}
+  #   * ${NAVY_CACHE_PATH}: where the script will store its cache
+  #   * ${log_level}
+  readonly ignore_cache
+  readonly file
+  readonly log_level
 }
 
 compute_checksum ()
 {
-  # compute checksum for the cwd
+  cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
+  set -f
+  cache=${cache%-*}
+  set +f
+  readonly cache
+}
+
+create_cache ()
+{
+  rm -rf "${cache}"
+  mkdir -p "${cache}"
 }
 
 define_context_datasources ()
 {
+  :
   # define $CONTEXTVERSION & $CONTEXTINFO datasources
   #   - send a /version curl on the 1.25 to get the last ApiVersion
   #   - send a /version curl for the ApiVersion
   #   - send a /info curl for the ApiVersion
 }
 
-main ()
+expand_datasources_into_datasources ()
+{
+  :
+  # gomplate to resolve GO templates with datasources:
+  #   Use this CLI to expand templates into values but not in keys (improve
+  #   it to works (recursively) with dictionaries):
+  #   $ yq '. | to_entries[] | "{{ print \"" + .key + "\" }}:" + .value' bases.yaml | gomplate -d bases.yaml=bases.yaml
+}
+
+expand_datasources_into_main ()
+{
+  :
+  # resolve datasources in main Navy file
+}
+
+expand_anchors ()
+{
+  :
+  # resolve 'anchors' keywords
+  #   - explode anchors and aliases
+}
+
+check_linear_includes ()
+{
+  :
+  # check circular dependencies between includes
+}
+
+expand_datasources_into_includes ()
+{
+  :
+  # resolve datasources in included files
+}
+
+expand_includes ()
+{
+  :
+  # resolve 'includes' keywords
+}
+
+expand_extends ()
+{
+  :
+  # change loop run and run[].loop into dictionnaries to:
+  #   resolve 'extends' (replace them with anchors and aliases then use yq explode)
+}
+
+generate_sh ()
+{
+  :
+  # yq script to generate sh script.
+}
+
+init ()
 {
   set -eux
+  ifs="${IFS}"
+  readonly ifs
+}
 
-  # catch environment vars:
-  #   * DOCKER_HOST: where curl will send its requests
-  #   * NAVY_CACHE_PATH: where the script will store its cache
+not_cached ()
+{
+  if [ "${ignore_cache}" = 'true' ] || [ ! -d "${cache}" ]; then return 0; else return 1; fi
+}
 
+main ()
+{
+  init
   parse_options "${@}"
 
-  # define default values for environment variables & options
+  default_values
 
   compute_checksum
 
-  if [ ! -d "${NAVY_CACHE_PATH}/${checksum}" ]
+  if not_cached
   then
+    create_cache
     define_context_datasources
-  # - gomplate to resolve GO templates with datasources:
-  #     Use this CLI to expand templates into values but not in keys (improve
-  #     it to works (recursively) with dictionnaries):
-  #     $ yq '. | to_entries[] | "{{ print \"" + .key + "\" }}:" + .value' bases.yaml | gomplate -d bases.yaml=bases.yaml
-  # - resolve 'anchors' keywords
-  #     - explode anchors and aliases
-  # - check circular dependencies between includes
-  # - resolve 'includes' keywords
-  # - change loop run and run[].loop into dictionnaries to:
-  #   - resolve 'extends' (replace them with anchors and aliases then use yq explode)
-  # - yq script to generate sh script.
-  # - generate cache: sha256sum <(find . -type -f -exec sha256sum {} \;)
+    expand_datasources_into_datasources
+    expand_datasources_into_main
+    expand_anchors
+    check_linear_includes
+    expand_datasources_into_includes
+    expand_includes
+    expand_extends
+    generate_sh
   fi
 
   # depending of parsed options:
@@ -67,19 +226,19 @@ main "${@}"
 #
 # regular:
 # curl -s --unix-socket /var/run/docker.sock -X DELETE http://v1.45/containers/hardcore_jang?force=true
-# 
+#
 # filters/urlencode:
 # curl -s --unix-socket /var/run/docker.sock 'http://1.45/images/json' -X GET -G --data-urlencode 'filters={"reference":{"172.17.2.3:5000/mywhalefleet/tiawl.local.*":true}}'
-# 
+#
 # attach: curl -s -N -T - -X POST --unix-socket ./docker.sock 'http://1.45/containers/aaebdff75c380b80556b9c2ce65b2c62ba4cdd59427d3f269d5a61d7b8a087b0/attach?stdout=1&stdin=1&stderr=1&stream=1' -H 'Upgrade: tcp' -H 'Connection: Upgrade'
-# 
+#
 # build:
 # tar c -f context.tar -C /tmp .
 # curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar
-# 
+#
 # http request details & answer: curl --verbose -o /dev/null --silent
 # only http return code: curl -o /dev/null -s -w "%{http_code}\n"
-# 
+#
 # characters:
 # - ▏▎▍▌▋▊▉
 # - ┏┓━┃┗┛

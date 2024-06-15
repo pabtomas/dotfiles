@@ -9,7 +9,8 @@ RUN <<END_OF_RUN
     http_proxy="${HTTP_PROXY:-}"
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
-    apk add --no-cache dash yq curl gomplate gum git lolcat
+    apk add --no-cache dash yq curl gomplate gum
+    apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing lolcat
     mkdir -p /navy
     unset http_proxy https_proxy
 END_OF_RUN
