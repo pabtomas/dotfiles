@@ -58,7 +58,7 @@ If you want to install Navy directly I assume that you have at least Busybox uti
   - [curl](https://github.com/curl/curl)
   - [yq](https://github.com/mikefarah/yq)
   - [gomplate](https://github.com/hairyhenderson/gomplate)
-  - [gum](https://github.com/charmbracelet/gum)
+  - `ts` from [moreutils](https://joeyh.name/code/moreutils/)
   - [lolcat](https://github.com/jaseg/lolcat)
 - Clone this repository
 - Add configuration (TODO: more details)

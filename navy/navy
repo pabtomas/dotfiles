@@ -1,5 +1,67 @@
 #! /usr/bin/env dash
 
+add_style ()
+{
+  red="$(printf '\033[38;5;204m')"
+  yellow="$(printf '\033[38;5;228m')"
+  green="$(printf '\033[38;5;120m')"
+  blue="$(printf '\033[38;5;105m')"
+  bold="$(printf '\033[1m')"
+  reset="$(printf '\033[m')"
+  time_format='%H:%M:%S'
+
+  readonly red yellow green blue bold reset time_format
+}
+
+error ()
+{
+  if [ -r "${1}" ]
+  then
+    sed "s@^@${red}${bold}ERROR${reset} @" "${1}"
+  else
+    printf '%b%bERROR%b %s\n' "${red}" "${bold}" "${reset}" "${1}" 1>&2
+  fi | ts "${time_format}"
+}
+
+warn ()
+{
+  if [ "${log_level}" -gt 0 ]
+  then
+    if [ -r "${1}" ]
+    then
+      sed "s@^@${yellow}${bold}WARN${reset} @" "${1}"
+    else
+      printf '%b%bWARN%b %s\n' "${yellow}" "${bold}" "${reset}" "${1}" 1>&2
+    fi | ts "${time_format}"
+  fi
+}
+
+info ()
+{
+  if [ "${log_level}" -gt 1 ]
+  then
+    if [ -r "${1}" ]
+    then
+      sed "s@^@${green}${bold}INFO${reset} @" "${1}"
+    else
+      printf '%b%bINFO%b %s\n' "${green}" "${bold}" "${reset}" "${1}"
+    fi | ts "${time_format}"
+  fi
+}
+
+debug ()
+{
+  if [ "${log_level}" -gt 2 ]
+  then
+    if [ -r "${1}" ]
+    then
+      sed "s@^@${blue}${bold}DEBUG${reset} @" "${1}"
+    else
+      printf '%b%bDEBUG%b %s\n' "${blue}" "${bold}" "${reset}" "${1}"
+    fi | ts "${time_format}"
+  fi
+}
+
 help_option ()
 {
   printf "\
@@ -36,11 +98,11 @@ file_option ()
 {
   if [ ! -e "${1}" ]
   then
-    printf '%s does not exist\n' "${1}" >&2
+    error "${1} does not exist"
     exit 1
   elif [ ! -r "${1}" ]
   then
-    printf 'You do not have the permission to read %s\n' "${1}" >&2
+    error "You do not have the permission to read ${1}"
     exit 1
   fi
   file="${1}"
@@ -53,7 +115,7 @@ v_option ()
 
 unknown_option ()
 {
-  printf 'Unknown option: "%s"\n' "${1}" >&2
+  error "Unknown option: '${1}'"
   return 1
 }
 
@@ -92,11 +154,16 @@ parse_options ()
   done
 }
 
-default_values ()
+prepare_curl ()
 {
+  local tmp
+  tmp="$(mktemp -d)"
+
   request_header='http:/'
-  curl_response="$(mktemp -d)/response.http"
+  curl_response="${tmp}/response.http"
+  curl_stderr="${tmp}/stderr.http"
   curl_options="--silent --write-out %{http_code} --output ${curl_response}"
+
   if [ -z "${DOCKER_HOST:-}" ]
   then
     curl_options="${curl_options} --unix-socket /var/run/docker.sock"
@@ -104,45 +171,62 @@ default_values ()
     request_header="${request_header}/${DOCKER_HOST#*://}"
   fi
 
+  if [ "${log_level}" -gt 2 ]
+  then
+    curl_options="${curl_options} --verbose --stderr ${curl_stderr}"
+  fi
+
+  readonly request_header curl_options curl_response curl_stderr
+}
+
+prepare ()
+{
   file="${file:-./navy.yaml}"
   log_level="${log_level:-2}"
   NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
 
-  readonly ignore_cache file log_level curl_options curl_response NAVY_CACHE_PATH
+  readonly ignore_cache file log_level NAVY_CACHE_PATH
+
+  prepare_curl
 }
 
 compute_checksum ()
 {
   cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
-  cache="${cache%-*}"
   cache="${cache%% *}"
   readonly cache
 }
 
 create_cache ()
 {
-  rm -rf "${cache}"
+  rm -r -f "${cache}"
   mkdir -p "${cache}"
 }
 
 _curl ()
 {
-  response="$(set -f; curl ${curl_options} "${@}")"
-  if [ "${response%"${response#?}"}" != '2' ]
-  then
-    printf 'HTTP response: %s\n' "${response}" >&2
-    return 1
-  fi
-}
+  rm -f "${curl_stderr}"
 
-get ()
-{
-  _curl --request GET "${@}"
+  local response log
+  response="$(set -f; curl ${curl_options} "${@}" "${req}")"
+
+  if [ "${response%"${response#?}"}" = '2' ]
+  then log='info'
+  else log='warn'; fi
+
+  ${log} "'${req}' HTTP response: ${response}"
+
+  if [ -s "${curl_stderr}" ]; then debug "${curl_stderr}"; fi
 }
 
 request ()
 {
   printf '%s/v%s%s\n' "${request_header}" "${api_version:-1.25}" "${1}"
+}
+
+get ()
+{
+  req="$(request "${req}")" _curl --request GET "${@}"
 }
 
 define_context_datasources ()
@@ -153,17 +237,14 @@ define_context_datasources ()
   info_json="${context}/info.json"
   mkdir -p "${context}"
 
-  local req
-  req="$(request '/version')"
-  get "${req}"
+  req='/version' get
   mv -f "${curl_response}" "${version_json}"
 
   api_version="$(gomplate --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
-  get "${req}"
+  req='/version' get
   mv -f "${curl_response}" "${version_json}"
 
-  req="$(request '/info')"
-  get "${req}"
+  req='/info' get
   mv -f "${curl_response}" "${info_json}"
 }
 
@@ -236,10 +317,9 @@ not_cached ()
 main ()
 {
   init
+  add_style
   parse_options "${@}"
-
-  default_values
-
+  prepare
   compute_checksum
 
   if not_cached
@@ -278,9 +358,6 @@ main "${@}"
 # build:
 # tar c -f context.tar -C /tmp .
 # curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar
-#
-# http request details & answer: curl --verbose -o /dev/null --silent
-# only http return code: curl -o /dev/null -s -w "%{http_code}\n"
 #
 # characters:
 # - ▏▎▍▌▋▊▉
