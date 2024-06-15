@@ -47,7 +47,7 @@ As stated above, Navy was designed to be used in a container. But that does not 
 
 Here the command line you can use to run Navy in a safe environment:
 ```
-docker run --rm -v .:/workspace:ro -v ~/.cache/navy:/cache:rw tiawl/navy:0.0.0
+docker run --rm -v .:/workspace:ro -v ~/.cache/navy:/var/cache/navy:rw tiawl/navy:0.1.0
 ```
 
 ### How to run Navy out of its safe box ?
@@ -72,3 +72,7 @@ If you use Navy in its container, add this option to the `docker run` command:
 ```
 
 otherwise export the `DOCKER_HOST` variable in your environment.
+
+### What did you plan for the next releases ? How can I contribute to this project ?
+
+You probably noticed that Navy does not have a first major release. Why ? Because Navy is ready to be used but is not mature. To go further, Navy needs feedbacks for its implemented features. Expect breaking changes in the next releases. With time, Navy will be more stable. If you want to contribute and see Navy growing, use Navy for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Navy better. So do not hesitate to open an issue: this is the best way to contribute.

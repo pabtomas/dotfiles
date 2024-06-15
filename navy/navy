@@ -34,13 +34,16 @@ ignore_cache_option ()
 
 file_option ()
 {
-  if [ -r "${1}" ]
+  if [ ! -e "${1}" ]
   then
-    file="${1}"
-  else
+    printf '%s does not exist\n' "${1}" >&2
+    exit 1
+  elif [ ! -r "${1}" ]
+  then
     printf 'You do not have the permission to read %s\n' "${1}" >&2
     exit 1
   fi
+  file="${1}"
 }
 
 v_option ()
@@ -91,22 +94,28 @@ parse_options ()
 
 default_values ()
 {
-  # define default values for
-  #   * ${DOCKER_HOST}: where curl will send its requests
-  #   * ${file}
-  #   * ${NAVY_CACHE_PATH}: where the script will store its cache
-  #   * ${log_level}
-  readonly ignore_cache
-  readonly file
-  readonly log_level
+  request_header='http:/'
+  curl_response="$(mktemp -d)/response.http"
+  curl_options="--silent --write-out %{http_code} --output ${curl_response}"
+  if [ -z "${DOCKER_HOST:-}" ]
+  then
+    curl_options="${curl_options} --unix-socket /var/run/docker.sock"
+  else
+    request_header="${request_header}/${DOCKER_HOST#*://}"
+  fi
+
+  file="${file:-./navy.yaml}"
+  log_level="${log_level:-2}"
+  NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
+
+  readonly ignore_cache file log_level curl_options curl_response NAVY_CACHE_PATH
 }
 
 compute_checksum ()
 {
   cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
-  set -f
-  cache=${cache%-*}
-  set +f
+  cache="${cache%-*}"
+  cache="${cache%% *}"
   readonly cache
 }
 
@@ -116,13 +125,46 @@ create_cache ()
   mkdir -p "${cache}"
 }
 
+_curl ()
+{
+  response="$(set -f; curl ${curl_options} "${@}")"
+  if [ "${response%"${response#?}"}" != '2' ]
+  then
+    printf 'HTTP response: %s\n' "${response}" >&2
+    return 1
+  fi
+}
+
+get ()
+{
+  _curl --request GET "${@}"
+}
+
+request ()
+{
+  printf '%s/v%s%s\n' "${request_header}" "${api_version:-1.25}" "${1}"
+}
+
 define_context_datasources ()
 {
-  :
-  # define $CONTEXTVERSION & $CONTEXTINFO datasources
-  #   - send a /version curl on the 1.25 to get the last ApiVersion
-  #   - send a /version curl for the ApiVersion
-  #   - send a /info curl for the ApiVersion
+  local context version_json info_json
+  context="${cache}/context"
+  version_json="${context}/version.json"
+  info_json="${context}/info.json"
+  mkdir -p "${context}"
+
+  local req
+  req="$(request '/version')"
+  get "${req}"
+  mv -f "${curl_response}" "${version_json}"
+
+  api_version="$(gomplate --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
+  get "${req}"
+  mv -f "${curl_response}" "${version_json}"
+
+  req="$(request '/info')"
+  get "${req}"
+  mv -f "${curl_response}" "${info_json}"
 }
 
 expand_datasources_into_datasources ()
@@ -180,14 +222,15 @@ generate_sh ()
 
 init ()
 {
-  set -eux
+  set -eu
+  # set -x
   ifs="${IFS}"
   readonly ifs
 }
 
 not_cached ()
 {
-  if [ "${ignore_cache}" = 'true' ] || [ ! -d "${cache}" ]; then return 0; else return 1; fi
+  if [ "${ignore_cache:-}" = 'true' ] || [ ! -d "${cache}" ]; then return 0; else return 1; fi
 }
 
 main ()
