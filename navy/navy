@@ -2,63 +2,63 @@
 
 add_style ()
 {
-  red="$(printf '\033[38;5;204m')"
-  yellow="$(printf '\033[38;5;228m')"
-  green="$(printf '\033[38;5;120m')"
-  blue="$(printf '\033[38;5;105m')"
-  bold="$(printf '\033[1m')"
-  reset="$(printf '\033[m')"
-  time_format='%H:%M:%S'
+  navy_red="$(printf '\033[38;5;204m')"
+  navy_yellow="$(printf '\033[38;5;228m')"
+  navy_green="$(printf '\033[38;5;120m')"
+  navy_blue="$(printf '\033[38;5;105m')"
+  navy_bold="$(printf '\033[1m')"
+  navy_reset="$(printf '\033[m')"
+  navy_timefmt='%H:%M:%S'
 
-  readonly red yellow green blue bold reset time_format
+  readonly navy_red navy_yellow navy_green navy_blue navy_bold navy_reset navy_timefmt
 }
 
 error ()
 {
   if [ -r "${1}" ]
   then
-    sed "s@^@${red}${bold}ERROR${reset} @" "${1}"
+    sed "s@^@${navy_red}${navy_bold}ERROR${navy_reset} @" "${1}"
   else
-    printf '%b%bERROR%b %s\n' "${red}" "${bold}" "${reset}" "${1}" 1>&2
-  fi | ts "${time_format}"
+    printf '%b%bERROR%b %s\n' "${navy_red}" "${navy_bold}" "${navy_reset}" "${1}"
+  fi | ts "${navy_timefmt}" 1>&2
 }
 
 warn ()
 {
-  if [ "${log_level}" -gt 0 ]
+  if [ "${navy_loglevel}" -gt 0 ]
   then
     if [ -r "${1}" ]
     then
-      sed "s@^@${yellow}${bold}WARN${reset} @" "${1}"
+      sed "s@^@${navy_yellow}${navy_bold}WARN${navy_reset} @" "${1}"
     else
-      printf '%b%bWARN%b %s\n' "${yellow}" "${bold}" "${reset}" "${1}" 1>&2
-    fi | ts "${time_format}"
+      printf '%b%bWARN%b %s\n' "${navy_yellow}" "${navy_bold}" "${navy_reset}" "${1}"
+    fi | ts "${navy_timefmt}" 1>&2
   fi
 }
 
 info ()
 {
-  if [ "${log_level}" -gt 1 ]
+  if [ "${navy_loglevel}" -gt 1 ]
   then
     if [ -r "${1}" ]
     then
-      sed "s@^@${green}${bold}INFO${reset} @" "${1}"
+      sed "s@^@${navy_green}${navy_bold}INFO${navy_reset} @" "${1}"
     else
-      printf '%b%bINFO%b %s\n' "${green}" "${bold}" "${reset}" "${1}"
-    fi | ts "${time_format}"
+      printf '%b%bINFO%b %s\n' "${navy_green}" "${navy_bold}" "${navy_reset}" "${1}"
+    fi | ts "${navy_timefmt}"
   fi
 }
 
 debug ()
 {
-  if [ "${log_level}" -gt 2 ]
+  if [ "${navy_loglevel}" -gt 2 ]
   then
     if [ -r "${1}" ]
     then
-      sed "s@^@${blue}${bold}DEBUG${reset} @" "${1}"
+      sed "s@^@${navy_blue}${navy_bold}DEBUG${navy_reset} @" "${1}"
     else
-      printf '%b%bDEBUG%b %s\n' "${blue}" "${bold}" "${reset}" "${1}"
-    fi | ts "${time_format}"
+      printf '%b%bDEBUG%b %s\n' "${navy_blue}" "${navy_bold}" "${navy_reset}" "${1}"
+    fi | ts "${navy_timefmt}"
   fi
 }
 
@@ -91,7 +91,7 @@ version_option ()
 
 ignore_cache_option ()
 {
-  ignore_cache='true'
+  navy_ignorecache='true'
 }
 
 file_option ()
@@ -105,12 +105,12 @@ file_option ()
     error "You do not have the permission to read ${1}"
     exit 1
   fi
-  file="${1}"
+  navy_file="${1}"
 }
 
 v_option ()
 {
-  log_level="$(( ${log_level:--1} + 1 ))"
+  navy_loglevel="$(( ${navy_loglevel:--1} + 1 ))"
 }
 
 unknown_option ()
@@ -131,7 +131,7 @@ parse_options ()
       set -f
       set -- "${1%"${1#??}"}" "-${1#??}" $(shift; printf '%s\n' "${@}")
       set +f
-      IFS="${ifs}"
+      IFS="${navy_ifs}"
       continue ;;
 
     # Handle '--file=file1' the same as '--file file1' for long-form 1-arg options
@@ -140,7 +140,7 @@ parse_options ()
       set -f
       set -- "${1%%=*}" "${1#*=}" $(shift; printf '%s\n' "${@}")
       set +f
-      IFS="${ifs}"
+      IFS="${navy_ifs}"
       continue ;;
 
     ( --ignore-cache ) ignore_cache_option ;;
@@ -159,69 +159,69 @@ prepare_curl ()
   local tmp
   tmp="$(mktemp -d)"
 
-  request_header='http:/'
-  curl_response="${tmp}/response.http"
-  curl_stderr="${tmp}/stderr.http"
-  curl_options="--silent --write-out %{http_code} --output ${curl_response}"
+  navy_reqheader='http:/'
+  navy_curlresponse="${tmp}/response.http"
+  navy_curlstderr="${tmp}/stderr.http"
+  navy_curlopts="--silent --write-out %{http_code} --output ${navy_curlresponse}"
 
   if [ -z "${DOCKER_HOST:-}" ]
   then
-    curl_options="${curl_options} --unix-socket /var/run/docker.sock"
+    navy_curlopts="${navy_curlopts} --unix-socket /var/run/docker.sock"
   else
-    request_header="${request_header}/${DOCKER_HOST#*://}"
+    navy_reqheader="${navy_reqheader}/${DOCKER_HOST#*://}"
   fi
 
-  if [ "${log_level}" -gt 2 ]
+  if [ "${navy_loglevel}" -gt 2 ]
   then
-    curl_options="${curl_options} --verbose --stderr ${curl_stderr}"
+    navy_curlopts="${navy_curlopts} --verbose --stderr ${navy_curlstderr}"
   fi
 
-  readonly request_header curl_options curl_response curl_stderr
+  readonly navy_reqheader navy_curlopts navy_curlresponse navy_curlstderr
 }
 
 prepare ()
 {
-  file="${file:-./navy.yaml}"
-  log_level="${log_level:-2}"
+  navy_file="${navy_file:-./navy.yaml}"
+  navy_loglevel="${navy_loglevel:-2}"
   NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
 
-  readonly ignore_cache file log_level NAVY_CACHE_PATH
+  readonly navy_ignorecache navy_file navy_loglevel NAVY_CACHE_PATH
 
   prepare_curl
 }
 
 compute_checksum ()
 {
-  cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
-  cache="${cache%% *}"
-  readonly cache
+  navy_cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
+  navy_cache="${navy_cache%% *}"
+  readonly navy_cache
 }
 
 create_cache ()
 {
-  rm -r -f "${cache}"
-  mkdir -p "${cache}"
+  rm -r -f "${navy_cache}"
+  mkdir -p "${navy_cache}"
+  navy_exploded="${navy_cache}/navy.yaml"
+  readonly navy_exploded
+  yq -M 'explode(.)' "${navy_file}" > "${navy_exploded}"
 }
 
 _curl ()
 {
-  rm -f "${curl_stderr}"
+  rm -f "${navy_curlstderr}"
 
-  local response log
-  response="$(set -f; curl ${curl_options} "${@}" "${req}")"
+  local response
+  response="$(set -f; curl ${navy_curlopts} "${@}" "${req}")"
 
-  if [ "${response%"${response#?}"}" = '2' ]
-  then log='info'
-  else log='warn'; fi
+  if [ "${response%"${response#?}"}" != '2' ]
+  then warn "'${req}' HTTP response: ${response}"; fi
 
-  ${log} "'${req}' HTTP response: ${response}"
-
-  if [ -s "${curl_stderr}" ]; then debug "${curl_stderr}"; fi
+  if [ -s "${navy_curlstderr}" ]; then debug "${navy_curlstderr}"; fi
 }
 
 request ()
 {
-  printf '%s/v%s%s\n' "${request_header}" "${api_version:-1.25}" "${1}"
+  printf '%s/v%s%s\n' "${navy_reqheader}" "${navy_apiversion:-1.25}" "${1}"
 }
 
 get ()
@@ -232,29 +232,43 @@ get ()
 define_context_datasources ()
 {
   local context version_json info_json
-  context="${cache}/context"
+  context="${navy_cache}/context"
   version_json="${context}/version.json"
   info_json="${context}/info.json"
+
   mkdir -p "${context}"
 
   req='/version' get
-  mv -f "${curl_response}" "${version_json}"
+  mv -f "${navy_curlresponse}" "${version_json}"
 
-  api_version="$(gomplate --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
+  navy_apiversion="$(gomplate --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
   req='/version' get
-  mv -f "${curl_response}" "${version_json}"
+  mv -f "${navy_curlresponse}" "${version_json}"
 
   req='/info' get
-  mv -f "${curl_response}" "${info_json}"
+  mv -f "${navy_curlresponse}" "${info_json}"
 }
 
 expand_datasources_into_datasources ()
 {
-  :
-  # gomplate to resolve GO templates with datasources:
-  #   Use this CLI to expand templates into values but not in keys (improve
-  #   it to works (recursively) with dictionaries):
-  #   $ yq '. | to_entries[] | "{{ print \"" + .key + "\" }}:" + .value' bases.yaml | gomplate -d bases.yaml=bases.yaml
+  local datasources header ds escaped_ds
+  datasources="${navy_cache}/datasources"
+
+  mkdir -p "${datasources}"
+
+  set -x
+  header="$(yq -M '.datasources[] | "{{ $" + .id + " := (datasource \"" + .source + "\") }}"' "${navy_exploded}" | tr -d '\n')"
+
+  for ds in $(yq -M '.datasources[].source' "${navy_exploded}")
+  do
+    mkdir -p "${datasources}/$(dirname -- "${ds}")"
+    escaped_ds="$(yq -M '(explode(.) | .. | key = "{{ print \"" + key + "\" }}") |= .' "${ds}")"
+    printf '%s%s\n' "${header}" "${escaped_ds}" | gomplate $(yq -M '.datasources[] | "--datasource " + .source + "=" + .source + " "' "${navy_exploded}" | tr '\n' ' ') --out "${datasources}/${ds}"
+
+    # TODO: resolve templates recursively
+    # current CLI:
+    # CWD="${PWD}" ./navy
+  done
 }
 
 expand_datasources_into_main ()
@@ -305,13 +319,13 @@ init ()
 {
   set -eu
   # set -x
-  ifs="${IFS}"
-  readonly ifs
+  navy_ifs="${IFS}"
+  readonly navy_ifs
 }
 
 not_cached ()
 {
-  if [ "${ignore_cache:-}" = 'true' ] || [ ! -d "${cache}" ]; then return 0; else return 1; fi
+  if [ "${navy_ignorecache:-}" = 'true' ] || [ ! -d "${navy_cache}" ]; then return 0; else return 1; fi
 }
 
 main ()

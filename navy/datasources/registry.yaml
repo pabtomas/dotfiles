@@ -3,7 +3,6 @@
 id: 'registry'
 host: '{{ $registry.id }}'
 ip: '{{ $networks.docker_utils.prefix }}.3'
-target: '{{ $registry.ip }}:{{ $registry.port }}'
 prefix:
   global: '{{ $registry.target }}{{ $all.sep.registry }}{{ $project.id }}{{ $all.sep.registry }}'
   owner: '{{ $registry.prefix.global }}{{ $all.owner.name }}{{ $all.sep.image }}'
