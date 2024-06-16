@@ -24,15 +24,15 @@ log ()
       then yq --colors --input-format "${fmt}" --output-format "${fmt}" "${1}"
       else cat "${1}"; fi
     else printf '%s\n' "${1}"
-    fi | sed "s@^@${color}${navy_bold}${text}${navy_reset} @" | ts "${navy_timefmt}" 1>&3
+    fi | sed "s@^@${color}${navy_bold}${text}${navy_reset} @" | ts "${navy_timefmt}" 1>&"${fd}"
   fi
 }
 
-error () { min='0' color="${navy_red}" text='ERROR' log "${@}"; }
-warn () { min='1' color="${navy_yellow}" text='WARN' log "${@}"; }
-info () { min='2' color="${navy_green}" text='INFO' log "${@}"; }
-debug () { min='3' color="${navy_blue}" text='DEBUG' log "${@}"; }
-verb () { min='4' color="${navy_purple}" text='VERB' log "${@}"; }
+error () { min='0' color="${navy_red}" text='ERROR' fd='4' log "${@}"; }
+warn () { min='1' color="${navy_yellow}" text='WARN' fd='4' log "${@}"; }
+info () { min='2' color="${navy_green}" text='INFO' fd='3' log "${@}"; }
+debug () { min='3' color="${navy_blue}" text='DEBUG' fd='3' log "${@}"; }
+verb () { min='4' color="${navy_purple}" text='VERB' fd='3' log "${@}"; }
 
 spin ()
 {
@@ -140,7 +140,8 @@ prepare_cache ()
   navy_cache="${navy_cache%% *}"
   navy_run="${navy_cache}/run"
   navy_buffer="${navy_run}/buffer"
-  readonly NAVY_CACHE_PATH navy_cache navy_run navy_buffer
+  navy_done="${navy_run}/done"
+  readonly NAVY_CACHE_PATH navy_cache navy_run navy_buffer navy_done
 }
 
 prepare_curl ()
@@ -358,14 +359,15 @@ init ()
 {
   set -eu
   #set -x
-  exec 3>&2
+  exec 3>&1
+  exec 4>&2
   navy_ifs="${IFS}"
   readonly navy_ifs
 }
 
 not_cached ()
 {
-  if [ "${navy_ignorecache:-}" = 'true' ] || [ ! -d "${navy_cache}" ]; then return 0; else return 1; fi
+  if [ "${navy_ignorecache:-}" = 'true' ] || [ ! -e "${navy_done}" ]; then return 0; else return 1; fi
 }
 
 main ()
