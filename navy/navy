@@ -177,6 +177,11 @@ prepare_curl ()
   readonly navy_reqheader navy_curlresponse
 }
 
+verbose_eval ()
+{
+  eval "${1} () { { set +x; } 2> /dev/null; if ! command ${1} ${opts:-} \"\${@}\" ${stderr:+2> }${stderr:-} ${pipe:+| }${pipe:-}; then return 1; fi; set -x; }"
+}
+
 prepare_logging ()
 {
   if [ "${navy_loglevel}" -gt 2 ]
@@ -186,26 +191,29 @@ prepare_logging ()
 
   readonly navy_curlopts
 
-  if [ "${navy_loglevel}" -gt 3 ]
-  then
-    PS4="\$(date +%H:%M:%S) ${navy_blue}${navy_bold}TRACE${navy_reset} "
-    set -x
-  fi
-
-  local yqopts gomplateopts
+  local yqopts gomplateopts utilsopt
   yqopts='--no-colors'
   gomplateopts=''
   if [ "${navy_loglevel}" -gt 4 ]
   then
     gomplateopts="${gomplateopts}${gomplateopts:+ }--verbose"
     yqopts="${yqopts}${yqopts:+ }--verbose"
-    mv () { { set +x; } 2> /dev/null; command mv -v "${@}" | verb; set -x; }
-    rm () { { set +x; } 2> /dev/null; command rm -v "${@}" | verb; set -x; }
-    mkdir () { { set +x; } 2> /dev/null; command mkdir -v "${@}" | verb; set -x; }
+    utilsopt='-v'
   fi
 
-  eval "gomplate () { command gomplate ${gomplateopts} \"\${@}\" 2> ${navy_buffer}; };
-        yq () { command yq ${yqopts} \"\${@}\" 2> ${navy_buffer}; }"
+  if [ "${navy_loglevel}" -gt 3 ]
+  then
+    PS4="\$(date +%H:%M:%S) ${navy_blue}${navy_bold}TRACE${navy_reset} "
+    set -x
+    opts="${utilsopt:-}" pipe='verb' verbose_eval 'mkdir'
+    opts="${utilsopt:-}" pipe='verb' verbose_eval 'mv'
+    opts="${utilsopt:-}" pipe='verb' verbose_eval 'rm'
+    opts="${gomplateopts}" stderr="${navy_buffer}" verbose_eval 'gomplate'
+    opts="${yqopts}" stderr="${navy_buffer}" verbose_eval 'yq'
+  else
+    eval "gomplate () { command gomplate ${gomplateopts} \"\${@}\" 2> ${navy_buffer}; };
+          yq () { command yq ${yqopts} \"\${@}\" 2> ${navy_buffer}; }"
+  fi
 }
 
 prepare ()
