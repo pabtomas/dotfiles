@@ -19,13 +19,15 @@ log ()
 {
   if [ "${navy_loglevel}" -ge "${min}" ]
   then
-    if [ -r "${1}" ]
+    if [ "${#}" = '0' ]
+    then command cat
+    elif [ -r "${1}" ]
     then
       if [ -n "${fmt:-}" ]
-      then yq --colors --input-format "${fmt}" --output-format "${fmt}" "${1}"
-      else cat "${1}"; fi
+      then command yq --colors --input-format "${fmt}" --output-format "${fmt}" "${1}"
+      else command cat "${1}"; fi
     else printf '%s\n' "${1}"
-    fi | sed "s@^@${color}${navy_bold}${text}${navy_reset} @" | ts "${navy_timefmt}" 1>&"${fd}"
+    fi | command sed "s@^@${color}${navy_bold}${text}${navy_reset} @" | command ts "${navy_timefmt}" 1>&"${fd}"
   fi
   if [ "${navy_loglevel}" -ge 4 ]; then set -x; fi
 }
@@ -40,6 +42,18 @@ spin ()
 {
   :
   # ⠧ ⠏ ⠛ ⠹ ⠼ ⠶
+}
+
+progress_bar ()
+{
+  :
+  # ▏▎▍▌▋▊▉█
+  # ▁▁▁▁▁▁▁▁
+  # █████  ▕
+  # ▔▔▔▔▔▔▔▔
+  # ▁▁▁▁▁▁▁▁
+  #▕█████   ▎
+  # ▔▔▔▔▔▔▔▔
 }
 
 help_option ()
@@ -170,19 +184,28 @@ prepare_logging ()
     navy_curlopts="${navy_curlopts}${navy_curlopts:+ }--verbose --stderr ${navy_buffer}"
   fi
 
+  readonly navy_curlopts
+
   if [ "${navy_loglevel}" -gt 3 ]
   then
     PS4="\$(date +%H:%M:%S) ${navy_blue}${navy_bold}TRACE${navy_reset} "
     set -x
   fi
 
+  local yqopts gomplateopts
+  yqopts='--no-colors'
+  gomplateopts=''
   if [ "${navy_loglevel}" -gt 4 ]
   then
-    navy_gomplateopts="${navy_gomplateopts}${navy_gomplateopts:+ }--verbose"
-    navy_yqopts="${navy_yqopts}${navy_yqopts:+ }--verbose"
+    gomplateopts="${gomplateopts}${gomplateopts:+ }--verbose"
+    yqopts="${yqopts}${yqopts:+ }--verbose"
+    mv () { { set +x; } 2> /dev/null; command mv -v "${@}" | verb; set -x; }
+    rm () { { set +x; } 2> /dev/null; command rm -v "${@}" | verb; set -x; }
+    mkdir () { { set +x; } 2> /dev/null; command mkdir -v "${@}" | verb; set -x; }
   fi
 
-  readonly navy_curlopts navy_gomplateopts navy_yqopts
+  eval "gomplate () { command gomplate ${gomplateopts} \"\${@}\" 2> ${navy_buffer}; };
+        yq () { command yq ${yqopts} \"\${@}\" 2> ${navy_buffer}; }"
 }
 
 prepare ()
@@ -194,10 +217,6 @@ prepare ()
 
   prepare_cache
   prepare_curl
-
-  navy_yqopts='--no-colors'
-  navy_gomplateopts=''
-
   prepare_logging
 }
 
@@ -218,15 +237,13 @@ _yq ()
 {
   rm -f "${navy_buffer}"
 
-  set -f
-  if ! yq ${navy_yqopts} "${@}" 2> "${navy_buffer}"
+  if ! yq "${@}"
   then
     error 'The YAML parser failed with this error:'
     error "${navy_buffer}"
     return 1
   elif [ -s "${navy_buffer}" ]
   then
-    set +f
     verb "${navy_buffer}"
     if [ "${navy_loglevel}" -le 3 ]
     then
@@ -240,15 +257,13 @@ _gom ()
 {
   rm -f "${navy_buffer}"
 
-  set -f
-  if ! gomplate ${navy_gomplateopts} "${@}" 2> "${navy_buffer}"
+  if ! gomplate "${@}"
   then
     error 'The Go Template processor failed with this error:'
     fmt='json' error "${navy_buffer}"
     return 1
   elif [ -s "${navy_buffer}" ]
   then
-    set +f
     fmt='json' verb "${navy_buffer}"
     if [ "${navy_loglevel}" -le 3 ]
     then
@@ -419,7 +434,3 @@ main "${@}"
 # build:
 # tar c -f context.tar -C /tmp .
 # curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar
-#
-# characters:
-# - ▏▎▍▌▋▊▉
-# - ┏┓━┃┗┛

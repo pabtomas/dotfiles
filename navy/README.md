@@ -52,13 +52,14 @@ docker run --rm -v .:/workspace:ro -v ~/.cache/navy:/var/cache/navy:rw tiawl/nav
 
 ### How to run Navy out of its safe box ?
 
-If you want to install Navy directly I assume that you have at least Busybox utilities on your system.
+If you want to install Navy directly I assume that you have at least Busybox utilities (and git) on your system.
 - Install the dependencies (it should not be difficult if you are using a popular package manager):
   - [dash](https://git.kernel.org/pub/scm/utils/dash/dash.git/)
+  - [coreutils](https://www.gnu.org/software/coreutils/)
+  - `ts` from [moreutils](https://joeyh.name/code/moreutils/)
   - [curl](https://github.com/curl/curl)
   - [yq](https://github.com/mikefarah/yq)
   - [gomplate](https://github.com/hairyhenderson/gomplate)
-  - `ts` from [moreutils](https://joeyh.name/code/moreutils/)
   - [lolcat](https://github.com/jaseg/lolcat)
 - Clone this repository
 - Add configuration (TODO: more details)
