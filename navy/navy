@@ -41,7 +41,7 @@ verb () { { set +x; } 2> /dev/null; min='5' color="${navy_purple}" text='VERB' f
 spin ()
 {
   :
-  # ⠧ ⠏ ⠛ ⠹ ⠼ ⠶
+  # ⠇⠋⠙⠸⠴⠦
 }
 
 progress_bar ()
