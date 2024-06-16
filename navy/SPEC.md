@@ -523,8 +523,7 @@ run:
 ### `Datasource.id`
 
 - **type**: string
-- **required**: false
-- **default value**: `""`
+- **required**: true
 - **description**: An **alphanumeric** string allowing you to access your Datasource in a more readable way in your Go templates.
 
 ### `Datasource.source`

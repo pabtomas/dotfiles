@@ -6,60 +6,38 @@ add_style ()
   navy_yellow="$(printf '\033[38;5;228m')"
   navy_green="$(printf '\033[38;5;120m')"
   navy_blue="$(printf '\033[38;5;105m')"
+  navy_purple="$(printf '\033[38;5;135m')"
   navy_bold="$(printf '\033[1m')"
   navy_reset="$(printf '\033[m')"
   navy_timefmt='%H:%M:%S'
 
-  readonly navy_red navy_yellow navy_green navy_blue navy_bold navy_reset navy_timefmt
+  readonly navy_red navy_yellow navy_green navy_blue navy_purple navy_bold navy_reset navy_timefmt
 }
 
-error ()
+log ()
 {
-  if [ -r "${1}" ]
-  then
-    sed "s@^@${navy_red}${navy_bold}ERROR${navy_reset} @" "${1}"
-  else
-    printf '%b%bERROR%b %s\n' "${navy_red}" "${navy_bold}" "${navy_reset}" "${1}"
-  fi | ts "${navy_timefmt}" 1>&2
-}
-
-warn ()
-{
-  if [ "${navy_loglevel}" -gt 0 ]
+  if [ "${navy_loglevel}" -ge "${min}" ]
   then
     if [ -r "${1}" ]
     then
-      sed "s@^@${navy_yellow}${navy_bold}WARN${navy_reset} @" "${1}"
-    else
-      printf '%b%bWARN%b %s\n' "${navy_yellow}" "${navy_bold}" "${navy_reset}" "${1}"
-    fi | ts "${navy_timefmt}" 1>&2
+      if [ -n "${fmt:-}" ]
+      then yq --colors --input-format "${fmt}" --output-format "${fmt}" "${1}"
+      else cat "${1}"; fi
+    else printf '%s\n' "${1}"
+    fi | sed "s@^@${color}${navy_bold}${text}${navy_reset} @" | ts "${navy_timefmt}" 1>&3
   fi
 }
 
-info ()
-{
-  if [ "${navy_loglevel}" -gt 1 ]
-  then
-    if [ -r "${1}" ]
-    then
-      sed "s@^@${navy_green}${navy_bold}INFO${navy_reset} @" "${1}"
-    else
-      printf '%b%bINFO%b %s\n' "${navy_green}" "${navy_bold}" "${navy_reset}" "${1}"
-    fi | ts "${navy_timefmt}"
-  fi
-}
+error () { min='0' color="${navy_red}" text='ERROR' log "${@}"; }
+warn () { min='1' color="${navy_yellow}" text='WARN' log "${@}"; }
+info () { min='2' color="${navy_green}" text='INFO' log "${@}"; }
+debug () { min='3' color="${navy_blue}" text='DEBUG' log "${@}"; }
+verb () { min='4' color="${navy_purple}" text='VERB' log "${@}"; }
 
-debug ()
+spin ()
 {
-  if [ "${navy_loglevel}" -gt 2 ]
-  then
-    if [ -r "${1}" ]
-    then
-      sed "s@^@${navy_blue}${navy_bold}DEBUG${navy_reset} @" "${1}"
-    else
-      printf '%b%bDEBUG%b %s\n' "${navy_blue}" "${navy_bold}" "${navy_reset}" "${1}"
-    fi | ts "${navy_timefmt}"
-  fi
+  :
+  # ⠧ ⠏ ⠛ ⠹ ⠼ ⠶
 }
 
 help_option ()
@@ -74,9 +52,10 @@ Flags:
   --file file        navy main file (default: ./navy.yaml).
   --ignore-cache     ignores the cache.
   -v                 prints only ERROR messages.
-  -v -v              prints ERROR and WARNING messages.
-  -v -v -v           prints ERROR, WARNING, and INFO messages (default).
-  -v -v -v -v        prints ERROR, WARNING, INFO and DEBUG messages.
+  -v -v              prints ERROR and WARN messages.
+  -v -v -v           prints ERROR, WARN, and INFO messages (default).
+  -v -v -v -v        prints ERROR, WARN, INFO and DEBUG messages.
+  -v -v -v -v -v     prints ERROR, WARN, INFO, DEBUG and VERB messages.
   --help             help for navy.
   --version          version for navy.
 "
@@ -154,61 +133,65 @@ parse_options ()
   done
 }
 
+prepare_cache ()
+{
+  NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
+  navy_cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
+  navy_cache="${navy_cache%% *}"
+  navy_run="${navy_cache}/run"
+  navy_buffer="${navy_run}/buffer"
+  readonly NAVY_CACHE_PATH navy_cache navy_run navy_buffer
+}
+
 prepare_curl ()
 {
-  local tmp
-  tmp="$(mktemp -d)"
-
   navy_reqheader='http:/'
-  navy_curlresponse="${tmp}/response.http"
-  navy_curlstderr="${tmp}/stderr.http"
+  navy_curlresponse="${navy_run}/response.http"
   navy_curlopts="--silent --write-out %{http_code} --output ${navy_curlresponse}"
 
   if [ -z "${DOCKER_HOST:-}" ]
   then
-    navy_curlopts="${navy_curlopts} --unix-socket /var/run/docker.sock"
+    navy_curlopts="${navy_curlopts}${navy_curlopts:+ }--unix-socket /var/run/docker.sock"
   else
     navy_reqheader="${navy_reqheader}/${DOCKER_HOST#*://}"
   fi
 
-  if [ "${navy_loglevel}" -gt 2 ]
+  readonly navy_reqheader navy_curlresponse
+}
+
+prepare_logging ()
+{
+  if [ "${navy_loglevel}" -gt 3 ]
   then
-    navy_curlopts="${navy_curlopts} --verbose --stderr ${navy_curlstderr}"
+    navy_curlopts="${navy_curlopts}${navy_curlopts:+ }--verbose --stderr ${navy_buffer}"
+    navy_gomplateopts="${navy_gomplateopts}${navy_gomplateopts:+ }--verbose"
+    navy_yqopts="${navy_yqopts}${navy_yqopts:+ }--verbose"
   fi
 
-  readonly navy_reqheader navy_curlopts navy_curlresponse navy_curlstderr
+  readonly navy_curlopts navy_gomplateopts navy_yqopts
 }
 
 prepare ()
 {
   navy_file="${navy_file:-./navy.yaml}"
   navy_loglevel="${navy_loglevel:-2}"
-  NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
 
-  readonly navy_ignorecache navy_file navy_loglevel NAVY_CACHE_PATH
+  readonly navy_ignorecache navy_file navy_loglevel
 
+  prepare_cache
   prepare_curl
-}
 
-compute_checksum ()
-{
-  navy_cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
-  navy_cache="${navy_cache%% *}"
-  readonly navy_cache
-}
+  navy_yqopts='--no-colors'
+  navy_gomplateopts=''
 
-create_cache ()
-{
-  rm -r -f "${navy_cache}"
-  mkdir -p "${navy_cache}"
-  navy_exploded="${navy_cache}/navy.yaml"
-  readonly navy_exploded
-  yq -M 'explode(.)' "${navy_file}" > "${navy_exploded}"
+  prepare_logging
 }
 
 _curl ()
 {
-  rm -f "${navy_curlstderr}"
+  rm -f "${navy_buffer}"
+
+  debug "curl ${navy_curlopts} ${@} ${req}"
 
   local response
   response="$(set -f; curl ${navy_curlopts} "${@}" "${req}")"
@@ -216,7 +199,55 @@ _curl ()
   if [ "${response%"${response#?}"}" != '2' ]
   then warn "'${req}' HTTP response: ${response}"; fi
 
-  if [ -s "${navy_curlstderr}" ]; then debug "${navy_curlstderr}"; fi
+  if [ -s "${navy_buffer}" ]; then verb "${navy_buffer}"; fi
+}
+
+_yq ()
+{
+  rm -f "${navy_buffer}"
+
+  debug "yq ${navy_yqopts} ${@}"
+
+  set -f
+  if ! yq ${navy_yqopts} "${@}" 2> "${navy_buffer}"
+  then
+    error 'The YAML parser failed with this error:'
+    error "${navy_buffer}"
+    return 1
+  elif [ -s "${navy_buffer}" ]
+  then
+    set +f
+    verb "${navy_buffer}"
+    if [ "${navy_loglevel}" -le 3 ]
+    then
+      warn 'The YAML parser succeed but returns this warning:'
+      warn "${navy_buffer}"
+    fi
+  fi
+}
+
+_gom ()
+{
+  rm -f "${navy_buffer}"
+
+  debug "gomplate ${navy_gomplateopts} ${@}"
+
+  set -f
+  if ! gomplate ${navy_gomplateopts} "${@}" 2> "${navy_buffer}"
+  then
+    error 'The Go Template processor failed with this error:'
+    fmt='json' error "${navy_buffer}"
+    return 1
+  elif [ -s "${navy_buffer}" ]
+  then
+    set +f
+    fmt='json' verb "${navy_buffer}"
+    if [ "${navy_loglevel}" -le 3 ]
+    then
+      warn 'The Go Template processor succeed but returns this warning:'
+      fmt='json' warn "${navy_buffer}"
+    fi
+  fi
 }
 
 request ()
@@ -227,6 +258,15 @@ request ()
 get ()
 {
   req="$(request "${req}")" _curl --request GET "${@}"
+}
+
+reset_cache ()
+{
+  rm -r -f "${navy_cache}"
+  mkdir -p "${navy_cache}" "${navy_run}"
+  navy_exploded="${navy_cache}/navy.yaml"
+  readonly navy_exploded
+  _yq 'explode(.)' "${navy_file}" > "${navy_exploded}"
 }
 
 define_context_datasources ()
@@ -241,7 +281,7 @@ define_context_datasources ()
   req='/version' get
   mv -f "${navy_curlresponse}" "${version_json}"
 
-  navy_apiversion="$(gomplate --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
+  navy_apiversion="$(_gom --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
   req='/version' get
   mv -f "${navy_curlresponse}" "${version_json}"
 
@@ -256,14 +296,13 @@ expand_datasources_into_datasources ()
 
   mkdir -p "${datasources}"
 
-  set -x
-  header="$(yq -M '.datasources[] | "{{ $" + .id + " := (datasource \"" + .source + "\") }}"' "${navy_exploded}" | tr -d '\n')"
+  header="$(_yq '.datasources[] | "{{ $" + .id + " := (datasource \"" + .source + "\") }}"' "${navy_exploded}" | tr -d '\n')"
 
-  for ds in $(yq -M '.datasources[].source' "${navy_exploded}")
+  for ds in $(_yq '.datasources[].source' "${navy_exploded}")
   do
     mkdir -p "${datasources}/$(dirname -- "${ds}")"
-    escaped_ds="$(yq -M '(explode(.) | .. | key = "{{ print \"" + key + "\" }}") |= .' "${ds}")"
-    printf '%s%s\n' "${header}" "${escaped_ds}" | gomplate $(yq -M '.datasources[] | "--datasource " + .source + "=" + .source + " "' "${navy_exploded}" | tr '\n' ' ') --out "${datasources}/${ds}"
+    escaped_ds="$(_yq '(explode(.) | .. | key = "{{ print \"" + key + "\" }}") |= .' "${ds}")"
+    printf '%s%s\n' "${header}" "${escaped_ds}" | _gom $(_yq '.datasources[] | "--datasource " + .source + "=" + .source + " "' "${navy_exploded}" | tr '\n' ' ') --out "${datasources}/${ds}"
 
     # TODO: resolve templates recursively
     # current CLI:
@@ -274,7 +313,7 @@ expand_datasources_into_datasources ()
 expand_datasources_into_main ()
 {
   :
-  # resolve datasources in main Navy file
+  # resolve datasources in main Navy file (not for Requests & Commands)
 }
 
 expand_anchors ()
@@ -293,7 +332,7 @@ check_linear_includes ()
 expand_datasources_into_includes ()
 {
   :
-  # resolve datasources in included files
+  # resolve datasources in included files (not for Requests & Commands)
 }
 
 expand_includes ()
@@ -318,7 +357,8 @@ generate_sh ()
 init ()
 {
   set -eu
-  # set -x
+  #set -x
+  exec 3>&2
   navy_ifs="${IFS}"
   readonly navy_ifs
 }
@@ -334,11 +374,10 @@ main ()
   add_style
   parse_options "${@}"
   prepare
-  compute_checksum
 
   if not_cached
   then
-    create_cache
+    reset_cache
     define_context_datasources
     expand_datasources_into_datasources
     expand_datasources_into_main
