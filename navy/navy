@@ -15,29 +15,6 @@ add_style ()
   readonly navy_red navy_yellow navy_green navy_cyan navy_blue navy_purple navy_bold navy_reset navy_timefmt
 }
 
-log ()
-{
-  if [ "${navy_loglevel}" -ge "${min}" ]
-  then
-    if [ "${#}" = '0' ]
-    then command cat
-    elif [ -r "${1}" ]
-    then
-      if [ -n "${fmt:-}" ]
-      then command yq --colors --input-format "${fmt}" --output-format "${fmt}" "${1}"
-      else command cat "${1}"; fi
-    else printf '%s\n' "${1}"
-    fi | command sed "s@^@${color}${navy_bold}${text}${navy_reset} @" | command ts "${navy_timefmt}" 1>&"${fd}"
-  fi
-  if [ "${navy_loglevel}" -ge 4 ]; then set -x; fi
-}
-
-error () { { set +x; } 2> /dev/null; min='0' color="${navy_red}" text='ERROR' fd='4' log "${@}"; }
-warn () { { set +x; } 2> /dev/null; min='1' color="${navy_yellow}" text='WARN' fd='4' log "${@}"; }
-info () { { set +x; } 2> /dev/null; min='2' color="${navy_green}" text='INFO' fd='3' log "${@}"; }
-debug () { { set +x; } 2> /dev/null; min='3' color="${navy_cyan}" text='DEBUG' fd='3' log "${@}"; }
-verb () { { set +x; } 2> /dev/null; min='5' color="${navy_purple}" text='VERB' fd='3' log "${@}"; }
-
 spin ()
 {
   :
@@ -55,6 +32,80 @@ progress_bar ()
   #▕█████   ▎
   # ▔▔▔▔▔▔▔▔
 }
+
+# TODO
+sleep_until ()
+{
+  command usleep 10
+}
+
+log ()
+{
+  local entries
+  entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}")"
+  set -f
+  command sed "s@^0@${navy_bold}${navy_red}ERROR${navy_reset} @;
+               s@^1@${navy_bold}${navy_yellow}WARN${navy_reset} @;
+               s@^2@${navy_bold}${navy_green}INFO${navy_reset} @;
+               s@^3@${navy_bold}${navy_cyan}DEBUG${navy_reset} @;
+               s@^4@${navy_bold}${navy_blue}TRACE${navy_reset} @;
+               s@^5@${navy_bold}${navy_purple}VERB${navy_reset} @" ${entries} | command ts "${navy_timefmt}"
+  command rm -f ${entries}
+  set +f
+}
+
+logger ()
+{
+  trap 'navy_loggerstart=1' USR1
+
+  add_style
+
+  local field
+  field="$(printf '%s//\n' "${navy_lines}" | command grep -o '/' | command grep -c '/')"
+
+  while [ -z "${navy_loggerstart:-}" ]; do command usleep 10; done
+
+  trap - USR1
+  trap 'navy_loggerstop=1' USR1
+
+  while [ -z "${navy_loggerstop:-}" ] || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
+  do
+    log "${field}"
+    #sleep_until
+  done
+}
+
+monitored ()
+{
+  local stock entry line i
+  while read -r line
+  do
+    if [ -d "${navy_lines}" ]
+    then
+      set -f
+      IFS="${navy_nl}"
+      for entry in ${stock:-}
+      do
+        i="$(( ${i:--1} + 1 ))"
+        printf '%s\n' "${entry}" > "${navy_lines}/${i}"
+      done
+      IFS="${navy_ifs}"
+      set +f
+      stock=''
+
+      i="$(( ${i:--1} + 1 ))"
+      printf '%s\n' "${line}" > "${navy_lines}/${i}"
+    else
+      stock="${stock:-}${navy_nl}${line}"
+    fi
+  done
+}
+
+perror () { if [ "${navy_loglevel}" -ge '0' ]; then sed 's/^/0/' >&3; fi; }
+pwarn () { if [ "${navy_loglevel}" -ge '1' ]; then sed 's/^/1/' >&3; fi; }
+pinfo () { if [ "${navy_loglevel}" -ge '2' ]; then sed 's/^/2/' >&3; fi; }
+pdebug () { if [ "${navy_loglevel}" -ge '3' ]; then sed 's/^/3/' >&3; fi; }
+pverb () { if [ "${navy_loglevel}" -ge '5' ]; then sed 's/^/5/' >&3; fi; }
 
 help_option ()
 {
@@ -94,11 +145,11 @@ file_option ()
 {
   if [ ! -e "${1}" ]
   then
-    error "${1} does not exist"
+    printf '%s does not exist\n' "${1}" | perror
     exit 1
   elif [ ! -r "${1}" ]
   then
-    error "You do not have the permission to read ${1}"
+    printf 'You do not have the permission to read %s\n' "${1}" | perror
     exit 1
   fi
   navy_file="${1}"
@@ -111,7 +162,7 @@ v_option ()
 
 unknown_option ()
 {
-  error "Unknown option: '${1}'"
+  printf 'Unknown option: %s\n' "'${1}'" | perror
   return 1
 }
 
@@ -150,69 +201,61 @@ parse_options ()
   done
 }
 
-prepare_cache ()
-{
-  NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
-  navy_cache="${NAVY_CACHE_PATH}/$(find . -type f -exec sha256sum {} \; | sha256sum)"
-  navy_cache="${navy_cache%% *}"
-  navy_run="${navy_cache}/run"
-  navy_buffer="${navy_run}/buffer"
-  navy_done="${navy_run}/done"
-  readonly NAVY_CACHE_PATH navy_cache navy_run navy_buffer navy_done
-}
-
 prepare_curl ()
 {
   navy_reqheader='http:/'
-  navy_curlresponse="${navy_run}/response.http"
-  navy_curlopts="--silent --write-out %{http_code} --output ${navy_curlresponse}"
+  navy_curlresp="${navy_run}/curl.response"
+  navy_curlopts="${navy_curlopts:+"${navy_curlopts:-}" }--silent --write-out %{http_code} --output ${navy_curlresp}"
 
   if [ -z "${DOCKER_HOST:-}" ]
   then
-    navy_curlopts="${navy_curlopts}${navy_curlopts:+ }--unix-socket /var/run/docker.sock"
+    navy_curlopts="${navy_curlopts:+"${navy_curlopts}" }--unix-socket /var/run/docker.sock"
   else
     navy_reqheader="${navy_reqheader}/${DOCKER_HOST#*://}"
   fi
 
-  readonly navy_reqheader navy_curlresponse
+  readonly navy_reqheader navy_curlresp navy_curlopts
 }
 
 verbose_eval ()
 {
-  eval "${1} () { { set +x; } 2> /dev/null; if ! command ${1} ${opts:-} \"\${@}\" ${stderr:+2> }${stderr:-} ${pipe:+| }${pipe:-}; then return 1; fi; set -x; }"
+  eval "${1} () { { set +x; } 2> /dev/null; if ! command ${1} ${opts:+"${opts}" }\"\${@}\"${pipe:+ 2>&1 | "${pipe}"}; then return 1; fi; set -x; }"
 }
 
 prepare_logging ()
 {
-  if [ "${navy_loglevel}" -gt 2 ]
+  if [ "${navy_loglevel}" -gt 3 ]
   then
-    navy_curlopts="${navy_curlopts}${navy_curlopts:+ }--verbose --stderr ${navy_buffer}"
+    PS4='4'
+    set -x
   fi
 
-  readonly navy_curlopts
+  if [ "${navy_loglevel}" -gt 2 ]
+  then
+    navy_curlopts="--verbose --stderr ${navy_buffer}"
+  fi
 
   local yqopts gomplateopts utilsopt
   yqopts='--no-colors'
-  gomplateopts=''
   if [ "${navy_loglevel}" -gt 4 ]
   then
-    gomplateopts="${gomplateopts}${gomplateopts:+ }--verbose"
-    yqopts="${yqopts}${yqopts:+ }--verbose"
+    gomplateopts="${gomplateopts:+"${gomplateopts}" }--verbose"
+    yqopts="${yqopts:+"${yqopts}" }--verbose"
     utilsopt='-v'
+    findopts='-D exec -D search'
   fi
 
   if [ "${navy_loglevel}" -gt 3 ]
   then
-    PS4="\$(date +%H:%M:%S) ${navy_blue}${navy_bold}TRACE${navy_reset} "
-    set -x
-    opts="${utilsopt:-}" pipe='verb' verbose_eval 'mkdir'
-    opts="${utilsopt:-}" pipe='verb' verbose_eval 'mv'
-    opts="${utilsopt:-}" pipe='verb' verbose_eval 'rm'
-    opts="${gomplateopts}" stderr="${navy_buffer}" verbose_eval 'gomplate'
-    opts="${yqopts}" stderr="${navy_buffer}" verbose_eval 'yq'
+    opts="${utilsopt:-}" pipe='pverb' verbose_eval 'mkdir'
+    opts="${utilsopt:-}" pipe='pverb' verbose_eval 'mv'
+    opts="${utilsopt:-}" pipe='pverb' verbose_eval 'rm'
+    opts="${findopts:-}" pipe='pverb' verbose_eval 'find'
+    opts="${gomplateopts:-}" verbose_eval 'gomplate'
+    opts="${yqopts:-}" verbose_eval 'yq'
   else
-    eval "gomplate () { command gomplate ${gomplateopts} \"\${@}\" 2> ${navy_buffer}; };
-          yq () { command yq ${yqopts} \"\${@}\" 2> ${navy_buffer}; }"
+    eval "gomplate () { command gomplate ${gomplateopts:+"${gomplateopts}" }\"\${@}\"; };
+          yq () { command yq ${yqopts:+"${yqopts}" }\"\${@}\"; }"
   fi
 }
 
@@ -223,62 +266,60 @@ prepare ()
 
   readonly navy_ignorecache navy_file navy_loglevel
 
-  prepare_cache
-  prepare_curl
   prepare_logging
+  prepare_curl
 }
 
 _curl ()
 {
   rm -f "${navy_buffer}"
 
-  local response
-  response="$(set -f; curl ${navy_curlopts} "${@}" "${req}")"
+  local out
+  if ! out="$(set -f; curl ${navy_curlopts} "${@}" "${req}")"
+  then
+    printf '%s HTTP response: %s\n' "'${req}'" "${out}" | perror
+    cat "${navy_buffer}" | perror
+    return 1
+  fi
 
-  if [ "${response%"${response#?}"}" != '2' ]
-  then warn "'${req}' HTTP response: ${response}"; fi
+  if [ "${out%"${out#?}"}" != '2' ]
+  then printf '%s HTTP response: %s\n' "'${req}'" "${out}" | pwarn; fi
 
-  if [ -s "${navy_buffer}" ]; then debug "${navy_buffer}"; fi
+  if [ -s "${navy_buffer}" ]; then cat "${navy_buffer}" | pdebug; fi
 }
 
 _yq ()
 {
   rm -f "${navy_buffer}"
 
-  if ! yq "${@}"
+  if ! yq "${@}" 2> "${navy_buffer}"
   then
-    error 'The YAML parser failed with this error:'
-    error "${navy_buffer}"
+    printf 'The YAML parser failed with this error:\n' | perror
+    cat "${navy_buffer}" | perror
     return 1
-  elif [ -s "${navy_buffer}" ]
+  elif [ "${navy_loglevel}" -le 3 ] && [ -s "${navy_buffer}" ]
   then
-    verb "${navy_buffer}"
-    if [ "${navy_loglevel}" -le 3 ]
-    then
-      warn 'The YAML parser succeed but returns this warning:'
-      warn "${navy_buffer}"
-    fi
-  fi
+    printf 'The YAML parser succeed but returns this warning:\n' | pwarn
+    cat "${navy_buffer}" | pwarn
+  elif [ -s "${navy_buffer}" ]
+  then cat "${navy_buffer}" | pverb; fi
 }
 
 _gom ()
 {
   rm -f "${navy_buffer}"
 
-  if ! gomplate "${@}"
+  if ! gomplate "${@}" 2> "${navy_buffer}"
   then
-    error 'The Go Template processor failed with this error:'
-    fmt='json' error "${navy_buffer}"
+    perror 'The Go Template processor failed with this error:'
+    command yq --colors --input-format 'json' --output-format 'json' "${navy_buffer}" | perror
     return 1
-  elif [ -s "${navy_buffer}" ]
+  elif [ "${navy_loglevel}" -le 3 ] && [ -s "${navy_buffer}" ]
   then
-    fmt='json' verb "${navy_buffer}"
-    if [ "${navy_loglevel}" -le 3 ]
-    then
-      warn 'The Go Template processor succeed but returns this warning:'
-      fmt='json' warn "${navy_buffer}"
-    fi
-  fi
+    printf 'The Go Template processor succeed but returns this warning:\n' | pwarn
+    command yq --colors --input-format 'json' --output-format 'json' "${navy_buffer}" | pwarn
+  elif [ -s "${navy_buffer}" ]
+  then command yq --colors --input-format 'json' --output-format 'json' "${navy_buffer}" | pverb; fi
 }
 
 request ()
@@ -293,8 +334,7 @@ get ()
 
 reset_cache ()
 {
-  rm -r -f "${navy_cache}"
-  mkdir -p "${navy_cache}" "${navy_run}"
+  find "${navy_cache}" -mindepth 1 -maxdepth 1 ! -name "${navy_run#"${navy_cache}/"}" -execdir rm -rf {} +
   navy_exploded="${navy_cache}/navy.yaml"
   readonly navy_exploded
   _yq 'explode(.)' "${navy_file}" > "${navy_exploded}"
@@ -310,14 +350,14 @@ define_context_datasources ()
   mkdir -p "${context}"
 
   req='/version' get
-  mv -f "${navy_curlresponse}" "${version_json}"
+  mv -f "${navy_curlresp}" "${version_json}"
 
   navy_apiversion="$(_gom --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
   req='/version' get
-  mv -f "${navy_curlresponse}" "${version_json}"
+  mv -f "${navy_curlresp}" "${version_json}"
 
   req='/info' get
-  mv -f "${navy_curlresponse}" "${info_json}"
+  mv -f "${navy_curlresp}" "${info_json}"
 }
 
 expand_datasources_into_datasources ()
@@ -388,10 +428,20 @@ generate_sh ()
 init ()
 {
   set -eu
-  exec 3>&1
-  exec 4>&2
+
   navy_ifs="${IFS}"
-  readonly navy_ifs
+  navy_nl='
+'
+  NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
+  navy_sha="$(find . -type f -exec sha256sum {} \; | sha256sum)"
+  navy_sha="${navy_sha%% *}"
+  navy_cache="${NAVY_CACHE_PATH}/${navy_sha}"
+  navy_run="${navy_cache}/run"
+  navy_logs="${navy_run}/logs"
+  navy_lines="${navy_logs}/lines"
+  navy_buffer="${navy_run}/buffer"
+  navy_done="${navy_run}/done"
+  readonly NAVY_CACHE_PATH navy_sha navy_cache navy_run navy_logs navy_lines navy_buffer navy_done navy_ifs navy_nl
 }
 
 not_cached ()
@@ -399,10 +449,17 @@ not_cached ()
   if [ "${navy_ignorecache:-}" = 'true' ] || [ ! -e "${navy_done}" ]; then return 0; else return 1; fi
 }
 
-main ()
+init_processor ()
 {
-  init
-  add_style
+  exec 3>&2
+  rm -r -f "${navy_run}"
+  mkdir -p "${navy_cache}" "${navy_run}" "${navy_logs}" "${navy_lines}"
+  kill -s USR1 "${navy_loggerpid}"
+}
+
+processor ()
+{
+  init_processor
   parse_options "${@}"
   prepare
 
@@ -423,6 +480,16 @@ main ()
   # depending of parsed options:
   # - run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script
   # - or use git to see dependencies as a tree
+}
+
+main ()
+{
+  init
+  logger &
+  navy_loggerpid="${!}"
+  readonly navy_loggerpid
+  trap "kill -s USR1 ${navy_loggerpid}; wait" EXIT INT TERM
+  { processor "${@}"; } 2>&1 | monitored
 }
 
 main "${@}"
