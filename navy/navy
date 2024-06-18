@@ -79,44 +79,12 @@ add_time ()
 
 spin ()
 {
-  local entries entry
+  local entries entry cnts_bc
   entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type d | command sort -n -t '/' -k "${1}")"
+  cnts_bc="${navy_spins}/cnts.bc"
+  command date '+cnts = %s%N' > "${cnts_bc}"
   set -f
-  command sed "s@^\([0-9]\+\) \(.*\)@\
-scale = 0\n\
-cnts = $(command date '+%s%N')\n\
-nts = \1\n\
-nelapsed = (cnts - nts) % ${navy_ns_per_100h}\n\
-ns = nelapsed % ${navy_ns_per_s}\n\
-cs = ns / ${navy_ns_per_cs} \n\
-elapsed = (nelapsed - ns) / ${navy_ns_per_s}\n\
-\
-define stop (nelapsed) {\n\
-  print (nelapsed / (5 * ${navy_ns_per_ds})) % 30, \" \", (nelapsed / ${navy_ns_per_ds}) % 34, \" \2\\\n\"\n\
-  halt\n\
-}\n\
-\
-if (nelapsed < ${navy_ns_per_10s}) print \" \";\n\
-if (nelapsed < ${navy_ns_per_min}) {\n\
-  if (cs > 9) { print \"   \", elapsed, \".\", cs, \" \"; stop (nelapsed); }\n\
-  if (cs < 10) { print \"   \", elapsed, \".0\", cs, \" \"; stop (nelapsed); }\n\
-}\n\
-if (nelapsed >= ${navy_ns_per_min} \&\& nelapsed < ${navy_ns_per_10min}) print \" \";\n\
-if (nelapsed >= ${navy_ns_per_min} \&\& nelapsed < ${navy_ns_per_h}) {\n\
-  sec = elapsed % ${navy_s_per_min}\n\
-  if (sec > 9) { print \"   \", elapsed / ${navy_s_per_min}, \":\", sec, \" \"; stop (nelapsed); }\n\
-  if (sec < 10) { print \"   \", elapsed / ${navy_s_per_min}, \":0\", sec, \" \"; stop (nelapsed); }\n\
-}\n\
-if (nelapsed >= ${navy_ns_per_h} \&\& nelapsed < ${navy_ns_per_10h}) print \" \";\n\
-if (nelapsed >= ${navy_ns_per_h}) {\n\
-  sec = elapsed % ${navy_s_per_min}\n\
-  min = (elapsed / ${navy_s_per_min}) % ${navy_min_per_h}\n\
-  if (sec > 9 \&\& min > 9) { print elapsed / ${navy_s_per_h}, \":\", min, \":\", sec, \" \"; stop (nelapsed); }\n\
-  if (sec < 10 \&\& min > 9) { print elapsed / ${navy_s_per_h}, \":\", min, \":0\", sec, \" \"; stop (nelapsed); }\n\
-  if (sec > 9 \&\& min < 10) { print elapsed / ${navy_s_per_h}, \":0\", min, \":\", sec, \" \"; stop (nelapsed); }\n\
-  if (sec < 10 \&\& min < 10) { print elapsed / ${navy_s_per_h}, \":0\", min, \":0\", sec, \" \"; stop (nelapsed); }\n\
-}@" ${entries} \
-  | BC_LINE_LENGTH='0' command bc -q \
+  BC_ENV_ARGS="${cnts_bc}" BC_LINE_LENGTH='0' command bc -q ${entries} \
   | command sed "s@^\([ ]*[0-9:.]\+ [0-9]\+\) 0 \(.*\)\$@\1 ⠄     ${navy_white}\2@; t endpattern;
                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 1 \(.*\)\$@\1 ⠔     ${navy_white}\2@; t endpattern;
                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 2 \(.*\)\$@\1 ⠐⠁    ${navy_white}\2@; t endpattern;
@@ -211,7 +179,7 @@ log ()
   command sed "s@^0@${date} ${navy_bold}${navy_red}ERROR${navy_reset} @; t end;
                s@^1@${date} ${navy_bold}${navy_yellow} WARN${navy_reset} @; t end;
                s@^2@${date} ${navy_bold}${navy_green} INFO${navy_reset} @; t end;
-               s@^3@${date} ${navy_bold}${navy_cyan}DEBUG${navy_reset} @; t end;
+               s@^3@${date} ${navy_bold}${navy_cyan} NOTE${navy_reset} @; t end;
                s@^4@${date} ${navy_bold}${navy_blue}TRACE${navy_reset} @; t end;
                s@^5@${date} ${navy_bold}${navy_purple} VERB${navy_reset} @; :end" ${entries}
   command rm -f ${entries}
@@ -253,7 +221,41 @@ listener ()
   do
     i="$(( ${i:--1} + 1 ))"
     case "${line}" in
-    ( S* ) command date "+%s%N ${line#S}" > "${navy_spins}/${i}" ;;
+    ( S* )
+      command date '+nts = %s%N' > "${navy_spins}/${i}"
+      command cat << EOF >> "${navy_spins}/${i}" ;;
+scale = 0
+nelapsed = (cnts - nts) % ${navy_ns_per_100h}
+ns = nelapsed % ${navy_ns_per_s}
+cs = ns / ${navy_ns_per_cs}
+elapsed = (nelapsed - ns) / ${navy_ns_per_s}
+
+define stop (nelapsed) {
+  print (nelapsed / (5 * ${navy_ns_per_ds})) % 30, " ", (nelapsed / ${navy_ns_per_ds}) % 34, " ${line#S}\n"
+  halt
+}
+
+if (nelapsed < ${navy_ns_per_10s}) print " ";
+if (nelapsed < ${navy_ns_per_min}) {
+  if (cs > 9) { print "   ", elapsed, ".", cs, " "; stop (nelapsed); }
+  if (cs < 10) { print "   ", elapsed, ".0", cs, " "; stop (nelapsed); }
+}
+if (nelapsed >= ${navy_ns_per_min} && nelapsed < ${navy_ns_per_10min}) print " ";
+if (nelapsed >= ${navy_ns_per_min} && nelapsed < ${navy_ns_per_h}) {
+  sec = elapsed % ${navy_s_per_min}
+  if (sec > 9) { print "   ", elapsed / ${navy_s_per_min}, ":", sec, " "; stop (nelapsed); }
+  if (sec < 10) { print "   ", elapsed / ${navy_s_per_min}, ":0", sec, " "; stop (nelapsed); }
+}n
+if (nelapsed >= ${navy_ns_per_h} && nelapsed < ${navy_ns_per_10h}) print " ";
+if (nelapsed >= ${navy_ns_per_h}) {
+  sec = elapsed % ${navy_s_per_min}
+  min = (elapsed / ${navy_s_per_min}) % ${navy_min_per_h}
+  if (sec > 9 && min > 9) { print elapsed / ${navy_s_per_h}, ":", min, ":", sec, " "; stop (nelapsed); }
+  if (sec < 10 && min > 9) { print elapsed / ${navy_s_per_h}, ":", min, ":0", sec, " "; stop (nelapsed); }
+  if (sec > 9 && min < 10) { print elapsed / ${navy_s_per_h}, ":0", min, ":", sec, " "; stop (nelapsed); }
+  if (sec < 10 && min < 10) { print elapsed / ${navy_s_per_h}, ":0", min, ":0", sec, " "; stop (nelapsed); }
+}
+EOF
     ( * ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
     esac
   done
@@ -262,7 +264,7 @@ listener ()
 send_error () { if [ "${navy_loglevel}" -ge '0' ]; then sed 's/^/0/' >&3; fi; }
 send_warn () { if [ "${navy_loglevel}" -ge '1' ]; then sed 's/^/1/' >&3; fi; }
 send_info () { if [ "${navy_loglevel}" -ge '2' ]; then sed 's/^/2/' >&3; fi; }
-send_debug () { if [ "${navy_loglevel}" -ge '3' ]; then sed 's/^/3/' >&3; fi; }
+send_note () { if [ "${navy_loglevel}" -ge '3' ]; then sed 's/^/3/' >&3; fi; }
 send_verb () { if [ "${navy_loglevel}" -ge '5' ]; then sed 's/^/5/' >&3; fi; }
 send_spin () { sed 's/^/S/' >&3; }
 
@@ -275,16 +277,16 @@ Usage:
   navy [flags]
 
 Flags:
-  --file file         navy main file (default: ./navy.yaml).
-  --ignore-cache      ignores the cache.
-  -v                  prints only ERROR messages.
-  -v -v               prints ERROR and WARN messages.
-  -v -v -v            prints ERROR, WARN, and INFO messages (default).
-  -v -v -v -v         prints ERROR, WARN, INFO and DEBUG messages.
-  -v -v -v -v -v      prints ERROR, WARN, INFO, DEBUG and TRACE messages.
-  -v -v -v -v -v -v   prints ERROR, WARN, INFO, DEBUG, TRACE and VERB messages.
-  --help              help for navy.
-  --version           version for navy.
+  --file file           navy main file (default: ./navy.yaml)
+  --reset-cache         resets the cache
+  -v                    prints only ERROR messages
+  -v -v                 prints ERROR and WARN messages
+  -v -v -v              prints ERROR, WARN, and INFO messages (default)
+  -v -v -v -v           prints ERROR, WARN, INFO and NOTE messages
+  -v -v -v -v -v        prints ERROR, WARN, INFO, NOTE and TRACE messages
+  -v -v -v -v -v -v     prints ERROR, WARN, INFO, NOTE, TRACE and VERB messages
+  --help                help for navy
+  --version             version for navy
 "
   return 1
 }
@@ -295,9 +297,9 @@ version_option ()
   return 1
 }
 
-ignore_cache_option ()
+reset_cache_option ()
 {
-  navy_ignorecache='true'
+  navy_resetcache='true'
 }
 
 file_option ()
@@ -349,7 +351,7 @@ parse_options ()
       IFS="${navy_ifs}"
       continue ;;
 
-    ( --ignore-cache ) ignore_cache_option ;;
+    ( --reset-cache ) reset_cache_option ;;
     ( --file ) file_option "${2}"; shift ;;
     ( -v ) v_option ;;
     ( --help ) help_option ;;
@@ -363,7 +365,7 @@ parse_options ()
 prepare_curl ()
 {
   navy_reqheader='http:/'
-  navy_curlresp="${navy_run}/curl.response"
+  navy_curlresp="${NAVY_RUN_PATH}/curlresponse.json"
   navy_curlopts="${navy_curlopts:+"${navy_curlopts:-}" }--silent --write-out %{http_code} --output ${navy_curlresp}"
 
   if [ -z "${DOCKER_HOST:-}" ]
@@ -423,7 +425,7 @@ prepare ()
   navy_file="${navy_file:-./navy.yaml}"
   navy_loglevel="${navy_loglevel:-2}"
 
-  readonly navy_ignorecache navy_file navy_loglevel
+  readonly navy_resetcache navy_file navy_loglevel
 
   prepare_logging
   prepare_curl
@@ -444,7 +446,13 @@ _curl ()
   if [ "${out%"${out#?}"}" != '2' ]
   then printf '%s HTTP response: %s\n' "'${req}'" "${out}" | send_warn; fi
 
-  if [ -s "${navy_buffer}" ]; then cat "${navy_buffer}" | send_debug; fi
+  if [ -s "${navy_buffer}" ]
+  then
+    printf '[CURL] HTTP exchange between Navy and Docker Engine:\n' | send_note
+    cat "${navy_buffer}" | send_note
+    printf '[CURL] JSON response from Docker Engine:\n' | send_note
+    yq --colors --input-format 'json' --output-format 'json' "${navy_curlresp}" | send_note
+  fi
 }
 
 _yq ()
@@ -491,9 +499,8 @@ get ()
   req="$(request "${req}")" _curl --request GET "${@}"
 }
 
-reset_cache ()
+explode_main_file ()
 {
-  find "${navy_cache}" -mindepth 1 -maxdepth 1 ! -name "${navy_run#"${navy_cache}/"}" -execdir rm -rf {} +
   navy_exploded="${navy_cache}/navy.yaml"
   readonly navy_exploded
   _yq 'explode(.)' "${navy_file}" > "${navy_exploded}"
@@ -528,6 +535,7 @@ expand_datasources_into_datasources ()
 
   header="$(_yq '.datasources[] | "{{ $" + .id + " := (datasource \"" + .source + "\") }}"' "${navy_exploded}" | tr -d '\n')"
 
+  # TODO: avoid shell loops
   for ds in $(_yq '.datasources[].source' "${navy_exploded}")
   do
     mkdir -p "${datasources}/$(dirname -- "${ds}")"
@@ -592,28 +600,30 @@ init ()
   navy_nl='
 '
   NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/navy}"
+  NAVY_RUN_PATH="${NAVY_RUN_PATH:-/var/run/navy}"
   navy_sha="$(find . -type f -exec sha256sum {} \; | sha256sum)"
   navy_sha="${navy_sha%% *}"
   navy_cache="${NAVY_CACHE_PATH}/${navy_sha}"
-  navy_run="${navy_cache}/run"
-  navy_logs="${navy_run}/logs"
+  navy_logs="${NAVY_RUN_PATH}/logs"
   navy_lines="${navy_logs}/lines"
-  navy_spins="${navy_run}/spins"
-  navy_buffer="${navy_run}/buffer"
-  navy_done="${navy_run}/done"
-  readonly NAVY_CACHE_PATH navy_sha navy_cache navy_run navy_logs navy_lines navy_spins navy_buffer navy_done navy_ifs navy_nl
+  navy_spins="${NAVY_RUN_PATH}/spins"
+  navy_buffer="${NAVY_RUN_PATH}/buffer"
+  navy_done="${NAVY_RUN_PATH}/done"
+  readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_buffer navy_done navy_ifs navy_nl
+
+  mkdir -p "${NAVY_CACHE_PATH}" "${NAVY_RUN_PATH}"
 }
 
 not_cached ()
 {
-  if [ "${navy_ignorecache:-}" = 'true' ] || [ ! -e "${navy_done}" ]; then return 0; else return 1; fi
+  if [ "${navy_resetcache:-}" = 'true' ] || [ ! -e "${navy_done}" ]; then return 0; else return 1; fi
 }
 
 init_processor ()
 {
   exec 3>&2
-  rm -r -f "${navy_run}"
-  mkdir -p "${navy_cache}" "${navy_run}" "${navy_logs}" "${navy_lines}" "${navy_spins}"
+  rm -r -f "${NAVY_RUN_PATH}/"*
+  mkdir -p "${navy_cache}" "${navy_logs}" "${navy_lines}" "${navy_spins}"
   kill -s USR1 "${navy_loggerpid}"
 }
 
@@ -625,7 +635,7 @@ processor ()
 
   if not_cached
   then
-    reset_cache
+    explode_main_file
     define_context_datasources
     expand_datasources_into_datasources
     expand_datasources_into_main
