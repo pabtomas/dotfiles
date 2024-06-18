@@ -59,29 +59,11 @@ add_style ()
            navy_rb165 navy_rb201 navy_rb200 navy_rb199 navy_rb198 navy_rb197
 }
 
-add_time ()
-{
-  navy_s_per_min='60'
-  navy_min_per_h='60'
-  navy_s_per_h='3600'
-  navy_ns_per_cs='10000000'
-  navy_ns_per_ds='100000000'
-  navy_ns_per_s='1000000000'
-  navy_ns_per_10s='10000000000'
-  navy_ns_per_min='60000000000'
-  navy_ns_per_10min='600000000000'
-  navy_ns_per_h='3600000000000'
-  navy_ns_per_10h='36000000000000'
-  navy_ns_per_100h='360000000000000'
-
-  readonly navy_s_per_min navy_min_per_h navy_s_per_h navy_ns_per_cs navy_ns_per_ds navy_ns_per_s navy_ns_per_10s navy_ns_per_min navy_ns_per_10min navy_ns_per_h navy_ns_per_10h navy_ns_per_100h
-}
-
 spin ()
 {
   local entries entry cnts_bc
   entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type d | command sort -n -t '/' -k "${1}")"
-  cnts_bc="${navy_spins}/cnts.bc"
+  cnts_bc="${NAVY_RUN_PATH}/cnts.bc"
   command date '+cnts = %s%N' > "${cnts_bc}"
   set -f
   BC_ENV_ARGS="${cnts_bc}" BC_LINE_LENGTH='0' command bc -q ${entries} \
@@ -191,7 +173,6 @@ logger ()
   trap 'navy_loggerstart=1' USR1
 
   add_style
-  add_time
 
   local field_logs field_spins
   field_logs="$(printf '%s//\n' "${navy_lines}" | command grep -o '/' | command grep -c '/')"
@@ -213,8 +194,27 @@ logger ()
   printf '%b' "${navy_showcursor}"
 }
 
+add_time ()
+{
+  navy_s_per_min='60'
+  navy_min_per_h='60'
+  navy_s_per_h='3600'
+  navy_ns_per_cs='10000000'
+  navy_ns_per_ds='100000000'
+  navy_ns_per_s='1000000000'
+  navy_ns_per_10s='10000000000'
+  navy_ns_per_min='60000000000'
+  navy_ns_per_10min='600000000000'
+  navy_ns_per_h='3600000000000'
+  navy_ns_per_10h='36000000000000'
+  navy_ns_per_100h='360000000000000'
+
+  readonly navy_s_per_min navy_min_per_h navy_s_per_h navy_ns_per_cs navy_ns_per_ds navy_ns_per_s navy_ns_per_10s navy_ns_per_min navy_ns_per_10min navy_ns_per_h navy_ns_per_10h navy_ns_per_100h
+}
+
 listener ()
 {
+  add_time
   local line i
   until [ -d "${navy_lines}" ] && [ -d "${navy_spins}" ]; do command usleep 10; done
   while read -r line
@@ -266,7 +266,9 @@ send_warn () { if [ "${navy_loglevel}" -ge '1' ]; then sed 's/^/1/' >&3; fi; }
 send_info () { if [ "${navy_loglevel}" -ge '2' ]; then sed 's/^/2/' >&3; fi; }
 send_note () { if [ "${navy_loglevel}" -ge '3' ]; then sed 's/^/3/' >&3; fi; }
 send_verb () { if [ "${navy_loglevel}" -ge '5' ]; then sed 's/^/5/' >&3; fi; }
-send_spin () { sed 's/^/S/' >&3; }
+
+start_spin () { sed 's/^/S/' >&3; }
+stop_spin () { :; }
 
 help_option ()
 {
