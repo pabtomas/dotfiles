@@ -11,6 +11,14 @@ RUN <<END_OF_RUN
     export http_proxy https_proxy
     apk add --no-cache dash coreutils findutils curl yq gomplate
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing lolcat
+    apk add --no-cache --virtual __install_ansi2txt cmake git build-base gcc
+    git clone https://github.com/kilobyte/colorized-logs.git
+    mkdir -p /build
+    cmake -B /build /colorized-logs
+    make -C /build
+    make -C /build install
+    rm -rf /build /colorized-logs
+    apk del __install_ansi2txt
     mkdir -p /navy
     unset http_proxy https_proxy
 END_OF_RUN

@@ -60,7 +60,7 @@ add_style ()
            navy_rb165 navy_rb201 navy_rb200 navy_rb199 navy_rb198 navy_rb197
 }
 
-spin ()
+spins ()
 {
   local entries entry cnts_bc
   entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}")"
@@ -71,70 +71,70 @@ spin ()
     command date '+cnts = %s%N' > "${cnts_bc}"
     set -f
     BC_ENV_ARGS="${cnts_bc}" BC_LINE_LENGTH='0' command bc -q ${entries} \
-    | command sed "s@^\([ ]*[0-9:.]\+ [0-9]\+\) 0 \(.*\)\$@\1 ⠄     ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 1 \(.*\)\$@\1 ⠔     ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 2 \(.*\)\$@\1 ⠐⠁    ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 3 \(.*\)\$@\1  ⠉    ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 4 \(.*\)\$@\1  ⠈⠂   ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 5 \(.*\)\$@\1   ⠢   ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 6 \(.*\)\$@\1   ⠠⠄  ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 7 \(.*\)\$@\1    ⠔  ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 8 \(.*\)\$@\1    ⠐⠁ ${navy_white}\2@; t endpattern;
-                   s@^\([ ]*[0-9:.]\+ [0-9]\+\) 9 \(.*\)\$@\1     ⠉ ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 10 \(.*\)\$@\1     ⠘ ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 11 \(.*\)\$@\1     ⠔ ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 12 \(.*\)\$@\1    ⠠⠄ ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 13 \(.*\)\$@\1    ⠢  ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 14 \(.*\)\$@\1   ⠈⠂  ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 15 \(.*\)\$@\1   ⠉   ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 16 \(.*\)\$@\1  ⠐⠁   ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 17 \(.*\)\$@\1  ⠔    ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 18 \(.*\)\$@\1 ⠠⠄    ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 19 \(.*\)\$@\1 ⠢     ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 20 \(.*\)\$@\1 ⠃     ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 21 \(.*\)\$@\1 ⠉     ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 22 \(.*\)\$@\1 ⠈⠂    ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 23 \(.*\)\$@\1  ⠢    ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 24 \(.*\)\$@\1  ⠠⠄   ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 25 \(.*\)\$@\1   ⠔   ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 26 \(.*\)\$@\1   ⠐⠁  ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 27 \(.*\)\$@\1    ⠉  ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 28 \(.*\)\$@\1    ⠈⠂ ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 29 \(.*\)\$@\1     ⠢ ${navy_white}\2@; t endpattern;
-                  s@^\([ ]*[0-9:.]\+ [0-9]\+\) 30 \(.*\)\$@\1     ⠠ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+\) [0-9]\+ 3[123] \(.*\)\$@\1       \2@; t endcolor;
-      :endpattern; s@^\([ ]*[0-9:.]\+ \)0 \(.*\)\$@\1${navy_rb196}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)1 \(.*\)\$@\1${navy_rb202}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)2 \(.*\)\$@\1${navy_rb208}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)3 \(.*\)\$@\1${navy_rb214}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)4 \(.*\)\$@\1${navy_rb220}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)5 \(.*\)\$@\1${navy_rb226}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)6 \(.*\)\$@\1${navy_rb190}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)7 \(.*\)\$@\1${navy_rb154}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)8 \(.*\)\$@\1${navy_rb118}\2@; t endcolor;
-                   s@^\([ ]*[0-9:.]\+ \)9 \(.*\)\$@\1${navy_rb82}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)10 \(.*\)\$@\1${navy_rb46}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)11 \(.*\)\$@\1${navy_rb47}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)12 \(.*\)\$@\1${navy_rb48}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)13 \(.*\)\$@\1${navy_rb49}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)14 \(.*\)\$@\1${navy_rb50}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)15 \(.*\)\$@\1${navy_rb51}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)16 \(.*\)\$@\1${navy_rb45}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)17 \(.*\)\$@\1${navy_rb39}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)18 \(.*\)\$@\1${navy_rb33}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)19 \(.*\)\$@\1${navy_rb27}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)20 \(.*\)\$@\1${navy_rb21}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)21 \(.*\)\$@\1${navy_rb57}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)22 \(.*\)\$@\1${navy_rb93}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)23 \(.*\)\$@\1${navy_rb128}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)24 \(.*\)\$@\1${navy_rb165}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)25 \(.*\)\$@\1${navy_rb201}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)26 \(.*\)\$@\1${navy_rb200}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)27 \(.*\)\$@\1${navy_rb199}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)28 \(.*\)\$@\1${navy_rb198}\2@; t endcolor;
-                  s@^\([ ]*[0-9:.]\+ \)29 \(.*\)\$@\1${navy_rb197}\2@;
-       :endcolor; s@^@${navy_bold}${navy_white}@;s@\$@${navy_reset}${navy_erase_until_eol}@"
-    for entry in ${entries}; do printf '%s' "${navy_sol}"; done
+      | command sed "s@^\([ ]*[0-9:.]\+ [0-9]\+\) 0 \(.*\)\$@\1 ⠄     ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 1 \(.*\)\$@\1 ⠔     ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 2 \(.*\)\$@\1 ⠐⠁    ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 3 \(.*\)\$@\1  ⠉    ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 4 \(.*\)\$@\1  ⠈⠂   ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 5 \(.*\)\$@\1   ⠢   ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 6 \(.*\)\$@\1   ⠠⠄  ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 7 \(.*\)\$@\1    ⠔  ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 8 \(.*\)\$@\1    ⠐⠁ ${navy_white}\2@; t endpattern;
+                     s@^\([ ]*[0-9:.]\+ [0-9]\+\) 9 \(.*\)\$@\1     ⠉ ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 10 \(.*\)\$@\1     ⠘ ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 11 \(.*\)\$@\1     ⠔ ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 12 \(.*\)\$@\1    ⠠⠄ ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 13 \(.*\)\$@\1    ⠢  ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 14 \(.*\)\$@\1   ⠈⠂  ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 15 \(.*\)\$@\1   ⠉   ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 16 \(.*\)\$@\1  ⠐⠁   ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 17 \(.*\)\$@\1  ⠔    ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 18 \(.*\)\$@\1 ⠠⠄    ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 19 \(.*\)\$@\1 ⠢     ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 20 \(.*\)\$@\1 ⠃     ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 21 \(.*\)\$@\1 ⠉     ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 22 \(.*\)\$@\1 ⠈⠂    ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 23 \(.*\)\$@\1  ⠢    ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 24 \(.*\)\$@\1  ⠠⠄   ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 25 \(.*\)\$@\1   ⠔   ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 26 \(.*\)\$@\1   ⠐⠁  ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 27 \(.*\)\$@\1    ⠉  ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 28 \(.*\)\$@\1    ⠈⠂ ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 29 \(.*\)\$@\1     ⠢ ${navy_white}\2@; t endpattern;
+                    s@^\([ ]*[0-9:.]\+ [0-9]\+\) 30 \(.*\)\$@\1     ⠠ ${navy_white}\2@; t endpattern;
+                s@^\([ ]*[0-9:.]\+\) [0-9]\+ 3[123] \(.*\)\$@\1       \2@; t endcolor;
+        :endpattern; s@^\([ ]*[0-9:.]\+ \)0 \(.*\)\$@\1${navy_rb196}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)1 \(.*\)\$@\1${navy_rb202}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)2 \(.*\)\$@\1${navy_rb208}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)3 \(.*\)\$@\1${navy_rb214}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)4 \(.*\)\$@\1${navy_rb220}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)5 \(.*\)\$@\1${navy_rb226}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)6 \(.*\)\$@\1${navy_rb190}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)7 \(.*\)\$@\1${navy_rb154}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)8 \(.*\)\$@\1${navy_rb118}\2@; t endcolor;
+                     s@^\([ ]*[0-9:.]\+ \)9 \(.*\)\$@\1${navy_rb82}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)10 \(.*\)\$@\1${navy_rb46}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)11 \(.*\)\$@\1${navy_rb47}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)12 \(.*\)\$@\1${navy_rb48}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)13 \(.*\)\$@\1${navy_rb49}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)14 \(.*\)\$@\1${navy_rb50}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)15 \(.*\)\$@\1${navy_rb51}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)16 \(.*\)\$@\1${navy_rb45}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)17 \(.*\)\$@\1${navy_rb39}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)18 \(.*\)\$@\1${navy_rb33}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)19 \(.*\)\$@\1${navy_rb27}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)20 \(.*\)\$@\1${navy_rb21}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)21 \(.*\)\$@\1${navy_rb57}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)22 \(.*\)\$@\1${navy_rb93}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)23 \(.*\)\$@\1${navy_rb128}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)24 \(.*\)\$@\1${navy_rb165}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)25 \(.*\)\$@\1${navy_rb201}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)26 \(.*\)\$@\1${navy_rb200}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)27 \(.*\)\$@\1${navy_rb199}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)28 \(.*\)\$@\1${navy_rb198}\2@; t endcolor;
+                    s@^\([ ]*[0-9:.]\+ \)29 \(.*\)\$@\1${navy_rb197}\2@;
+         :endcolor; s@^@${navy_bold}${navy_white}@;s@\$@${navy_reset}@"
+    #for entry in ${entries}; do printf '%s' "${navy_sol}"; done
     set +f
   fi
 }
@@ -165,63 +165,55 @@ cols ()
   COLUMNS="${COLUMNS:-"$(command tput cols)"}"
 }
 
-log ()
+logs ()
 {
-  local entries date
-  entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}")"
+  local entries date spins
+  spins="$(spins "${2}")"
+
+  entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}" | command head -n 300)"
 
   if [ -n "${entries:-}" ]
   then
     date="$(command date '+%T')"
     cols
     set -f
-    # "\n${navy_sol}" * ((nb of term raws of the current logline) + (nb of spins))
-#    command sed "s@^0@${navy_red}ERROR ${navy_reset}@; t first;
-#                 s@^1@${navy_yellow} WARN ${navy_reset}@; t first;
-#                 s@^2@${navy_green} INFO ${navy_reset}@; t first;
-#                 s@^3@${navy_cyan} NOTE ${navy_reset}@; t first;
-#                 s@^4@${navy_blue}TRACE ${navy_reset}@; t first;
-#                 s@^5@${navy_purple} VERB ${navy_reset}@;
-#         :first; s@^@${date} ${navy_bold}@; b reset_T_tail;
-#  :reset_T_tail; s@.@&\n@$(( ${COLUMNS} + ${#date} + ${#navy_bold} + ${#navy_cyan} + ${#navy_reset} + 7 )); T tail;
-#                 s@\n@${navy_erase_until_eol}\n\n${navy_sol}${navy_sol}@;
-#                 P;
-#                 s@^.*\n@@;
-#          :loop; /^$/ {
-#                   b break;
-#                 }; b reset_T_break;
-# :reset_T_break; s@.@&\n@${COLUMNS}; T break;
-#                 s@^@${date}       @;
-#                 s@\n@${navy_erase_until_eol}\n\n${navy_sol}${navy_sol}@;
-#                 P;
-#                 s@^.*\n@@; t loop;
-#         :break; /^$/d; t exit;
-#                 s@^@${date}       @;
-#          :tail; s@\$@${navy_erase_until_eol}\n\n${navy_sol}${navy_sol}@;
-#          :exit;" ${entries}
-
-    # TODO: Manage color from JSON YQ output
-    command sed "s@^0@${navy_red}ERROR ${navy_reset}@; t first;
-                 s@^1@${navy_yellow} WARN ${navy_reset}@; t first;
-                 s@^2@${navy_green} INFO ${navy_reset}@; t first;
-                 s@^3@${navy_cyan} NOTE ${navy_reset}@; t first;
-                 s@^4@${navy_blue}TRACE ${navy_reset}@; t first;
-                 s@^5@${navy_purple} VERB ${navy_reset}@;
-         :first; s@^@${date} ${navy_bold}@; b reset_T_tail;
-  :reset_T_tail; s@.@&\n@$(( ${COLUMNS} + ${#date} + ${#navy_bold} + ${#navy_cyan} + ${#navy_reset} + 7 )); T tail;
-                 P;
-                 s@^.*\n@@;
-          :loop; /^$/ {
-                   b break;
-                 }; b reset_T_break;
- :reset_T_break; s@.@&\n@${COLUMNS}; T break;
-                 s@^@${date}       @;
-                 P;
-                 s@^.*\n@@; t loop;
-         :break; /^$/d; t exit;
-                 s@^@${date}       @;
-          :tail;
-          :exit;" ${entries}
+    # sed       's/Ą/./g;      t reset;
+    #    :reset; s@.@&\n@7;    t bigger; T smaller;
+    #     :loop; /^$/ {
+    #              b break;
+    #            };
+    #            s/./&\n/3;    T break;
+    #            s/^/OK:/;
+    #   :bigger; s/\n/#KO\n/;
+    #            P;
+    #            s/^.*\n//;    t loop;
+    #    :break; /^$/d;        t exit;
+    #            s/^/OK:/;
+    #  :smaller; s/$/#KO/;
+    #     :exit;' test/*
+    # TODO: "\n${navy_sol}" * ((nb of term raws of the current logline) + (nb of spins))
+    command sed          "s@^0@${navy_red}ERROR ${navy_reset}@;                t first;
+                          s@^1@${navy_yellow} WARN ${navy_reset}@;             t first;
+                          s@^2@${navy_green} INFO ${navy_reset}@;              t first;
+                          s@^3@${navy_cyan} NOTE ${navy_reset}@;               t first;
+                          s@^4@${navy_blue}TRACE ${navy_reset}@;               t first;
+                          s@^5@${navy_purple} VERB ${navy_reset}@;
+                  :first; s@^@\n${navy_sol}${date} ${navy_bold}@;              t reset_T_smaller;
+        :reset_T_smaller; s@.@&\n@$(( 1 + ${COLUMNS} + ${#navy_sol}
+                                        + ${#navy_bold} + ${#navy_cyan}
+                                        + ${#navy_reset} ));                   t longer_than_term; T smaller_than_term;
+                   :loop; /^$/ {
+                            b break;
+                          };                                                   t reset_T_break;
+          :reset_T_break; s@.@&\n@$(( ${COLUMNS} - ${#date} - 7 ));            T break;
+                          s@^@\n${navy_sol}               @;
+       :longer_than_term; s@\n@${navy_erase_until_eol}\n${spins}${navy_sol}@;
+                          P;
+                          s@^.*\n@@;                                           t loop;
+                  :break; /^$/d;                                               t exit;
+                          s@^@\n${navy_sol}               @;
+      :smaller_than_term; s@\$@${navy_erase_until_eol}\n${spins}${navy_sol}@;
+                   :exit;" ${entries}
     command rm -f ${entries}
     set +f
   fi
@@ -258,12 +250,8 @@ logger ()
 
   while [ -z "${navy_loggerstop:-}" ] || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
   do
-    log "${field_logs}"
-    if [ -z "${navy_loggerstop:-}" ]
-    then
-      spin "${field_spins}"
-      _stop
-    fi
+    logs "${field_logs}" "${field_spins}"
+    if [ -z "${navy_loggerstop:-}" ]; then _stop; fi
     #sleep_until
   done
 
@@ -341,16 +329,17 @@ if (nelapsed >= ${navy_ns_per_h}) {
 }
 EOF
       command ln -s "${navy_spins}/${i}" "${navy_aliases}/${alias}" ;;
-    ( * ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
+    ( [012345]* ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
+    ( * ) printf '%s%s\n' "${PS4}" "${line}" > "${navy_lines}/${i}" ;;
     esac
   done
 }
 
-send_error () { if [ "${navy_loglevel}" -ge '0' ]; then sed 's@^@0@' >&3; fi; }
-send_warn () { if [ "${navy_loglevel}" -ge '1' ]; then sed 's@^@1@' >&3; fi; }
-send_info () { if [ "${navy_loglevel}" -ge '2' ]; then sed 's@^@2@' >&3; fi; }
-send_note () { if [ "${navy_loglevel}" -ge '3' ]; then sed 's@^@3@' >&3; fi; }
-send_verb () { if [ "${navy_loglevel}" -ge '5' ]; then sed 's@^@5@' >&3; fi; }
+send_error () { if [ "${navy_loglevel}" -ge '0' ]; then ansi2txt | sed 's@^@0@' >&3; fi; }
+send_warn () { if [ "${navy_loglevel}" -ge '1' ]; then ansi2txt | sed 's@^@1@' >&3; fi; }
+send_info () { if [ "${navy_loglevel}" -ge '2' ]; then ansi2txt | sed 's@^@2@' >&3; fi; }
+send_note () { if [ "${navy_loglevel}" -ge '3' ]; then ansi2txt | sed 's@^@3@' >&3; fi; }
+send_verb () { if [ "${navy_loglevel}" -ge '5' ]; then ansi2txt | sed 's@^@5@' >&3; fi; }
 
 start_spin () { sed "s@^@S/${1}/@" >&3; }
 stop_spin () { printf 'K%s\n' "${1}" >&3; }
@@ -472,11 +461,7 @@ verbose_eval ()
 
 prepare_logging ()
 {
-  if [ "${navy_loglevel}" -gt 3 ]
-  then
-    PS4='4'
-    set -x
-  fi
+  if [ "${navy_loglevel}" -gt 3 ]; then set -x; fi
 
   if [ "${navy_loglevel}" -gt 2 ]
   then
@@ -538,8 +523,7 @@ _curl ()
     printf '[CURL] HTTP exchange between Navy and Docker Engine:\n' | send_note
     cat "${navy_buffer}" | send_note
     printf '[CURL] JSON response from Docker Engine:\n' | send_note
-    # TODO: json
-    cat "${navy_curlresp}" | send_note
+    command yq --no-colors --input-format 'json' --output-format 'json' "${navy_curlresp}" | send_note
   fi
 }
 
@@ -567,17 +551,14 @@ _gom ()
   if ! gomplate "${@}" 2> "${navy_buffer}"
   then
     printf 'The Go Template processor failed with this error:\n' | send_error
-    # TODO: json
-    cat "${navy_buffer}" | send_error
+    command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_error
     return 1
   elif [ "${navy_loglevel}" -le 3 ] && [ -s "${navy_buffer}" ]
   then
     printf 'The Go Template processor succeed but returns this warning:\n' | send_warn
-    # TODO: json
-    cat "${navy_buffer}" | send_warn
+    command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_warn
   elif [ -s "${navy_buffer}" ]
-  # TODO: json
-  then cat "${navy_buffer}" | send_verb; fi
+  then command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_verb; fi
 }
 
 request ()
@@ -705,6 +686,8 @@ init ()
   navy_done="${NAVY_RUN_PATH}/done"
   readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_stops navy_aliases navy_tty navy_buffer navy_done navy_ifs navy_nl
 
+  PS4='4'
+
   mkdir -p "${NAVY_CACHE_PATH}" "${NAVY_RUN_PATH}"
 }
 
@@ -730,7 +713,7 @@ processor ()
 
   if not_cached
   then
-    #printf 'Prepare cache\n' | start_spin 'cache'
+    printf 'Prepare cache\n' | start_spin 'cache'
     explode_main_file
     define_context_datasources
     expand_datasources_into_datasources
@@ -741,7 +724,7 @@ processor ()
     expand_includes
     expand_extends
     generate_sh
-    #stop_spin 'cache'
+    stop_spin 'cache'
   fi
 
   # depending of parsed options:
