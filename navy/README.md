@@ -47,7 +47,7 @@ As stated above, Navy was designed to be used in a container. But that does not 
 
 Here the command line you can use to run Navy in a safe environment:
 ```
-docker run --rm -v .:/workspace:ro -v ~/.cache/navy:/var/cache/navy:rw tiawl/navy:0.1.0
+docker run --rm -t -v .:/workspace:ro -v ~/.cache/navy:/var/cache/navy:rw tiawl/navy:0.1.0
 ```
 
 ### How to run Navy out of its safe box ?
