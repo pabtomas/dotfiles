@@ -9,7 +9,7 @@ RUN <<END_OF_RUN
     http_proxy="${HTTP_PROXY:-}"
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
-    apk add --no-cache dash coreutils findutils curl yq gomplate
+    apk add --no-cache dash coreutils curl yq gomplate
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing lolcat
     apk add --no-cache --virtual __install_ansi2txt cmake git build-base gcc
     git clone https://github.com/kilobyte/colorized-logs.git

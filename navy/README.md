@@ -56,7 +56,6 @@ If you want to install Navy directly I assume that you have at least Busybox uti
 - Install the dependencies (it should not be difficult if you are using a popular package manager):
   - [dash](https://git.kernel.org/pub/scm/utils/dash/dash.git/)
   - [coreutils](https://www.gnu.org/software/coreutils/)
-  - [findutils](https://www.gnu.org/software/findutils/)
   - [curl](https://github.com/curl/curl)
   - [yq](https://github.com/mikefarah/yq)
   - [gomplate](https://github.com/hairyhenderson/gomplate)
