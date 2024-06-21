@@ -12,6 +12,7 @@ add_style ()
   navy_purple="${navy_esc}[38;5;135m"
   navy_bold="${navy_esc}[1m"
   navy_erase_until_eol="${navy_esc}[K"
+  try="${navy_esc}[G"
   navy_sol="${navy_esc}[F"
   navy_hidecursor="${navy_esc}[?25l"
   navy_showcursor="${navy_esc}[?25h"
@@ -185,29 +186,29 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
   if (nelapsed < ${navy_us_per_10s}) print \" \";\n\
   if (nelapsed < ${navy_us_per_min})\n\
   {\n\
-    if (cs > 9) { print \"   ${navy_bold}${navy_white}\", elapsed, \".\", cs; spin (nelapsed, index); continue; }\n\
-    if (cs < 10) { print \"   ${navy_bold}${navy_white}\", elapsed, \".0\", cs; spin (nelapsed, index); continue; }\n\
+    if (cs > 9) { print \"   ${navy_bold}${navy_white}\", elapsed, \".\", cs; dummy = spin (nelapsed, index); continue; }\n\
+    if (cs < 10) { print \"   ${navy_bold}${navy_white}\", elapsed, \".0\", cs; dummy = spin (nelapsed, index); continue; }\n\
   }\n\
   if (nelapsed >= ${navy_us_per_min} \&\& nelapsed < ${navy_us_per_10min}) print \" \";\n\
   if (nelapsed >= ${navy_us_per_min} \&\& nelapsed < ${navy_us_per_h})\n\
   {\n\
     sec = elapsed % ${navy_s_per_min}\n\
-    if (sec > 9) { print \"   ${navy_bold}${navy_white}\", elapsed / ${navy_s_per_min}, \":\", sec; spin (nelapsed, index); continue; }\n\
-    if (sec < 10) { print \"   ${navy_bold}${navy_white}\", elapsed / ${navy_s_per_min}, \":0\", sec; spin (nelapsed, index); continue; }\n\
+    if (sec > 9) { print \"   ${navy_bold}${navy_white}\", elapsed / ${navy_s_per_min}, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec < 10) { print \"   ${navy_bold}${navy_white}\", elapsed / ${navy_s_per_min}, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
   }\n\
   if (nelapsed >= ${navy_us_per_h} \&\& nelapsed < ${navy_us_per_10h}) print \" \";\n\
   if (nelapsed >= ${navy_us_per_h} \&\& nelapsed < ${navy_us_per_100h})\n\
   {\n\
     sec = elapsed % ${navy_s_per_min}\n\
     min = (elapsed / ${navy_s_per_min}) % ${navy_min_per_h}\n\
-    if (sec > 9 \&\& min > 9) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":\", min, \":\", sec; spin (nelapsed, index); continue; }\n\
-    if (sec < 10 \&\& min > 9) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":\", min, \":0\", sec; spin (nelapsed, index); continue; }\n\
-    if (sec > 9 \&\& min < 10) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":0\", min, \":\", sec; spin (nelapsed, index); continue; }\n\
-    if (sec < 10 \&\& min < 10) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":0\", min, \":0\", sec; spin (nelapsed, index); continue; }\n\
+    if (sec > 9 \&\& min > 9) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":\", min, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec < 10 \&\& min > 9) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":\", min, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec > 9 \&\& min < 10) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":0\", min, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec < 10 \&\& min < 10) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":0\", min, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
   }\n\
-  print \"${navy_bold}${navy_white}--:--:--\"; spin (nelapsed, index);\n\
+  print \"${navy_bold}${navy_white}--:--:--\"; dummy = spin (nelapsed, index);\n\
 }\n\
-print \"${navy_sol}\"\n@" \
+print \"${try}\"\n@" \
       | BC_LINE_LENGTH='0' command bc -q
     set +f
 #TODO: for each spin: print ${navy_sol}
