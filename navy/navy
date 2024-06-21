@@ -206,9 +206,9 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
     if (sec < 10 \&\& min < 10) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":0\", min, \":0\", sec; spin (nelapsed, index); continue; }\n\
   }\n\
   print \"${navy_bold}${navy_white}--:--:--\"; spin (nelapsed, index);\n\
-}\n@" \
+}\n\
+print \"${navy_sol}\"\n@" \
       | BC_LINE_LENGTH='0' command bc -q
-#print \"${navy_sol}\"\n@" \
     set +f
 #TODO: for each spin: print ${navy_sol}
   fi
