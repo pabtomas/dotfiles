@@ -60,83 +60,157 @@ add_style ()
            navy_rb165 navy_rb201 navy_rb200 navy_rb199 navy_rb198 navy_rb197
 }
 
+add_time ()
+{
+  navy_s_per_min='60'
+  navy_min_per_h='60'
+  navy_s_per_h='3600'
+  navy_us_per_cs='10000'
+  navy_us_per_ds='100000'
+  navy_us_per_s='1000000'
+  navy_us_per_10s='10000000'
+  navy_us_per_min='60000000'
+  navy_us_per_10min='600000000'
+  navy_us_per_h='3600000000'
+  navy_us_per_10h='36000000000'
+  navy_us_per_100h='360000000000'
+
+  readonly navy_s_per_min navy_min_per_h navy_s_per_h navy_us_per_cs navy_us_per_ds navy_us_per_s navy_us_per_10s navy_us_per_min navy_us_per_10min navy_us_per_h navy_us_per_10h navy_us_per_100h
+}
+
 spins ()
 {
-  local entries cnts_bc
-  entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}")"
+  local entries escape_for_bc_print spin_title_fn
+  entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}" | command sed 's/^/-f /')"
 
   if [ -n "${entries:-}" ]
   then
-    cnts_bc="${NAVY_RUN_PATH}/cnts.bc"
-    command sed "s@^@\n${navy_sol}@; s@\$@${navy_erase_until_eol}@"
-    command date '+cnts = %s%N' > "${cnts_bc}"
+    #TODO: for each spin
+    #escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "\n'"${navy_sol}"'@; s@$@'"${navy_erase_until_eol}"'\\n";@'
+    escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "@; s@$@'"${navy_erase_until_eol}"'\\n";@'
+    spin_title_fn='s@$@ define spin_title (index) { } 0@'
     set -f
-    BC_ENV_ARGS="${cnts_bc}" BC_LINE_LENGTH='0' command bc -q ${entries} \
-      | command sed "
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 0 \(.*\)\$@\1 ⠄     ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 1 \(.*\)\$@\1 ⠔     ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 2 \(.*\)\$@\1 ⠐⠁    ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 3 \(.*\)\$@\1  ⠉    ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 4 \(.*\)\$@\1  ⠈⠂   ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 5 \(.*\)\$@\1   ⠢   ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 6 \(.*\)\$@\1   ⠠⠄  ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 7 \(.*\)\$@\1    ⠔  ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 8 \(.*\)\$@\1    ⠐⠁ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 9 \(.*\)\$@\1     ⠉ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 10 \(.*\)\$@\1     ⠘ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 11 \(.*\)\$@\1     ⠔ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 12 \(.*\)\$@\1    ⠠⠄ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 13 \(.*\)\$@\1    ⠢  ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 14 \(.*\)\$@\1   ⠈⠂  ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 15 \(.*\)\$@\1   ⠉   ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 16 \(.*\)\$@\1  ⠐⠁   ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 17 \(.*\)\$@\1  ⠔    ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 18 \(.*\)\$@\1 ⠠⠄    ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 19 \(.*\)\$@\1 ⠢     ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 20 \(.*\)\$@\1 ⠃     ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 21 \(.*\)\$@\1 ⠉     ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 22 \(.*\)\$@\1 ⠈⠂    ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 23 \(.*\)\$@\1  ⠢    ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 24 \(.*\)\$@\1  ⠠⠄   ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 25 \(.*\)\$@\1   ⠔   ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 26 \(.*\)\$@\1   ⠐⠁  ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 27 \(.*\)\$@\1    ⠉  ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 28 \(.*\)\$@\1    ⠈⠂ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 29 \(.*\)\$@\1     ⠢ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+ [0-9]\+\) 30 \(.*\)\$@\1     ⠠ ${navy_white}\2@; t endpattern;
-              s@^\([ ]*[0-9:.]\+\) [0-9]\+ 3[123] \(.*\)\$@\1       \2@; t endcolor;
- :endpattern; s@^\([ ]*[0-9:.]\+ \)0 \(.*\)\$@\1${navy_rb196}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)1 \(.*\)\$@\1${navy_rb202}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)2 \(.*\)\$@\1${navy_rb208}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)3 \(.*\)\$@\1${navy_rb214}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)4 \(.*\)\$@\1${navy_rb220}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)5 \(.*\)\$@\1${navy_rb226}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)6 \(.*\)\$@\1${navy_rb190}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)7 \(.*\)\$@\1${navy_rb154}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)8 \(.*\)\$@\1${navy_rb118}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)9 \(.*\)\$@\1${navy_rb82}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)10 \(.*\)\$@\1${navy_rb46}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)11 \(.*\)\$@\1${navy_rb47}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)12 \(.*\)\$@\1${navy_rb48}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)13 \(.*\)\$@\1${navy_rb49}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)14 \(.*\)\$@\1${navy_rb50}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)15 \(.*\)\$@\1${navy_rb51}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)16 \(.*\)\$@\1${navy_rb45}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)17 \(.*\)\$@\1${navy_rb39}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)18 \(.*\)\$@\1${navy_rb33}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)19 \(.*\)\$@\1${navy_rb27}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)20 \(.*\)\$@\1${navy_rb21}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)21 \(.*\)\$@\1${navy_rb57}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)22 \(.*\)\$@\1${navy_rb93}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)23 \(.*\)\$@\1${navy_rb128}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)24 \(.*\)\$@\1${navy_rb165}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)25 \(.*\)\$@\1${navy_rb201}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)26 \(.*\)\$@\1${navy_rb200}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)27 \(.*\)\$@\1${navy_rb199}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)28 \(.*\)\$@\1${navy_rb198}\2@; t endcolor;
-              s@^\([ ]*[0-9:.]\+ \)29 \(.*\)\$@\1${navy_rb197}\2@;
-   :endcolor; s@^@${navy_bold}${navy_white}@;s@\$@${navy_reset}${navy_sol}@"
+    command ts '%.s' | command sed -e "${escape_for_bc_print};${spin_title_fn}" ${entries} -e "
+      s@\(.*\); \(define spin_title (index) {\)@\1\n\2@;
+      s@ [0-9]\+\$@;\n@;
+      s@^[0-9]\+@scale = 0\ncnts = \0\n@;
+      s@\$@\
+define spin_color (index)\n\
+{\n\
+  if (index ==  0) print \"${navy_rb196}\";\n\
+  if (index ==  1) print \"${navy_rb202}\";\n\
+  if (index ==  2) print \"${navy_rb208}\";\n\
+  if (index ==  3) print \"${navy_rb214}\";\n\
+  if (index ==  4) print \"${navy_rb220}\";\n\
+  if (index ==  5) print \"${navy_rb226}\";\n\
+  if (index ==  6) print \"${navy_rb190}\";\n\
+  if (index ==  7) print \"${navy_rb154}\";\n\
+  if (index ==  8) print \"${navy_rb118}\";\n\
+  if (index ==  9) print \"${navy_rb82}\";\n\
+  if (index == 10) print \"${navy_rb46}\";\n\
+  if (index == 11) print \"${navy_rb47}\";\n\
+  if (index == 12) print \"${navy_rb48}\";\n\
+  if (index == 13) print \"${navy_rb49}\";\n\
+  if (index == 14) print \"${navy_rb50}\";\n\
+  if (index == 15) print \"${navy_rb51}\";\n\
+  if (index == 16) print \"${navy_rb45}\";\n\
+  if (index == 17) print \"${navy_rb39}\";\n\
+  if (index == 18) print \"${navy_rb33}\";\n\
+  if (index == 19) print \"${navy_rb27}\";\n\
+  if (index == 20) print \"${navy_rb21}\";\n\
+  if (index == 21) print \"${navy_rb57}\";\n\
+  if (index == 22) print \"${navy_rb93}\";\n\
+  if (index == 23) print \"${navy_rb128}\";\n\
+  if (index == 24) print \"${navy_rb165}\";\n\
+  if (index == 25) print \"${navy_rb201}\";\n\
+  if (index == 26) print \"${navy_rb200}\";\n\
+  if (index == 27) print \"${navy_rb199}\";\n\
+  if (index == 28) print \"${navy_rb198}\";\n\
+  if (index == 29) print \"${navy_rb197}\";\n\
+}\n\
+\
+define spin_pattern (index)\n\
+{\n\
+  if (index ==  0)                 print \" ⠄     \";\n\
+  if (index ==  1)                 print \" ⠔     \";\n\
+  if (index ==  2)                 print \" ⠐⠁    \";\n\
+  if (index ==  3)                 print \"  ⠉    \";\n\
+  if (index ==  4)                 print \"  ⠈⠂   \";\n\
+  if (index ==  5)                 print \"   ⠢   \";\n\
+  if (index ==  6)                 print \"   ⠠⠄  \";\n\
+  if (index ==  7)                 print \"    ⠔  \";\n\
+  if (index ==  8)                 print \"    ⠐⠁ \";\n\
+  if (index ==  9)                 print \"     ⠉ \";\n\
+  if (index == 10)                 print \"     ⠘ \";\n\
+  if (index == 11)                 print \"     ⠔ \";\n\
+  if (index == 12)                 print \"    ⠠⠄ \";\n\
+  if (index == 13)                 print \"    ⠢  \";\n\
+  if (index == 14)                 print \"   ⠈⠂  \";\n\
+  if (index == 15)                 print \"   ⠉   \";\n\
+  if (index == 16)                 print \"  ⠐⠁   \";\n\
+  if (index == 17)                 print \"  ⠔    \";\n\
+  if (index == 18)                 print \" ⠠⠄    \";\n\
+  if (index == 19)                 print \" ⠢     \";\n\
+  if (index == 20)                 print \" ⠃     \";\n\
+  if (index == 21)                 print \" ⠉     \";\n\
+  if (index == 22)                 print \" ⠈⠂    \";\n\
+  if (index == 23)                 print \"  ⠢    \";\n\
+  if (index == 24)                 print \"  ⠠⠄   \";\n\
+  if (index == 25)                 print \"   ⠔   \";\n\
+  if (index == 26)                 print \"   ⠐⠁  \";\n\
+  if (index == 27)                 print \"    ⠉  \";\n\
+  if (index == 28)                 print \"    ⠈⠂ \";\n\
+  if (index == 29)                 print \"     ⠢ \";\n\
+  if (index == 30)                 print \"     ⠠ \";\n\
+  if (index >  30 \&\& index < 34) print \"       \";\n\
+}\n\
+\
+define spin (nelapsed, index)\n\
+{\n\
+  dummy = spin_color ((nelapsed / (5 * ${navy_us_per_ds})) % 30)\n\
+  dummy = spin_pattern ((nelapsed / ${navy_us_per_ds}) % 34)\n\
+  print \"${navy_white}\"\n\
+  dummy = spin_title (index)\n\
+  print \"${navy_reset}\"\n\
+}\n\
+\
+for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
+{\n\
+  nts = spins_nts [index]\n\
+  nelapsed = cnts - nts\n\
+  ns = nelapsed % ${navy_us_per_s}\n\
+  cs = ns / ${navy_us_per_cs}\n\
+  elapsed = (nelapsed - ns) / ${navy_us_per_s}\n\
+\
+  if (nelapsed < ${navy_us_per_10s}) print \" \";\n\
+  if (nelapsed < ${navy_us_per_min})\n\
+  {\n\
+    if (cs > 9) { print \"   ${navy_bold}${navy_white}\", elapsed, \".\", cs; spin (nelapsed, index); continue; }\n\
+    if (cs < 10) { print \"   ${navy_bold}${navy_white}\", elapsed, \".0\", cs; spin (nelapsed, index); continue; }\n\
+  }\n\
+  if (nelapsed >= ${navy_us_per_min} \&\& nelapsed < ${navy_us_per_10min}) print \" \";\n\
+  if (nelapsed >= ${navy_us_per_min} \&\& nelapsed < ${navy_us_per_h})\n\
+  {\n\
+    sec = elapsed % ${navy_s_per_min}\n\
+    if (sec > 9) { print \"   ${navy_bold}${navy_white}\", elapsed / ${navy_s_per_min}, \":\", sec; spin (nelapsed, index); continue; }\n\
+    if (sec < 10) { print \"   ${navy_bold}${navy_white}\", elapsed / ${navy_s_per_min}, \":0\", sec; spin (nelapsed, index); continue; }\n\
+  }\n\
+  if (nelapsed >= ${navy_us_per_h} \&\& nelapsed < ${navy_us_per_10h}) print \" \";\n\
+  if (nelapsed >= ${navy_us_per_h} \&\& nelapsed < ${navy_us_per_100h})\n\
+  {\n\
+    sec = elapsed % ${navy_s_per_min}\n\
+    min = (elapsed / ${navy_s_per_min}) % ${navy_min_per_h}\n\
+    if (sec > 9 \&\& min > 9) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":\", min, \":\", sec; spin (nelapsed, index); continue; }\n\
+    if (sec < 10 \&\& min > 9) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":\", min, \":0\", sec; spin (nelapsed, index); continue; }\n\
+    if (sec > 9 \&\& min < 10) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":0\", min, \":\", sec; spin (nelapsed, index); continue; }\n\
+    if (sec < 10 \&\& min < 10) { print \"${navy_bold}${navy_white}\", elapsed / ${navy_s_per_h}, \":0\", min, \":0\", sec; spin (nelapsed, index); continue; }\n\
+  }\n\
+  print \"${navy_bold}${navy_white}--:--:--\"; spin (nelapsed, index);\n\
+}\n@" \
+      | BC_LINE_LENGTH='0' command bc -q
+#print \"${navy_sol}\"\n@" \
     set +f
+#TODO: for each spin: print ${navy_sol}
   fi
 }
 
@@ -164,7 +238,7 @@ logs ()
 {
   local entries date first_max_length_line max_line_length does_line_has_enought_chars
 
-  entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}" | command head -n 300)"
+  entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}")"
 
   if [ -n "${entries:-}" ]
   then
@@ -174,14 +248,13 @@ logs ()
     does_line_has_enought_chars="$(printf "%${COLUMNS}s" | sed 's/ /\[^\\n]/g')"
     max_line_length="$(printf "%${COLUMNS}s" | tr ' ' '.')"
     set -f
-    # TODO: "\n${navy_sol}" * ((nb of term raws of the current logline) + (nb of spins))
     command sed          "s@^0@${navy_red}ERROR ${navy_reset}@;    t header;
                           s@^1@${navy_yellow} WARN ${navy_reset}@; t header;
                           s@^2@${navy_green} INFO ${navy_reset}@;  t header;
                           s@^3@${navy_cyan} NOTE ${navy_reset}@;   t header;
                           s@^4@${navy_blue}TRACE ${navy_reset}@;   t header;
                           s@^5@${navy_purple} VERB ${navy_reset}@;
-                 :header; s@^@${date} ${navy_bold}@;  t reset_T_smaller;
+                 :header; s@^@${date} ${navy_bold}@;               t reset_T_smaller;
         :reset_T_smaller; s@^${first_max_length_line}@&\n@;        T smaller; t loop;
                    :loop; s@\n\$@@;                                t equal;
                           h;
@@ -220,6 +293,7 @@ logger ()
   trap 'navy_loggerstart=1' USR1
 
   add_style
+  add_time
 
   local field_logs field_spins
   field_logs="$(printf '%s//\n' "${navy_lines}" | command grep -o '/' | command grep -c '/')"
@@ -240,28 +314,9 @@ logger ()
   printf '%b' "${navy_showcursor}"
 }
 
-add_time ()
-{
-  navy_s_per_min='60'
-  navy_min_per_h='60'
-  navy_s_per_h='3600'
-  navy_ns_per_cs='10000000'
-  navy_ns_per_ds='100000000'
-  navy_ns_per_s='1000000000'
-  navy_ns_per_10s='10000000000'
-  navy_ns_per_min='60000000000'
-  navy_ns_per_10min='600000000000'
-  navy_ns_per_h='3600000000000'
-  navy_ns_per_10h='36000000000000'
-  navy_ns_per_100h='360000000000000'
-
-  readonly navy_s_per_min navy_min_per_h navy_s_per_h navy_ns_per_cs navy_ns_per_ds navy_ns_per_s navy_ns_per_10s navy_ns_per_min navy_ns_per_10min navy_ns_per_h navy_ns_per_10h navy_ns_per_100h
-}
-
 listener ()
 {
-  add_time
-  local line alias src i
+  local line alias ts i
   until [ -L "${navy_tty}" ] \
     && [ -d "${navy_lines}" ] \
     && [ -d "${navy_spins}" ] \
@@ -276,40 +331,31 @@ listener ()
       line="${line#*/}"
       alias="${line%%/*}"
       line="${line#*/}"
-      command date '+nts = %s%N' > "${navy_spins}/${i}"
-      command cat << EOF >> "${navy_spins}/${i}"
-scale = 0
-nelapsed = (cnts - nts) % ${navy_ns_per_100h}
-ns = nelapsed % ${navy_ns_per_s}
-cs = ns / ${navy_ns_per_cs}
-elapsed = (nelapsed - ns) / ${navy_ns_per_s}
+      ts="$(command date '+%s%N')"
+      # TODO: escape BC script
+      printf '
+s@^\(.*\) \(define spin_title (index) {\)\([^}]*\)} \([0-9]*\)$@\\1 spins_nts [\\4] = %s; \\2\\3if (index == \\4) print "%s"; } \\4@;
 
-define stop (nelapsed) {
-  print (nelapsed / (5 * ${navy_ns_per_ds})) % 30, " ", (nelapsed / ${navy_ns_per_ds}) % 34, " ${line}\n"
-  halt
-}
+td;
+:d;
+s@9\(_*\)$@_\\1@;
+td;
 
-if (nelapsed < ${navy_ns_per_10s}) print " ";
-if (nelapsed < ${navy_ns_per_min}) {
-  if (cs > 9) { print "   ", elapsed, ".", cs, " "; stop (nelapsed); }
-  if (cs < 10) { print "   ", elapsed, ".0", cs, " "; stop (nelapsed); }
-}
-if (nelapsed >= ${navy_ns_per_min} && nelapsed < ${navy_ns_per_10min}) print " ";
-if (nelapsed >= ${navy_ns_per_min} && nelapsed < ${navy_ns_per_h}) {
-  sec = elapsed % ${navy_s_per_min}
-  if (sec > 9) { print "   ", elapsed / ${navy_s_per_min}, ":", sec, " "; stop (nelapsed); }
-  if (sec < 10) { print "   ", elapsed / ${navy_s_per_min}, ":0", sec, " "; stop (nelapsed); }
-}n
-if (nelapsed >= ${navy_ns_per_h} && nelapsed < ${navy_ns_per_10h}) print " ";
-if (nelapsed >= ${navy_ns_per_h}) {
-  sec = elapsed % ${navy_s_per_min}
-  min = (elapsed / ${navy_s_per_min}) % ${navy_min_per_h}
-  if (sec > 9 && min > 9) { print elapsed / ${navy_s_per_h}, ":", min, ":", sec, " "; stop (nelapsed); }
-  if (sec < 10 && min > 9) { print elapsed / ${navy_s_per_h}, ":", min, ":0", sec, " "; stop (nelapsed); }
-  if (sec > 9 && min < 10) { print elapsed / ${navy_s_per_h}, ":0", min, ":", sec, " "; stop (nelapsed); }
-  if (sec < 10 && min < 10) { print elapsed / ${navy_s_per_h}, ":0", min, ":0", sec, " "; stop (nelapsed); }
-}
-EOF
+s@ \(_\+\)$@ 1\\1@; tn;
+s@8\(_*\)$@9\\1@; tn;
+s@7\(_*\)$@8\\1@; tn;
+s@6\(_*\)$@7\\1@; tn;
+s@5\(_*\)$@6\\1@; tn;
+s@4\(_*\)$@5\\1@; tn;
+s@3\(_*\)$@4\\1@; tn;
+s@2\(_*\)$@3\\1@; tn;
+s@1\(_*\)$@2\\1@; tn;
+s@0\(_*\)$@1\\1@; tn;
+
+:n;
+s@_\(_*\)$@0\\1@;
+tn;
+' "${ts%???}" "${line}" >> "${navy_spins}/${i}"
       command ln -s "${navy_spins}/${i}" "${navy_aliases}/${alias}" ;;
     ( [012345]* ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
     ( * ) printf '%s%s\n' "${PS4}" "${line}" > "${navy_lines}/${i}" ;;
