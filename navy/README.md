@@ -35,7 +35,7 @@ TODO
 
 ## How to use it ?
 
-As stated above, Navy was designed to be used in a container. But that does not mean that you can not use it outside of a container.
+As stated above, Navy was designed to be used in a container.
 
 ### Why should you run Navy into a container ?
 
@@ -50,31 +50,12 @@ Here the command line you can use to run Navy in a safe environment:
 docker run --rm -t -v .:/workspace:ro -v ~/.cache/navy:/var/cache/navy:rw tiawl/navy:0.1.0
 ```
 
-### How to run Navy out of its safe box ?
-
-If you want to install Navy directly I assume that you have at least Busybox utilities (and git) on your system.
-- Install the dependencies (it should not be difficult if you are using a popular package manager):
-  - [dash](https://git.kernel.org/pub/scm/utils/dash/dash.git/)
-  - [coreutils](https://www.gnu.org/software/coreutils/)
-  - [curl](https://github.com/curl/curl)
-  - [GNU sed]()
-  - [GNU bc]()
-  - `ts` from [moreutils]()
-  - [yq](https://github.com/mikefarah/yq)
-  - [gomplate](https://github.com/hairyhenderson/gomplate)
-  - [lolcat](https://github.com/jaseg/lolcat)
-- Clone this repository
-- Add configuration (TODO: more details)
-- Install it (TODO: more details)
-
 ### How to run Navy with a remote docker socket ?
 
 If you use Navy in its container, add this option to the `docker run` command:
 ```
 -e DOCKER_HOST=${DOCKER_HOST}
 ```
-
-otherwise export the `DOCKER_HOST` variable in your environment.
 
 ### What did you plan for the next releases ? How can I contribute to this project ?
 
