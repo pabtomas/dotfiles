@@ -609,6 +609,7 @@ explode_main_file ()
   navy_exploded="${navy_cache}/navy.yaml"
   readonly navy_exploded
   _yq 'explode(.)' "${navy_file}" > "${navy_exploded}"
+  printf 'Prepare cache: Main file exploded\n' | send_info
 }
 
 define_context_datasources ()
@@ -630,7 +631,7 @@ define_context_datasources ()
   req='/info' get
   mv -f "${navy_curlresp}" "${info_json}"
 
-  printf 'Context datasources defined\n' | send_info
+  printf 'Prepare cache: Context datasources defined\n' | send_info
 }
 
 expand_datasources_into_datasources ()
