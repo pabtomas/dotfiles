@@ -81,14 +81,13 @@ add_time ()
 
 spins ()
 {
-  local entries escape_for_bc_print spin_title_fn
-  entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}" | command xargs -I % cat %)"
+  local escape_for_bc_print spin_title_fn
 
-  if [ -n "${entries:-}" ]
+  if [ -n "${1:-}" ]
   then
     escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "@; s@$@'"${navy_erase_until_eol}"'\\n";@'
     spin_title_fn='s@$@ define spin_title (index) { } 0@'
-    command ts '%.s' | command sed -e "${escape_for_bc_print};${spin_title_fn}" -e "${entries}" -e "
+    command ts '%.s %T' | command sed -e "${escape_for_bc_print};${spin_title_fn}" -e "${1}" -e "
       s@\(.*\); \(define spin_title (index) {\)@\1\n\2@;
       s@ [0-9]\+\$@;\n@;
       s@^[0-9]\+@scale = 0\ncnts = \0\n@;
@@ -214,6 +213,8 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
 }\n\
 print \"\\\a\"\n@"  \
       | BC_LINE_LENGTH='0' command bc -q | command buffered_output
+  else
+    command ts '%T'
   fi
 }
 
@@ -239,17 +240,14 @@ cols ()
 
 logs ()
 {
-  local entries date first_max_length_line max_line_length does_line_has_enought_chars eol
-
-  entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${1}")"
-
+  local first_max_length_line max_line_length does_line_has_enought_chars eol
   cols
-  if [ -n "${entries:-}" ]
+
+  if [ -n "${1:-}" ]
   then
-    date="$(command date '+%T')"
-    first_max_length_line="$(printf "%$(( ${COLUMNS} + ${#navy_bold} + ${#navy_cyan} + ${#navy_reset} ))s" | tr ' ' '.')"
-    does_line_has_enought_chars="$(printf "%${COLUMNS}s" | sed 's/ /\[^\\n]/g')"
-    max_line_length="$(printf "%${COLUMNS}s" | tr ' ' '.')"
+    first_max_length_line="$(printf "%$(( ${COLUMNS} + ${#navy_bold} + ${#navy_cyan} + ${#navy_reset} - 9 ))s" | command tr ' ' '.')"
+    does_line_has_enought_chars="$(printf "%$(( ${COLUMNS} - 9 ))s" | command sed 's/ /\[^\\n]/g')"
+    max_line_length="$(printf "%$(( ${COLUMNS} - 9 ))s" | command tr ' ' '.')"
     set -f
     command sed          "s@^0@${navy_red}ERROR ${navy_reset}@;    t header;
                           s@^1@${navy_yellow} WARN ${navy_reset}@; t header;
@@ -257,7 +255,7 @@ logs ()
                           s@^3@${navy_cyan} NOTE ${navy_reset}@;   t header;
                           s@^4@${navy_blue}TRACE ${navy_reset}@;   t header;
                           s@^5@${navy_purple} VERB ${navy_reset}@;
-                 :header; s@^@${date} ${navy_bold}@;               t reset_T_smaller;
+                 :header; s@^@${navy_bold}@;                       t reset_T_smaller;
         :reset_T_smaller; s@^${first_max_length_line}@&\n@;        T smaller; t loop;
                    :loop; s@\n\$@@;                                t equal;
                           h;
@@ -265,17 +263,18 @@ logs ()
                           p;
                           g;
                           s@.*\n@@;
-                          s@^@               @;                    t reset_t_loop;
+                          s@^@      @;                             t reset_t_loop;
            :reset_t_loop; /${does_line_has_enought_chars}$/ {
                             s@^${max_line_length}@\0\n@;           t loop;
                           };
                   :equal;
                 :smaller;
-                   :exit;" ${entries}
+                   :exit;" ${1}
 
-    command rm -f ${entries}
+    command rm -f ${1}
     set +f
-  else
+  elif [ -n "${2:-}" ]
+  then
     eol="${navy_esc}[${COLUMNS}G"
     printf '%b%b' "${navy_previous}" "${eol}"
   fi
@@ -301,7 +300,7 @@ logger ()
   add_style
   add_time
 
-  local field_logs field_spins
+  local field_logs field_spins logs_entries spins_entries
   field_logs="$(printf '%s//\n' "${navy_lines}" | command grep -o '/' | command grep -c '/')"
   field_spins="$(printf '%s//\n' "${navy_spins}" | command grep -o '/' | command grep -c '/')"
 
@@ -313,7 +312,9 @@ logger ()
 
   while [ -z "${navy_loggerstop:-}" ] || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
   do
-    logs "${field_logs}" | spins "${field_spins}" 1>&2
+    logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_logs}")"
+    spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_spins}" | command xargs -I % cat %)"
+    logs "${logs_entries}" "${spins_entries}" | spins "${spins_entries}" 1>&2
     if [ -z "${navy_loggerstop:-}" ]; then _stop; fi
   done
 
@@ -641,6 +642,7 @@ expand_datasources_into_datasources ()
 
   mkdir -p "${datasources}"
 
+  # TODO: add context datasources
   header="$(_yq '.datasources[] | "{{ $" + .id + " := (datasource \"" + .source + "\") }}"' "${navy_exploded}" | tr -d '\n')"
 
   # TODO: avoid shell loops

@@ -1,7 +1,5 @@
 .*.sw[a-z]
-tags
-/bin
-/obj
 Session.vim
-compose.yaml
+zig-out
+.zig-cache
 daemon.json
