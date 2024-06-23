@@ -1,7 +1,7 @@
 ---
 
 id: 'relay'
-volumes:
+volume:
   var:
     log: '{{ $relay.id }}-var-log-fs{{ $volumes.suffix.delme }}'
 

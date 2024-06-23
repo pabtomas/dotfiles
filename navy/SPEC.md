@@ -43,7 +43,6 @@
 12. [Datasource](#datasource-object)
     - [id](#datasourceid)
     - [source](#datasourcesource)
-    - [scope](#datasourcescope)
 13. [Anchor](#anchor-object)
     - [source](#anchorsource)
     - [in](#anchorin)
@@ -61,10 +60,8 @@
 datasources:
   - source: datasources/first.yaml
     id: my-first-datasource
-    scope: *
   - source: datasources/second.yaml
     id: my-second-datasource
-    scope: images.create.*
 ```
 
 ## `anchors`
@@ -121,7 +118,7 @@ versions:
   - 1.45
   - 1.44
   - 1.43
-  - '{{ $CONTEXTVERSION.ApiVersion }}
+  - '{{ $VERSION.ApiVersion }}
 ```
 
 ## `run`
@@ -479,13 +476,11 @@ run:
     - Used with the `datasources` keyword, the Datasource object have to be YAML file. Used with the `Register.as` keyword, the Datasource object is a JSON answer from Docker Engine. A Datasource has 3 available attributes (each of them is described in its own section):
         - id
         - source
-        - scope
 - **exemples**:
     - Here an exemple of a Datasource object used into the `datasources` list:
     ```yaml
     source: datasources/message.yaml
     id: message
-    scope: *
     ```
     The `datasources/message.yaml` YAML file will be loaded as Datasource object. You can refer this Datasource as the `$message` variable into your GO templates. It will be visible into all your Requests & Commands.
     - Here an exemple of the YAML file content used by the Datasource object shown above:
@@ -496,14 +491,11 @@ run:
     sender: Alice
     receiver: Bob
 
-    # You can use the other Datasources in your Datasource files (whatever the defined scope).
-    message: 'Hello {{ (ds "datasources/message.yaml").receiver }}, you received a message from {{ (ds "datasources/message.yaml").sender }}'
+    # You can use the other Datasources in your Datasource files
+    message: 'Hello {{ $message.receiver }}, you received a message from {{ $message.sender }}'
 
-    # You can use the Datasource.id attribute (if you used it) to have more readable code
-    same_message: 'Hello {{ $message.receiver }}, you received a message from {{ $message.sender }}'
-
-    # You can use the special CONTEXTVERSION/CONTEXTINFO Datasources in your Datasource files
-    message2: 'Your Docker Engine is using the {{ $CONTEXTVERSION.ApiVersion }} version of the API and is already running {{ $CONTEXTINFO.Containers }} container(s) !'
+    # You can use the special VERSION/INFO Datasources in your Datasource files
+    message2: 'Your Docker Engine is using the {{ $VERSION.ApiVersion }} version of the API and is already running {{ $INFO.Containers }} container(s) !'
 
     ...
     ```
@@ -516,7 +508,6 @@ run:
         filters: '{"label":{"navy":true}}'
       as:
         id: registercontainersjson
-        scope: *
     ```
     The result of the `/containers/json` Request will be store into the `registercontainersjson` variable into your GO templates. It will be visible into all your Requests & Commands.
 
@@ -533,13 +524,6 @@ run:
     - required if used into the `datasources` list,
     - ignored if used into the `Register.as` attribute.
 - **description**: The path (relative to your main Navy file) of the YAML file you want to use as a Datasource.
-
-### `Datasource.scope`
-
-- **type**: string
-- **required**: false
-- **default**: `*`
-- **description**: An extended regex pattern applied on the `id` attribute of Requests and Commands. It allows you to filter access to the Datasource.
 
 ## Anchor object
 

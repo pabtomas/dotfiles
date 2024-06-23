@@ -8,8 +8,9 @@ add_style ()
   navy_yellow="${navy_esc}[38;5;228m"
   navy_green="${navy_esc}[38;5;120m"
   navy_cyan="${navy_esc}[38;5;045m"
-  navy_blue="${navy_esc}[38;5;105m"
+  navy_blue="${navy_esc}[38;5;069m"
   navy_purple="${navy_esc}[38;5;135m"
+  navy_pink="${navy_esc}[38;5;207m"
   navy_bold="${navy_esc}[1m"
   navy_erase_until_eol="${navy_esc}[K"
   navy_sol="${navy_esc}[G"
@@ -49,7 +50,7 @@ add_style ()
   navy_rb198="${navy_esc}[38;5;198m"
   navy_rb197="${navy_esc}[38;5;197m"
 
-  readonly navy_white navy_red navy_yellow navy_green navy_cyan navy_blue navy_purple \
+  readonly navy_white navy_red navy_yellow navy_green navy_cyan navy_blue navy_purple navy_pink \
            navy_bold \
            navy_erase_until_eol navy_sol navy_previous \
            navy_hidecursor navy_showcursor \
@@ -249,27 +250,28 @@ logs ()
     does_line_has_enought_chars="$(printf "%$(( ${COLUMNS} - 9 ))s" | command sed 's/ /\[^\\n]/g')"
     max_line_length="$(printf "%$(( ${COLUMNS} - 9 ))s" | command tr ' ' '.')"
     set -f
-    command sed          "s@^0@${navy_red}ERROR ${navy_reset}@;    t header;
-                          s@^1@${navy_yellow} WARN ${navy_reset}@; t header;
-                          s@^2@${navy_green} INFO ${navy_reset}@;  t header;
-                          s@^3@${navy_cyan} NOTE ${navy_reset}@;   t header;
-                          s@^4@${navy_blue}TRACE ${navy_reset}@;   t header;
-                          s@^5@${navy_purple} VERB ${navy_reset}@;
-                 :header; s@^@${navy_bold}@;                       t reset_T_smaller;
-        :reset_T_smaller; s@^${first_max_length_line}@&\n@;        T smaller; t loop;
-                   :loop; s@\n\$@@;                                t equal;
-                          h;
-                          s@\(.\)\n.*@\1@;
-                          p;
-                          g;
-                          s@.*\n@@;
-                          s@^@      @;                             t reset_t_loop;
-           :reset_t_loop; /${does_line_has_enought_chars}$/ {
-                            s@^${max_line_length}@\0\n@;           t loop;
-                          };
-                  :equal;
-                :smaller;
-                   :exit;" ${1}
+    command sed        "s@^${navy_errorlevel}@${navy_red}ERROR ${navy_reset}@;    t header;
+                        s@^${navy_warnlevel}@${navy_yellow} WARN ${navy_reset}@;  t header;
+                        s@^${navy_infolevel}@${navy_green} INFO ${navy_reset}@;   t header;
+                        s@^${navy_notelevel}@${navy_cyan} NOTE ${navy_reset}@;    t header;
+                        s@^${navy_debuglevel}@${navy_blue}DEBUG ${navy_reset}@;   t header;
+                        s@^${navy_tracelevel}@${navy_purple}TRACE ${navy_reset}@; t header;
+                        s@^${navy_verblevel}@${navy_pink} VERB ${navy_reset}@;
+               :header; s@^@${navy_bold}@;                                        t reset_T_smaller;
+      :reset_T_smaller; s@^${first_max_length_line}@&\n@;                         T smaller; t loop;
+                 :loop; s@\n\$@@;                                                 t equal;
+                        h;
+                        s@\(.\)\n.*@\1@;
+                        p;
+                        g;
+                        s@.*\n@@;
+                        s@^@      @;                                              t reset_t_loop;
+         :reset_t_loop; /${does_line_has_enought_chars}$/ {
+                          s@^${max_line_length}@\0\n@;                            t loop;
+                        };
+                :equal;
+              :smaller;
+                 :exit;" ${1}
 
     command rm -f ${1}
     set +f
@@ -300,9 +302,10 @@ logger ()
   add_style
   add_time
 
-  local field_logs field_spins logs_entries spins_entries
+  local field_logs field_spins logs_entries spins_entries arg_max
   field_logs="$(printf '%s//\n' "${navy_lines}" | command grep -o '/' | command grep -c '/')"
   field_spins="$(printf '%s//\n' "${navy_spins}" | command grep -o '/' | command grep -c '/')"
+  arg_max="$(( $(command getconf ARG_MAX) / 4 - 1 ))"
 
   while [ -z "${navy_loggerstart:-}" ]; do command usleep 10; done
 
@@ -312,7 +315,7 @@ logger ()
 
   while [ -z "${navy_loggerstop:-}" ] || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
   do
-    logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_logs}")"
+    logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_logs}" | command head -n "${arg_max}")"
     spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_spins}" | command xargs -I % cat %)"
     logs "${logs_entries}" "${spins_entries}" | spins "${spins_entries}" 1>&2
     if [ -z "${navy_loggerstop:-}" ]; then _stop; fi
@@ -363,17 +366,18 @@ s@_\(_*\)$@0\\1@;
 tn%d;
 ' "${ts%???}" "$(printf '%s' "${line}" | command sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${navy_spins}/${i}"
       command ln -s "${navy_spins}/${i}" "${navy_aliases}/${alias}" ;;
-    ( [012345]* ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
+    ( [0123456]* ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
     ( * ) printf '%s%s\n' "${PS4}" "${line}" > "${navy_lines}/${i}" ;;
     esac
   done
 }
 
-send_error () { if [ "${navy_loglevel}" -ge '0' ]; then ansi2txt | sed 's@^@0@' >&3; fi; }
-send_warn () { if [ "${navy_loglevel}" -ge '1' ]; then ansi2txt | sed 's@^@1@' >&3; fi; }
-send_info () { if [ "${navy_loglevel}" -ge '2' ]; then ansi2txt | sed 's@^@2@' >&3; fi; }
-send_note () { if [ "${navy_loglevel}" -ge '3' ]; then ansi2txt | sed 's@^@3@' >&3; fi; }
-send_verb () { if [ "${navy_loglevel}" -ge '5' ]; then ansi2txt | sed 's@^@5@' >&3; fi; }
+send_error () { if [ "${navy_loglevel}" -ge "${navy_errorlevel}" ]; then ansi2txt | sed "s@^@${navy_errorlevel}@" >&3; fi; }
+send_warn () { if [ "${navy_loglevel}" -ge "${navy_warnlevel}" ]; then ansi2txt | sed "s@^@${navy_warnlevel}@" >&3; fi; }
+send_info () { if [ "${navy_loglevel}" -ge "${navy_infolevel}" ]; then ansi2txt | sed "s@^@${navy_infolevel}@" >&3; fi; }
+send_note () { if [ "${navy_loglevel}" -ge "${navy_notelevel}" ]; then ansi2txt | sed "s@^@${navy_notelevel}@" >&3; fi; }
+send_debug () { if [ "${navy_loglevel}" -ge "${navy_debuglevel}" ]; then ansi2txt | sed "s@^@${navy_debuglevel}@" >&3; fi; }
+send_verb () { if [ "${navy_loglevel}" -ge "${navy_verblevel}" ]; then ansi2txt | sed "s@^@${navy_verblevel}@" >&3; fi; }
 
 start_spin () { sed "s@^@S/${1}/@" >&3; }
 stop_spin () { printf 'K%s\n' "${1}" >&3; }
@@ -387,16 +391,11 @@ Usage:
   navy [flags]
 
 Flags:
-  --file file           navy main file (default: ./navy.yaml)
-  --reset-cache         resets the cache
-  -v                    prints only ERROR messages
-  -v -v                 prints ERROR and WARN messages
-  -v -v -v              prints ERROR, WARN, and INFO messages (default)
-  -v -v -v -v           prints ERROR, WARN, INFO and NOTE messages
-  -v -v -v -v -v        prints ERROR, WARN, INFO, NOTE and TRACE messages
-  -v -v -v -v -v -v     prints ERROR, WARN, INFO, NOTE, TRACE and VERB messages
-  --help                help for navy
-  --version             version for navy
+  --file file       navy main file (default: ./navy.yaml)
+  --reset-cache     resets the cache
+  -v                log level [reusable option] (default: 3, max: 7)
+  --help            help for navy
+  --version         version for navy
 "
   return 1
 }
@@ -495,16 +494,16 @@ verbose_eval ()
 
 prepare_logging ()
 {
-  if [ "${navy_loglevel}" -gt 3 ]; then set -x; fi
+  if [ "${navy_loglevel}" -ge "${navy_tracelevel}" ]; then set -x; fi
 
-  if [ "${navy_loglevel}" -gt 2 ]
+  if [ "${navy_loglevel}" -ge "${navy_debuglevel}" ]
   then
     navy_curlopts="--verbose --stderr ${navy_buffer}"
   fi
 
   local yqopts gomplateopts utilsopt findopts
   yqopts='--no-colors'
-  if [ "${navy_loglevel}" -gt 4 ]
+  if [ "${navy_loglevel}" -ge "${navy_verblevel}" ]
   then
     gomplateopts="${gomplateopts:+"${gomplateopts}" }--verbose"
     yqopts="${yqopts:+"${yqopts}" }--verbose"
@@ -512,7 +511,7 @@ prepare_logging ()
     findopts='-D exec -D search'
   fi
 
-  if [ "${navy_loglevel}" -gt 3 ]
+  if [ "${navy_loglevel}" -ge "${navy_tracelevel}" ]
   then
     opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'mkdir'
     opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'mv'
@@ -529,7 +528,7 @@ prepare_logging ()
 prepare ()
 {
   navy_file="${navy_file:-./navy.yaml}"
-  navy_loglevel="${navy_loglevel:-2}"
+  navy_loglevel="${navy_loglevel:-"${navy_infolevel}"}"
 
   readonly navy_resetcache navy_file navy_loglevel
 
@@ -554,10 +553,10 @@ _curl ()
 
   if [ -s "${navy_buffer}" ]
   then
-    printf '[CURL] HTTP exchange between Navy and Docker Engine:\n' | send_note
-    cat "${navy_buffer}" | send_note
-    printf '[CURL] JSON response from Docker Engine:\n' | send_note
-    command yq --no-colors --input-format 'json' --output-format 'json' "${navy_curlresp}" | send_note
+    printf '[CURL] HTTP exchange between Navy and Docker Engine:\n' | send_debug
+    cat "${navy_buffer}" | send_debug
+    printf '[CURL] JSON response from Docker Engine:\n' | send_debug
+    command yq --no-colors --input-format 'json' --output-format 'json' "${navy_curlresp}" | send_debug
   fi
 }
 
@@ -570,7 +569,7 @@ _yq ()
     printf 'The YAML parser failed with this error:\n' | send_error
     cat "${navy_buffer}" | send_error
     return 1
-  elif [ "${navy_loglevel}" -le 3 ] && [ -s "${navy_buffer}" ]
+  elif [ "${navy_loglevel}" -lt "${navy_verblevel}" ] && [ -s "${navy_buffer}" ]
   then
     printf 'The YAML parser succeed but returns this warning:\n' | send_warn
     cat "${navy_buffer}" | send_warn
@@ -587,7 +586,7 @@ _gom ()
     printf 'The Go Template processor failed with this error:\n' | send_error
     command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_error
     return 1
-  elif [ "${navy_loglevel}" -le 3 ] && [ -s "${navy_buffer}" ]
+  elif [ "${navy_loglevel}" -lt "${navy_verblevel}" ] && [ -s "${navy_buffer}" ]
   then
     printf 'The Go Template processor succeed but returns this warning:\n' | send_warn
     command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_warn
@@ -605,57 +604,75 @@ get ()
   req="$(request "${req}")" _curl --request GET "${@}"
 }
 
+prepare_cache ()
+{
+  navy_cache_exploded="${navy_cache}/navy.yaml"
+
+  navy_cache_context="${navy_cache}/context"
+  navy_cache_version_json="${navy_cache_context}/version.json"
+  navy_cache_info_json="${navy_cache_context}/info.json"
+
+  navy_cache_datasources="${navy_cache}/datasources"
+  navy_cache_escaped="${navy_cache_datasources}/escaped.yaml"
+  navy_cache_gathered="${navy_cache_datasources}/gathered.yaml"
+  navy_cache_rendered="${navy_cache_datasources}/rendered.yaml"
+
+  readonly navy_cache_exploded \
+           navy_cache_context navy_cache_version_json navy_cache_info_json \
+           navy_cache_datasources navy_cache_escaped navy_cache_gathered navy_cache_rendered
+
+  mkdir -p "${navy_cache_context}" "${navy_cache_datasources}"
+
+  printf 'Processing the cache: Cache prepared\n' | send_note
+}
+
 explode_main_file ()
 {
-  navy_exploded="${navy_cache}/navy.yaml"
-  readonly navy_exploded
-  _yq 'explode(.)' "${navy_file}" > "${navy_exploded}"
-  printf 'Prepare cache: Main file exploded\n' | send_info
+  _yq 'explode(.)' "${navy_file}" > "${navy_cache_exploded}"
+  printf 'Processing the cache: Main file exploded\n' | send_note
 }
 
 define_context_datasources ()
 {
-  local context version_json info_json
-  context="${navy_cache}/context"
-  version_json="${context}/version.json"
-  info_json="${context}/info.json"
-
-  mkdir -p "${context}"
-
   req='/version' get
-  mv -f "${navy_curlresp}" "${version_json}"
+  mv -f "${navy_curlresp}" "${navy_cache_version_json}"
 
-  navy_apiversion="$(_gom --datasource "version=${version_json}" --in '{{ (datasource "version").ApiVersion }}')"
+  navy_apiversion="$(_gom --datasource "version=${navy_cache_version_json}" --in '{{ (datasource "version").ApiVersion }}')"
   req='/version' get
-  mv -f "${navy_curlresp}" "${version_json}"
+  mv -f "${navy_curlresp}" "${navy_cache_version_json}"
 
   req='/info' get
-  mv -f "${navy_curlresp}" "${info_json}"
+  mv -f "${navy_curlresp}" "${navy_cache_info_json}"
 
-  printf 'Prepare cache: Context datasources defined\n' | send_info
+  printf 'Processing the cache: Context datasources defined\n' | send_note
 }
 
 expand_datasources_into_datasources ()
 {
-  local datasources header ds escaped_ds
-  datasources="${navy_cache}/datasources"
+  local datasources gathered_sha rendered_sha
+  gathered_sha='0'
+  rendered_sha='1'
+  datasources="$(_yq '.datasources[].source' "${navy_cache_exploded}")"
 
-  mkdir -p "${datasources}"
+  set -f
+  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_rendered}"
+  set +f
 
-  # TODO: add context datasources
-  header="$(_yq '.datasources[] | "{{ $" + .id + " := (datasource \"" + .source + "\") }}"' "${navy_exploded}" | tr -d '\n')"
-
-  # TODO: avoid shell loops
-  for ds in $(_yq '.datasources[].source' "${navy_exploded}")
+  until [ "${gathered_sha}" = "${rendered_sha}" ]
   do
-    mkdir -p "${datasources}/$(dirname -- "${ds}")"
-    escaped_ds="$(_yq '(explode(.) | .. | key = "{{ print \"" + key + "\" }}") |= .' "${ds}")"
-    printf '%s%s\n' "${header}" "${escaped_ds}" | _gom $(_yq '.datasources[] | "--datasource " + .source + "=" + .source + " "' "${navy_exploded}" | tr '\n' ' ') --out "${datasources}/${ds}"
+    cp -f "${navy_cache_rendered}" "${navy_cache_gathered}"
+    printf '{{ $INFO := (datasource "info") }}{{ $VERSION := (datasource "version") }}' > "${navy_cache_escaped}"
+    _yq '.datasources[] | "{{ $" + .id + " := index (datasource \"gathered\") \"" + .source + "\" }}"' "${navy_cache_exploded}" | tr -d '\n' >> "${navy_cache_escaped}"
+    _yq '(.. | key = "{{ print \"" + key + "\" }}") |= .' "${navy_cache_gathered}" >> "${navy_cache_escaped}"
 
-    # TODO: resolve templates recursively
-    # current CLI:
-    # CWD="${PWD}" ./navy
+    _gom --datasource "gathered=${navy_cache_gathered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
+    gathered_sha="$(sha256sum "${navy_cache_gathered}")"
+    gathered_sha="${gathered_sha%% *}"
+    rendered_sha="$(sha256sum "${navy_cache_rendered}")"
+    rendered_sha="${rendered_sha%% *}"
   done
+
+  printf 'Processing the cache: Datasources expanded\n' | send_note
 }
 
 expand_datasources_into_main ()
@@ -722,9 +739,17 @@ init ()
   navy_tty="${NAVY_RUN_PATH}/tty"
   navy_buffer="${NAVY_RUN_PATH}/buffer"
   navy_done="${NAVY_RUN_PATH}/done"
-  readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_stops navy_aliases navy_tty navy_buffer navy_done navy_ifs navy_nl
+  navy_errorlevel='0'
+  navy_warnlevel='1'
+  navy_infolevel='2'
+  navy_notelevel='3'
+  navy_debuglevel='4'
+  navy_tracelevel='5'
+  navy_verblevel='6'
+  readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_stops navy_aliases navy_tty navy_buffer navy_done navy_ifs navy_nl \
+           navy_errorlevel navy_warnlevel navy_infolevel navy_notelevel navy_debuglevel navy_tracelevel navy_verblevel
 
-  PS4='4'
+  PS4="${navy_tracelevel}"
 
   mkdir -p "${NAVY_CACHE_PATH}" "${NAVY_RUN_PATH}"
 }
@@ -751,7 +776,9 @@ processor ()
 
   if not_cached
   then
-    printf 'Prepare cache\n' | start_spin 'cache'
+    # TODO: use cache when failure: do not do compute the cache again
+    printf 'Processing the cache ...\n' | start_spin 'cache'
+    prepare_cache
     explode_main_file
     define_context_datasources
     expand_datasources_into_datasources
@@ -764,6 +791,8 @@ processor ()
     generate_sh
     stop_spin 'cache'
   fi
+  # current CLI:
+  # CWD="${PWD}" ./navy
 
   # depending of parsed options:
   # - run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script

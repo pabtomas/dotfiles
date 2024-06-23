@@ -27,7 +27,7 @@ containers:
       _: '{{ $dependencies.prefix.containers.create }}virtual'
       docker: '{{ $dependencies.prefix.containers.virtual.create }}{{ $docker.id }}'
       gpu: '{{ $dependencies.prefix.containers.virtual.create }}{{ $gpu.id }}'
-      isolated: '{{ $dependencies.prefix.containers.virtual.create }}{{ $isolated.id }}'
+      isolated: '{{ $dependencies.prefix.containers.virtual.create }}isolated'
       man: '{{ $dependencies.prefix.containers.virtual.create }}{{ $man.id }}'
       pass: '{{ $dependencies.prefix.containers.virtual.create }}{{ $pass.id }}'
       registry: '{{ $dependencies.prefix.containers.virtual.create }}{{ $registry.id }}'

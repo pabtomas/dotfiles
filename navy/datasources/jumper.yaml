@@ -11,9 +11,9 @@ path:
     var:
       log: '/opt/{{ $listener.id }}{{ $all.path.var.log }}'
   proxy:
-    etc: '/opt/{{ $socketproxy.yaml").id }}{{ $nginx.path.etc }}'
+    etc: '/opt/{{ $socketproxy.id }}{{ $nginx.path.etc }}'
     opt:
-      scripts: '/opt/{{ $socketproxy.yaml").id }}{{ $all.path.opt.scripts }}'
+      scripts: '/opt/{{ $socketproxy.id }}{{ $all.path.opt.scripts }}'
     var:
       log: '/opt/{{ $socketproxy.id }}{{ $nginx.path.var.log }}'
   relay:

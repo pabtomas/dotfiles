@@ -1,8 +1,8 @@
 ---
 
 prefix: 'API_ENDPOINT_'
-tag: '{{ $CONTEXTVERSION.ApiVersion }}'
+tag: '{{ $VERSION.ApiVersion }}'
 url:
-  spec: 'https://raw.githubusercontent.com/moby/moby/master/docs/api/v{{ $CONTEXTVERSION.ApiVersion }}.yaml'
+  spec: 'https://raw.githubusercontent.com/moby/moby/master/docs/api/v{{ $VERSION.ApiVersion }}.yaml'
 
 ...
