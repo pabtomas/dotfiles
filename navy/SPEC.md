@@ -309,8 +309,6 @@ rules:
     - the Docker Engine API you are targetting,
     - the endpoint and method you want to submit to the Docker Engine.
 
-For convenience, Navy takes one (and only one) liberty on the Docker Engine API: the `buildargs` Query parameters of the `/build` Request needs a dictionnary instead of a string containing a JSON map of string pairs.
-
 ### `Body.path`
 
 - **type**: Path
@@ -340,18 +338,24 @@ For convenience, Navy takes one (and only one) liberty on the Docker Engine API:
       - id: images.build.virtual1
         virtual: true
         query:
-          buildargs:
-            FILEPATH: '/my/file/path'
+          buildargs: |
+          {
+            "FILEPATH":"/my/file/path"
+          }
       - id: images.build.virtual2
         virtual: true
         query:
-          buildargs:
-            FILEPATH: '/my/other/file/path'
-            USER: 'myuser'
+          buildargs: |
+          {
+            "FILEPATH":"/my/other/file/path",
+            "USER":"myuser"
+          }
       - id: images.build.myimage
         query:
-          buildargs:
-            USER: 'root'
+          buildargs: |
+          {
+            "USER":"root"
+          }
         extends:
           - images.build.virtual1
           - images.build.virtual2
@@ -360,9 +364,11 @@ For convenience, Navy takes one (and only one) liberty on the Docker Engine API:
     ```yaml
       - id: images.build.myimage
         query:
-          buildargs:
-            FILEPATH: '/my/other/file/path' # images.build.virtual1 prevails on images.build.virtual2
-            USER: 'root' # images.build.myimage prevails on images.build.virtual1 and images.build.virtual2
+          buildargs: |
+          {
+            "FILEPATH":"/my/other/file/path", # images.build.virtual1 prevails on images.build.virtual2
+            "USER":"root" # images.build.myimage prevails on images.build.virtual1 and images.build.virtual2
+          }
     ```
     - extending from a virtual or a non-virtual Body will not share same attributes:
         - from a non-virtual Body, the extended Body will inherit these attributes: `query`, `path`, `context`.
@@ -381,8 +387,10 @@ method: POST
 loop:
   - id: images.build.myimage
     query:
-      buildargs:
-        USER: 'root'
+      buildargs: |
+      {
+        "USER":"root"
+      }
       t: 'myimage:latest'
     context: 'dir/of/myimage'
 ```
