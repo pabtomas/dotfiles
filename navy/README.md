@@ -9,7 +9,7 @@ Navy was born because I faced a recurrent scenario when dealing with Docker:
 - With time this stack is growing and it takes more time to make things around Compose to compensate Compose's lacks,
 - I switch to another solution (Ansible, Kubernetes, Swarm, ...) because the project is now unmaintainable.
 
-Here a non exhaustif list of problems that made my Compose projects messy:
+Here a non exhaustive list of problems that made my Compose projects messy:
 1. Extra usage of templating tools. The Compose envfile is quickly limited:
   - Interpolation forbidden for services,
   - Less useful than most of templating tools
@@ -21,6 +21,12 @@ Here a non exhaustif list of problems that made my Compose projects messy:
 
 In most cases, this is how things should go: Compose is not the right tool for the project I am working on.
 But sometimes, I feel like my project is not complex and going for Ansible, Swarm or another solution is overkilled.
+
+Another popular solution is to use GNU `make` with the Docker client. Even if this option solves some issues I described, I think this is the starting point for many other troubles. Because this introduction is long enough I am not going to list problems I encountered with GNU `make` during my Docker projects. Conclude with the first line of the GNU `make` documentation is the most relevant thing to do:
+```
+GNU Make is a tool which controls the generation of executables and other non-source files of a program from the program's source files.
+```
+With other words: GNU `make` was not degined to be used with Docker.
 
 Navy was designed with 5 priorities in mind to solve all problems I had with Compose without going for an heavy solution:
 1. Minimal process installation: Navy was conceived to run with a minimal set of dependencies into a minimal container (no extra daemon, no extra library installation, no extra configuration),

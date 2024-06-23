@@ -1,120 +1,122 @@
 ---
 
-run:
-  - endpoint: /containers/{id}/start
-    method: POST
-    loop:
-      - id: '{{ $dependencies.containers.start.listened }}'
-        virtual: true
-        depends_on:
-          - '{{ $dependencies.containers.start.listener }}'
-      - id: '{{ $dependencies.containers.start.builder }}'
-        path:
-          id: '{{ $builder.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.builder }}'
-      - id: '{{ $dependencies.containers.start.carpenter.relay }}'
-        path:
-          id: '{{ $carpenterrelay.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.carpenter.relay }}'
-          - '{{ $dependencies.containers.start.xserver }}'
-      - id: '{{ $dependencies.containers.start.carpenter.runner }}'
-        path:
-          id: '{{ $carpenterrunner.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.carpenter.runner }}'
-          - '{{ $dependencies.containers.start.carpenter.relay }}'
-      - id: '{{ $dependencies.containers.start.controller }}'
-        path:
-          id: '{{ controller.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.controller }}'
-          - '{{ $dependencies.containers.start.builder }}'
-          - '{{ $dependencies.containers.start.registry }}'
-          - '{{ $dependencies.containers.start.socketproxy }}'
-          - '{{ $dependencies.containers.start.xserver }}'
-        extends:
-          - '{{ $dependencies.containers.start.listened }}'
-      - id: '{{ $dependencies.containers.start.editor }}'
-        path:
-          id: '{{ $editor.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.editor }}'
-        extends:
-          - '{{ $dependencies.containers.start.listened }}'
-      - id: '{{ $dependencies.containers.start.explorer.shell }}'
-        path:
-          id: '{{ $explorershell.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.explorer.shell }}'
-        extends:
-          - '{{ $dependencies.containers.start.listened }}'
-      - id: '{{ $dependencies.containers.start.explorer.zig }}'
-        path:
-          id: '{{ $explorerzig.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.explorer.zig }}'
-        extends:
-          - '{{ $dependencies.containers.start.listened }}'
-      - id: '{{ $dependencies.containers.start.jumper }}'
-        path:
-          id: '{{ $jumper.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.jumper }}'
-          - '{{ $dependencies.containers.start.controller }}'
-          - '{{ $dependencies.containers.start.explorer.shell }}'
-          - '{{ $dependencies.containers.start.explorer.zig }}'
-          - '{{ $dependencies.containers.start.safedeposit }}'
-          - '{{ $dependencies.containers.start.scholar }}'
-        extends:
-          - '{{ $dependencies.containers.start.listened }}'
-      - id: '{{ $dependencies.containers.start.listener }}'
-        path:
-          id: '{{ $listener.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.listener }}'
-          - '{{ $dependencies.containers.start.socketproxy }}'
-      - id: '{{ $dependencies.containers.start.socketproxy }}'
-        path:
-          id: '{{ $socketproxy.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.socketproxy }}'
-      - id: '{{ $dependencies.containers.start.registry }}'
-        path:
-          id: '{{ $registry.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.registry }}'
-      - id: '{{ $dependencies.containers.start.safedeposit }}'
-        path:
-          id: '{{ $safedeposit.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.safedeposit }}'
-        extends:
-          - '{{ $dependencies.containers.start.listened }}'
-      - id: '{{ $dependencies.containers.start.scholar }}'
-        path:
-          id: '{{ $scholar.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.scholar }}'
-        extends:
-          - '{{ $dependencies.containers.start.listened }}'
-      - id: '{{ $dependencies.containers.start.spaceporn.relay }}'
-        path:
-          id: '{{ $spacepornrelay.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.spaceporn.relay }}'
-          - '{{ $dependencies.containers.start.xserver }}'
-      - id: '{{ $dependencies.containers.start.spaceporn.runner }}'
-        path:
-          id: '{{ spacepornrunner.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.spaceporn.runner }}'
-          - '{{ $dependencies.containers.start.spaceporn.relay }}'
-      - id: '{{ $dependencies.containers.start.xserver }}'
-        path:
-          id: '{{ xserver.host }}'
-        depends_on:
-          - '{{ $dependencies.containers.create.xserver }}'
+rules:
+  - id: '{{ $rules.up }}'
+    run:
+      - endpoint: /containers/{id}/start
+        method: POST
+        loop:
+          - id: '{{ $dependencies.containers.start.listened }}'
+            virtual: true
+            depends_on:
+              - '{{ $dependencies.containers.start.listener }}'
+          - id: '{{ $dependencies.containers.start.builder }}'
+            path:
+              id: '{{ $builder.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.builder }}'
+          - id: '{{ $dependencies.containers.start.carpenter.relay }}'
+            path:
+              id: '{{ $carpenterrelay.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.carpenter.relay }}'
+              - '{{ $dependencies.containers.start.xserver }}'
+          - id: '{{ $dependencies.containers.start.carpenter.runner }}'
+            path:
+              id: '{{ $carpenterrunner.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.carpenter.runner }}'
+              - '{{ $dependencies.containers.start.carpenter.relay }}'
+          - id: '{{ $dependencies.containers.start.controller }}'
+            path:
+              id: '{{ controller.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.controller }}'
+              - '{{ $dependencies.containers.start.builder }}'
+              - '{{ $dependencies.containers.start.registry }}'
+              - '{{ $dependencies.containers.start.socketproxy }}'
+              - '{{ $dependencies.containers.start.xserver }}'
+            extends:
+              - '{{ $dependencies.containers.start.listened }}'
+          - id: '{{ $dependencies.containers.start.editor }}'
+            path:
+              id: '{{ $editor.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.editor }}'
+            extends:
+              - '{{ $dependencies.containers.start.listened }}'
+          - id: '{{ $dependencies.containers.start.explorer.shell }}'
+            path:
+              id: '{{ $explorershell.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.explorer.shell }}'
+            extends:
+              - '{{ $dependencies.containers.start.listened }}'
+          - id: '{{ $dependencies.containers.start.explorer.zig }}'
+            path:
+              id: '{{ $explorerzig.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.explorer.zig }}'
+            extends:
+              - '{{ $dependencies.containers.start.listened }}'
+          - id: '{{ $dependencies.containers.start.jumper }}'
+            path:
+              id: '{{ $jumper.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.jumper }}'
+              - '{{ $dependencies.containers.start.controller }}'
+              - '{{ $dependencies.containers.start.explorer.shell }}'
+              - '{{ $dependencies.containers.start.explorer.zig }}'
+              - '{{ $dependencies.containers.start.safedeposit }}'
+              - '{{ $dependencies.containers.start.scholar }}'
+            extends:
+              - '{{ $dependencies.containers.start.listened }}'
+          - id: '{{ $dependencies.containers.start.listener }}'
+            path:
+              id: '{{ $listener.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.listener }}'
+              - '{{ $dependencies.containers.start.socketproxy }}'
+          - id: '{{ $dependencies.containers.start.socketproxy }}'
+            path:
+              id: '{{ $socketproxy.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.socketproxy }}'
+          - id: '{{ $dependencies.containers.start.registry }}'
+            path:
+              id: '{{ $registry.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.registry }}'
+          - id: '{{ $dependencies.containers.start.safedeposit }}'
+            path:
+              id: '{{ $safedeposit.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.safedeposit }}'
+            extends:
+              - '{{ $dependencies.containers.start.listened }}'
+          - id: '{{ $dependencies.containers.start.scholar }}'
+            path:
+              id: '{{ $scholar.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.scholar }}'
+            extends:
+              - '{{ $dependencies.containers.start.listened }}'
+          - id: '{{ $dependencies.containers.start.spaceporn.relay }}'
+            path:
+              id: '{{ $spacepornrelay.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.spaceporn.relay }}'
+              - '{{ $dependencies.containers.start.xserver }}'
+          - id: '{{ $dependencies.containers.start.spaceporn.runner }}'
+            path:
+              id: '{{ spacepornrunner.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.spaceporn.runner }}'
+              - '{{ $dependencies.containers.start.spaceporn.relay }}'
+          - id: '{{ $dependencies.containers.start.xserver }}'
+            path:
+              id: '{{ xserver.host }}'
+            depends_on:
+              - '{{ $dependencies.containers.create.xserver }}'
 
 ...

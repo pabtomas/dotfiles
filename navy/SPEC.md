@@ -6,11 +6,14 @@
 2. [anchors](#anchors)
 3. [include](#include)
 4. [versions](#versions)
-5. [run](#run)
-6. [post](#post)
+5. [rules](#rules)
 
 ### Objects:
 
+6. [Rule](#rule-object)
+    - [id](#ruleid)
+    - [description](#ruledescription)
+    - [run](#rulerun)
 7. [Request](#request-object)
     - [endpoint](#requestendpoint)
     - [method](#requestmethod)
@@ -21,6 +24,7 @@
 8. [Body](#body-object)
     - [id](#bodyid)
     - [depends_on](#bodydepends_on)
+    - [errexit](#bodyerrexit)
     - [path](#bodypath)
     - [query](#bodyquery)
     - [virtual](#bodyvirtual)
@@ -29,15 +33,18 @@
 9. [Register](#register-object)
     - [id](#registerid)
     - [depends_on](#registerdepends_on)
+    - [errexit](#registererrexit)
     - [query](#registerquery)
     - [as](#registeras)
 10. [From](#from-object)
     - [id](#fromid)
     - [depends_on](#fromdepends_on)
+    - [errexit](#fromerrexit)
     - [filter](#fromfilter)
 11. [Command](#command-object)
     - [id](#commandid)
     - [depends_on](#commanddepends_on)
+    - [errexit](#commanderrexit)
     - [if](#commandif)
     - [argv](#commandargv)
 12. [Datasource](#datasource-object)
@@ -121,42 +128,49 @@ versions:
   - '{{ $VERSION.ApiVersion }}
 ```
 
-## `run`
+## `rules`
+
+TODO
 
 - **type**: list
-- **required**: false
+- **required**: true
 - **default**: `[]`
-- **description**: A list of Requests and Commands. If a Request (or Command) in this list fails, Navy skips whatever comes after in this list and run the `post` list.
+- **description**: A list of user defined Rules.
 - **exemple**:
 ```yaml
-run:
-  - endpoint: /volumes/create
-    method: POST
-    loop:
-      - query:
-          Name: my-volume
-      - query:
-          Name: my-volume-2
+rules:
 ```
 
-## `post`
+## Rule object
+
+TODO
+
+### `Rule.id`
+
+TODO
+
+### `Rule.description`
+
+TODO
+
+### `Rule.run`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: A list of Requests and Commands reserved for cleanup actions. Navy will run every Request (or Command) in this list whatever happens.
+- **description**: A list of Requests and Commands.
 - **exemple**:
 ```yaml
-post:
-  - endpoint: /volumes/{name}
-    method: DELETE
-    from:
-      - path:
-          name: my-volume
-      - path:
-          name: my-volume-2
-        query:
-          force: true
+rules:
+  - id: 'up'
+    run:
+      - endpoint: /volumes/create
+        method: POST
+        loop:
+          - query:
+              Name: my-volume
+          - query:
+              Name: my-volume-2
 ```
 
 ## Request object
@@ -247,21 +261,23 @@ A Request has also an optional attribute: `if`.
 - **description**: Body of a Request. The only use case of this object is in the `Request.loop` attribute.
 - **exemple**:
 ```yaml
-run:
-  - endpoint: /containers/create
-    method: POST
-    loop:
-      - id: containers.create.mycontainer
-        query:
-          name: mycontainer
-  - endpoint: /containers/{id}/start
-    method: POST
-    loop:
-      - id: containers.start.mycontainer
-        path:
-          id: mycontainer
-        depends_on:
-          - containers.create.mycontainer
+rules:
+  - id: 'up'
+    run:
+      - endpoint: /containers/create
+        method: POST
+        loop:
+          - id: containers.create.mycontainer
+            query:
+              name: mycontainer
+      - endpoint: /containers/{id}/start
+        method: POST
+        loop:
+          - id: containers.start.mycontainer
+            path:
+              id: mycontainer
+            depends_on:
+              - containers.create.mycontainer
 ```
 
 ### `Body.id`
@@ -276,6 +292,13 @@ run:
 - **required**: false
 - **default**: `[]`
 - **description**: Navy uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Navy will run the Request after the Requests and Commands listed here are executed.
+
+### `Body.errexit`
+
+- **type**: boolean
+- **required**: false
+- **default**: `true`
+- **description**: If the Request failed, Navy stops its execution in failure.
 
 ### `Body.query`
 
@@ -382,6 +405,13 @@ loop:
 - **default**: `[]`
 - **description**: See `Body.depends_on`.
 
+### `Register.errexit`
+
+- **type**: boolean
+- **required**: false
+- **default**: `true`
+- **description**: See `Body.errexit`.
+
 ### `Register.query`
 
 - **type**: dictionnary
@@ -413,6 +443,13 @@ loop:
 - **default**: `[]`
 - **description**: See `Body.depends_on`.
 
+### `From.errexit`
+
+- **type**: boolean
+- **required**: false
+- **default**: `true`
+- **description**: See `Body.errexit`.
+
 ### `From.filter`
 
 - **type**: string
@@ -424,22 +461,24 @@ loop:
 - **description**: A custom command for specific need or to compensate Navy's lacks.
 - **exemples**:
 ```yaml
-run:
-  - id: commands.install.docker-cli
-    argv:
-      - 'apk'
-      - 'add'
-      - '--no-cache'
-      - 'docker-cli'
-    depends_on:
-      - containers.start.my-container
-  - id: commands.attach
-    argv:
-      - 'docker'
-      - 'attach'
-      - 'my-container'
-    depends_on:
-      - commands.install.docker-cli
+rules:
+  - id: 'up'
+    run:
+      - id: commands.install.docker-cli
+        argv:
+          - 'apk'
+          - 'add'
+          - '--no-cache'
+          - 'docker-cli'
+        depends_on:
+          - containers.start.my-container
+      - id: commands.attach
+        argv:
+          - 'docker'
+          - 'attach'
+          - 'my-container'
+        depends_on:
+          - commands.install.docker-cli
 ```
 
 ### `Command.id`
@@ -454,6 +493,13 @@ run:
 - **required**: false
 - **default**: `[]`
 - **description**: See `Body.depends_on`.
+
+### `Command.errexit`
+
+- **type**: boolean
+- **required**: false
+- **default**: `true`
+- **description**: See `Body.errexit`.
 
 ### `Command.if`
 

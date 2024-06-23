@@ -1,19 +1,23 @@
 ---
 
-post:
-  - endpoint: /volumes
-    method: GET
-    register:
-      query:
-        filters: '{"label":{"navy":{{ $project.id }}}}'
-      id: post.volumes.json
-      as:
-        id: registerpostvolumes
-  - endpoint: /volumes/{name}
-    method: DELETE
-    from:
-      filter: '{{ $array := "" }}{{ range $registerpostvolumes }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
-      depends_on:
-        - post.volumes.json
+rules:
+  - id: '{{ $rules.down }}'
+    run:
+      - endpoint: /volumes
+        method: GET
+        register:
+          query:
+            filters: '{"label":{"navy":{{ $project.id }}}}'
+          id: post.volumes.json
+          errexit: false
+          as:
+            id: registerpostvolumes
+      - endpoint: /volumes/{name}
+        method: DELETE
+        from:
+          filter: '{{ $array := "" }}{{ range $registerpostvolumes }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+          errexit: false
+          depends_on:
+            - post.volumes.json
 
 ...

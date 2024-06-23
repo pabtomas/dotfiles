@@ -1,19 +1,23 @@
 ---
 
-post:
-  - endpoint: /networks
-    method: GET
-    register:
-      query:
-        filters: '{"label":{"navy":{{ $project.id }}}}'
-      id: post.networks.json
-      as:
-        id: registerpostnetworks
-  - endpoint: /networks/{id}
-    method: DELETE
-    from:
-      filter: '{{ $array := "" }}{{ range $registerpostnetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
-      depends_on:
-        - post.networks.json
+rules:
+  - id: '{{ $rules.down }}'
+    run:
+      - endpoint: /networks
+        method: GET
+        register:
+          id: post.networks.json
+          query:
+            filters: '{"label":{"navy":{{ $project.id }}}}'
+          errexit: false
+          as:
+            id: registerpostnetworks
+      - endpoint: /networks/{id}
+        method: DELETE
+        from:
+          filter: '{{ $array := "" }}{{ range $registerpostnetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+          errexit: false
+          depends_on:
+            - post.networks.json
 
 ...

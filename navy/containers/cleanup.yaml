@@ -1,25 +1,30 @@
 ---
 
-post:
-  - endpoint: /containers/json
-    method: GET
-    register:
-      query:
-        filters: '{"label":{"navy":{{ $project.id }}}}'
-      id: post.containers.json
-      as:
-        id: registerpostcontainers
-  - endpoint: /containers/{id}/stop
-    method: POST
-    from:
-      filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"id\":\"containers.stop." .Id "\",\"path\":{\"id\":\"" .Id "\"},\"query\":{\"t\":0}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
-      depends_on:
-        - post.containers.json
-  - endpoint: /containers/{id}
-    method: DELETE
-    from:
-      filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
-      depends_on:
-        - post.containers.json
+rules:
+  - id: '{{ $rules.down }}'
+    run:
+      - endpoint: /containers/json
+        method: GET
+        register:
+          query:
+            filters: '{"label":{"navy":{{ $project.id }}}}'
+          id: post.containers.json
+          errexit: false
+          as:
+            id: registerpostcontainers
+      - endpoint: /containers/{id}/stop
+        method: POST
+        from:
+          filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"id\":\"containers.stop." .Id "\",\"path\":{\"id\":\"" .Id "\"},\"query\":{\"t\":0}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+          errexit: false
+          depends_on:
+            - post.containers.json
+      - endpoint: /containers/{id}
+        method: DELETE
+        from:
+          filter: '{{ $array := "" }}{{ range $registerpostcontainers }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+          errexit: false
+          depends_on:
+            - post.containers.json
 
 ...

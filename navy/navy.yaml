@@ -74,6 +74,8 @@ datasources:
     id: registry
   - source: datasources/relay.yaml
     id: relay
+  - source: datasources/rules.yaml
+    id: rules
   - source: datasources/runner.yaml
     id: runner
   - source: datasources/safedeposit.yaml
@@ -127,5 +129,11 @@ include:
   - containers/cleanup.yaml
   - volumes/cleanup.yaml
   - networks/cleanup.yaml
+
+rules:
+  - id: '{{ $rules.up }}'
+    description: 'Create and start containers, volumes and networks'
+  - id: '{{ $rules.down }}'
+    description: 'Stop and remove containers, volumes and networks'
 
 ...
