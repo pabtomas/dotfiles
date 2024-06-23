@@ -606,6 +606,7 @@ get ()
 prepare_cache ()
 {
   navy_cache_exploded="${navy_cache}/exploded.yaml"
+  navy_cache_nods="${navy_cache}/nods.yaml"
   navy_cache_escaped="${navy_cache}/escaped.yaml"
   navy_cache_rendered="${navy_cache}/rendered.yaml"
 
@@ -619,7 +620,7 @@ prepare_cache ()
   navy_cache_dsgathered="${navy_cache_datasources}/gathered.yaml"
   navy_cache_dsrendered="${navy_cache_datasources}/rendered.yaml"
 
-  readonly navy_cache_exploded navy_cache_escaped navy_cache_rendered \
+  readonly navy_cache_exploded navy_cache_nods navy_cache_escaped navy_cache_rendered \
            navy_cache_context navy_cache_version_json navy_cache_info_json \
            navy_cache_datasources navy_cache_header navy_cache_dsescaped navy_cache_dsgathered navy_cache_dsrendered
 
@@ -653,6 +654,7 @@ write_datasources_header ()
 {
   printf '{{ $INFO := (datasource "info") }}{{ $VERSION := (datasource "version") }}' > "${navy_cache_header}"
   _yq '.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"' "${navy_cache_exploded}" | tr -d '\n' >> "${navy_cache_header}"
+  _yq '. |= del(.datasources)' "${navy_cache_exploded}" > "${navy_cache_nods}"
   printf 'Preprocessing: Datasources header written\n' | send_note
 }
 
@@ -691,9 +693,8 @@ expand_datasources_into_main ()
 
   # do not process templates into post, run and datasources
   _yq '(.. | key = "{{ print \"" + key + "\" }}") |= .
-           | (with(has("{{ print \"datasources\" }}"); . | .["{{ print \"datasources\" }}"] |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}")))
            | (with(has("{{ print \"post\" }}"); . | .["{{ print \"post\" }}"] |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}")))
-           | (with(has("{{ print \"run\" }}"); . | .["{{ print \"run\" }}"] |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}")))' "${navy_cache_exploded}" >> "${navy_cache_escaped}"
+           | (with(has("{{ print \"run\" }}"); . | .["{{ print \"run\" }}"] |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}")))' "${navy_cache_nods}" >> "${navy_cache_escaped}"
   _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
 
   printf 'Preprocessing: Datasources expanded into main file\n' | send_note
