@@ -393,7 +393,7 @@ Usage:
 Flags:
   --file file       navy main file (default: ./navy.yaml)
   --reset-cache     resets the cache
-  -v                log level [reusable option] (default: 3, max: 7)
+   -v               verbosity, reusable (default: 3, max: 7)
   --help            help for navy
   --version         version for navy
 "
@@ -501,22 +501,21 @@ prepare_logging ()
     navy_curlopts="--verbose --stderr ${navy_buffer}"
   fi
 
-  local yqopts gomplateopts utilsopt findopts
+  local yqopts gomplateopts utilsopt
   yqopts='--no-colors'
   if [ "${navy_loglevel}" -ge "${navy_verblevel}" ]
   then
     gomplateopts="${gomplateopts:+"${gomplateopts}" }--verbose"
     yqopts="${yqopts:+"${yqopts}" }--verbose"
     utilsopt='-v'
-    findopts='-D exec -D search'
   fi
 
   if [ "${navy_loglevel}" -ge "${navy_tracelevel}" ]
   then
+    opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'cp'
     opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'mkdir'
     opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'mv'
     opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'rm'
-    opts="${findopts:-}" pipe='send_verb' verbose_eval 'find'
     opts="${gomplateopts:-}" verbose_eval 'gomplate'
     opts="${yqopts:-}" verbose_eval 'yq'
   else
@@ -606,30 +605,33 @@ get ()
 
 prepare_cache ()
 {
-  navy_cache_exploded="${navy_cache}/navy.yaml"
+  navy_cache_exploded="${navy_cache}/exploded.yaml"
+  navy_cache_escaped="${navy_cache}/escaped.yaml"
+  navy_cache_rendered="${navy_cache}/rendered.yaml"
 
   navy_cache_context="${navy_cache}/context"
   navy_cache_version_json="${navy_cache_context}/version.json"
   navy_cache_info_json="${navy_cache_context}/info.json"
 
   navy_cache_datasources="${navy_cache}/datasources"
-  navy_cache_escaped="${navy_cache_datasources}/escaped.yaml"
-  navy_cache_gathered="${navy_cache_datasources}/gathered.yaml"
-  navy_cache_rendered="${navy_cache_datasources}/rendered.yaml"
+  navy_cache_header="${navy_cache_datasources}/header.yaml"
+  navy_cache_dsescaped="${navy_cache_datasources}/escaped.yaml"
+  navy_cache_dsgathered="${navy_cache_datasources}/gathered.yaml"
+  navy_cache_dsrendered="${navy_cache_datasources}/rendered.yaml"
 
-  readonly navy_cache_exploded \
+  readonly navy_cache_exploded navy_cache_escaped navy_cache_rendered \
            navy_cache_context navy_cache_version_json navy_cache_info_json \
-           navy_cache_datasources navy_cache_escaped navy_cache_gathered navy_cache_rendered
+           navy_cache_datasources navy_cache_header navy_cache_dsescaped navy_cache_dsgathered navy_cache_dsrendered
 
   mkdir -p "${navy_cache_context}" "${navy_cache_datasources}"
 
-  printf 'Processing the cache: Cache prepared\n' | send_note
+  printf 'Preprocessing: Cache prepared\n' | send_note
 }
 
 explode_main_file ()
 {
   _yq 'explode(.)' "${navy_file}" > "${navy_cache_exploded}"
-  printf 'Processing the cache: Main file exploded\n' | send_note
+  printf 'Preprocessing: Main file exploded\n' | send_note
 }
 
 define_context_datasources ()
@@ -644,7 +646,14 @@ define_context_datasources ()
   req='/info' get
   mv -f "${navy_curlresp}" "${navy_cache_info_json}"
 
-  printf 'Processing the cache: Context datasources defined\n' | send_note
+  printf 'Preprocessing: Context datasources defined\n' | send_note
+}
+
+write_datasources_header ()
+{
+  printf '{{ $INFO := (datasource "info") }}{{ $VERSION := (datasource "version") }}' > "${navy_cache_header}"
+  _yq '.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"' "${navy_cache_exploded}" | tr -d '\n' >> "${navy_cache_header}"
+  printf 'Preprocessing: Datasources header written\n' | send_note
 }
 
 expand_datasources_into_datasources ()
@@ -655,30 +664,39 @@ expand_datasources_into_datasources ()
   datasources="$(_yq '.datasources[].source' "${navy_cache_exploded}")"
 
   set -f
-  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_rendered}"
+  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_dsrendered}"
   set +f
 
   until [ "${gathered_sha}" = "${rendered_sha}" ]
   do
-    cp -f "${navy_cache_rendered}" "${navy_cache_gathered}"
-    printf '{{ $INFO := (datasource "info") }}{{ $VERSION := (datasource "version") }}' > "${navy_cache_escaped}"
-    _yq '.datasources[] | "{{ $" + .id + " := index (datasource \"gathered\") \"" + .source + "\" }}"' "${navy_cache_exploded}" | tr -d '\n' >> "${navy_cache_escaped}"
-    _yq '(.. | key = "{{ print \"" + key + "\" }}") |= .' "${navy_cache_gathered}" >> "${navy_cache_escaped}"
+    cp -f "${navy_cache_dsrendered}" "${navy_cache_dsgathered}"
+    cp -f "${navy_cache_header}" "${navy_cache_dsescaped}"
 
-    _gom --datasource "gathered=${navy_cache_gathered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
-    gathered_sha="$(sha256sum "${navy_cache_gathered}")"
+    _yq '(.. | key = "{{ print \"" + key + "\" }}") |= .' "${navy_cache_dsgathered}" >> "${navy_cache_dsescaped}"
+
+    _gom --datasource "header=${navy_cache_dsgathered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_dsescaped}" --out "${navy_cache_dsrendered}"
+
+    gathered_sha="$(sha256sum "${navy_cache_dsgathered}")"
     gathered_sha="${gathered_sha%% *}"
-    rendered_sha="$(sha256sum "${navy_cache_rendered}")"
+    rendered_sha="$(sha256sum "${navy_cache_dsrendered}")"
     rendered_sha="${rendered_sha%% *}"
   done
 
-  printf 'Processing the cache: Datasources expanded\n' | send_note
+  printf 'Preprocessing: Datasources expanded\n' | send_note
 }
 
 expand_datasources_into_main ()
 {
-  :
-  # resolve datasources in main Navy file (not for Requests & Commands)
+  cp -f "${navy_cache_header}" "${navy_cache_escaped}"
+
+  # do not process templates into post, run and datasources
+  _yq '(.. | key = "{{ print \"" + key + "\" }}") |= .
+           | (with(has("{{ print \"datasources\" }}"); . | .["{{ print \"datasources\" }}"] |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}")))
+           | (with(has("{{ print \"post\" }}"); . | .["{{ print \"post\" }}"] |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}")))
+           | (with(has("{{ print \"run\" }}"); . | .["{{ print \"run\" }}"] |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}")))' "${navy_cache_exploded}" >> "${navy_cache_escaped}"
+  _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
+
+  printf 'Preprocessing: Datasources expanded into main file\n' | send_note
 }
 
 expand_anchors ()
@@ -777,10 +795,11 @@ processor ()
   if not_cached
   then
     # TODO: use cache when failure: do not do compute the cache again
-    printf 'Processing the cache ...\n' | start_spin 'cache'
+    printf 'Preprocessing ...\n' | start_spin 'cache'
     prepare_cache
     explode_main_file
     define_context_datasources
+    write_datasources_header
     expand_datasources_into_datasources
     expand_datasources_into_main
     expand_anchors
