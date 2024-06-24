@@ -1,5 +1,42 @@
 #! /usr/bin/env dash
 
+alias not='! '
+
+eq () { if [ "${1}" = "${2}" ];   then return 0; else return 1; fi; }
+gt () { if [ "${1}" -gt "${2}" ]; then return 0; else return 1; fi; }
+lt () { if [ "${1}" -lt "${2}" ]; then return 0; else return 1; fi; }
+ge () { if not lt "${1}" "${2}";  then return 0; else return 1; fi; }
+le () { if not gt "${1}" "${2}";  then return 0; else return 1; fi; }
+
+is ()
+{
+  case "${1}" in
+  ( dir )      if [ -d "${2}" ]; then return 0; else return 1; fi ;;
+  ( nonempty ) if [ -s "${2}" ]; then return 0; else return 1; fi ;;
+  ( present )  if [ -e "${2}" ]; then return 0; else return 1; fi ;;
+  ( sym )      if [ -L "${2}" ]; then return 0; else return 1; fi ;;
+  ( * ) ;;
+  esac
+}
+
+can ()
+{
+  case "${1}" in
+  ( read )  if [ -r "${2}" ]; then return 0; else return 1; fi ;;
+  ( write ) if [ -w "${2}" ]; then return 0; else return 1; fi ;;
+  ( exec )  if [ -x "${2}" ]; then return 0; else return 1; fi ;;
+  ( * ) ;;
+  esac
+}
+
+str ()
+{
+  case "${1}" in
+  ( empty ) if [ -z "${2}" ]; then return 0; else return 1; fi ;;
+  ( * ) ;;
+  esac
+}
+
 add_style ()
 {
   navy_esc="$(printf '\033')"
@@ -84,13 +121,14 @@ spins ()
 {
   local escape_for_bc_print spin_title_fn
 
-  if [ -n "${1:-}" ]
+  if not str empty "${1:-}"
   then
     escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "@; s@$@'"${navy_erase_until_eol}"'\\n";@'
     spin_title_fn='s@$@ define spin_title (index) { } 0@'
     command ts '%.s %T' | command sed -e "${escape_for_bc_print};${spin_title_fn}" -e "${1}" -e "
       s@\(.*\); \(define spin_title (index) {\)@\1\n\2@;
       s@ [0-9]\+\$@;\n@;
+      s@^[0-9]\+print \"[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@print \"@;
       s@^[0-9]\+@scale = 0\ncnts = \0\n@;
       s@\$@\
 define spin_color (index)\n\
@@ -212,10 +250,10 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
 {\n\
   print \"${navy_previous}\"\n\
 }\n\
-print \"\\\a\"\n@"  \
+print \"\\\a\"\n@; :exit" \
       | BC_LINE_LENGTH='0' command bc -q | command buffered_output
   else
-    command ts '%T'
+    command ts '%T' | command sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@@"
   fi
 }
 
@@ -244,13 +282,16 @@ logs ()
   local first_max_length_line max_line_length does_line_has_enought_chars eol
   cols
 
-  if [ -n "${1:-}" ]
+  if not str empty "${1:-}"
   then
     first_max_length_line="$(printf "%$(( ${COLUMNS} + ${#navy_bold} + ${#navy_cyan} + ${#navy_reset} - 9 ))s" | command tr ' ' '.')"
     does_line_has_enought_chars="$(printf "%$(( ${COLUMNS} - 9 ))s" | command sed 's/ /\[^\\n]/g')"
     max_line_length="$(printf "%$(( ${COLUMNS} - 9 ))s" | command tr ' ' '.')"
     set -f
-    command sed        "s@^${navy_errorlevel}@${navy_red}ERROR ${navy_reset}@;    t header;
+    command sed        "/^${navy_rawlevel}/ {
+                          b exit;
+                        }
+                        s@^${navy_errorlevel}@${navy_red}ERROR ${navy_reset}@;    t header;
                         s@^${navy_warnlevel}@${navy_yellow} WARN ${navy_reset}@;  t header;
                         s@^${navy_infolevel}@${navy_green} INFO ${navy_reset}@;   t header;
                         s@^${navy_notelevel}@${navy_cyan} NOTE ${navy_reset}@;    t header;
@@ -275,7 +316,7 @@ logs ()
 
     command rm -f ${1}
     set +f
-  elif [ -n "${2:-}" ]
+  elif not str empty "${2:-}"
   then
     eol="${navy_esc}[${COLUMNS}G"
     printf '%b%b' "${navy_previous}" "${eol}"
@@ -287,7 +328,7 @@ _stop ()
   local entries
   entries="$(command find "${navy_stops}" -mindepth 1 -maxdepth 1 -type l)"
 
-  if [ -n "${entries:-}" ]
+  if not str empty "${entries:-}"
   then
     set -f
     command rm -f ${entries} $(command readlink -f ${entries})
@@ -307,18 +348,18 @@ logger ()
   field_spins="$(printf '%s//\n' "${navy_spins}" | command grep -o '/' | command grep -c '/')"
   arg_max="$(( $(command getconf ARG_MAX) / 4 - 1 ))"
 
-  while [ -z "${navy_loggerstart:-}" ]; do command usleep 10; done
+  while str empty "${navy_loggerstart:-}"; do command usleep 10; done
 
   trap 'navy_loggerstop=1' USR1
 
   printf '%b' "${navy_hidecursor}"
 
-  while [ -z "${navy_loggerstop:-}" ] || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
+  while str empty "${navy_loggerstop:-}" || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
   do
     logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_logs}" | command head -n "${arg_max}")"
     spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_spins}" | command xargs -I % cat %)"
     logs "${logs_entries}" "${spins_entries}" | spins "${spins_entries}" 1>&2
-    if [ -z "${navy_loggerstop:-}" ]; then _stop; fi
+    if str empty "${navy_loggerstop:-}"; then _stop; fi
   done
 
   printf '%b' "${navy_showcursor}"
@@ -327,11 +368,11 @@ logger ()
 listener ()
 {
   local line alias ts i
-  until [ -L "${navy_tty}" ] \
-    && [ -d "${navy_lines}" ] \
-    && [ -d "${navy_spins}" ] \
-    && [ -d "${navy_aliases}" ] \
-    && [ -d "${navy_stops}" ]; do command usleep 10; done
+  until is sym "${navy_tty}" \
+    && is dir "${navy_lines}" \
+    && is dir "${navy_spins}" \
+    && is dir "${navy_aliases}" \
+    && is dir "${navy_stops}"; do command usleep 10; done
   while read -r line
   do
     i="$(( ${i:--1} + 1 ))"
@@ -366,44 +407,58 @@ s@_\(_*\)$@0\\1@;
 tn%d;
 ' "${ts%???}" "$(printf '%s' "${line}" | command sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${navy_spins}/${i}"
       command ln -s "${navy_spins}/${i}" "${navy_aliases}/${alias}" ;;
-    ( [0123456]* ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
+    ( [-0123456]* ) printf '%s\n' "${line}" > "${navy_lines}/${i}" ;;
     ( * ) printf '%s%s\n' "${PS4}" "${line}" > "${navy_lines}/${i}" ;;
     esac
   done
 }
 
-send_error () { if [ "${navy_loglevel}" -ge "${navy_errorlevel}" ]; then ansi2txt | sed "s@^@${navy_errorlevel}@" >&3; fi; }
-send_warn () { if [ "${navy_loglevel}" -ge "${navy_warnlevel}" ]; then ansi2txt | sed "s@^@${navy_warnlevel}@" >&3; fi; }
-send_info () { if [ "${navy_loglevel}" -ge "${navy_infolevel}" ]; then ansi2txt | sed "s@^@${navy_infolevel}@" >&3; fi; }
-send_note () { if [ "${navy_loglevel}" -ge "${navy_notelevel}" ]; then ansi2txt | sed "s@^@${navy_notelevel}@" >&3; fi; }
-send_debug () { if [ "${navy_loglevel}" -ge "${navy_debuglevel}" ]; then ansi2txt | sed "s@^@${navy_debuglevel}@" >&3; fi; }
-send_verb () { if [ "${navy_loglevel}" -ge "${navy_verblevel}" ]; then ansi2txt | sed "s@^@${navy_verblevel}@" >&3; fi; }
+send_raw () { ansi2txt | sed "s@^@${navy_rawlevel}@"; }
+send_error () { if ge "${navy_loglevel}" "${navy_errorlevel}"; then ansi2txt | sed "s@^@${navy_errorlevel}@" >&3; fi; }
+send_warn () { if ge "${navy_loglevel}" "${navy_warnlevel}"; then ansi2txt | sed "s@^@${navy_warnlevel}@" >&3; fi; }
+send_info () { if ge "${navy_loglevel}" "${navy_infolevel}"; then ansi2txt | sed "s@^@${navy_infolevel}@" >&3; fi; }
+send_note () { if ge "${navy_loglevel}" "${navy_notelevel}"; then ansi2txt | sed "s@^@${navy_notelevel}@" >&3; fi; }
+send_debug () { if ge "${navy_loglevel}" "${navy_debuglevel}"; then ansi2txt | sed "s@^@${navy_debuglevel}@" >&3; fi; }
+send_verb () { if ge "${navy_loglevel}" "${navy_verblevel}"; then ansi2txt | sed "s@^@${navy_verblevel}@" >&3; fi; }
 
 start_spin () { sed "s@^@S/${1}/@" >&3; }
 stop_spin () { printf 'K%s\n' "${1}" >&3; }
 
-help_option ()
+help ()
 {
   printf "\
 A Docker Engine orchestrator
 
 Usage:
-  navy [flags]
+  navy [options] [rules]
 
-Flags:
-  --file file       navy main file (default: ./navy.yaml)
-  --reset-cache     resets the cache
-   -v               verbosity, reusable (default: 3, max: 7)
-  --help            help for navy
-  --version         version for navy
-"
+Rules:
+  TODO
+
+Options:
+  -f, --file file       navy main file (default: ./navy.yaml)
+  -r, --reset-cache     resets the cache
+  -v                    verbosity, reusable (default: 3, max: 7)
+  -h, --help            help for navy
+  -V, --version         version for navy
+" | send_raw
   return 1
+}
+
+version ()
+{
+  printf 'navy 0.1.0\n' | send_raw
+  return 1
+}
+
+help_option ()
+{
+  navy_help='true'
 }
 
 version_option ()
 {
-  printf 'navy 0.1.0\n'
-  return 1
+  navy_version='true'
 }
 
 reset_cache_option ()
@@ -413,11 +468,11 @@ reset_cache_option ()
 
 file_option ()
 {
-  if [ ! -e "${1}" ]
+  if not is present "${1}"
   then
     printf '%s does not exist\n' "${1}" | send_error
     exit 1
-  elif [ ! -r "${1}" ]
+  elif not can read "${1}"
   then
     printf 'You do not have the permission to read %s\n' "${1}" | send_error
     exit 1
@@ -430,23 +485,37 @@ v_option ()
   navy_loglevel="$(( ${navy_loglevel:--1} + 1 ))"
 }
 
+add_rule ()
+{
+  navy_userrules="${navy_userrules:-}${1} "
+}
+
 unknown_option ()
 {
-  printf 'Unknown option: %s\n' "'${1}'" | send_error
+  printf 'Unknown rule/option: %s\n' "'${1}'" | send_error
   return 1
 }
 
 parse_options ()
 {
-  while [ "${#}" != '0' ]
+  while not eq "${#}" '0'
   do
     case "${1}" in
 
     # Handle '-abc' the same as '-a -bc' for short-form no-arg options
-    ( -[v]?* )
+    ( -[hrvV]?* )
       IFS=' '
       set -f
       set -- "${1%"${1#??}"}" "-${1#??}" $(shift; printf '%s\n' "${@}")
+      set +f
+      IFS="${navy_ifs}"
+      continue ;;
+
+    # Handle '-foo' the same as '-f oo' for short-form 1-arg options
+    ( -[f]?* )
+      IFS=' '
+      set -f
+      set -- "${1%"${1#??}"}" "${1#??}" $(shift; printf '%s\n' "${@}")
       set +f
       IFS="${navy_ifs}"
       continue ;;
@@ -460,12 +529,12 @@ parse_options ()
       IFS="${navy_ifs}"
       continue ;;
 
-    ( --reset-cache ) reset_cache_option ;;
-    ( --file ) file_option "${2}"; shift ;;
-    ( -v ) v_option ;;
-    ( --help ) help_option ;;
-    ( --version ) version_option ;;
-    ( * ) unknown_option "${1}" ;;
+    ( -r|--reset-cache ) reset_cache_option        ;;
+    ( -f|--file )        file_option "${2}"; shift ;;
+    ( -v )               v_option                  ;;
+    ( -h|--help )        help_option               ;;
+    ( -V|--version )     version_option            ;;
+    ( * )                add_rule "${1}"           ;;
     esac
     shift
   done
@@ -477,7 +546,7 @@ prepare_curl ()
   navy_curlresp="${NAVY_RUN_PATH}/curlresponse.json"
   navy_curlopts="${navy_curlopts:+"${navy_curlopts:-}" }--silent --write-out %{http_code} --output ${navy_curlresp}"
 
-  if [ -z "${DOCKER_HOST:-}" ]
+  if str empty "${DOCKER_HOST:-}"
   then
     navy_curlopts="${navy_curlopts:+"${navy_curlopts}" }--unix-socket /var/run/docker.sock"
   else
@@ -489,28 +558,28 @@ prepare_curl ()
 
 verbose_eval ()
 {
-  eval "${1} () { { set +x; } 2> /dev/null; if ! command ${1} ${opts:+"${opts}" }\"\${@}\"${pipe:+ 2>&1 | "${pipe}"}; then return 1; fi; set -x; }"
+  eval "${1} () { { set +x; } 2> /dev/null; if not command ${1} ${opts:+"${opts}" }\"\${@}\"${pipe:+ 2>&1 | "${pipe}"}; then return 1; fi; set -x; }"
 }
 
 prepare_logging ()
 {
-  if [ "${navy_loglevel}" -ge "${navy_tracelevel}" ]; then set -x; fi
+  if ge "${navy_loglevel}" "${navy_tracelevel}"; then set -x; fi
 
-  if [ "${navy_loglevel}" -ge "${navy_debuglevel}" ]
+  if ge "${navy_loglevel}" "${navy_debuglevel}"
   then
     navy_curlopts="--verbose --stderr ${navy_buffer}"
   fi
 
   local yqopts gomplateopts utilsopt
   yqopts='--no-colors'
-  if [ "${navy_loglevel}" -ge "${navy_verblevel}" ]
+  if ge "${navy_loglevel}" "${navy_verblevel}"
   then
     gomplateopts="${gomplateopts:+"${gomplateopts}" }--verbose"
     yqopts="${yqopts:+"${yqopts}" }--verbose"
     utilsopt='-v'
   fi
 
-  if [ "${navy_loglevel}" -ge "${navy_tracelevel}" ]
+  if ge "${navy_loglevel}" "${navy_tracelevel}"
   then
     opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'cp'
     opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'mkdir'
@@ -529,7 +598,9 @@ prepare ()
   navy_file="${navy_file:-./navy.yaml}"
   navy_loglevel="${navy_loglevel:-"${navy_infolevel}"}"
 
-  readonly navy_resetcache navy_file navy_loglevel
+  printf 'Main file found: %s\n' "${navy_file}" | send_note
+
+  readonly navy_resetcache navy_file navy_loglevel navy_help navy_version navy_userrules
 
   prepare_logging
   prepare_curl
@@ -540,17 +611,17 @@ _curl ()
   rm -f "${navy_buffer}"
 
   local out
-  if ! out="$(set -f; curl ${navy_curlopts} "${@}" "${req}")"
+  if not out="$(set -f; curl ${navy_curlopts} "${@}" "${req}")"
   then
     printf '%s HTTP response: %s\n' "'${req}'" "${out}" | send_error
-    cat "${navy_buffer}" | send_error
+    if is present "${navy_buffer}"; then cat "${navy_buffer}" | send_error; fi
     return 1
   fi
 
-  if [ "${out%"${out#?}"}" != '2' ]
+  if not eq "${out%"${out#?}"}" '2'
   then printf '%s HTTP response: %s\n' "'${req}'" "${out}" | send_warn; fi
 
-  if [ -s "${navy_buffer}" ]
+  if is nonempty "${navy_buffer}"
   then
     printf '[CURL] HTTP exchange between Navy and Docker Engine:\n' | send_debug
     cat "${navy_buffer}" | send_debug
@@ -563,16 +634,16 @@ _yq ()
 {
   rm -f "${navy_buffer}"
 
-  if ! yq "${@}" 2> "${navy_buffer}"
+  if not yq "${@}" 2> "${navy_buffer}"
   then
     printf 'The YAML parser failed with this error:\n' | send_error
-    cat "${navy_buffer}" | send_error
+    if is present "${navy_buffer}"; then cat "${navy_buffer}" | send_error; fi
     return 1
-  elif [ "${navy_loglevel}" -lt "${navy_verblevel}" ] && [ -s "${navy_buffer}" ]
+  elif lt "${navy_loglevel}" "${navy_verblevel}" && is nonempty "${navy_buffer}"
   then
     printf 'The YAML parser succeed but returns this warning:\n' | send_warn
     cat "${navy_buffer}" | send_warn
-  elif [ -s "${navy_buffer}" ]
+  elif is nonempty "${navy_buffer}"
   then cat "${navy_buffer}" | send_verb; fi
 }
 
@@ -580,16 +651,16 @@ _gom ()
 {
   rm -f "${navy_buffer}"
 
-  if ! gomplate "${@}" 2> "${navy_buffer}"
+  if not gomplate "${@}" 2> "${navy_buffer}"
   then
     printf 'The Go Template processor failed with this error:\n' | send_error
-    command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_error
+    if is present "${navy_buffer}"; then command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_error; fi
     return 1
-  elif [ "${navy_loglevel}" -lt "${navy_verblevel}" ] && [ -s "${navy_buffer}" ]
+  elif lt "${navy_loglevel}" "${navy_verblevel}" && is nonempty "${navy_buffer}"
   then
     printf 'The Go Template processor succeed but returns this warning:\n' | send_warn
     command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_warn
-  elif [ -s "${navy_buffer}" ]
+  elif is nonempty "${navy_buffer}"
   then command yq --no-colors --input-format 'json' --output-format 'json' "${navy_buffer}" | send_verb; fi
 }
 
@@ -669,7 +740,7 @@ expand_datasources_into_datasources ()
   _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_dsrendered}"
   set +f
 
-  until [ "${gathered_sha}" = "${rendered_sha}" ]
+  until eq "${gathered_sha}" "${rendered_sha}"
   do
     cp -f "${navy_cache_dsrendered}" "${navy_cache_dsgathered}"
     cp -f "${navy_cache_header}" "${navy_cache_dsescaped}"
@@ -756,6 +827,7 @@ init ()
   navy_tty="${NAVY_RUN_PATH}/tty"
   navy_buffer="${NAVY_RUN_PATH}/buffer"
   navy_done="${NAVY_RUN_PATH}/done"
+  navy_rawlevel='-'
   navy_errorlevel='0'
   navy_warnlevel='1'
   navy_infolevel='2'
@@ -764,7 +836,7 @@ init ()
   navy_tracelevel='5'
   navy_verblevel='6'
   readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_stops navy_aliases navy_tty navy_buffer navy_done navy_ifs navy_nl \
-           navy_errorlevel navy_warnlevel navy_infolevel navy_notelevel navy_debuglevel navy_tracelevel navy_verblevel
+           navy_rawlevel navy_errorlevel navy_warnlevel navy_infolevel navy_notelevel navy_debuglevel navy_tracelevel navy_verblevel
 
   PS4="${navy_tracelevel}"
 
@@ -773,10 +845,10 @@ init ()
 
 not_cached ()
 {
-  if [ "${navy_resetcache:-}" = 'true' ] || [ ! -e "${navy_done}" ]; then return 0; else return 1; fi
+  if eq "${navy_resetcache:-}" 'true' || not is present "${navy_done}"; then return 0; else return 1; fi
 }
 
-init_processor ()
+init_runner ()
 {
   exec 3>&2
   rm -r -f "${NAVY_RUN_PATH}/"*
@@ -785,12 +857,8 @@ init_processor ()
   kill -s USR1 "${navy_loggerpid}"
 }
 
-processor ()
+preprocess ()
 {
-  init_processor
-  parse_options "${@}"
-  prepare
-
   if not_cached
   then
     # TODO: use cache when failure: do not do compute the cache again
@@ -809,12 +877,46 @@ processor ()
     generate_sh
     stop_spin 'cache'
   fi
+}
+
+run ()
+{
   # current CLI:
   # CWD="${PWD}" ./navy
 
   # depending of parsed options:
   # - run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script
-  # - or use git to see dependencies as a tree
+  # - or use git to see dependencies as a tree ???
+  if eq "${navy_help:-}" 'true'
+  then
+    help
+  elif eq "${navy_version:-}" 'true'
+  then
+    version
+  else
+    IFS=' '
+    set -f
+    set -- ${navy_userrules:-}
+    set +f
+    IFS="${navy_ifs}"
+    while not eq "${#}" '0'
+    do
+      case " ${navy_rules:-} " in
+      ( *" ${1} "* ) : ;; #TODO
+      ( * ) unknown_option "${1}" ;;
+      esac
+      shift
+    done
+  fi
+}
+
+runner ()
+{
+  init_runner
+  parse_options "${@}"
+  prepare
+  preprocess
+  run
 }
 
 main ()
@@ -824,7 +926,7 @@ main ()
   navy_loggerpid="${!}"
   readonly navy_loggerpid
   trap "kill -s USR1 ${navy_loggerpid}; wait" EXIT INT TERM
-  { processor "${@}"; } 2>&1 | listener
+  { runner "${@}"; } 2>&1 | listener
 }
 
 main "${@}"
