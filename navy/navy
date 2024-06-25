@@ -251,7 +251,7 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
   print \"${navy_previous}\"\n\
 }\n\
 print \"\\\a\"\n@; :exit" \
-      | BC_LINE_LENGTH='0' command bc -q | command buffered_output
+      | BC_LINE_LENGTH='0' command bc -q | command stdoutbuf
   else
     command ts '%T' | command sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@@"
   fi
@@ -570,21 +570,25 @@ prepare_logging ()
     navy_curlopts="--verbose --stderr ${navy_buffer}"
   fi
 
-  local yqopts gomplateopts utilsopt
+  local yqopts gomplateopts findopts
   yqopts='--no-colors'
   if ge "${navy_loglevel}" "${navy_verblevel}"
   then
     gomplateopts="${gomplateopts:+"${gomplateopts}" }--verbose"
     yqopts="${yqopts:+"${yqopts}" }--verbose"
-    utilsopt='-v'
+    navy_utilsopts='-v'
+    findopts='-D exec -D search'
+
+    readonly navy_utilsopts
   fi
 
   if ge "${navy_loglevel}" "${navy_tracelevel}"
   then
-    opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'cp'
-    opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'mkdir'
-    opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'mv'
-    opts="${utilsopt:-}" pipe='send_verb' verbose_eval 'rm'
+    opts="${navy_utilsopts:-}" pipe='send_verb' verbose_eval 'cp'
+    opts="${navy_utilsopts:-}" pipe='send_verb' verbose_eval 'mkdir'
+    opts="${navy_utilsopts:-}" pipe='send_verb' verbose_eval 'mv'
+    opts="${navy_utilsopts:-}" pipe='send_verb' verbose_eval 'rm'
+    opts="${findopts:-}" pipe='send_verb' verbose_eval 'find'
     opts="${gomplateopts:-}" verbose_eval 'gomplate'
     opts="${yqopts:-}" verbose_eval 'yq'
   else
@@ -779,9 +783,14 @@ expand_datasources_into_main ()
 
 expand_anchors ()
 {
-  : TODO
-  # - build directories
-  # yq '.explode[] | .in as $in | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" + (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim) | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s '"test/" + .file' navy.yaml
+  # copy the filetree of the project
+  set -f
+  find "$(dirname -- "${navy_file}")" -mindepth 1 -not -path '*/.*' -type d -exec mkdir ${navy_utilsopts:-} -p "${navy_cache_anchors}/"{} \;
+  set +f
+
+  _yq '.explode[] | .in as $in | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" + (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim) | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s "\"${navy_cache_anchors}/\" + .file" "${navy_file}"
+
+  printf 'Preprocessing: Anchors exploded\n' | send_note
 }
 
 check_linear_includes ()

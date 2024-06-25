@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = std.builtin.OptimizeMode.ReleaseFast;
 
     const exe = b.addExecutable(.{
-        .name = "buffered_output",
+        .name = "stdoutbuf",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
