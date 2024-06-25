@@ -10,6 +10,28 @@ ARG ENTRYPOINTD_PATH
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
+#    cat << TEMPLATING > "${CHECK_ENTRYPOINT_PATH}"
+##! /bin/sh
+#
+#main ()
+#{
+#  set -eux
+#  if [ -d ${CHECK_ENTRYPOINTD_PATH} ]
+#  then
+#    for file in ${CHECK_ENTRYPOINTD_PATH}/*.sh
+#    do
+#      if [ -r "\${file}" ]
+#      then
+#        . "\${file}"
+#      fi
+#    done
+#    unset file
+#  fi
+#}
+#
+#main
+#TEMPLATING
+
 RUN <<END_OF_RUN
     set -eux
     export http_proxy="${HTTP_PROXY:-}"
@@ -36,27 +58,6 @@ main ()
 
 main
 TEMPLATING
-#    cat << TEMPLATING > "${CHECK_ENTRYPOINT_PATH}"
-##! /bin/sh
-#
-#main ()
-#{
-#  set -eux
-#  if [ -d ${CHECK_ENTRYPOINTD_PATH} ]
-#  then
-#    for file in ${CHECK_ENTRYPOINTD_PATH}/*.sh
-#    do
-#      if [ -r "\${file}" ]
-#      then
-#        . "\${file}"
-#      fi
-#    done
-#    unset file
-#  fi
-#}
-#
-#main
-#TEMPLATING
     check_compose="${CHECK_ENTRYPOINTD_PATH}/99compose.sh"
     _grep="$(command -v grep)"
     _hostname="$(command -v hostname)"
