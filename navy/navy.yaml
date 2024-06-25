@@ -111,11 +111,15 @@ datasources:
   - source: datasources/zig.yaml
     id: zig
 
-anchors:
-  - source: anchors/volumes.yaml
-    in:
-      - containers/create/virtual.yaml
-      - containers/create.yaml
+explode:
+  - anchors:
+      - anchors/volumes.yaml
+      - anchors/binds.yaml
+    in: containers/create/virtual.yaml
+  - anchors:
+      - anchors/volumes.yaml
+      - anchors/binds.yaml
+    in: containers/create.yaml
 
 include:
   - networks/create.yaml

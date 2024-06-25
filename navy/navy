@@ -686,16 +686,19 @@ prepare_cache ()
   navy_cache_info_json="${navy_cache_context}/info.json"
 
   navy_cache_datasources="${navy_cache}/datasources"
-  navy_cache_header="${navy_cache_datasources}/header.yaml"
+  navy_cache_header="${navy_cache_datasources}/header"
   navy_cache_dsescaped="${navy_cache_datasources}/escaped.yaml"
   navy_cache_dsgathered="${navy_cache_datasources}/gathered.yaml"
   navy_cache_dsrendered="${navy_cache_datasources}/rendered.yaml"
 
+  navy_cache_anchors="${navy_cache}/anchors"
+
   readonly navy_cache_exploded navy_cache_nods navy_cache_escaped navy_cache_rendered \
            navy_cache_context navy_cache_version_json navy_cache_info_json \
-           navy_cache_datasources navy_cache_header navy_cache_dsescaped navy_cache_dsgathered navy_cache_dsrendered
+           navy_cache_datasources navy_cache_header navy_cache_dsescaped navy_cache_dsgathered navy_cache_dsrendered \
+           navy_cache_anchors
 
-  mkdir -p "${navy_cache_context}" "${navy_cache_datasources}"
+  mkdir -p "${navy_cache_context}" "${navy_cache_datasources}" "${navy_cache_anchors}"
 
   printf 'Preprocessing: Cache prepared\n' | send_note
 }
@@ -723,37 +726,42 @@ define_context_datasources ()
 
 write_datasources_header ()
 {
-  printf '{{ $INFO := (datasource "info") }}{{ $VERSION := (datasource "version") }}' > "${navy_cache_header}"
-  _yq '.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"' "${navy_cache_exploded}" | tr -d '\n' >> "${navy_cache_header}"
+  _yq '[.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"] + ["{{ $INFO := (datasource \"info\") }}{{ $VERSION := (datasource \"version\") }}"] | join("")' "${navy_cache_exploded}" > "${navy_cache_header}"
   _yq '. |= del(.datasources)' "${navy_cache_exploded}" > "${navy_cache_nods}"
   printf 'Preprocessing: Datasources header written\n' | send_note
 }
 
 expand_datasources_into_datasources ()
 {
-  local datasources gathered_sha rendered_sha
+  local datasources gathered_sha rendered_sha i gathered escaped rendered
+  i='0'
   gathered_sha='0'
   rendered_sha='1'
   datasources="$(_yq '.datasources[].source' "${navy_cache_exploded}")"
 
   set -f
-  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_dsrendered}"
+  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_dsrendered}.${i}"
   set +f
 
   until eq "${gathered_sha}" "${rendered_sha}"
   do
-    cp -f "${navy_cache_dsrendered}" "${navy_cache_dsgathered}"
-    cp -f "${navy_cache_header}" "${navy_cache_dsescaped}"
+    i="$(( ${i} + 1 ))"
+    escaped="${navy_cache_dsescaped}.${i}"
+    gathered="${navy_cache_dsgathered}.${i}"
+    rendered="${navy_cache_dsrendered}.${i}"
+    cp -f "${navy_cache_dsrendered}.$(( ${i} - 1 ))" "${gathered}"
 
-    _yq '(.. | key = "{{ print \"" + key + "\" }}") |= .' "${navy_cache_dsgathered}" >> "${navy_cache_dsescaped}"
+    _yq '(.. | key = "{{ print \"" + key + "\" }}" | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${gathered}" > "${escaped}"
 
-    _gom --datasource "header=${navy_cache_dsgathered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_dsescaped}" --out "${navy_cache_dsrendered}"
+    _gom --datasource "header=file:///${gathered}?type=application/yaml" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${escaped}" --out "${rendered}"
 
-    gathered_sha="$(sha256sum "${navy_cache_dsgathered}")"
+    gathered_sha="$(sha256sum "${gathered}")"
     gathered_sha="${gathered_sha%% *}"
-    rendered_sha="$(sha256sum "${navy_cache_dsrendered}")"
+    rendered_sha="$(sha256sum "${rendered}")"
     rendered_sha="${rendered_sha%% *}"
   done
+
+  cp -f "${rendered}" "${navy_cache_dsrendered}"
 
   printf 'Preprocessing: Datasources expanded\n' | send_note
 }
@@ -771,39 +779,39 @@ expand_datasources_into_main ()
 
 expand_anchors ()
 {
-  :
-  # resolve 'anchors' keywords
-  #   - explode anchors and aliases
+  : TODO
+  # - build directories
+  # yq '.explode[] | .in as $in | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" + (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim) | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s '"test/" + .file' navy.yaml
 }
 
 check_linear_includes ()
 {
-  :
+  : TODO
   # check circular dependencies between includes
 }
 
 expand_datasources_into_includes ()
 {
-  :
+  : TODO
   # resolve datasources in included files (not for Requests & Commands)
 }
 
 expand_includes ()
 {
-  :
+  : TODO
   # resolve 'includes' keywords
 }
 
 expand_extends ()
 {
-  :
+  : TODO
   # change loop run and run[].loop into dictionnaries to:
   #   resolve 'extends' (replace them with anchors and aliases then use yq explode)
 }
 
 generate_sh ()
 {
-  :
+  : TODO
   # yq script to generate sh script.
 }
 

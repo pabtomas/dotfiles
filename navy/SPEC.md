@@ -3,7 +3,7 @@
 ### Keywords:
 
 1. [datasources](#datasources)
-2. [anchors](#anchors)
+2. [explode](#explode)
 3. [include](#include)
 4. [versions](#versions)
 5. [rules](#rules)
@@ -50,9 +50,9 @@
 12. [Datasource](#datasource-object)
     - [id](#datasourceid)
     - [source](#datasourcesource)
-13. [Anchor](#anchor-object)
-    - [source](#anchorsource)
-    - [in](#anchorin)
+13. [Explode](#explode-object)
+    - [in](#explodein)
+    - [anchors](#explodeanchors)
 
 ## `datasources`
 
@@ -71,21 +71,24 @@ datasources:
     id: my-second-datasource
 ```
 
-## `anchors`
+## `explode`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Anchors. In this list, you can define a YAML file and share its anchors across multiple files. More details on the Anchor available attributes into the [Anchor object section](#anchor-object).
+- **description**: List of Explode objects. In this list, you can define a YAML file and specify where its anchors are coming from. More details on the Explode available attributes into the [Explode object section](#explode-object).
 - **good to know**:
-    - The `anchors` keyword is processed after the `datasources` keyword when Navy is executed and before the `include` keyword. Its location is in your main Navy file.
+    - The `explode` keyword is processed after the `datasources` keyword when Navy is executed and before the `include` keyword. Its location is in your main Navy file.
 - **exemple**:
 ```yaml
-anchors:
-  - source: anchors/file.yaml
-    in:
-      - anchors-user1.yaml
-      - anchors-user2.yaml
+explode:
+  - anchors:
+      - anchors/file.yaml
+      - anchors/file2.yaml
+    in: anchors-user1.yaml
+  - anchors:
+      - anchors/file.yaml
+    in: anchors-user2.yaml
 ```
 
 ## `include`
@@ -95,7 +98,7 @@ anchors:
 - **default**: `[]`
 - **description**: List of files to include into the current file. Including files in another will merge their contents. Each file can contain its own `include` list.
 - **good to know**:
-    - The `include` keyword is processed after the `anchors` keyword when Navy is executed
+    - The `include` keyword is processed after the `explode` keyword when Navy is executed
 - **exemple**:
 ```yaml
 include:
@@ -579,18 +582,18 @@ rules:
     - ignored if used into the `Register.as` attribute.
 - **description**: The path (relative to your main Navy file) of the YAML file you want to use as a Datasource.
 
-## Anchor object
+## Explode object
 
-- **description**: A YAML file containing anchors definitions.
+- **description**: A YAML file using anchors definitions from other YAML files.
 - **exemples**:
-    - Here an exemple of an Anchor object used into the `anchors` list:
+    - Here an exemple of an Explode object used into the `explode` list:
     ```yaml
-    source: anchors/volumes.yaml
-    in:
-      - volumes/create.yaml
-      - volumes/cleanup.yaml
+    anchors:
+      - anchors/volumes.yaml
+      - anchors/bonds.yaml
+    in: volumes/create.yaml
     ```
-    Anchors from `anchors/volumes.yaml` will be visible into `volumes/create.yaml` and `volumes/cleanup.yaml`
+    anchors from `anchors/volumes.yaml` and `anchors/binds.yaml` will be visible into `volumes/create.yaml`
     - Here an exemple of the YAML file content containing anchors you want to share with other files:
     ```yaml
     ---
@@ -606,15 +609,15 @@ rules:
     ...
     ```
 
-### `Anchor.source`
+### `Explode.in`
 
 - **type**: string
 - **required**: true
-- **description**: The path (relative to your main Navy file) of the YAML file that defines anchors you want to use outside.
+- **description**: The path (relative to your main Navy file) of the YAML file that needs anchors from other YAML files.
 
-### `Anchor.in`
+### `Explode.anchors`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: A list of YAML filepaths (relative to your main Navy file) where anchors from the `Anchor.source` path will be visible.
+- **description**: A list of YAML filepaths (relative to your main Navy file) where anchors needed by the `Explode.in` file.

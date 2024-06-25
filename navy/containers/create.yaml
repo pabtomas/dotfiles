@@ -36,6 +36,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual._ }}'
           - id: '{{ $dependencies.containers.create.carpenter.relay }}'
+            query:
               name: '{{ $carpenterrelay.host }}'
               Hostname: '{{ $carpenterrelay.host }}'
               Image: '{{ $carpenterrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -60,6 +61,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual._ }}'
           - id: '{{ $dependencies.containers.create.carpenter.runner }}'
+            query:
               name: '{{ $carpenterrunner.host }}'
               Hostname: '{{ $carpenterrunner.host }}'
               Image: '{{ $carpenterrunner.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -74,6 +76,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual.isolated }}'
           - id: '{{ $dependencies.containers.create.controller }}'
+            query:
               name: '{{ $controller.host }}'
               Hostname: '{{ $controller.host }}'
               HostConfig:
@@ -92,6 +95,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual.docker }}'
           - id: '{{ $dependencies.containers.create.editor }}'
+            query:
               name: '{{ $editor.host }}'
               Hostname: '{{ $editor.host }}'
               HostConfig:
@@ -108,6 +112,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual.vim }}'
           - id: '{{ $dependencies.containers.create.explorer.shell }}'
+            query:
               name: '{{ $explorershell.host }}'
               Hostname: '{{ $explorershell.host }}'
               HostConfig:
@@ -120,6 +125,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual.shell }}'
           - id: '{{ $dependencies.containers.create.explorer.zig }}'
+            query:
               name: '{{ $explorerzig.host }}'
               Hostname: '{{ $explorerzig.host }}'
               HostConfig:
@@ -132,6 +138,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual.zig }}'
           - id: '{{ $dependencies.containers.create.jumper }}'
+            query:
               name: '{{ $jumper.host }}'
               Hostname: '{{ $jumper.host }}'
               Image: '{{ $jumper.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -196,6 +203,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual._ }}'
           - id: '{{ $dependencies.containers.create.listener }}'
+            query:
               name: '{{ $listener.host }}'
               Hostname: '{{ $listener.host }}'
               Image: '{{ $listener.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -224,6 +232,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual._ }}'
           - id: '{{ $dependencies.containers.create.socketproxy }}'
+            query:
               name: '{{ $socketproxy.host }}'
               Hostname: '{{ $socketproxy.host }}'
               Image: '{{ $socketproxy.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -260,6 +269,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual._ }}'
           - id: '{{ $dependencies.containers.create.registry }}'
+            query:
               name: '{{ $registry.host }}'
               Hostname: '{{ $registry.host }}'
               NetworkConfig:
@@ -269,6 +279,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual.registry }}'
           - id: '{{ $dependencies.containers.create.safedeposit }}'
+            query:
               name: '{{ $safedeposit.host }}'
               Hostname: '{{ $safedeposit.host }}'
               HostConfig:
@@ -282,11 +293,13 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual.pass }}'
           - id: '{{ $dependencies.containers.create.scholar }}'
+            query:
               name: '{{ $scholar.host }}'
               Hostname: '{{ $scholar.host }}'
             extends:
               - '{{ $dependencies.containers.create.virtual.man }}'
           - id: '{{ $dependencies.containers.create.spaceporn.relay }}'
+            query:
               name: '{{ $spacepornrelay.host }}'
               Hostname: '{{ $spacepornrelay.host }}'
               Image: '{{ $spacepornrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
@@ -311,6 +324,7 @@ rules:
             extends:
               - '{{ $dependencies.containers.create.virtual._ }}'
           - id: '{{ $dependencies.containers.create.spaceporn.runner }}'
+            query:
               name: '{{ $spacepornrunner.host }}'
               Hostname: '{{ $spacepornrunner.host }}'
               Entrypoint:
@@ -330,6 +344,7 @@ rules:
               - '{{ $dependencies.containers.create.virtual.gpu }}'
               - '{{ $dependencies.containers.create.virtual.isolated }}'
           - id: '{{ $dependencies.containers.create.xserver }}'
+            query:
               name: '{{ $xserver.host }}'
               Hostname: '{{ $xserver.host }}'
               Image: '{{ xserver.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
