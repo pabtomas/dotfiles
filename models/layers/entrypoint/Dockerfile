@@ -111,9 +111,10 @@ main ()
 
 main
 TEMPLATING
-    chmod 0700 "${ENTRYPOINT_PATH}" "${CHECK_ENTRYPOINT_PATH}" "${check_compose}"
+    chmod 0700 "${ENTRYPOINT_PATH}" "${check_compose}"
     unset http_proxy https_proxy
 END_OF_RUN
+    #chmod 0700 "${ENTRYPOINT_PATH}" "${CHECK_ENTRYPOINT_PATH}" "${check_compose}"
 
 ENV ENTRYPOINT_PATH ${ENTRYPOINT_PATH}
 ENTRYPOINT ${ENTRYPOINT_PATH}
