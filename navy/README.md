@@ -38,8 +38,9 @@ Navy was designed with 5 priorities in mind to solve all problems I had with Com
 ## How to start a Navy Project ?
 
 First of all, you need to describe your project with a `navy.yaml` file. Here the links you need to fill it:
-- [the Navy specification](https://github.com/tiawl/navy/blob/trunk/SPEC.md)
+- [the Navy specification](https://github.com/tiawl/navy/blob/trunk/doc/00_index.md)
 - [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
+- [the gomplate documentation](https://docs.gomplate.ca/) and [the GO template documentation](https://pkg.go.dev/text/template)
 
 ## How to use it ?
 

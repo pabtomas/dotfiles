@@ -1096,14 +1096,30 @@ check_deps ()
   coreutils='true' harden 'readlink'
   coreutils='true' harden 'rm'
 
-  harden 'curl'
-  harden 'yq'
-  harden 'gomplate'
-  harden 'ts'
   harden 'ansi2txt'
-  harden 'stdoutbuf'
-  harden 'parallel'
+  harden 'curl'
+  harden 'gomplate'
   harden 'lolcat'
+  harden 'parallel'
+  harden 'stdoutbuf'
+  harden 'ts'
+  harden 'yq'
+
+  # check it with: grep -o -E '\w+' navy | sort | uniq -c | sort -n
+  harden 'basename'
+  harden 'cat'
+  harden 'cut'
+  harden 'date'
+  harden 'dirname'
+  harden 'getconf'
+  harden 'grep'
+  harden 'kill'
+  harden 'mktemp'
+  harden 'sha256sum'
+  harden 'tr'
+  harden 'tty'
+  harden 'stty' || harden 'tput'
+  harden 'usleep'
 }
 
 init ()
