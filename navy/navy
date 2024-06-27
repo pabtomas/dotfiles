@@ -125,12 +125,11 @@ spins ()
 
   if not str empty "${1:-}"
   then
-    escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "@; s@$@'"${navy_erase_until_eol}"'\\n";@'
+    escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\.[0-9]\+ \)[0-2][0-9]:[0-5][0-9]:[0-5][0-9] '"${navy_rawlevel}"'@\1@; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "'"${navy_erase_until_eol}"'@; s@$@\\n";@'
     spin_title_fn='s@$@ define spin_title (index) { } 0@'
     command ts '%.s %T' | command busybox sed -e "${escape_for_bc_print};${spin_title_fn}" -e "${1}" -e "
       s@\(.*\); \(define spin_title (index) {\)@\1\n\2@;
       s@ [0-9]\+\$@;\n@;
-      s@^[0-9]\+print \"[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@print \"@;
       s@^[0-9]\+@scale = 0\ncnts = \0\n@;
       s@\$@\
 define spin_color (index)\n\
@@ -255,7 +254,7 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
 print \"\\\a\"\n@; :exit" \
       | BC_LINE_LENGTH='0' command bc -q | command stdoutbuf
   else
-    command ts '%T' | command busybox sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@@; s@\$@${navy_erase_until_eol}@"
+    command ts '%T' | command busybox sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@${navy_erase_until_eol}@"
   fi
 }
 
@@ -358,8 +357,7 @@ logger ()
 
   while str empty "${navy_loggerstop:-}" || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
   do
-    # TODO: logs_entries="$(command find "${navy_lines}" -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -mindepth 1 -maxdepth 2 -type f | command sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
-    logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_logs}" | command busybox head -n "${arg_max}")"
+    logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -type f | command sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
     spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % cat %)"
     logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
     if str empty "${navy_loggerstop:-}"; then _stop; fi
@@ -481,6 +479,7 @@ listener ()
 
 _send ()
 {
+  pfx="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${pfx}"
   if str empty "${cat:-}" && eq "${#}" '0'; then sed "s@^@${pfx}@"
   elif str empty "${cat:-}"; then printf -- "${pfx}%b\n" "${@}"
   elif is nonempty "${cat}"; then sed "s@^@${pfx}@" "${cat}"; fi 1>&3;
@@ -488,13 +487,13 @@ _send ()
 
 send () { if ge "${navy_loglevel}" "${lvl}"; then pfx="${lvl}" _send "${@}"; fi; }
 
-send_raw   () { pfx="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_rawlevel}"   _send "${@}"; }
-send_error () { pfx="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_errorlevel}" _send "${@}"; }
-send_warn  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_warnlevel}"   send "${@}"; }
-send_info  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_infolevel}"   send "${@}"; }
-send_note  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_notelevel}"   send "${@}"; }
-send_debug () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_debuglevel}"  send "${@}"; }
-send_verb  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_verblevel}"   send "${@}"; }
+send_raw   () { pfx="${navy_rawlevel}"   _send "${@}"; }
+send_error () { pfx="${navy_errorlevel}" _send "${@}"; }
+send_warn  () { lvl="${navy_warnlevel}"   send "${@}"; }
+send_info  () { lvl="${navy_infolevel}"   send "${@}"; }
+send_note  () { lvl="${navy_notelevel}"   send "${@}"; }
+send_debug () { lvl="${navy_debuglevel}"  send "${@}"; }
+send_verb  () { lvl="${navy_verblevel}"   send "${@}"; }
 
 send_flush () { printf '%s%s%s%s\n' "${navy_flushreq}" "${navy_reqsep}" "${pid}" "${navy_reqsep}" 1>&3; }
 
@@ -681,78 +680,86 @@ reset_buffer ()
 
 _curl ()
 {
-  local pid buffer out
+  local pid stderr out
   read -r pid < /proc/self/stat
   pid="${pid%% *}"
   reset_buffer "${pid}"
-  buffer="${navy_buffers}/${pid}/0"
+  stderr="${navy_buffers}/${pid}/0"
   readonly pid req
 
-  if not out="$(set -f; IFS=' '; curl ${navy_curlopts} --stderr "${buffer}" "${@}" "${req}")"
+  if not out="$(set -f; IFS=' '; curl ${navy_curlopts} --stderr "${stderr}" "${@}" "${req}")"
   then
-    if is present "${buffer}"
-    then
-      send_error "'${req}' HTTP response: ${out}"
-      cat="${buffer}" send_error
-    fi
+    buffered='true' send_error "'${req}' HTTP response: ${out}"
+    if is nonempty "${stderr}"
+    then buffered='true' cat="${stderr}" send_error; fi
+    send_flush
     return 1
   fi
 
   if not eq "${out%"${out#?}"}" '2'
-  then send_warn "'${req}' HTTP response: ${out}"; fi
-
-  if is nonempty "${buffer}"
   then
-    send_debug '[CURL] HTTP exchange between Navy and Docker Engine:'
-    cat="${buffer}" send_debug
-    send_debug '[CURL] JSON response from Docker Engine:'
-    xtrace_safe "command yq -M -p 'json' -o 'json' ${navy_curlresp} | send_debug"
+    buffered='true' send_warn "'${req}' HTTP response: ${out}"
+    send_flush
+  fi
+
+  if is nonempty "${stderr}"
+  then
+    buffered='true' send_debug '[CURL] HTTP exchange between Navy and Docker Engine:'
+    buffered='true' cat="${stderr}" send_debug
+    buffered='true' send_debug '[CURL] JSON response from Docker Engine:'
+    xtrace_safe "command yq -M -p 'json' -o 'json' ${navy_curlresp} | buffered='true' send_debug"
+    send_flush
   fi
 }
 
 _yq ()
 {
-  local pid buffer
+  local pid stderr
   read -r pid < /proc/self/stat
   pid="${pid%% *}"
   reset_buffer "${pid}"
-  buffer="${navy_buffers}/${pid}/0"
+  stderr="${navy_buffers}/${pid}/0"
   readonly pid
 
-  if not yq -M "${@}" 2> "${buffer}"
+  if not yq -M "${@}" 2> "${stderr}"
   then
-    send_error 'The YAML parser failed with this error:'
-    if is present "${buffer}"; then cat="${buffer}" send_error; fi
+    if is nonempty "${stderr}"
+    then
+      send_error 'The YAML parser failed with this error:'
+      cat="${stderr}" send_error
+    else send_error 'The YAML parser failed'; fi
     return 1
-  elif lt "${navy_loglevel}" "${navy_verblevel}" && is nonempty "${buffer}"
+  elif lt "${navy_loglevel}" "${navy_verblevel}" && is nonempty "${stderr}"
   then
     send_warn 'The YAML parser succeed but returns this warning:'
-    cat="${buffer}" send_warn
-  elif is nonempty "${buffer}"
-  then cat="${buffer}" send_verb; fi
+    cat="${stderr}" send_warn
+  elif is nonempty "${stderr}"
+  then cat="${stderr}" send_verb; fi
 }
 
 _gom ()
 {
-  local pid buffer
+  local pid stderr
   read -r pid < /proc/self/stat
   pid="${pid%% *}"
   reset_buffer "${pid}"
-  buffer="${navy_buffers}/${pid}/0"
+  stderr="${navy_buffers}/${pid}/0"
   readonly pid
 
-  if not gomplate "${@}" 2> "${buffer}"
+  if not gomplate "${@}" 2> "${stderr}"
   then
-    send_error 'The Go Template processor failed with this error:'
-    if is present "${buffer}"
-    then xtrace_safe "command yq -M -p 'json' -o 'json' ${buffer} | send_error"; fi
+    if is nonempty "${stderr}"
+    then
+      send_error 'The Go Template processor failed with this error:'
+      xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_error"
+    else send_error 'The Go Template processor failed'; fi
     return 1
-  elif lt "${navy_loglevel}" "${navy_verblevel}" && is nonempty "${buffer}"
+  elif lt "${navy_loglevel}" "${navy_verblevel}" && is nonempty "${stderr}"
   then
     send_warn 'The Go Template processor succeed but returns this warning:'
-    xtrace_safe "command yq -M -p 'json' -o 'json' ${buffer} | send_warn"
-  elif is nonempty "${buffer}"
-  then xtrace_safe "command yq -M -p 'json' -o 'json' ${buffer} | send_verb"; fi
+    xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_warn"
+  elif is nonempty "${stderr}"
+  then xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_verb"; fi
 }
 
 build_request ()
@@ -1005,7 +1012,7 @@ add_logger_reqchars ()
   navy_verblevel='6'
   navy_spinreq='S'
   navy_stopreq='K'
-  navy_bufreq='p'
+  navy_bufreq='B'
   navy_flushreq='F'
   navy_reqsep='/'
   readonly navy_rawlevel navy_errorlevel navy_warnlevel navy_infolevel navy_notelevel navy_debuglevel navy_tracelevel navy_verblevel \
