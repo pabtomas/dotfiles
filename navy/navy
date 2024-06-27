@@ -255,7 +255,7 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
 print \"\\\a\"\n@; :exit" \
       | BC_LINE_LENGTH='0' command bc -q | command stdoutbuf
   else
-    command ts '%T' | command busybox sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@@"
+    command ts '%T' | command busybox sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${navy_rawlevel}@@; s@\$@${navy_erase_until_eol}@"
   fi
 }
 
@@ -361,7 +361,7 @@ logger ()
     # TODO: logs_entries="$(command find "${navy_lines}" -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -mindepth 1 -maxdepth 2 -type f | command sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
     logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_logs}" | command busybox head -n "${arg_max}")"
     spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % cat %)"
-    logs "${logs_entries}" "${spins_entries}" | spins "${spins_entries}" 1>&2
+    logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
     if str empty "${navy_loggerstop:-}"; then _stop; fi
   done
 
@@ -372,41 +372,37 @@ logger ()
 #################################   LISTENER   ###############################
 ##############################################################################
 
-stop_spin_req ()
+stop_req ()
 {
-  command mv "${navy_aliases}/${1#K}" "${navy_stops}/${2}"
+  command mv "${navy_aliases}/${1#"${navy_stopreq}"}" "${navy_stops}/${2}"
 }
 
-start_spin_req ()
+spin_req ()
 {
-  local line alias ts i
-  line="${1#S/}"
+  local line i alias ts
+  line="${1#"${navy_spinreq}${navy_reqsep}"}"
   i="${2}"
-  alias="${line%%/*}"
-  line="${line#*/}"
+  alias="${line%%"${navy_reqsep}"*}"
+  line="${line#*"${navy_reqsep}"}"
   ts="$(command date '+%s%N')"
   printf '
 s@^\(.*\) \(define spin_title (index) {\)\([^}]*\)} \([0-9]*\)$@\\1 spins_nts [\\4] = %s; \\2\\3if (index == \\4) print "%s"; } \\4@;
 
-td%d;
-:d%d;
-s@9\(_*\)$@_\\1@;
-td%d;
+                          t d%d;
+:d%d; s@9\(_*\)$@_\\1@;   t d%d;
 
-s@ \(_\+\)$@ 1\\1@; tn%d;
-s@8\(_*\)$@9\\1@; tn%d;
-s@7\(_*\)$@8\\1@; tn%d;
-s@6\(_*\)$@7\\1@; tn%d;
-s@5\(_*\)$@6\\1@; tn%d;
-s@4\(_*\)$@5\\1@; tn%d;
-s@3\(_*\)$@4\\1@; tn%d;
-s@2\(_*\)$@3\\1@; tn%d;
-s@1\(_*\)$@2\\1@; tn%d;
-s@0\(_*\)$@1\\1@; tn%d;
+      s@ \(_\+\)$@ 1\\1@; t n%d;
+      s@8\(_*\)$@9\\1@;   t n%d;
+      s@7\(_*\)$@8\\1@;   t n%d;
+      s@6\(_*\)$@7\\1@;   t n%d;
+      s@5\(_*\)$@6\\1@;   t n%d;
+      s@4\(_*\)$@5\\1@;   t n%d;
+      s@3\(_*\)$@4\\1@;   t n%d;
+      s@2\(_*\)$@3\\1@;   t n%d;
+      s@1\(_*\)$@2\\1@;   t n%d;
+      s@0\(_*\)$@1\\1@;   t n%d;
 
-:n%d;
-s@_\(_*\)$@0\\1@;
-tn%d;
+:n%d; s@_\(_*\)$@0\\1@;   t n%d;
 ' "${ts%???}" "$(printf '%s' "${line}" | command busybox sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${navy_spins}/${i}"
   command ln -f -s "${navy_spins}/${i}" "${navy_aliases}/${alias}"
 }
@@ -414,13 +410,12 @@ tn%d;
 buffer_req ()
 {
   local line alias i dir
-  line="${1#p/}"
+  line="${1#"${navy_bufreq}${navy_reqsep}"}"
   i="${2}"
-  alias="${line%%/*}"
-  line="${line#*/}"
+  alias="${line%%"${navy_reqsep}"*}"
+  line="${line#*"${navy_reqsep}"}"
   if is sym "${navy_aliases}/${alias}"
-  then
-    dir="$(command readlink -f "${navy_aliases}/${alias}")"
+  then dir="$(command readlink -f "${navy_aliases}/${alias}")"
   else
     dir="$(command mktemp -d -p "${navy_lines}")"
     command ln -f -s "${dir}" "${navy_aliases}/${alias}"
@@ -431,10 +426,10 @@ buffer_req ()
 flush_req ()
 {
   local line alias i dir
-  line="${1#f/}"
+  line="${1#"${navy_flushreq}${navy_reqsep}"}"
   i="${2}"
-  alias="${line%%/*}"
-  line="${line#*/}"
+  alias="${line%%"${navy_reqsep}"*}"
+  line="${line#*"${navy_reqsep}"}"
   dir="$(command readlink -f "${navy_aliases}/${alias}")"
   command mv -f "${dir}" "${navy_lines}/${i}"
   command rm -f "${navy_aliases}/${alias}"
@@ -442,7 +437,7 @@ flush_req ()
 
 logging_req ()
 {
-  printf '%s\n' "${1}" > "${navy_lines}/${2}"
+  printf '%s\n' "${1}" | command ansi2txt > "${navy_lines}/${2}"
 }
 
 unknown_req ()
@@ -459,22 +454,23 @@ empty_req ()
 listener ()
 {
   local line i
-  until is sym "${navy_tty}" \
-    &&  is dir "${navy_lines}" \
-    &&  is dir "${navy_spins}" \
-    &&  is dir "${navy_aliases}" \
-    &&  is dir "${navy_stops}"; do command usleep 10; done
-  command ansi2txt | while read -r line
+  until is sym "${navy_tty}"     && \
+        is dir "${navy_lines}"   && \
+        is dir "${navy_spins}"   && \
+        is dir "${navy_aliases}" && \
+        is dir "${navy_stops}"; do command usleep 10; done
+  # TODO: remove loop with sed + bc script ???
+  while read -r line
   do
     i="$(( ${i:--1} + 1 ))"
     if str empty "${line}"; then empty_req "${i}"; continue; fi
     case "${line}" in
-    ( [-0123456]* ) logging_req "${line}" "${i}" ;;
-    ( S/* ) start_spin_req "${line}" "${i}" ;;
-    ( K* )  stop_spin_req "${line}" "${i}" ;;
-    ( p/* ) buffer_req "${line}" "${i}" ;;
-    ( f/* ) flush_req "${line}" "${i}" ;;
-    ( * )   unknown_req "${line}" "${i}" ;;
+    ( ["${navy_errorlevel}"-"${navy_verblevel}${navy_rawlevel}"]* ) logging_req "${line}" "${i}" ;;
+    ( "${navy_spinreq}${navy_reqsep}"* )  spin_req "${line}" "${i}"    ;;
+    ( "${navy_stopreq}"* )                stop_req "${line}" "${i}"    ;;
+    ( "${navy_bufreq}${navy_reqsep}"* )   buffer_req "${line}" "${i}"  ;;
+    ( "${navy_flushreq}${navy_reqsep}"* ) flush_req "${line}" "${i}"   ;;
+    ( * ) unknown_req "${line}" "${i}" ;;
     esac
   done
 }
@@ -485,41 +481,42 @@ listener ()
 
 _send ()
 {
-  if str empty "${cat:-}" && str empty "${1:-}"; then sed "s@^@${pfx}@"
-  elif str empty "${cat:-}"; then IFS="${navy_nl}"; printf -- "${pfx}%b\n" ${1}
+  if str empty "${cat:-}" && eq "${#}" '0'; then sed "s@^@${pfx}@"
+  elif str empty "${cat:-}"; then printf -- "${pfx}%b\n" "${@}"
   elif is nonempty "${cat}"; then sed "s@^@${pfx}@" "${cat}"; fi 1>&3;
 }
 
 send () { if ge "${navy_loglevel}" "${lvl}"; then pfx="${lvl}" _send "${@}"; fi; }
 
-send_raw   () { pfx="${navy_rawlevel}"   _send "${@}"; }
-send_error () { pfx="${navy_errorlevel}" _send "${@}"; }
-send_warn  () { lvl="${navy_warnlevel}"   send "${@}"; }
-send_info  () { lvl="${navy_infolevel}"   send "${@}"; }
-send_note  () { lvl="${navy_notelevel}"   send "${@}"; }
-send_debug () { lvl="${navy_debuglevel}"  send "${@}"; }
-send_verb  () { lvl="${navy_verblevel}"   send "${@}"; }
+send_raw   () { pfx="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_rawlevel}"   _send "${@}"; }
+send_error () { pfx="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_errorlevel}" _send "${@}"; }
+send_warn  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_warnlevel}"   send "${@}"; }
+send_info  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_infolevel}"   send "${@}"; }
+send_note  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_notelevel}"   send "${@}"; }
+send_debug () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_debuglevel}"  send "${@}"; }
+send_verb  () { lvl="${buffered:+"${navy_bufreq}${navy_reqsep}${pid}${navy_reqsep}"}${navy_verblevel}"   send "${@}"; }
 
-start_spin () { printf 'S/%s/%s\n' "${1}" "${2}" 1>&3; }
-stop_spin () { printf 'K%s\n' "${1}" 1>&3; }
+send_flush () { printf '%s%s%s%s\n' "${navy_flushreq}" "${navy_reqsep}" "${pid}" "${navy_reqsep}" 1>&3; }
+
+send_spin ()  { printf '%s%s%s%s%s\n' "${navy_spinreq}" "${navy_reqsep}" "${1}" "${navy_reqsep}" "${2}" 1>&3; }
+send_stop  () { printf '%s%s\n' "${navy_stopreq}" "${1}" 1>&3; }
 
 help ()
 {
-  send_raw "\
-A Docker Engine orchestrator
-\0
-Usage:
-  navy [options] [rules]
-\0
-Rules:
-  TODO
-\0
-Options:
-  -f, --file file       navy main file (default: ./navy.yaml)
-  -r, --reset-cache     resets the cache
-  -v                    verbosity, reusable (default: 3, max: 7)
-  -h, --help            help for navy
-  -V, --version         version for navy"
+  send_raw 'A Docker Engine orchestrator'                                     \
+           ''                                                                 \
+           'Usage:'                                                           \
+           '  navy [options] [rules]'                                         \
+           ''                                                                 \
+           'Rules:'                                                           \
+           '  TODO'                                                           \
+           ''                                                                 \
+           'Options:'                                                         \
+           '  -f, --file file       navy main file (default: ./navy.yaml)'    \
+           '  -r, --reset-cache     resets the cache'                         \
+           '  -v                    verbosity, reusable (default: 3, max: 7)' \
+           '  -h, --help            help for navy'                            \
+           '  -V, --version         version for navy'
   return 1
 }
 
@@ -935,9 +932,7 @@ preprocess ()
   if not_cached
   then
     # TODO: use cache when failure: do not do compute the cache again
-    start_spin 'cache' 'Preprocessing ...'
-    start_spin 'ooo' 'Preprocessing 2 ...'
-    start_spin 'kkk' 'Preprocessing 3 ...'
+    send_spin 'cache' 'Preprocessing ...'
     prepare_cache
     explode_main_file
     define_context_datasources
@@ -950,9 +945,7 @@ preprocess ()
     expand_includes
     expand_extends
     generate_sh
-    stop_spin 'cache'
-    stop_spin 'ooo'
-    stop_spin 'kkk'
+    send_stop 'cache'
   fi
 }
 
@@ -1000,6 +993,25 @@ runner ()
 ###################################   MAIN   #################################
 ##############################################################################
 
+add_logger_reqchars ()
+{
+  navy_rawlevel='-'
+  navy_errorlevel='0'
+  navy_warnlevel='1'
+  navy_infolevel='2'
+  navy_notelevel='3'
+  navy_debuglevel='4'
+  navy_tracelevel='5'
+  navy_verblevel='6'
+  navy_spinreq='S'
+  navy_stopreq='K'
+  navy_bufreq='p'
+  navy_flushreq='F'
+  navy_reqsep='/'
+  readonly navy_rawlevel navy_errorlevel navy_warnlevel navy_infolevel navy_notelevel navy_debuglevel navy_tracelevel navy_verblevel \
+           navy_spinreq navy_stopreq navy_bufreq navy_flushreq navy_reqsep
+}
+
 init ()
 {
   set -eu
@@ -1020,16 +1032,9 @@ init ()
   navy_tty="${NAVY_RUN_PATH}/tty"
   navy_buffers="${NAVY_RUN_PATH}/buffers"
   navy_done="${NAVY_RUN_PATH}/done"
-  navy_rawlevel='-'
-  navy_errorlevel='0'
-  navy_warnlevel='1'
-  navy_infolevel='2'
-  navy_notelevel='3'
-  navy_debuglevel='4'
-  navy_tracelevel='5'
-  navy_verblevel='6'
-  readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_stops navy_aliases navy_tty navy_buffers navy_done navy_ifs navy_nl \
-           navy_rawlevel navy_errorlevel navy_warnlevel navy_infolevel navy_notelevel navy_debuglevel navy_tracelevel navy_verblevel
+  readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_stops navy_aliases navy_tty navy_buffers navy_done navy_ifs navy_nl
+
+  add_logger_reqchars
 
   PS4="${navy_tracelevel}"
 
