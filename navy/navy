@@ -295,8 +295,8 @@ logger ()
 
   while str empty "${navy_loggerstop:-}" || command find "${navy_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -type f | read dummy
   do
-    logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -type f | command sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
-    spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % cat %)"
+    logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
+    spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % cat %)"
     logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
     if str empty "${navy_loggerstop:-}"; then _stop; fi
   done
