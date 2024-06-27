@@ -687,7 +687,7 @@ _curl ()
   stderr="${navy_buffers}/${pid}/0"
   readonly pid req
 
-  if not out="$(set -f; IFS=' '; curl ${navy_curlopts} --stderr "${stderr}" "${@}" "${req}")"
+  if not out="$(set -f; curl ${navy_curlopts} --stderr "${stderr}" "${@}" "${req}")"
   then
     buffered='true' send_error "'${req}' HTTP response: ${out}"
     if is nonempty "${stderr}"
@@ -838,9 +838,7 @@ expand_datasources_into_datasources ()
   datasources="$(_yq '[.datasources[].source] | join(" ")' "${navy_cache_exploded}")"
 
   set -f
-  IFS=' '
   _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_dsrendered}.${i}"
-  IFS="${navy_ifs}"
   set +f
 
   until eq "${gathered_sha}" "${rendered_sha}"
