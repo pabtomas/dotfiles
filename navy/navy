@@ -1048,12 +1048,12 @@ harden ()
   for bin in ${PATH}
   do
     case "${busybox:+busybox}${coreutils:+coreutils}${gnu:+gnu}" in
-    ( 'busybox'|'coreutils' )
+    ( busybox|coreutils )
       if can exec "${bin}/${1}" && \
          is sym "${bin}/${1}" && \
          eq "$(command basename -- "$(command readlink -f "${bin}/${1}")")" "${busybox:+busybox}${coreutils:+coreutils}"
       then flag='true'; break; fi ;;
-    ( 'gnu' )
+    ( gnu )
       if can exec "${bin}/${1}" && \
          eq "$(command basename -- "$(command readlink -f "${bin}/${1}")")" "${1}"
       then flag='true'; break; fi ;;
