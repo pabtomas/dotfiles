@@ -37,24 +37,30 @@ Navy was designed with 5 priorities in mind to solve all problems I had with Com
 
 ## How to start a Navy Project ?
 
-TODO
+First of all, you need to describe your project with a `navy.yaml` file (you can overwrite this name with navy options). Here the links you need to fill it:
+- [the Navy specification](https://github.com/tiawl/navy/blob/trunk/SPEC.md)
+- [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
 
 ## How to use it ?
 
 As stated above, Navy was designed to be used in a container.
 
-### Why should you run Navy into a container ?
+### Why run Navy into a container ?
 
 1. Navy was written in Shell to keep it minimal: no compilation process, extra libraries or anything else a real programing language could need. The extra cost of this design decision is an environment sensitivity. Because Navy does not manage harsh environments (because it could lead to unmaintable code), the solution was to write a dedicated image.
-2. Navy needs access to your Docker socket to communicate with the Docker Engine. However the Docker socket can only be root accessed. So running Navy on your computer means running it as root. **And running scripts written by others as root on your system if the most unsafe thing you can do**. Again: the solution is to isolate the Navy process on its container.
+2. Navy needs access to your Docker socket to communicate with the Docker Engine. However the Docker socket can only be root accessed. So running Navy on your laptop means running it as root. **And running scripts written by others as root on your system if the most unsafe thing you can do**. Again: the solution is to isolate the Navy process on its container.
 3. You can use the Navy dedicated image as a stage for your own images. It could be very useful if you want to extend Navy features for your own needs or/and to share it with others.
 
-### How to run Navy in its dedicated box ?
+### How to run Navy ?
 
 Here the command line you can use to run Navy in a safe environment:
 ```
 docker run --rm -t -v .:/workspace:ro -v ~/.cache/navy:/var/cache/navy:rw tiawl/navy:0.1.0
 ```
+
+### Can I run Navy out of its dedicated box ?
+
+Even if it is not recommended, yes you can. If you are convinced that you need Navy ouf of its container follow steps described in its [Dockerfile](https://github.com/tiawl/navy/blob/trunk/Dockerfile).
 
 ### How to run Navy with a remote docker socket ?
 
@@ -63,6 +69,8 @@ If you use Navy in its container, add this option to the `docker run` command:
 -e DOCKER_HOST=${DOCKER_HOST}
 ```
 
+If not, export `DOCKER_HOST` in your environment.
+
 ### What did you plan for the next releases ? How can I contribute to this project ?
 
-You probably noticed that Navy does not have a first major release. Why ? Because Navy is ready to be used but is not mature. To go further, Navy needs feedbacks for its implemented features. Expect breaking changes in the next releases. With time, Navy will be more stable. If you want to contribute and see Navy growing, use Navy for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Navy better. So do not hesitate to open an issue: this is the best way to contribute.
+You probably noticed that Navy does not have a first major release. Why ? Because Navy is ready to be used but is not mature. To go further, Navy needs feedbacks for its implemented features. Expect breaking changes in the next releases. With time, Navy will be more stable. If you want to contribute and see Navy growing, use Navy for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Navy better. So do not hesitate to open an issue: this is currently the best way to contribute.

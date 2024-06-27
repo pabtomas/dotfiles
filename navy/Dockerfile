@@ -1,12 +1,3 @@
-# NOTES:
-# * `GNU bc` is faster than `busybox bc`
-# * `GNU find` is really faster than `busybox find`
-# * `GNU head` is slower than `busybox head`
-# * `GNU sed` is a little bit slower than `busybox sed`
-# * `GNU sort` is really faster than `busybox sort`
-# * `GNU tr` and `busybox tr` are equivalent
-# * `xargs` is slow, avoid it when possible. If not, `GNU xargs` is slower than `busybox xargs`.
-
 FROM alpine:3.20
 
 COPY ./utils /tmp/
@@ -20,7 +11,7 @@ RUN <<END_OF_RUN
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
 
-    apk add --no-cache dash coreutils findutils moreutils bc curl yq gomplate
+    apk add --no-cache dash coreutils findutils moreutils bc curl yq gomplate parallel
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing lolcat
 
     apk add --no-cache --virtual __install_ansi2txt cmake git build-base gcc
@@ -46,6 +37,9 @@ RUN <<END_OF_RUN
       zig build -p /usr/local
     done
     rm -rf "${tmp_xz}" "${tmp_zig}" /usr/local/bin/lib /usr/local/bin/zig /tmp/utils
+
+    ln -s -f "$(command -v busybox)" "$(command -v head)"
+    ln -s -f "$(command -v busybox)" "$(command -v xargs)"
 
     mkdir -p /navy
     unset http_proxy https_proxy

@@ -23,6 +23,7 @@ can ()
 {
   case "${1}" in
   ( read )  if [ -r "${2}" ]; then return 0; else return 1; fi ;;
+  ( exec )  if [ -x "${2}" ]; then return 0; else return 1; fi ;;
   ( * ) ;;
   esac
 }
@@ -38,69 +39,6 @@ str ()
 ##############################################################################
 ##################################   LOGGER   ################################
 ##############################################################################
-
-add_style ()
-{
-  navy_esc="$(printf '\033')"
-  navy_white="${navy_esc}[38;5;15m"
-  navy_red="${navy_esc}[38;5;204m"
-  navy_yellow="${navy_esc}[38;5;228m"
-  navy_green="${navy_esc}[38;5;120m"
-  navy_cyan="${navy_esc}[38;5;045m"
-  navy_blue="${navy_esc}[38;5;069m"
-  navy_purple="${navy_esc}[38;5;135m"
-  navy_pink="${navy_esc}[38;5;207m"
-  navy_bold="${navy_esc}[1m"
-  navy_erase_until_eol="${navy_esc}[K"
-  navy_sol="${navy_esc}[G"
-  navy_previous="${navy_esc}[F"
-  navy_hidecursor="${navy_esc}[?25l"
-  navy_showcursor="${navy_esc}[?25h"
-  navy_reset="${navy_esc}[m"
-
-  navy_rb196="${navy_esc}[38;5;196m"
-  navy_rb202="${navy_esc}[38;5;202m"
-  navy_rb208="${navy_esc}[38;5;208m"
-  navy_rb214="${navy_esc}[38;5;214m"
-  navy_rb220="${navy_esc}[38;5;220m"
-  navy_rb226="${navy_esc}[38;5;226m"
-  navy_rb190="${navy_esc}[38;5;190m"
-  navy_rb154="${navy_esc}[38;5;154m"
-  navy_rb118="${navy_esc}[38;5;118m"
-  navy_rb82="${navy_esc}[38;5;082m"
-  navy_rb46="${navy_esc}[38;5;046m"
-  navy_rb47="${navy_esc}[38;5;047m"
-  navy_rb48="${navy_esc}[38;5;048m"
-  navy_rb49="${navy_esc}[38;5;049m"
-  navy_rb50="${navy_esc}[38;5;050m"
-  navy_rb51="${navy_esc}[38;5;051m"
-  navy_rb45="${navy_esc}[38;5;045m"
-  navy_rb39="${navy_esc}[38;5;039m"
-  navy_rb33="${navy_esc}[38;5;033m"
-  navy_rb27="${navy_esc}[38;5;027m"
-  navy_rb21="${navy_esc}[38;5;021m"
-  navy_rb57="${navy_esc}[38;5;057m"
-  navy_rb93="${navy_esc}[38;5;093m"
-  navy_rb128="${navy_esc}[38;5;129m"
-  navy_rb165="${navy_esc}[38;5;165m"
-  navy_rb201="${navy_esc}[38;5;201m"
-  navy_rb200="${navy_esc}[38;5;200m"
-  navy_rb199="${navy_esc}[38;5;199m"
-  navy_rb198="${navy_esc}[38;5;198m"
-  navy_rb197="${navy_esc}[38;5;197m"
-
-  readonly navy_white navy_red navy_yellow navy_green navy_cyan navy_blue navy_purple navy_pink \
-           navy_bold \
-           navy_erase_until_eol navy_sol navy_previous \
-           navy_hidecursor navy_showcursor \
-           navy_reset \
-           navy_rb196 navy_rb202 navy_rb208 navy_rb214 navy_rb220 navy_rb226 \
-           navy_rb190 navy_rb154 navy_rb118 navy_rb82 navy_rb46 navy_rb47 \
-           navy_rb48 navy_rb49 navy_rb50 navy_rb51 navy_rb45 navy_rb39 \
-           navy_rb33 navy_rb27 navy_rb21 navy_rb57 navy_rb93 navy_rb128 \
-           navy_rb165 navy_rb201 navy_rb200 navy_rb199 navy_rb198 navy_rb197
-}
-
 add_time ()
 {
   navy_s_per_min='60'
@@ -273,7 +211,7 @@ progress_bar ()
 cols ()
 {
   local tty
-  tty="$(command readlink -f "${navy_tty}")"
+  tty="$(command coreutils --coreutils-prog=readlink -f "${navy_tty}")"
   COLUMNS="$(command stty -F "${tty}" size | command cut -d ' ' -f 2)"
   COLUMNS="${COLUMNS:-"$(command tput cols)"}"
 }
@@ -315,7 +253,7 @@ logs ()
                :smaller;
                   :exit;" ${1}
 
-    command rm -f ${1}
+    command coreutils --coreutils-prog=rm -f ${1}
     set +f
   elif not str empty "${2:-}"
   then
@@ -332,7 +270,7 @@ _stop ()
   if not str empty "${entries:-}"
   then
     set -f
-    command rm -f ${entries} $(command readlink -f ${entries})
+    command coreutils --coreutils-prog=rm -f ${entries} $(command coreutils --coreutils-prog=readlink -f ${entries})
     set +f
   fi
 }
@@ -341,7 +279,6 @@ logger ()
 {
   trap 'navy_loggerstart=1' USR1
 
-  add_style
   add_time
 
   local field_logs field_spins logs_entries spins_entries arg_max
@@ -355,7 +292,7 @@ logger ()
 
   printf '%b' "${navy_hidecursor}"
 
-  while str empty "${navy_loggerstop:-}" || command find "${navy_lines}" -mindepth 1 -maxdepth 1 -type f | read dummy
+  while str empty "${navy_loggerstop:-}" || command find "${navy_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -type f | read dummy
   do
     logs_entries="$(command find "${navy_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${navy_lines}/[0-9]*" -type f | command sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
     spins_entries="$(command find "${navy_spins}" -mindepth 1 -maxdepth 1 -type f | command sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % cat %)"
@@ -372,7 +309,7 @@ logger ()
 
 stop_req ()
 {
-  command mv "${navy_aliases}/${1#"${navy_stopreq}"}" "${navy_stops}/${2}"
+  command coreutils --coreutils-prog=mv "${navy_aliases}/${1#"${navy_stopreq}"}" "${navy_stops}/${2}"
 }
 
 spin_req ()
@@ -402,7 +339,7 @@ s@^\(.*\) \(define spin_title (index) {\)\([^}]*\)} \([0-9]*\)$@\\1 spins_nts [\
 
 :n%d; s@_\(_*\)$@0\\1@;   t n%d;
 ' "${ts%???}" "$(printf '%s' "${line}" | command busybox sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${navy_spins}/${i}"
-  command ln -f -s "${navy_spins}/${i}" "${navy_aliases}/${alias}"
+  command coreutils --coreutils-prog=ln -f -s "${navy_spins}/${i}" "${navy_aliases}/${alias}"
 }
 
 buffer_req ()
@@ -413,10 +350,10 @@ buffer_req ()
   alias="${line%%"${navy_reqsep}"*}"
   line="${line#*"${navy_reqsep}"}"
   if is sym "${navy_aliases}/${alias}"
-  then dir="$(command readlink -f "${navy_aliases}/${alias}")"
+  then dir="$(command coreutils --coreutils-prog=readlink -f "${navy_aliases}/${alias}")"
   else
     dir="$(command mktemp -d -p "${navy_lines}")"
-    command ln -f -s "${dir}" "${navy_aliases}/${alias}"
+    command coreutils --coreutils-prog=ln -f -s "${dir}" "${navy_aliases}/${alias}"
   fi
   printf '%s\n' "${line}" > "${dir}/${i}"
 }
@@ -428,9 +365,9 @@ flush_req ()
   i="${2}"
   alias="${line%%"${navy_reqsep}"*}"
   line="${line#*"${navy_reqsep}"}"
-  dir="$(command readlink -f "${navy_aliases}/${alias}")"
-  command mv -f "${dir}" "${navy_lines}/${i}"
-  command rm -f "${navy_aliases}/${alias}"
+  dir="$(command coreutils --coreutils-prog=readlink -f "${navy_aliases}/${alias}")"
+  command coreutils --coreutils-prog=mv -f "${dir}" "${navy_lines}/${i}"
+  command coreutils --coreutils-prog=rm -f "${navy_aliases}/${alias}"
 }
 
 logging_req ()
@@ -513,7 +450,8 @@ help ()
            'Options:'                                                         \
            '  -f, --file file       navy main file (default: ./navy.yaml)'    \
            '  -r, --reset-cache     resets the cache'                         \
-           '  -v                    verbosity, reusable (default: 3, max: 7)' \
+           '  -q                    reduce log level, reusable 2 times'       \
+           '  -v                    increase log level, reusable 4 times'     \
            '  -h, --help            help for navy'                            \
            '  -V, --version         version for navy'
   return 1
@@ -554,9 +492,24 @@ file_option ()
   navy_file="${1}"
 }
 
+q_option ()
+{
+  if eq "${navy_ignore_qopt:-}" 'true'; then return 0; fi
+  if le "${navy_loglevel:-"${navy_infolevel}"}" "${navy_infolevel}" && gt "${navy_loglevel:-"${navy_infolevel}"}" "${navy_errorlevel}"
+  then navy_loglevel="$(( ${navy_loglevel:-"${navy_infolevel}"} - 1 ))"
+  elif eq "${navy_loglevel:-"${navy_infolevel}"}" "${navy_errorlevel}"
+  then navy_loglevel="${navy_warnlevel}" send_warn '-q can not be used more than 2 times'; navy_ignore_qopt='true'
+  else send_error '-q and -v options can not be combined'; return 1; fi
+}
+
 v_option ()
 {
-  navy_loglevel="$(( ${navy_loglevel:--1} + 1 ))"
+  if eq "${navy_ignore_vopt:-}" 'true'; then return 0; fi
+  if ge "${navy_loglevel:-"${navy_infolevel}"}" "${navy_infolevel}" && lt "${navy_loglevel:-"${navy_infolevel}"}" "${navy_verblevel}"
+  then navy_loglevel="$(( ${navy_loglevel:-"${navy_infolevel}"} + 1 ))"
+  elif eq "${navy_loglevel:-"${navy_infolevel}"}" "${navy_verblevel}"
+  then send_warn '-v can not be used more than 4 times'; navy_ignore_vopt='true'
+  else send_error '-q and -v options can not be combined'; return 1; fi
 }
 
 add_rule ()
@@ -577,7 +530,7 @@ parse_options ()
     case "${1}" in
 
     # Handle '-abc' the same as '-a -bc' for short-form no-arg options
-    ( -[hrvV]?* )
+    ( -[hrqvV]?* )
       IFS=' '
       set -f
       set -- "${1%"${1#??}"}" "-${1#??}" $(shift; printf '%s\n' "${@}")
@@ -605,6 +558,7 @@ parse_options ()
 
     ( -r|--reset-cache ) reset_cache_option        ;;
     ( -f|--file )        file_option "${2}"; shift ;;
+    ( -q )               q_option                  ;;
     ( -v )               v_option                  ;;
     ( -h|--help )        help_option               ;;
     ( -V|--version )     version_option            ;;
@@ -621,23 +575,20 @@ prepare_curl ()
   navy_curlopts="${navy_curlopts:+"${navy_curlopts:-}" }--silent --write-out %{http_code} --output ${navy_curlresp}"
 
   if str empty "${DOCKER_HOST:-}"
-  then
-    navy_curlopts="${navy_curlopts:+"${navy_curlopts}" }--unix-socket /var/run/docker.sock"
-  else
-    navy_curlreqheader="${navy_curlreqheader}/${DOCKER_HOST#*://}"
-  fi
+  then navy_curlopts="${navy_curlopts:+"${navy_curlopts}" }--unix-socket /var/run/docker.sock"
+  else navy_curlreqheader="${navy_curlreqheader}/${DOCKER_HOST#*://}"; fi
 
   readonly navy_curlreqheader navy_curlresp navy_curlopts
 }
 
 verbose_mode ()
 {
-  cp () { { set +x; } 2> /dev/null; if not command cp -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  ln () { { set +x; } 2> /dev/null; if not command ln -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  mkdir () { { set +x; } 2> /dev/null; if not command mkdir -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  mv () { { set +x; } 2> /dev/null; if not command mv -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  readlink () { { set +x; } 2> /dev/null; if not command readlink -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  rm () { { set +x; } 2> /dev/null; if not command rm -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  cp () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=cp -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  ln () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=ln -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  mkdir () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=mkdir -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  mv () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=mv -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  readlink () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=readlink -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  rm () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=rm -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
   find () { { set +x; } 2> /dev/null; if not command find -D exec -D search "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
   yq () { { set +x; } 2> /dev/null; if not command yq -v -M "${@}"; then return 1; fi; set -x; }
   gomplate () { { set +x; } 2> /dev/null; if not command gomplate -V "${@}"; then return 1; fi; set -x; }
@@ -674,8 +625,8 @@ xtrace_safe ()
 
 reset_buffer ()
 {
-  rm -rf "${navy_buffers}/${1}"
-  mkdir -p "${navy_buffers}/${1}"
+  coreutils --coreutils-prog=rm -rf "${navy_buffers}/${1}"
+  coreutils --coreutils-prog=mkdir -p "${navy_buffers}/${1}"
 }
 
 _curl ()
@@ -796,7 +747,7 @@ prepare_cache ()
            navy_cache_datasources navy_cache_header navy_cache_dsescaped navy_cache_dsgathered navy_cache_dsrendered \
            navy_cache_anchors
 
-  mkdir -p "${navy_cache_context}" "${navy_cache_datasources}" "${navy_cache_anchors}"
+  coreutils --coreutils-prog=mkdir -p "${navy_cache_context}" "${navy_cache_datasources}" "${navy_cache_anchors}"
 
   send_note 'Preprocessing: Cache prepared'
 }
@@ -810,14 +761,14 @@ explode_main_file ()
 define_context_datasources ()
 {
   req='/version' get
-  mv -f "${navy_curlresp}" "${navy_cache_version_json}"
+  coreutils --coreutils-prog=mv -f "${navy_curlresp}" "${navy_cache_version_json}"
 
   navy_apiversion="$(_gom --datasource "version=${navy_cache_version_json}" --in '{{ (datasource "version").ApiVersion }}')"
   req='/version' get
-  mv -f "${navy_curlresp}" "${navy_cache_version_json}"
+  coreutils --coreutils-prog=mv -f "${navy_curlresp}" "${navy_cache_version_json}"
 
   req='/info' get
-  mv -f "${navy_curlresp}" "${navy_cache_info_json}"
+  coreutils --coreutils-prog=mv -f "${navy_curlresp}" "${navy_cache_info_json}"
 
   send_note 'Preprocessing: Context datasources defined'
 }
@@ -847,7 +798,7 @@ expand_datasources_into_datasources ()
     escaped="${navy_cache_dsescaped}.${i}"
     gathered="${navy_cache_dsgathered}.${i}"
     rendered="${navy_cache_dsrendered}.${i}"
-    cp -f "${navy_cache_dsrendered}.$(( ${i} - 1 ))" "${gathered}"
+    coreutils --coreutils-prog=cp -f "${navy_cache_dsrendered}.$(( ${i} - 1 ))" "${gathered}"
 
     _yq '(.. | key = "{{ print \"" + key + "\" }}" | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${gathered}" > "${escaped}"
 
@@ -859,14 +810,14 @@ expand_datasources_into_datasources ()
     rendered_sha="${rendered_sha%% *}"
   done
 
-  cp -f "${rendered}" "${navy_cache_dsrendered}"
+  coreutils --coreutils-prog=cp -f "${rendered}" "${navy_cache_dsrendered}"
 
   send_note 'Preprocessing: Datasources expanded'
 }
 
 expand_datasources_into_main ()
 {
-  cp -f "${navy_cache_header}" "${navy_cache_escaped}"
+  coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_escaped}"
 
   # do not process templates into rules[].run[]
   _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}"))' "${navy_cache_nods}" >> "${navy_cache_escaped}"
@@ -879,7 +830,7 @@ expand_anchors ()
 {
   # copy the filetree of the project
   set -f
-  find "$(dirname -- "${navy_file}")" -mindepth 1 -not -path '*/.*' -type d -exec mkdir ${navy_mkdiropts:-} -p "${navy_cache_anchors}/"{} \;
+  find "$(dirname -- "${navy_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${navy_mkdiropts:-} -p "${navy_cache_anchors}/"{} \;
   set +f
 
   _yq '.explode[] | .in as $in | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" + (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim) | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s "\"${navy_cache_anchors}/\" + .file" "${navy_file}"
@@ -926,9 +877,9 @@ not_cached ()
 init_runner ()
 {
   exec 3>&2
-  rm -r -f "${NAVY_RUN_PATH}/"*
-  mkdir -p "${navy_cache}" "${navy_buffers}" "${navy_logs}" "${navy_lines}" "${navy_spins}" "${navy_stops}" "${navy_aliases}"
-  ln -s -f "$(tty)" "${navy_tty}"
+  coreutils --coreutils-prog=rm -r -f "${NAVY_RUN_PATH}/"*
+  coreutils --coreutils-prog=mkdir -p "${navy_cache}" "${navy_buffers}" "${navy_logs}" "${navy_lines}" "${navy_spins}" "${navy_stops}" "${navy_aliases}"
+  coreutils --coreutils-prog=ln -s -f "$(tty)" "${navy_tty}"
   kill -s USR1 "${navy_loggerpid}"
 }
 
@@ -960,7 +911,7 @@ run ()
   # CWD="${PWD}" ./navy
 
   # depending of parsed options:
-  # - run sh script with: seq 1 10 | xargs --max-args 1 --max-procs "$(( $(nproc) + 1 ))" ./script
+  # - run sh script with GNU parallel
   # - or use git to see dependencies as a tree ???
   if eq "${navy_help:-}" 'true'
   then
@@ -998,6 +949,74 @@ runner ()
 ###################################   MAIN   #################################
 ##############################################################################
 
+add_style ()
+{
+  navy_esc="$(printf '\033')"
+  navy_white="${navy_esc}[38;5;15m"
+  navy_red="${navy_esc}[38;5;204m"
+  navy_orange="${navy_esc}[38;5;215m"
+  navy_yellow="${navy_esc}[38;5;228m"
+  navy_green="${navy_esc}[38;5;120m"
+  navy_cyan="${navy_esc}[38;5;045m"
+  navy_blue="${navy_esc}[38;5;069m"
+  navy_purple="${navy_esc}[38;5;135m"
+  navy_pink="${navy_esc}[38;5;207m"
+  navy_bold="${navy_esc}[1m"
+  navy_erase_until_eol="${navy_esc}[K"
+  navy_sol="${navy_esc}[G"
+  navy_previous="${navy_esc}[F"
+  navy_hidecursor="${navy_esc}[?25l"
+  navy_showcursor="${navy_esc}[?25h"
+  navy_reset="${navy_esc}[m"
+
+  navy_rb196="${navy_esc}[38;5;196m"
+  navy_rb202="${navy_esc}[38;5;202m"
+  navy_rb208="${navy_esc}[38;5;208m"
+  navy_rb214="${navy_esc}[38;5;214m"
+  navy_rb220="${navy_esc}[38;5;220m"
+  navy_rb226="${navy_esc}[38;5;226m"
+  navy_rb190="${navy_esc}[38;5;190m"
+  navy_rb154="${navy_esc}[38;5;154m"
+  navy_rb118="${navy_esc}[38;5;118m"
+  navy_rb82="${navy_esc}[38;5;082m"
+  navy_rb46="${navy_esc}[38;5;046m"
+  navy_rb47="${navy_esc}[38;5;047m"
+  navy_rb48="${navy_esc}[38;5;048m"
+  navy_rb49="${navy_esc}[38;5;049m"
+  navy_rb50="${navy_esc}[38;5;050m"
+  navy_rb51="${navy_esc}[38;5;051m"
+  navy_rb45="${navy_esc}[38;5;045m"
+  navy_rb39="${navy_esc}[38;5;039m"
+  navy_rb33="${navy_esc}[38;5;033m"
+  navy_rb27="${navy_esc}[38;5;027m"
+  navy_rb21="${navy_esc}[38;5;021m"
+  navy_rb57="${navy_esc}[38;5;057m"
+  navy_rb93="${navy_esc}[38;5;093m"
+  navy_rb128="${navy_esc}[38;5;129m"
+  navy_rb165="${navy_esc}[38;5;165m"
+  navy_rb201="${navy_esc}[38;5;201m"
+  navy_rb200="${navy_esc}[38;5;200m"
+  navy_rb199="${navy_esc}[38;5;199m"
+  navy_rb198="${navy_esc}[38;5;198m"
+  navy_rb197="${navy_esc}[38;5;197m"
+
+  readonly navy_white navy_red navy_orange navy_yellow navy_green navy_cyan navy_blue navy_purple navy_pink \
+           navy_bold \
+           navy_erase_until_eol navy_sol navy_previous \
+           navy_hidecursor navy_showcursor \
+           navy_reset \
+           navy_rb196 navy_rb202 navy_rb208 navy_rb214 navy_rb220 navy_rb226 \
+           navy_rb190 navy_rb154 navy_rb118 navy_rb82 navy_rb46 navy_rb47 \
+           navy_rb48 navy_rb49 navy_rb50 navy_rb51 navy_rb45 navy_rb39 \
+           navy_rb33 navy_rb27 navy_rb21 navy_rb57 navy_rb93 navy_rb128 \
+           navy_rb165 navy_rb201 navy_rb200 navy_rb199 navy_rb198 navy_rb197
+}
+
+fatal ()
+{
+  printf '%s %b%bFATAL%b %s\n' "$(date '+%T')" "${navy_orange}" "${navy_bold}" "${navy_reset}" "${1}"
+}
+
 add_logger_reqchars ()
 {
   navy_rawlevel='-'
@@ -1015,6 +1034,73 @@ add_logger_reqchars ()
   navy_reqsep='/'
   readonly navy_rawlevel navy_errorlevel navy_warnlevel navy_infolevel navy_notelevel navy_debuglevel navy_tracelevel navy_verblevel \
            navy_spinreq navy_stopreq navy_bufreq navy_flushreq navy_reqsep
+}
+
+harden ()
+{
+  local bin flag
+
+  IFS=':'
+  set -f
+  for bin in ${PATH}
+  do
+    case "${busybox:+busybox}${coreutils:+coreutils}${gnu:+gnu}" in
+    ( 'busybox'|'coreutils' )
+      if can exec "${bin}/${1}" && \
+         is sym "${bin}/${1}" && \
+         eq "$(command basename -- "$(command readlink -f "${bin}/${1}")")" "${busybox:+busybox}${coreutils:+coreutils}"
+      then flag='true'; break; fi ;;
+    ( 'gnu' )
+      if can exec "${bin}/${1}" && \
+         eq "$(command basename -- "$(command readlink -f "${bin}/${1}")")" "${1}"
+      then flag='true'; break; fi ;;
+    ( * )
+      if can exec "${bin}/${1}"; then flag='true'; break; fi ;;
+    esac
+  done
+  set +f
+  IFS="${navy_ifs}"
+
+  if not eq "${flag:-}" 'true'
+  then fatal "${busybox:+Busybox }${coreutils:+Coreutils }${gnu:+GNU }${1} not found"; return 1; fi
+}
+
+check_deps ()
+{
+  # GNU `bc` is faster than Busybox `bc`, have unicode & escape sequences support
+  gnu='true' harden 'bc'
+
+  # GNU `find` is really faster than Busybox `find` and have debug options
+  gnu='true' harden 'find'
+
+  # Coreutils `head` is slower than Busybox `head`
+  busybox='true' harden 'head'
+
+  # GNU `sed` is a little bit slower than Busybox `sed`
+  busybox='true' harden 'sed'
+
+  # Coreutils `sort` is really faster than Busybox `sort`
+  coreutils='true' harden 'sort'
+
+  # `xargs` is slow, avoid it when possible. If not, GNU `xargs` is slower than Busybox `xargs`.
+  busybox='true' harden 'xargs'
+
+  # Coreutils `cp`, `ln`, `mkdir`, `mv`, `readlink` and `rm` have verbose option
+  coreutils='true' harden 'cp'
+  coreutils='true' harden 'ln'
+  coreutils='true' harden 'mkdir'
+  coreutils='true' harden 'mv'
+  coreutils='true' harden 'readlink'
+  coreutils='true' harden 'rm'
+
+  harden 'curl'
+  harden 'yq'
+  harden 'gomplate'
+  harden 'ts'
+  harden 'ansi2txt'
+  harden 'stdoutbuf'
+  harden 'parallel'
+  harden 'lolcat'
 }
 
 init ()
@@ -1040,10 +1126,13 @@ init ()
   readonly NAVY_CACHE_PATH NAVY_RUN_PATH navy_sha navy_cache navy_logs navy_lines navy_spins navy_stops navy_aliases navy_tty navy_buffers navy_done navy_ifs navy_nl
 
   add_logger_reqchars
+  add_style
+
+  check_deps
 
   PS4="${navy_tracelevel}"
 
-  mkdir -p "${NAVY_CACHE_PATH}" "${NAVY_RUN_PATH}"
+  coreutils --coreutils-prog=mkdir -p "${NAVY_CACHE_PATH}" "${NAVY_RUN_PATH}"
 }
 
 main ()
