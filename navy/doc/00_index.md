@@ -2,9 +2,9 @@
 
 ## The traditional hello-word
 
-1. [the code](https://github.com/tiawl/navy/blob/trunk/doc/01_hello-world.md#)
-2. [explaination](https://github.com/tiawl/navy/blob/trunk/doc/01_hello-world.md#)
-3. [going further](https://github.com/tiawl/navy/blob/trunk/doc/01_hello-world.md#)
+1. [the code](https://github.com/tiawl/MyWhaleFleet/blob/navy/navy/doc/01_hello-world.md#the-code)
+2. [explaination](https://github.com/tiawl/navy/blob/trunk/doc/01_hello-world.md#what-does-it-mean-)
+3. [going further](https://github.com/tiawl/navy/blob/trunk/doc/01_hello-world.md#going-further)
 
 ## Specification
 
