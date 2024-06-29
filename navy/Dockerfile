@@ -11,7 +11,7 @@ RUN <<END_OF_RUN
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
 
-    apk add --no-cache dash coreutils findutils moreutils bc curl yq gomplate parallel
+    apk add --no-cache dash coreutils findutils moreutils bc curl yq gomplate parallel ripgrep
     apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing lolcat
 
     apk add --no-cache --virtual __install_ansi2txt cmake git build-base gcc

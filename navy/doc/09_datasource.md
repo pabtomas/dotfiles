@@ -11,7 +11,7 @@
     source: datasources/message.yaml
     id: message
     ```
-    The `datasources/message.yaml` YAML file will be loaded as Datasource object. You can refer this Datasource as the `$message` variable into your GO templates. It will be visible into all your Requests & Commands.
+    The `datasources/message.yaml` YAML file will be loaded as Datasource object. You can refer this Datasource as the `$message` variable into your Golang templates. It will be visible into all your Requests & Commands.
     - Here an exemple of the YAML file content used by the Datasource object shown above:
     ```yaml
     ---
@@ -38,13 +38,13 @@
       as:
         id: registercontainersjson
     ```
-    The result of the `/containers/json` Request will be store into the `registercontainersjson` variable into your GO templates. It will be visible into all your Requests & Commands.
+    The result of the `/containers/json` Request will be store into the `registercontainersjson` variable into your Golang templates. It will be visible into all your Requests & Commands.
 
 ### `Datasource.id`
 
 - **type**: string
 - **required**: true
-- **description**: An **alphanumeric** string allowing you to access your Datasource in a more readable way in your Go templates.
+- **description**: An **alphanumeric** string allowing you to access your Datasource in a more readable way in your Golang templates.
 
 ### `Datasource.source`
 

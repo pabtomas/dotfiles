@@ -5,7 +5,7 @@
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Datasources available in GO templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**. More details on the Datasource available attributes into the [Datasource object section](#datasource-object).
+- **description**: List of Datasources available in Golang templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**. More details on the Datasource available attributes into the [Datasource object section](#datasource-object).
 - **good to know**:
     - The `datasources` keyword is the first thing Navy will processed when executed, its location can not be outside your main Navy file.
 - **exemple**:

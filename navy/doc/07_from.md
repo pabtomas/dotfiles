@@ -27,4 +27,4 @@
 
 - **type**: string
 - **required**: true
-- **description**: A GO template filter returning a list of Body objects. Each element of this list will be used to run a matching Docker Engine API Request.
+- **description**: A Golang template filter returning a list of Body objects. Each element of this list will be used to run a matching Docker Engine API Request.

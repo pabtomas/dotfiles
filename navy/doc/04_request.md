@@ -72,7 +72,7 @@ A Request has also an optional attribute: `if`.
 - **type**: From
 - **required**: false
 - **default**: `""`
-- **description**: A From object. This object will be evaluated 2 times. The first one as a GO template. The result of this first resolution is a list. Each element of this list will be evaluated as an element of a `Request.loop` keyword.
+- **description**: A From object. This object will be evaluated 2 times. The first one as a Golang template. The result of this first resolution is a list. Each element of this list will be evaluated as an element of a `Request.loop` keyword.
 
 ### `Request.if`
 

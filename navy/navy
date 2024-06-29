@@ -284,8 +284,8 @@ logger ()
   add_time
 
   local field_logs field_spins logs_entries spins_entries arg_max
-  field_logs="$(printf '%s//\n' "${navy_lines}" | command grep -o '/' | command grep -c '/')"
-  field_spins="$(printf '%s//\n' "${navy_spins}" | command grep -o '/' | command grep -c '/')"
+  field_logs="$(printf '%s//\n' "${navy_lines}" | command rg -o '/' | command rg -c '/')"
+  field_spins="$(printf '%s//\n' "${navy_spins}" | command rg -o '/' | command rg -c '/')"
   arg_max="$(( $(command getconf ARG_MAX) / 4 - 1 ))"
 
   while str empty "${navy_loggerstart:-}"; do command usleep 10; done
@@ -707,13 +707,13 @@ _gom ()
   then
     if is nonempty "${stderr}"
     then
-      send_error 'The Go Template processor failed with this error:'
+      send_error 'The Golang Template processor failed with this error:'
       xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_error"
-    else send_error 'The Go Template processor failed'; fi
+    else send_error 'The Golang Template processor failed'; fi
     return 1
   elif lt "${navy_loglevel}" "${navy_verblevel}" && is nonempty "${stderr}"
   then
-    send_warn 'The Go Template processor succeed but returns this warning:'
+    send_warn 'The Golang Template processor succeed but returns this warning:'
     xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_warn"
   elif is nonempty "${stderr}"
   then xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_verb"; fi
@@ -789,27 +789,29 @@ write_datasources_header ()
 
 expand_datasources_into_datasources ()
 {
-  local datasources before_sha after_sha
+  local datasources last shas
   datasources="$(_yq '[.datasources[].source] | join(" ")' "${navy_cache_exploded}")"
 
   set -f
   _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_datasources}/0.yaml"
   set +f
 
-  until eq "${before_sha:-0}" "${after_sha:-1}"
+  last="$(sha256sum "${navy_cache_datasources}/0.yaml")"
+
+  until eq "${shas:+"${shas##* }"}" "${last}"
   do
     i="$(( ${i:-0} + 1 ))"
-    coreutils --coreutils-prog=cp -f "${navy_cache_datasources}/$(( ${i} - 1 )).yaml" "${navy_cache_datasources}/${i}.yq.yaml"
+    shas="${shas:+"${shas}" }${last}"
 
-    _yq '(.. | key = "{{ print \"" + key + "\" }}" | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${navy_cache_datasources}/${i}.yq.yaml" > "${navy_cache_datasources}/${i}.gom.yaml"
+    _yq '(.. | key = "{{ print \"" + key + "\" }}" | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${navy_cache_datasources}/$(( ${i} - 1 )).yaml" > "${navy_cache_datasources}/${i}.gom.yaml"
+    _gom --datasource "header=${navy_cache_datasources}/$(( ${i} - 1 )).yaml" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_datasources}/${i}.gom.yaml" --out "${navy_cache_datasources}/${i}.yaml"
 
-    _gom --datasource "header=${navy_cache_datasources}/${i}.yq.yaml" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_datasources}/${i}.gom.yaml" --out "${navy_cache_datasources}/${i}.yaml"
-
-    before_sha="$(sha256sum "${navy_cache_datasources}/${i}.yq.yaml")"
-    before_sha="${before_sha%% *}"
-    after_sha="$(sha256sum "${navy_cache_datasources}/${i}.yaml")"
-    after_sha="${after_sha%% *}"
+    last="$(sha256sum "${navy_cache_datasources}/${i}.yaml")"
+    last="${last%% *}"
   done
+
+  if rg -q "^\s*'[^']+'\s*:\s*'[^'{]*\{\{[^'}]*\}\}.*'" "${navy_cache_datasources}/${i}.yaml"
+  then send_error 'Circular Golang template reference detected into datasources'; return 1; fi
 
   coreutils --coreutils-prog=cp -f "${navy_cache_datasources}/${i}.yaml" "${navy_cache_dsrendered}"
 
@@ -839,6 +841,7 @@ explode_extern_anchors ()
   send_note 'Preprocessing: Extern anchors exploded'
 }
 
+# TODO: refactoring
 resolve_includes ()
 {
   if eq "${#}" '0'
@@ -1123,6 +1126,7 @@ check_deps ()
   harden 'lolcat'
   harden 'parallel'
   harden 'stdoutbuf'
+  harden 'rg'
   harden 'ts'
   harden 'yq'
 
@@ -1132,7 +1136,6 @@ check_deps ()
   harden 'date'
   harden 'dirname'
   harden 'getconf'
-  harden 'grep'
   harden 'kill'
   harden 'mktemp'
   harden 'sha256sum'
@@ -1169,7 +1172,12 @@ init ()
 
   check_deps
 
+  GOMPLATE_LEFT_DELIM='{{'
+  GOMPLATE_RIGHT_DELIM='}}'
   PS4="${navy_tracelevel}"
+
+  readonly GOMPLATE_LEFT_DELIM GOMPLATE_RIGHT_DELIM PS4
+  export GOMPLATE_LEFT_DELIM GOMPLATE_RIGHT_DELIM
 
   coreutils --coreutils-prog=mkdir -p "${NAVY_CACHE_PATH}" "${NAVY_RUN_PATH}"
 }
