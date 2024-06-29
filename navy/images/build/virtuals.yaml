@@ -11,21 +11,21 @@ rules:
             query:
               nocache: false
               buildargs: |
-              {
-                "HTTP_PROXY":"{{ if (and (has .Env "http_proxy") (.Env.http_proxy)) }}{{ .Env.http_proxy }}{{ else if (and (has .Env "HTTP_PROXY") (.Env.HTTP_PROXY)) }}{{ .Env.HTTP_PROXY }}{{ end }}",
-                "HTTPS_PROXY":"{{ if (and (has .Env "https_proxy") (.Env.https_proxy)) }}{{ .Env.https_proxy }}{{ else if (and (has .Env "HTTPS_PROXY") (.Env.HTTPS_PROXY)) }}{{ .Env.HTTPS_PROXY }}{{ end }}"
-              }
+                {
+                  "HTTP_PROXY":"{{ if (and (has .Env "http_proxy") (.Env.http_proxy)) }}{{ .Env.http_proxy }}{{ else if (and (has .Env "HTTP_PROXY") (.Env.HTTP_PROXY)) }}{{ .Env.HTTP_PROXY }}{{ end }}",
+                  "HTTPS_PROXY":"{{ if (and (has .Env "https_proxy") (.Env.https_proxy)) }}{{ .Env.https_proxy }}{{ else if (and (has .Env "HTTPS_PROXY") (.Env.HTTPS_PROXY)) }}{{ .Env.HTTPS_PROXY }}{{ end }}"
+                }
               dockerfile: Dockerfile
           - id: '{{ $dependencies.images.build.virtual.entrypoint }}'
             virtual: true
             query:
               buildargs: |
-              {
-                "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.sh }}",
-                "CHECK_ENTRYPOINTD_PATH":"{{ $entrypoint.path.check.d }}",
-                "ENTRYPOINT_PATH":"{{ $entrypoint.path.entrypoint.sh }}",
-                "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}"
-              }
+                {
+                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.sh }}",
+                  "CHECK_ENTRYPOINTD_PATH":"{{ $entrypoint.path.check.d }}",
+                  "ENTRYPOINT_PATH":"{{ $entrypoint.path.entrypoint.sh }}",
+                  "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}"
+                }
             context: '{{ $all.path.dockerfiles }}/{{ $entrypoint.id }}'
             extends:
               - '{{ $dependencies.images.build.virtual._ }}'
@@ -33,9 +33,9 @@ rules:
             virtual: true
             query:
               buildargs: |
-              {
-                "ENTRYPOINT_LAYER_IMG":"{{ $entrypointalpine.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
-              }
+                {
+                  "ENTRYPOINT_LAYER_IMG":"{{ $entrypointalpine.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+                }
             depends_on:
               - '{{ $dependencies.images.build.alpine.entrypoint }}'
             extends:
@@ -44,9 +44,9 @@ rules:
             virtual: true
             query:
               buildargs: |
-              {
-                "BASH_LAYER_IMG":"{{ $bash.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
-              }
+                {
+                  "BASH_LAYER_IMG":"{{ $bash.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+                }
             depends_on:
               - '{{ $dependencies.images.build.bash._ }}'
             extends:
@@ -55,9 +55,9 @@ rules:
             virtual: true
             query:
               buildargs: |
-              {
-                "WORKSPACES_LAYER_IMG":"{{ $workspaces.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
-              }
+                {
+                  "WORKSPACES_LAYER_IMG":"{{ $workspaces.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+                }
             depends_on:
               - '{{ $dependencies.images.build.workspaces }}'
             extends:
@@ -66,9 +66,9 @@ rules:
             virtual: true
             query:
               buildargs: |
-              {
-                "SSHD_LAYER_IMG":"{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
-              }
+                {
+                  "SSHD_LAYER_IMG":"{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+                }
             depends_on:
               - '{{ $dependencies.images.build.sshd }}'
             extends:
@@ -77,9 +77,9 @@ rules:
             virtual: true
             query:
               buildargs: |
-              {
-                "GIT_LAYER_IMG":"{{ $git.yaml").image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
-              }
+                {
+                  "GIT_LAYER_IMG":"{{ $git.yaml").image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+                }
             depends_on:
               - '{{ $dependencies.images.build.git }}'
             extends:
@@ -88,9 +88,9 @@ rules:
             virtual: true
             query:
               buildargs: |
-              {
-                "NGINX_LAYER_IMG":"{{ $nginx.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
-              }
+                {
+                  "NGINX_LAYER_IMG":"{{ $nginx.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+                }
             depends_on:
               - '{{ $dependencies.images.build.nginx }}'
             extends:
@@ -99,13 +99,13 @@ rules:
             virtual: true
             query:
               buildargs: |
-              {
-                "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
-                "SOCAT_LAYER_IMG":"{{ $socat.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
-                "TMP_XSERVER_SOCKETS_PATH":"{{ $xserver.path.sockets }}",
-                "XSERVER_IP":"{{ $xserver.ip }}",
-                "XSERVER_PORT":"{{ $xserver.port }}"
-              }
+                {
+                  "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
+                  "SOCAT_LAYER_IMG":"{{ $socat.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
+                  "TMP_XSERVER_SOCKETS_PATH":"{{ $xserver.path.sockets }}",
+                  "XSERVER_IP":"{{ $xserver.ip }}",
+                  "XSERVER_PORT":"{{ $xserver.port }}"
+                }
             context: '{{ $all.path.dockerfiles }}/{{ $relay.id }}'
             depends_on:
               - '{{ $dependencies.images.build.socat }}'

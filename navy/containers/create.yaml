@@ -1,7 +1,7 @@
 ---
 
 include:
-  - containers/create/virtual.yaml
+  - create/virtual.yaml
 
 rules:
   - id: '{{ $rules.up }}'

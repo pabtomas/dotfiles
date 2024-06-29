@@ -821,7 +821,7 @@ expand_datasources_into_main ()
   coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_escaped}"
 
   # do not process templates into rules[].run[]
-  _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= "{{ print \"" + (. | sub("\"", "\\\"")) + "\" }}"))' "${navy_cache_nods}" >> "${navy_cache_escaped}"
+  _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${navy_cache_nods}" >> "${navy_cache_escaped}"
   _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
 
   send_note "Preprocessing: Datasources expanded into ${navy_file}"
@@ -841,23 +841,28 @@ explode_extern_anchors ()
 
 resolve_includes ()
 {
-  if eq "${#}" '0'; then coreutils --coreutils-prog=cp -f "${navy_cache_rendered}" "${navy_cache_include}/navy.yaml"; fi
+  if eq "${#}" '0'
+  then
+    coreutils --coreutils-prog=rm -rf "${navy_cache_include}/"*
+    coreutils --coreutils-prog=cp -f "${navy_cache_rendered}" "${navy_cache_include}/navy.yaml"
+  fi
+
   # use `set` instead of `local` for recursive functions is safer
   set -- "${1:-"${navy_cache_include}/navy.yaml"}" "$(dirname -- "${1:-"${navy_cache_include}/navy.yaml"}")" "${PWD}"
   cd -- "${2}"
   set -- "${1}" "$(coreutils --coreutils-prog=realpath -s --relative-to="${navy_cache_include}" "${2}")" "${3}"
-  local file
+  local file yq_in
   for file in $(_yq '.include[]' "${1}")
   do
     coreutils --coreutils-prog=mkdir -p "$(dirname -- "${file}")"
     if is present "${navy_cache_include}/${2}/${file}"
     then send_error "Circular dependency detected into ${1} for ${file}"; return 1; fi
-    if is present "${navy_cache_explode}/${file}"
-    then coreutils --coreutils-prog=cp -f "${navy_cache_explode}/${file}" "${navy_cache_include}/${2}/${file}"
-    else coreutils --coreutils-prog=cp -f "$(dirname -- "${navy_file_abs}")/${2}/${file}" "${navy_cache_include}/${2}/${file}.yq"; fi
+    if is present "${navy_cache_explode}/${2}/${file}"
+    then yq_in="${navy_cache_explode}/${2}/${file}"
+    else yq_in="$(dirname -- "${navy_file_abs}")/${2}/${file}"; fi
     coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_include}/${2}/${file}.gom"
 
-    _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= "{{ print \"" + (. | sub("\"", "\\\"")) + "\" }}"))' "${navy_cache_include}/${2}/${file}.yq" >> "${navy_cache_include}/${2}/${file}.gom"
+    _yq 'explode(.) | @yaml | @yamld | (.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${yq_in}" >> "${navy_cache_include}/${2}/${file}.gom"
     _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_include}/${2}/${file}.gom" --out "${navy_cache_include}/${2}/${file}"
 
     resolve_includes "${navy_cache_include}/${2}/${file}"
@@ -865,22 +870,6 @@ resolve_includes ()
     send_note "Preprocessing: Datasources expanded into ${2}/${file}"
   done
   cd "${3}"
-  # use recursive DFS
-  # for file in include:
-  #   if file already in /var/cache/navy/includes:
-  #     ERROR: circular dependencies detected
-  #   if file already in /var/cache/navy/anchors:
-  #     copy it from /var/cache/navy/anchors
-  #   explode anchors: TODO
-  #   expand datasources except in rules[].run[]
-  #   if include directive found:
-  #     DFS on include
-}
-
-expand_datasources_into_includes ()
-{
-  : TODO
-  # resolve datasources in included files (not for Requests & Commands)
 }
 
 expand_includes ()
@@ -930,7 +919,6 @@ preprocess ()
     expand_datasources_into_main
     explode_extern_anchors
     resolve_includes
-    expand_datasources_into_includes
     expand_includes
     expand_extends
     generate_sh

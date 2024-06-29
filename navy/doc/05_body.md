@@ -81,23 +81,23 @@ rules:
         virtual: true
         query:
           buildargs: |
-          {
-            "FILEPATH":"/my/file/path"
-          }
+            {
+              "FILEPATH":"/my/file/path"
+            }
       - id: images.build.virtual2
         virtual: true
         query:
           buildargs: |
-          {
-            "FILEPATH":"/my/other/file/path",
-            "USER":"myuser"
-          }
+            {
+              "FILEPATH":"/my/other/file/path",
+              "USER":"myuser"
+            }
       - id: images.build.myimage
         query:
           buildargs: |
-          {
-            "USER":"root"
-          }
+            {
+              "USER":"root"
+            }
         extends:
           - images.build.virtual1
           - images.build.virtual2
@@ -107,10 +107,10 @@ rules:
       - id: images.build.myimage
         query:
           buildargs: |
-          {
-            "FILEPATH":"/my/other/file/path", # images.build.virtual1 prevails on images.build.virtual2
-            "USER":"root" # images.build.myimage prevails on images.build.virtual1 and images.build.virtual2
-          }
+            {
+              "FILEPATH":"/my/other/file/path", # images.build.virtual1 prevails on images.build.virtual2
+              "USER":"root" # images.build.myimage prevails on images.build.virtual1 and images.build.virtual2
+            }
     ```
     - extending from a virtual or a non-virtual Body will not share same attributes:
         - from a non-virtual Body, the extended Body will inherit these attributes: `query`, `path`, `context`.
@@ -130,9 +130,9 @@ loop:
   - id: images.build.myimage
     query:
       buildargs: |
-      {
-        "USER":"root"
-      }
+        {
+          "USER":"root"
+        }
       t: 'myimage:latest'
     context: 'dir/of/myimage'
 ```

@@ -1,8 +1,8 @@
 ---
 
 include:
-  - images/build/virtual.yaml
-  - images/build/layers.yaml
-  - images/build/finals.yaml
+  - build/virtuals.yaml
+  - build/layers.yaml
+  - build/finals.yaml
 
 ...
