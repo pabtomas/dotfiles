@@ -213,7 +213,8 @@ cols ()
 {
   local tty
   tty="$(command coreutils --coreutils-prog=readlink -f "${navy_tty}")"
-  COLUMNS="$(command stty -F "${tty}" size | command cut -d ' ' -f 2)"
+  COLUMNS="$(command stty -F "${tty}" size)"
+  COLUMNS="${COLUMNS:+"${COLUMNS##* }"}"
   COLUMNS="${COLUMNS:-"$(command tput cols)"}"
 }
 
@@ -586,6 +587,7 @@ prepare_curl ()
 
 verbose_mode ()
 {
+  # TODO: it does not work because coreutils is directly used instead of the defined functions when verbose is active
   cp () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=cp -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
   ln () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=ln -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
   mkdir () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=mkdir -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
@@ -608,12 +610,13 @@ prepare_logging ()
 
 prepare ()
 {
-  navy_file="${navy_file:-./navy.yaml}"
+  navy_file="${navy_file:-navy.yaml}"
+  navy_file_abs="${PWD}/${navy_file}"
   navy_loglevel="${navy_loglevel:-"${navy_infolevel}"}"
 
   send_note "Main file found: ${navy_file}"
 
-  readonly navy_resetcache navy_file navy_loglevel navy_help navy_version navy_userrules
+  readonly navy_resetcache navy_file navy_file_abs navy_loglevel navy_help navy_version navy_userrules
 
   prepare_logging
   prepare_curl
@@ -739,18 +742,19 @@ prepare_cache ()
 
   navy_cache_datasources="${navy_cache}/datasources"
   navy_cache_header="${navy_cache_datasources}/header"
-  navy_cache_dsescaped="${navy_cache_datasources}/escaped.yaml"
-  navy_cache_dsgathered="${navy_cache_datasources}/gathered.yaml"
   navy_cache_dsrendered="${navy_cache_datasources}/rendered.yaml"
 
-  navy_cache_anchors="${navy_cache}/anchors"
+  navy_cache_explode="${navy_cache}/explode"
+
+  navy_cache_include="${navy_cache}/include"
 
   readonly navy_cache_exploded navy_cache_nods navy_cache_escaped navy_cache_rendered \
            navy_cache_context navy_cache_version_json navy_cache_info_json \
-           navy_cache_datasources navy_cache_header navy_cache_dsescaped navy_cache_dsgathered navy_cache_dsrendered \
-           navy_cache_anchors
+           navy_cache_datasources navy_cache_header navy_cache_dsrendered \
+           navy_cache_explode \
+           navy_cache_include
 
-  coreutils --coreutils-prog=mkdir -p "${navy_cache_context}" "${navy_cache_datasources}" "${navy_cache_anchors}"
+  coreutils --coreutils-prog=mkdir -p "${navy_cache_context}" "${navy_cache_datasources}" "${navy_cache_explode}" "${navy_cache_include}"
 
   send_note 'Preprocessing: Cache prepared'
 }
@@ -758,7 +762,7 @@ prepare_cache ()
 explode_main_file ()
 {
   _yq 'explode(.)' "${navy_file}" > "${navy_cache_exploded}"
-  send_note 'Preprocessing: Main file exploded'
+  send_note "Preprocessing: anchors into ${navy_file} exploded"
 }
 
 define_context_datasources ()
@@ -785,37 +789,31 @@ write_datasources_header ()
 
 expand_datasources_into_datasources ()
 {
-  local datasources gathered_sha rendered_sha i gathered escaped rendered
-  i='0'
-  gathered_sha='0'
-  rendered_sha='1'
+  local datasources before_sha after_sha
   datasources="$(_yq '[.datasources[].source] | join(" ")' "${navy_cache_exploded}")"
 
   set -f
-  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_dsrendered}.${i}"
+  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_datasources}/0.yaml"
   set +f
 
-  until eq "${gathered_sha}" "${rendered_sha}"
+  until eq "${before_sha:-0}" "${after_sha:-1}"
   do
-    i="$(( ${i} + 1 ))"
-    escaped="${navy_cache_dsescaped}.${i}"
-    gathered="${navy_cache_dsgathered}.${i}"
-    rendered="${navy_cache_dsrendered}.${i}"
-    coreutils --coreutils-prog=cp -f "${navy_cache_dsrendered}.$(( ${i} - 1 ))" "${gathered}"
+    i="$(( ${i:-0} + 1 ))"
+    coreutils --coreutils-prog=cp -f "${navy_cache_datasources}/$(( ${i} - 1 )).yaml" "${navy_cache_datasources}/${i}.yq.yaml"
 
-    _yq '(.. | key = "{{ print \"" + key + "\" }}" | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${gathered}" > "${escaped}"
+    _yq '(.. | key = "{{ print \"" + key + "\" }}" | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${navy_cache_datasources}/${i}.yq.yaml" > "${navy_cache_datasources}/${i}.gom.yaml"
 
-    _gom --datasource "header=file:///${gathered}?type=application/yaml" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${escaped}" --out "${rendered}"
+    _gom --datasource "header=${navy_cache_datasources}/${i}.yq.yaml" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_datasources}/${i}.gom.yaml" --out "${navy_cache_datasources}/${i}.yaml"
 
-    gathered_sha="$(sha256sum "${gathered}")"
-    gathered_sha="${gathered_sha%% *}"
-    rendered_sha="$(sha256sum "${rendered}")"
-    rendered_sha="${rendered_sha%% *}"
+    before_sha="$(sha256sum "${navy_cache_datasources}/${i}.yq.yaml")"
+    before_sha="${before_sha%% *}"
+    after_sha="$(sha256sum "${navy_cache_datasources}/${i}.yaml")"
+    after_sha="${after_sha%% *}"
   done
 
-  coreutils --coreutils-prog=cp -f "${rendered}" "${navy_cache_dsrendered}"
+  coreutils --coreutils-prog=cp -f "${navy_cache_datasources}/${i}.yaml" "${navy_cache_dsrendered}"
 
-  send_note 'Preprocessing: Datasources expanded'
+  send_note 'Preprocessing: Datasources fully expanded'
 }
 
 expand_datasources_into_main ()
@@ -823,28 +821,60 @@ expand_datasources_into_main ()
   coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_escaped}"
 
   # do not process templates into rules[].run[]
-  _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= "{{ print \"" + . + "\" }}"))' "${navy_cache_nods}" >> "${navy_cache_escaped}"
+  _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= "{{ print \"" + (. | sub("\"", "\\\"")) + "\" }}"))' "${navy_cache_nods}" >> "${navy_cache_escaped}"
   _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
 
-  send_note 'Preprocessing: Datasources expanded into main file'
+  send_note "Preprocessing: Datasources expanded into ${navy_file}"
 }
 
-expand_anchors ()
+explode_extern_anchors ()
 {
   # copy the filetree of the project
   set -f
-  find "$(dirname -- "${navy_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${navy_mkdiropts:-} -p "${navy_cache_anchors}/"{} \;
+  find "$(dirname -- "${navy_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${navy_mkdiropts:-} -p "${navy_cache_explode}/"{} \;
   set +f
 
-  _yq '.explode[] | .in as $in | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" + (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim) | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s "\"${navy_cache_anchors}/\" + .file" "${navy_file}"
+  _yq '.explode[] | .in as $in | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" + (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim) | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s "\"${navy_cache_explode}/\" + .file" "${navy_cache_rendered}"
 
-  send_note 'Preprocessing: Anchors exploded'
+  send_note 'Preprocessing: Extern anchors exploded'
 }
 
-check_linear_includes ()
+resolve_includes ()
 {
-  : TODO
-  # check circular dependencies between includes
+  if eq "${#}" '0'; then coreutils --coreutils-prog=cp -f "${navy_cache_rendered}" "${navy_cache_include}/navy.yaml"; fi
+  # use `set` instead of `local` for recursive functions is safer
+  set -- "${1:-"${navy_cache_include}/navy.yaml"}" "$(dirname -- "${1:-"${navy_cache_include}/navy.yaml"}")" "${PWD}"
+  cd -- "${2}"
+  set -- "${1}" "$(coreutils --coreutils-prog=realpath -s --relative-to="${navy_cache_include}" "${2}")" "${3}"
+  local file
+  for file in $(_yq '.include[]' "${1}")
+  do
+    coreutils --coreutils-prog=mkdir -p "$(dirname -- "${file}")"
+    if is present "${navy_cache_include}/${2}/${file}"
+    then send_error "Circular dependency detected into ${1} for ${file}"; return 1; fi
+    if is present "${navy_cache_explode}/${file}"
+    then coreutils --coreutils-prog=cp -f "${navy_cache_explode}/${file}" "${navy_cache_include}/${2}/${file}"
+    else coreutils --coreutils-prog=cp -f "$(dirname -- "${navy_file_abs}")/${2}/${file}" "${navy_cache_include}/${2}/${file}.yq"; fi
+    coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_include}/${2}/${file}.gom"
+
+    _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= "{{ print \"" + (. | sub("\"", "\\\"")) + "\" }}"))' "${navy_cache_include}/${2}/${file}.yq" >> "${navy_cache_include}/${2}/${file}.gom"
+    _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_include}/${2}/${file}.gom" --out "${navy_cache_include}/${2}/${file}"
+
+    resolve_includes "${navy_cache_include}/${2}/${file}"
+
+    send_note "Preprocessing: Datasources expanded into ${2}/${file}"
+  done
+  cd "${3}"
+  # use recursive DFS
+  # for file in include:
+  #   if file already in /var/cache/navy/includes:
+  #     ERROR: circular dependencies detected
+  #   if file already in /var/cache/navy/anchors:
+  #     copy it from /var/cache/navy/anchors
+  #   explode anchors: TODO
+  #   expand datasources except in rules[].run[]
+  #   if include directive found:
+  #     DFS on include
 }
 
 expand_datasources_into_includes ()
@@ -898,8 +928,8 @@ preprocess ()
     write_datasources_header
     expand_datasources_into_datasources
     expand_datasources_into_main
-    expand_anchors
-    check_linear_includes
+    explode_extern_anchors
+    resolve_includes
     expand_datasources_into_includes
     expand_includes
     expand_extends
@@ -1096,6 +1126,9 @@ check_deps ()
   coreutils='true' harden 'readlink'
   coreutils='true' harden 'rm'
 
+  # Coreutils `realpath` has -s and --relative-to options
+  coreutils='true' harden 'realpath'
+
   harden 'ansi2txt'
   harden 'curl'
   harden 'gomplate'
@@ -1108,7 +1141,6 @@ check_deps ()
   # check it with: grep -o -E '\w+' navy | sort | uniq -c | sort -n
   harden 'basename'
   harden 'cat'
-  harden 'cut'
   harden 'date'
   harden 'dirname'
   harden 'getconf'

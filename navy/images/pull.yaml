@@ -31,7 +31,7 @@ rules:
           as:
             id: localbashimage
             scope: '{{ $dependencies.images.pull.bash }}'
-      - if: {{ ne 1 (len $localbashimage) }}
+      - if: '{{ ne 1 (len $localbashimage) }}'
         endpoint: /images/create
         method: POST
         loop:
@@ -50,7 +50,7 @@ rules:
           as:
             id: localbuildkitimage
             scope: '{{ $dependencies.images.pull.buildkit }}'
-      - if: {{ ne 1 (len $localbuildkitimage) }}
+      - if: '{{ ne 1 (len $localbuildkitimage) }}'
         endpoint: /images/create
         method: POST
         loop:
@@ -69,7 +69,7 @@ rules:
           as:
             id: localdockerimage
             scope: '{{ $dependencies.images.pull.docker }}'
-      - if: {{ ne 1 (len $localdockerimage) }}
+      - if: '{{ ne 1 (len $localdockerimage) }}'
         endpoint: /images/create
         method: POST
         loop:
@@ -88,7 +88,7 @@ rules:
           as:
             id: localregistryimage
             scope: '{{ $dependencies.images.pull.registry }}'
-      - if: {{ ne 1 (len $localregistryimage) }}
+      - if: '{{ ne 1 (len $localregistryimage) }}'
         endpoint: /images/create
         method: POST
         loop:
@@ -107,7 +107,7 @@ rules:
           as:
             id: localsocketproxyimage
             scope: '{{ $dependencies.images.pull.socketproxy }}'
-      - if: {{ ne 1 (len $localsocketproxyimage) }}
+      - if: '{{ ne 1 (len $localsocketproxyimage) }}'
         endpoint: /images/create
         method: POST
         loop:
