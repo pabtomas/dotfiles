@@ -3,10 +3,6 @@
 user:
   unprivileged: 'visitor'
 
-test:
-  bad: "{{ $all.test.bad2 }}"
-  bad2: "{{ $all.test.bad }}"
-
 os:
   id: '{{ $alpine.id }}'
   image:
