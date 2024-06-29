@@ -852,7 +852,7 @@ resolve_includes ()
 
   # use `set` instead of `local` for recursive functions is safer
   set -- "${1:-"${navy_cache_include}/navy.yaml"}" "$(dirname -- "${1:-"${navy_cache_include}/navy.yaml"}")" "${PWD}"
-  cd -- "${2}"
+  cd "${2}"
   set -- "${1}" "$(coreutils --coreutils-prog=realpath -s --relative-to="${navy_cache_include}" "${2}")" "${3}"
   local file yq_in
   for file in $(_yq '.include[]' "${1}")
