@@ -25,4 +25,4 @@ Here some important facts about log levels:
 - ERROR and FATAL messages can not be hidden when reducing log levels.
 - More the log level is increased (with `-v`), more the log level is lower in the above list: `-v` shows NOTE messages and above, `-vv` shows DEBUG messages and above, ...
 - NOTE and DEBUG message are conceived to debug your Navy projects.
-- TRACE and VERB message are conceived for development purposes so please **use `-vvv` and `-vvvv` options with caution**. Maybe you can find debugging information in it, but this not the purpose of these options. When used, expect a lot of internal content (maybe cryptic or not useful for your debugging session) and several minutes of latency (especially for the last level).
+- TRACE and VERB message are conceived for development purposes so please **use `-vvv` and `-vvvv` options with caution**. Maybe you can find some useful debugging information with, but this not the purpose of these options. When used, expect a lot of internal content (maybe cryptic or not useful for your current debugging session) and several minutes of latency (especially for the last level).
