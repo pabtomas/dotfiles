@@ -587,13 +587,18 @@ prepare_curl ()
 
 verbose_mode ()
 {
-  # TODO: it does not work because coreutils is directly used instead of the defined functions when verbose is active
-  cp () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=cp -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  ln () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=ln -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  mkdir () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=mkdir -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  mv () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=mv -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  readlink () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=readlink -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
-  rm () { { set +x; } 2> /dev/null; if not command coreutils --coreutils-prog=rm -v "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  coreutils ()
+  {
+    { set +x; } 2> /dev/null
+    local prog
+    prog="${1}"
+    shift
+    case "${prog}" in
+    ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
+    ( * ) if not command coreutils "${prog}" "${@}"; then return 1; fi ;;
+    esac
+    set -x
+  }
   find () { { set +x; } 2> /dev/null; if not command find -D exec -D search "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
   yq () { { set +x; } 2> /dev/null; if not command yq -v -M "${@}"; then return 1; fi; set -x; }
   gomplate () { { set +x; } 2> /dev/null; if not command gomplate -V "${@}"; then return 1; fi; set -x; }

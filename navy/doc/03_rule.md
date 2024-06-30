@@ -5,7 +5,7 @@
 ```yaml
 rules:
   - id: 'new_alpine'
-    description: 'create an '
+    description: 'create an Alpine container'
     run:
       - endpoint: /images/create
         method: POST
@@ -22,7 +22,7 @@ rules:
               Image: 'docker.io/library/alpine:latest'
 ```
 
-Now each time you are using `navy new_alpine` it will pull the latest alpine image and create a container base on this image.
+Now each time you are using `navy new_alpine` it will pull the latest alpine image and create a container based on this image.
 
 ### `Rule.id`
 

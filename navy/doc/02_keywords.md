@@ -79,8 +79,6 @@ versions:
 
 ## `rules`
 
-TODO
-
 - **type**: list
 - **required**: true
 - **default**: `[]`
@@ -88,4 +86,14 @@ TODO
 - **exemple**:
 ```yaml
 rules:
+  - id: 'pull_alpine'
+    description: 'pull the latest official Dockerhub Alpine image'
+    run:
+      - endpoint: /images/create
+        method: POST
+        loop:
+          - id: 'pull'
+            query:
+              fromImage: 'docker.io/library/alpine'
+              tag: 'latest'
 ```

@@ -61,3 +61,8 @@
 8. [Explode](https://github.com/tiawl/navy/blob/trunk/doc/10_explode.md#explode-object)
     - [in](https://github.com/tiawl/navy/blob/trunk/doc/10_explode.md#explodein)
     - [anchors](https://github.com/tiawl/navy/blob/trunk/doc/10_explode.md#explodeanchors)
+
+## Debugging
+
+1. [known common mistakes](https://github.com/tiawl/navy/blob/trunk/doc/11_debugging.md#known-common-mistakes)
+2. [log levels](https://github.com/tiawl/navy/blob/trunk/doc/11_debugging.md#log-levels)
