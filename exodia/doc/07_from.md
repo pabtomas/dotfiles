@@ -1,5 +1,7 @@
 # From object
 
+TODO
+
 - **description**: The only use case of this object is in `Request.from`.
 - **exemple**: See `Request object`.
 

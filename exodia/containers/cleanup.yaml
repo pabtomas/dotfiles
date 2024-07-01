@@ -7,7 +7,7 @@ rules:
         method: GET
         register:
           query:
-            filters: '{"label":{"navy":{{ $project.id }}}}'
+            filters: '{"label":{"exodia":{{ $project.id }}}}'
           id: post.containers.json
           errexit: false
           as:

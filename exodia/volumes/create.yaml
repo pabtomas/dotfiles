@@ -36,7 +36,7 @@ rules:
             virtual: true
             query:
               Labels:
-                navy: '{{ $project.id }}'
+                exodia: '{{ $project.id }}'
             depends_on:
               - volumes.json
           - id: '{{ $dependencies.volumes.create.carpenterrelay }}'

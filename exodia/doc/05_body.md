@@ -33,14 +33,14 @@ rules:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Navy uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Navy will run the Request after the Requests and Commands listed here are executed.
+- **description**: Exodia uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Exodia execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Exodia will run the Request after the Requests and Commands listed here are executed.
 
 ### `Body.errexit`
 
 - **type**: boolean
 - **required**: false
 - **default**: `true`
-- **description**: If the Request failed, Navy stops its execution in failure.
+- **description**: If the Request failed, Exodia stops its execution in failure.
 
 ### `Body.query`
 
@@ -63,7 +63,7 @@ rules:
 - **type**: boolean
 - **required**: false
 - **default**: false
-- **description**: A virtual Body will not result as a Request execution by Navy. It is particularly useful when you want to reuse common attributes between Bodies.
+- **description**: A virtual Body will not result as a Request execution by Exodia. It is particularly useful when you want to reuse common attributes between Bodies.
 
 ### `Body.extends`
 
@@ -121,7 +121,7 @@ rules:
 - **type**: string
 - **required**: false
 - **default**: `"."`
-- **description**: This attribute is only useful when you are making a `/build` Request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Navy file. 
+- **description**: This attribute is only useful when you are making a `/build` Request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Exodia file. 
 - **exemple**:
 ```yaml
 endpoint: /build

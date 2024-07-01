@@ -8,7 +8,7 @@ rules:
         register:
           id: post.networks.json
           query:
-            filters: '{"label":{"navy":{{ $project.id }}}}'
+            filters: '{"label":{"exodia":{{ $project.id }}}}'
           errexit: false
           as:
             id: registerpostnetworks

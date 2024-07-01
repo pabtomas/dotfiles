@@ -5,9 +5,9 @@
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of Datasources available in Golang templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Navy**. More details on the Datasource available attributes into the [Datasource object section](#datasource-object).
+- **description**: List of Datasources available in Golang templates. In this list, **A Datasource have to be a YAML file to be correctly processed by Exodia**. More details on the Datasource available attributes into the [Datasource object section](#datasource-object).
 - **good to know**:
-    - The `datasources` keyword is the first thing Navy will processed when executed, its location can not be outside your main Navy file.
+    - The `datasources` keyword is the first thing Exodia will processed when executed, its location can not be outside your main Exodia file.
 - **exemple**:
 ```yaml
 datasources:
@@ -24,7 +24,7 @@ datasources:
 - **default**: `[]`
 - **description**: List of Explode objects. In this list, you can define a YAML file and specify where its anchors are coming from. More details on the Explode available attributes into the [Explode object section](#explode-object).
 - **good to know**:
-    - The `explode` keyword is processed after the `datasources` keyword when Navy is executed and before the `include` keyword. Its location is in your main Navy file.
+    - The `explode` keyword is processed after the `datasources` keyword when Exodia is executed and before the `include` keyword. Its location is in your main Exodia file.
 - **exemple**:
 ```yaml
 explode:
@@ -44,7 +44,7 @@ explode:
 - **default**: `[]`
 - **description**: List of files to include into the current file. Including files in another will merge their contents. Each file can contain its own `include` list.
 - **good to know**:
-    - The `include` keyword is processed after the `explode` keyword when Navy is executed
+    - The `include` keyword is processed after the `explode` keyword when Exodia is executed
 - **exemple**:
 ```yaml
 include:
@@ -58,7 +58,7 @@ include:
 
 - **type**: list
 - **required**: true
-- **description**: List of Docker Engine API versions targetted by your project. Navy will run with the first available version. Navy will fail if the Docker Engine does not support any targetted version.
+- **description**: List of Docker Engine API versions targetted by your project. Exodia will run with the first available version. Exodia will fail if the Docker Engine does not support any targetted version.
 - **good to know**:
     - For the Docker Engine API versions after 1.25 (included), the documentation specify this:
     ```

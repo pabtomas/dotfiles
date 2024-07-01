@@ -1,0 +1,1260 @@
+#! /usr/bin/env dash
+
+alias not='! '
+
+eq () { if [ "${1}" = "${2}" ];   then return 0; else return 1; fi; }
+gt () { if [ "${1}" -gt "${2}" ]; then return 0; else return 1; fi; }
+lt () { if [ "${1}" -lt "${2}" ]; then return 0; else return 1; fi; }
+ge () { if not lt "${1}" "${2}";  then return 0; else return 1; fi; }
+le () { if not gt "${1}" "${2}";  then return 0; else return 1; fi; }
+
+is ()
+{
+  case "${1}" in
+  ( dir )      if [ -d "${2}" ]; then return 0; else return 1; fi ;;
+  ( nonempty ) if [ -s "${2}" ]; then return 0; else return 1; fi ;;
+  ( present )  if [ -e "${2}" ]; then return 0; else return 1; fi ;;
+  ( sym )      if [ -L "${2}" ]; then return 0; else return 1; fi ;;
+  ( * ) ;;
+  esac
+}
+
+can ()
+{
+  case "${1}" in
+  ( read )  if [ -r "${2}" ]; then return 0; else return 1; fi ;;
+  ( exec )  if [ -x "${2}" ]; then return 0; else return 1; fi ;;
+  ( * ) ;;
+  esac
+}
+
+str ()
+{
+  case "${1}" in
+  ( empty ) if [ -z "${2}" ]; then return 0; else return 1; fi ;;
+  ( * ) ;;
+  esac
+}
+
+##############################################################################
+##################################   LOGGER   ################################
+##############################################################################
+
+add_time ()
+{
+  exodia_s_per_min='60'
+  exodia_min_per_h='60'
+  exodia_s_per_h='3600'
+  exodia_us_per_cs='10000'
+  exodia_us_per_ds='100000'
+  exodia_us_per_s='1000000'
+  exodia_us_per_10s='10000000'
+  exodia_us_per_min='60000000'
+  exodia_us_per_10min='600000000'
+  exodia_us_per_h='3600000000'
+  exodia_us_per_10h='36000000000'
+  exodia_us_per_100h='360000000000'
+
+  readonly exodia_s_per_min exodia_min_per_h exodia_s_per_h exodia_us_per_cs exodia_us_per_ds exodia_us_per_s exodia_us_per_10s exodia_us_per_min exodia_us_per_10min exodia_us_per_h exodia_us_per_10h exodia_us_per_100h
+}
+
+spins ()
+{
+  local escape_for_bc_print spin_title_fn
+
+  if not str empty "${1:-}"
+  then
+    escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\.[0-9]\+ \)[0-2][0-9]:[0-5][0-9]:[0-5][0-9] '"${exodia_rawlevel}"'@\1@; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "'"${exodia_erase_until_eol}"'@; s@$@\\n";@'
+    spin_title_fn='s@$@ define spin_title (index) { } 0@'
+    command ts '%.s %T' | command busybox sed -e "${escape_for_bc_print};${spin_title_fn}" -e "${1}" -e "
+      s@\(.*\); \(define spin_title (index) {\)@\1\n\2@;
+      s@ [0-9]\+\$@;\n@;
+      s@^[0-9]\+@scale = 0\ncnts = \0\n@;
+      s@\$@\
+define spin_color (index)\n\
+{\n\
+  if (index ==  0) print \"${exodia_rb196}\"\n\
+  if (index ==  1) print \"${exodia_rb202}\"\n\
+  if (index ==  2) print \"${exodia_rb208}\"\n\
+  if (index ==  3) print \"${exodia_rb214}\"\n\
+  if (index ==  4) print \"${exodia_rb220}\"\n\
+  if (index ==  5) print \"${exodia_rb226}\"\n\
+  if (index ==  6) print \"${exodia_rb190}\"\n\
+  if (index ==  7) print \"${exodia_rb154}\"\n\
+  if (index ==  8) print \"${exodia_rb118}\"\n\
+  if (index ==  9) print \"${exodia_rb82}\"\n\
+  if (index == 10) print \"${exodia_rb46}\"\n\
+  if (index == 11) print \"${exodia_rb47}\"\n\
+  if (index == 12) print \"${exodia_rb48}\"\n\
+  if (index == 13) print \"${exodia_rb49}\"\n\
+  if (index == 14) print \"${exodia_rb50}\"\n\
+  if (index == 15) print \"${exodia_rb51}\"\n\
+  if (index == 16) print \"${exodia_rb45}\"\n\
+  if (index == 17) print \"${exodia_rb39}\"\n\
+  if (index == 18) print \"${exodia_rb33}\"\n\
+  if (index == 19) print \"${exodia_rb27}\"\n\
+  if (index == 20) print \"${exodia_rb21}\"\n\
+  if (index == 21) print \"${exodia_rb57}\"\n\
+  if (index == 22) print \"${exodia_rb93}\"\n\
+  if (index == 23) print \"${exodia_rb128}\"\n\
+  if (index == 24) print \"${exodia_rb165}\"\n\
+  if (index == 25) print \"${exodia_rb201}\"\n\
+  if (index == 26) print \"${exodia_rb200}\"\n\
+  if (index == 27) print \"${exodia_rb199}\"\n\
+  if (index == 28) print \"${exodia_rb198}\"\n\
+  if (index == 29) print \"${exodia_rb197}\"\n\
+}\n\
+\
+define spin_pattern (index)\n\
+{\n\
+  if (index ==  0)                 print \" ⠄     \"\n\
+  if (index ==  1)                 print \" ⠔     \"\n\
+  if (index ==  2)                 print \" ⠐⠁    \"\n\
+  if (index ==  3)                 print \"  ⠉    \"\n\
+  if (index ==  4)                 print \"  ⠈⠂   \"\n\
+  if (index ==  5)                 print \"   ⠢   \"\n\
+  if (index ==  6)                 print \"   ⠠⠄  \"\n\
+  if (index ==  7)                 print \"    ⠔  \"\n\
+  if (index ==  8)                 print \"    ⠐⠁ \"\n\
+  if (index ==  9)                 print \"     ⠉ \"\n\
+  if (index == 10)                 print \"     ⠘ \"\n\
+  if (index == 11)                 print \"     ⠔ \"\n\
+  if (index == 12)                 print \"    ⠠⠄ \"\n\
+  if (index == 13)                 print \"    ⠢  \"\n\
+  if (index == 14)                 print \"   ⠈⠂  \"\n\
+  if (index == 15)                 print \"   ⠉   \"\n\
+  if (index == 16)                 print \"  ⠐⠁   \"\n\
+  if (index == 17)                 print \"  ⠔    \"\n\
+  if (index == 18)                 print \" ⠠⠄    \"\n\
+  if (index == 19)                 print \" ⠢     \"\n\
+  if (index == 20)                 print \" ⠃     \"\n\
+  if (index == 21)                 print \" ⠉     \"\n\
+  if (index == 22)                 print \" ⠈⠂    \"\n\
+  if (index == 23)                 print \"  ⠢    \"\n\
+  if (index == 24)                 print \"  ⠠⠄   \"\n\
+  if (index == 25)                 print \"   ⠔   \"\n\
+  if (index == 26)                 print \"   ⠐⠁  \"\n\
+  if (index == 27)                 print \"    ⠉  \"\n\
+  if (index == 28)                 print \"    ⠈⠂ \"\n\
+  if (index == 29)                 print \"     ⠢ \"\n\
+  if (index == 30)                 print \"     ⠠ \"\n\
+  if (index >  30 \&\& index < 34) print \"       \"\n\
+}\n\
+\
+define spin (nelapsed, index)\n\
+{\n\
+  dummy = spin_color ((nelapsed / (5 * ${exodia_us_per_ds})) % 30)\n\
+  dummy = spin_pattern ((nelapsed / ${exodia_us_per_ds}) % 34)\n\
+  print \"${exodia_white}\"\n\
+  dummy = spin_title (index)\n\
+  print \"${exodia_reset}${exodia_erase_until_eol}\"\n\
+}\n\
+\
+for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
+{\n\
+  nts = spins_nts [index]\n\
+  nelapsed = cnts - nts\n\
+  ns = nelapsed % ${exodia_us_per_s}\n\
+  cs = ns / ${exodia_us_per_cs}\n\
+  elapsed = (nelapsed - ns) / ${exodia_us_per_s}\n\
+\
+  if (index > 0) print \"\\\n\"\n\
+\
+  if (nelapsed < ${exodia_us_per_10s}) print \" \"\n\
+  if (nelapsed < ${exodia_us_per_min})\n\
+  {\n\
+    if (cs > 9) { print \"   ${exodia_bold}${exodia_white}\", elapsed, \".\", cs; dummy = spin (nelapsed, index); continue; }\n\
+    if (cs < 10) { print \"   ${exodia_bold}${exodia_white}\", elapsed, \".0\", cs; dummy = spin (nelapsed, index); continue; }\n\
+  }\n\
+  if (nelapsed >= ${exodia_us_per_min} \&\& nelapsed < ${exodia_us_per_10min}) print \" \"\n\
+  if (nelapsed >= ${exodia_us_per_min} \&\& nelapsed < ${exodia_us_per_h})\n\
+  {\n\
+    sec = elapsed % ${exodia_s_per_min}\n\
+    if (sec > 9) { print \"   ${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_min}, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec < 10) { print \"   ${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_min}, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
+  }\n\
+  if (nelapsed >= ${exodia_us_per_h} \&\& nelapsed < ${exodia_us_per_10h}) print \" \"\n\
+  if (nelapsed >= ${exodia_us_per_h} \&\& nelapsed < ${exodia_us_per_100h})\n\
+  {\n\
+    sec = elapsed % ${exodia_s_per_min}\n\
+    min = (elapsed / ${exodia_s_per_min}) % ${exodia_min_per_h}\n\
+    if (sec > 9 \&\& min > 9) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":\", min, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec < 10 \&\& min > 9) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":\", min, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec > 9 \&\& min < 10) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":0\", min, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
+    if (sec < 10 \&\& min < 10) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":0\", min, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
+  }\n\
+  print \"${exodia_bold}${exodia_white}--:--:--\"\n\
+  dummy = spin (nelapsed, index)\n\
+}\n\
+for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
+{\n\
+  print \"${exodia_previous}\"\n\
+}\n\
+print \"\\\a\"\n@; :exit" \
+      | BC_LINE_LENGTH='0' command bc -q | command stdoutbuf
+  else
+    command ts '%T' | command busybox sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${exodia_rawlevel}@${exodia_erase_until_eol}@"
+  fi
+}
+
+progress_bar ()
+{
+  : TODO
+  # ▏▎▍▌▋▊▉█
+  # ▁▁▁▁▁▁▁▁
+  # █████  ▕
+  # ▔▔▔▔▔▔▔▔
+  # ▁▁▁▁▁▁▁▁
+  #▕█████   ▎
+  # ▔▔▔▔▔▔▔▔
+}
+
+cols ()
+{
+  local tty
+  tty="$(command coreutils --coreutils-prog=readlink -f "${exodia_tty}")"
+  COLUMNS="$(command stty -F "${tty}" size)"
+  COLUMNS="${COLUMNS:+"${COLUMNS##* }"}"
+  COLUMNS="${COLUMNS:-"$(command tput cols)"}"
+}
+
+logs ()
+{
+  local first_max_length_line max_line_length does_line_has_enought_chars eol
+  cols
+
+  if not str empty "${1:-}"
+  then
+    first_max_length_line="$(printf "%$(( ${COLUMNS} + ${#exodia_bold} + ${#exodia_cyan} + ${#exodia_reset} - 9 ))s" | command tr ' ' '.')"
+    does_line_has_enought_chars="$(printf "%$(( ${COLUMNS} - 9 ))s" | command busybox sed 's/ /\[^\\n]/g')"
+    max_line_length="$(printf "%$(( ${COLUMNS} - 9 ))s" | command tr ' ' '.')"
+    set -f
+    command busybox sed "/^${exodia_rawlevel}/ {
+                           b exit;
+                         }
+                         s@^${exodia_errorlevel}@${exodia_red}ERROR ${exodia_reset}@;    t header;
+                         s@^${exodia_warnlevel}@${exodia_yellow} WARN ${exodia_reset}@;  t header;
+                         s@^${exodia_infolevel}@${exodia_green} INFO ${exodia_reset}@;   t header;
+                         s@^${exodia_notelevel}@${exodia_cyan} NOTE ${exodia_reset}@;    t header;
+                         s@^${exodia_debuglevel}@${exodia_blue}DEBUG ${exodia_reset}@;   t header;
+                         s@^${exodia_tracelevel}@${exodia_purple}TRACE ${exodia_reset}@; t header;
+                         s@^${exodia_verblevel}@${exodia_pink} VERB ${exodia_reset}@;
+                :header; s@^@${exodia_bold}@;                                        t reset_T_smaller;
+       :reset_T_smaller; s@^${first_max_length_line}@&\n@;                         T smaller; t loop;
+                  :loop; s@\n\$@@;                                                 t equal;
+                         h;
+                         s@\(.\)\n.*@\1@;
+                         p;
+                         g;
+                         s@.*\n@@;
+                         s@^@      @;                                              t reset_t_loop;
+          :reset_t_loop; /${does_line_has_enought_chars}$/ {
+                           s@^${max_line_length}@\0\n@;                            t loop;
+                         };
+                 :equal;
+               :smaller;
+                  :exit;" ${1}
+
+    command coreutils --coreutils-prog=rm -f ${1}
+    set +f
+  elif not str empty "${2:-}"
+  then
+    eol="${exodia_esc}[${COLUMNS}G"
+    printf '%b%b' "${exodia_previous}" "${eol}"
+  fi
+}
+
+_stop ()
+{
+  local entries
+  entries="$(command find "${exodia_stops}" -mindepth 1 -maxdepth 1 -type l)"
+
+  if not str empty "${entries:-}"
+  then
+    set -f
+    command coreutils --coreutils-prog=rm -f ${entries} $(command coreutils --coreutils-prog=readlink -f ${entries})
+    set +f
+  fi
+}
+
+logger ()
+{
+  trap 'exodia_loggerstart=1' USR1
+
+  add_time
+
+  local field_logs field_spins logs_entries spins_entries arg_max
+  field_logs="$(printf '%s//\n' "${exodia_lines}" | command rg -o '/' | command rg -c '/')"
+  field_spins="$(printf '%s//\n' "${exodia_spins}" | command rg -o '/' | command rg -c '/')"
+  arg_max="$(( $(command getconf ARG_MAX) / 4 - 1 ))"
+
+  while str empty "${exodia_loggerstart:-}"; do command usleep 10; done
+
+  trap 'exodia_loggerstop=1' USR1
+
+  printf '%b' "${exodia_hidecursor}"
+
+  while str empty "${exodia_loggerstop:-}" || command find "${exodia_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_lines}/[0-9]*" -type f | read dummy
+  do
+    logs_entries="$(command find "${exodia_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
+    spins_entries="$(command find "${exodia_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % cat %)"
+    logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
+    if str empty "${exodia_loggerstop:-}"; then _stop; fi
+  done
+
+  printf '%b' "${exodia_showcursor}"
+}
+
+##############################################################################
+#################################   LISTENER   ###############################
+##############################################################################
+
+stop_req ()
+{
+  command coreutils --coreutils-prog=mv "${exodia_aliases}/${1#"${exodia_stopreq}"}" "${exodia_stops}/${2}"
+}
+
+spin_req ()
+{
+  local line i alias ts
+  line="${1#"${exodia_spinreq}${exodia_reqsep}"}"
+  i="${2}"
+  alias="${line%%"${exodia_reqsep}"*}"
+  line="${line#*"${exodia_reqsep}"}"
+  ts="$(command date '+%s%N')"
+  printf '
+s@^\(.*\) \(define spin_title (index) {\)\([^}]*\)} \([0-9]*\)$@\\1 spins_nts [\\4] = %s; \\2\\3if (index == \\4) print "%s"; } \\4@;
+
+                          t d%d;
+:d%d; s@9\(_*\)$@_\\1@;   t d%d;
+
+      s@ \(_\+\)$@ 1\\1@; t n%d;
+      s@8\(_*\)$@9\\1@;   t n%d;
+      s@7\(_*\)$@8\\1@;   t n%d;
+      s@6\(_*\)$@7\\1@;   t n%d;
+      s@5\(_*\)$@6\\1@;   t n%d;
+      s@4\(_*\)$@5\\1@;   t n%d;
+      s@3\(_*\)$@4\\1@;   t n%d;
+      s@2\(_*\)$@3\\1@;   t n%d;
+      s@1\(_*\)$@2\\1@;   t n%d;
+      s@0\(_*\)$@1\\1@;   t n%d;
+
+:n%d; s@_\(_*\)$@0\\1@;   t n%d;
+' "${ts%???}" "$(printf '%s' "${line}" | command busybox sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${exodia_spins}/${i}"
+  command coreutils --coreutils-prog=ln -f -s "${exodia_spins}/${i}" "${exodia_aliases}/${alias}"
+}
+
+buffer_req ()
+{
+  local line alias i dir
+  line="${1#"${exodia_bufreq}${exodia_reqsep}"}"
+  i="${2}"
+  alias="${line%%"${exodia_reqsep}"*}"
+  line="${line#*"${exodia_reqsep}"}"
+  if is sym "${exodia_aliases}/${alias}"
+  then dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_aliases}/${alias}")"
+  else
+    dir="$(command mktemp -d -p "${exodia_lines}")"
+    command coreutils --coreutils-prog=ln -f -s "${dir}" "${exodia_aliases}/${alias}"
+  fi
+  printf '%s\n' "${line}" > "${dir}/${i}"
+}
+
+flush_req ()
+{
+  local line alias i dir
+  line="${1#"${exodia_flushreq}${exodia_reqsep}"}"
+  i="${2}"
+  alias="${line%%"${exodia_reqsep}"*}"
+  line="${line#*"${exodia_reqsep}"}"
+  dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_aliases}/${alias}")"
+  command coreutils --coreutils-prog=mv -f "${dir}" "${exodia_lines}/${i}"
+  command coreutils --coreutils-prog=rm -f "${exodia_aliases}/${alias}"
+}
+
+logging_req ()
+{
+  printf '%s\n' "${1}" | command ansi2txt > "${exodia_lines}/${2}"
+}
+
+unknown_req ()
+{
+  printf '0Unknown logger request: "%s"\n' "${1}" > "${exodia_lines}/${2}"
+  return 1
+}
+
+empty_req ()
+{
+  printf '%s\n' "${PS4}" > "${exodia_lines}/${1}"
+}
+
+listener ()
+{
+  local line i
+  until is sym "${exodia_tty}"     && \
+        is dir "${exodia_lines}"   && \
+        is dir "${exodia_spins}"   && \
+        is dir "${exodia_aliases}" && \
+        is dir "${exodia_stops}"; do command usleep 10; done
+  # TODO: replace loop with sed + bc script ???
+  while read -r line
+  do
+    i="$(( ${i:--1} + 1 ))"
+    if str empty "${line}"; then empty_req "${i}"; continue; fi
+    case "${line}" in
+    ( ["${exodia_errorlevel}"-"${exodia_verblevel}${exodia_rawlevel}"]* ) logging_req "${line}" "${i}" ;;
+    ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req "${line}" "${i}"    ;;
+    ( "${exodia_stopreq}"* )                stop_req "${line}" "${i}"    ;;
+    ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req "${line}" "${i}"  ;;
+    ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req "${line}" "${i}"   ;;
+    ( * ) unknown_req "${line}" "${i}" ;;
+    esac
+  done
+}
+
+##############################################################################
+##################################   RUNNER   ################################
+##############################################################################
+
+_send ()
+{
+  pfx="${buffered:+"${exodia_bufreq}${exodia_reqsep}${pid}${exodia_reqsep}"}${pfx}"
+  if str empty "${cat:-}" && eq "${#}" '0'; then sed "s@^@${pfx}@"
+  elif str empty "${cat:-}"; then printf -- "${pfx}%b\n" "${@}"
+  elif is nonempty "${cat}"; then sed "s@^@${pfx}@" "${cat}"; fi 1>&3;
+}
+
+send () { if ge "${exodia_loglevel}" "${lvl}"; then pfx="${lvl}" _send "${@}"; fi; }
+
+send_raw   () { pfx="${exodia_rawlevel}"   _send "${@}"; }
+send_error () { pfx="${exodia_errorlevel}" _send "${@}"; }
+send_warn  () { lvl="${exodia_warnlevel}"   send "${@}"; }
+send_info  () { lvl="${exodia_infolevel}"   send "${@}"; }
+send_note  () { lvl="${exodia_notelevel}"   send "${@}"; }
+send_debug () { lvl="${exodia_debuglevel}"  send "${@}"; }
+send_verb  () { lvl="${exodia_verblevel}"   send "${@}"; }
+
+send_flush () { printf '%s%s%s%s\n' "${exodia_flushreq}" "${exodia_reqsep}" "${pid}" "${exodia_reqsep}" 1>&3; }
+
+send_spin ()  { printf '%s%s%s%s%s\n' "${exodia_spinreq}" "${exodia_reqsep}" "${1}" "${exodia_reqsep}" "${2}" 1>&3; }
+send_stop  () { printf '%s%s\n' "${exodia_stopreq}" "${1}" 1>&3; }
+
+help ()
+{
+  send_raw 'A Docker Engine orchestrator'                                     \
+           ''                                                                 \
+           'Usage:'                                                           \
+           '  exodia [options] [rules]'                                         \
+           ''                                                                 \
+           'Rules:'                                                           \
+           '  TODO'                                                           \
+           ''                                                                 \
+           'Options:'                                                         \
+           '  -f, --file file       exodia main file (default: ./exodia.yaml)'    \
+           '  -r, --reset-cache     resets the cache'                         \
+           '  -q                    reduce log level, reusable 2 times'       \
+           '  -v                    increase log level, reusable 4 times'     \
+           '  -h, --help            help for exodia'                            \
+           '  -V, --version         version for exodia'
+  return 1
+}
+
+version ()
+{
+  send_raw 'exodia 0.1.0'
+  return 1
+}
+
+help_option ()
+{
+  exodia_help='true'
+}
+
+version_option ()
+{
+  exodia_version='true'
+}
+
+reset_cache_option ()
+{
+  exodia_resetcache='true'
+}
+
+file_option ()
+{
+  if not is present "${1}"
+  then
+    send_error "${1} does not exist"
+    return 1
+  elif not can read "${1}"
+  then
+    send_error "You do not have the permission to read ${1}"
+    return 1
+  fi
+  exodia_file="${1}"
+}
+
+q_option ()
+{
+  if eq "${exodia_ignore_qopt:-}" 'true'; then return 0; fi
+  if le "${exodia_loglevel:-"${exodia_infolevel}"}" "${exodia_infolevel}" && gt "${exodia_loglevel:-"${exodia_infolevel}"}" "${exodia_errorlevel}"
+  then exodia_loglevel="$(( ${exodia_loglevel:-"${exodia_infolevel}"} - 1 ))"
+  elif eq "${exodia_loglevel:-"${exodia_infolevel}"}" "${exodia_errorlevel}"
+  then exodia_loglevel="${exodia_warnlevel}" send_warn '-q can not be used more than 2 times'; exodia_ignore_qopt='true'
+  else send_error '-q and -v options can not be combined'; return 1; fi
+}
+
+v_option ()
+{
+  if eq "${exodia_ignore_vopt:-}" 'true'; then return 0; fi
+  if ge "${exodia_loglevel:-"${exodia_infolevel}"}" "${exodia_infolevel}" && lt "${exodia_loglevel:-"${exodia_infolevel}"}" "${exodia_verblevel}"
+  then exodia_loglevel="$(( ${exodia_loglevel:-"${exodia_infolevel}"} + 1 ))"
+  elif eq "${exodia_loglevel:-"${exodia_infolevel}"}" "${exodia_verblevel}"
+  then send_warn '-v can not be used more than 4 times'; exodia_ignore_vopt='true'
+  else send_error '-q and -v options can not be combined'; return 1; fi
+}
+
+add_rule ()
+{
+  exodia_userrules="${exodia_userrules:-}${1} "
+}
+
+unknown_option ()
+{
+  send_error "Unknown rule/option: '${1}'"
+  return 1
+}
+
+parse_options ()
+{
+  until eq "${#}" '0'
+  do
+    case "${1}" in
+
+    # Handle '-abc' the same as '-a -bc' for short-form no-arg options
+    ( -[hrqvV]?* )
+      IFS=' '
+      set -f
+      set -- "${1%"${1#??}"}" "-${1#??}" $(shift; printf '%s\n' "${@}")
+      set +f
+      IFS="${exodia_ifs}"
+      continue ;;
+
+    # Handle '-foo' the same as '-f oo' for short-form 1-arg options
+    ( -[f]?* )
+      IFS=' '
+      set -f
+      set -- "${1%"${1#??}"}" "${1#??}" $(shift; printf '%s\n' "${@}")
+      set +f
+      IFS="${exodia_ifs}"
+      continue ;;
+
+    # Handle '--file=file1' the same as '--file file1' for long-form 1-arg options
+    ( --file=* )
+      IFS=' '
+      set -f
+      set -- "${1%%=*}" "${1#*=}" $(shift; printf '%s\n' "${@}")
+      set +f
+      IFS="${exodia_ifs}"
+      continue ;;
+
+    ( -r|--reset-cache ) reset_cache_option        ;;
+    ( -f|--file )        file_option "${2}"; shift ;;
+    ( -q )               q_option                  ;;
+    ( -v )               v_option                  ;;
+    ( -h|--help )        help_option               ;;
+    ( -V|--version )     version_option            ;;
+    ( * )                add_rule "${1}"           ;;
+    esac
+    shift
+  done
+
+  unset exodia_ignore_qopt exodia_ignore_vopt
+}
+
+prepare_curl ()
+{
+  exodia_curlreqheader='http:/'
+  exodia_curlresp="${NAVY_RUN_PATH}/curlresponse.json"
+  exodia_curlopts="${exodia_curlopts:+"${exodia_curlopts:-}" }--silent --write-out %{http_code} --output ${exodia_curlresp}"
+
+  if str empty "${DOCKER_HOST:-}"
+  then exodia_curlopts="${exodia_curlopts:+"${exodia_curlopts}" }--unix-socket /var/run/docker.sock"
+  else exodia_curlreqheader="${exodia_curlreqheader}/${DOCKER_HOST#*://}"; fi
+
+  readonly exodia_curlreqheader exodia_curlresp exodia_curlopts
+}
+
+verbose_mode ()
+{
+  coreutils ()
+  {
+    { set +x; } 2> /dev/null
+    local prog
+    prog="${1}"
+    shift
+    case "${prog}" in
+    ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
+    ( * ) if not command coreutils "${prog}" "${@}"; then return 1; fi ;;
+    esac
+    set -x
+  }
+  find () { { set +x; } 2> /dev/null; if not command find -D exec -D search "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  yq () { { set +x; } 2> /dev/null; if not command yq -v -M "${@}"; then return 1; fi; set -x; }
+  gomplate () { { set +x; } 2> /dev/null; if not command gomplate -V "${@}"; then return 1; fi; set -x; }
+  exodia_mkdiropts='-v'
+  readonly exodia_mkdiropts
+}
+
+prepare_logging ()
+{
+  if ge "${exodia_loglevel}" "${exodia_tracelevel}"; then set -x; fi
+  if ge "${exodia_loglevel}" "${exodia_debuglevel}"; then exodia_curlopts='--verbose'; fi
+  if ge "${exodia_loglevel}" "${exodia_verblevel}"; then verbose_mode; fi
+}
+
+prepare ()
+{
+  exodia_file="${exodia_file:-exodia.yaml}"
+  exodia_file_abs="${PWD}/${exodia_file}"
+  exodia_loglevel="${exodia_loglevel:-"${exodia_infolevel}"}"
+
+  send_note "Main file found: ${exodia_file}"
+
+  readonly exodia_resetcache exodia_file exodia_file_abs exodia_loglevel exodia_help exodia_version exodia_userrules
+
+  prepare_logging
+  prepare_curl
+}
+
+xtrace_safe ()
+{
+  if ge "${exodia_loglevel}" "${exodia_tracelevel}"; then { set +x; } 2> /dev/null; fi
+  eval "${1}"
+  if ge "${exodia_loglevel}" "${exodia_tracelevel}"; then set -x; fi
+}
+
+reset_buffer ()
+{
+  coreutils --coreutils-prog=rm -rf "${exodia_buffers}/${1}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_buffers}/${1}"
+}
+
+_curl ()
+{
+  local pid stderr out
+  read -r pid < /proc/self/stat
+  pid="${pid%% *}"
+  reset_buffer "${pid}"
+  stderr="${exodia_buffers}/${pid}/0"
+  readonly pid req
+
+  if not out="$(set -f; curl ${exodia_curlopts} --stderr "${stderr}" "${@}" "${req}")"
+  then
+    buffered='true' send_error "'${req}' HTTP response: ${out}"
+    if is nonempty "${stderr}"
+    then buffered='true' cat="${stderr}" send_error; fi
+    send_flush
+    return 1
+  fi
+
+  if not eq "${out%"${out#?}"}" '2'
+  then
+    buffered='true' send_warn "'${req}' HTTP response: ${out}"
+    send_flush
+  fi
+
+  if is nonempty "${stderr}"
+  then
+    buffered='true' send_debug '[CURL] HTTP exchange between Exodia and Docker Engine:'
+    buffered='true' cat="${stderr}" send_debug
+    buffered='true' send_debug '[CURL] JSON response from Docker Engine:'
+    xtrace_safe "command yq -M -p 'json' -o 'json' ${exodia_curlresp} | buffered='true' send_debug"
+    send_flush
+  fi
+}
+
+_yq ()
+{
+  local pid stderr
+  read -r pid < /proc/self/stat
+  pid="${pid%% *}"
+  reset_buffer "${pid}"
+  stderr="${exodia_buffers}/${pid}/0"
+  readonly pid
+
+  if not yq -M "${@}" 2> "${stderr}"
+  then
+    if is nonempty "${stderr}"
+    then
+      send_error 'The YAML parser failed with this error:'
+      cat="${stderr}" send_error
+    else send_error 'The YAML parser failed'; fi
+    return 1
+  elif lt "${exodia_loglevel}" "${exodia_verblevel}" && is nonempty "${stderr}"
+  then
+    send_warn 'The YAML parser succeed but returns this warning:'
+    cat="${stderr}" send_warn
+  elif is nonempty "${stderr}"
+  then cat="${stderr}" send_verb; fi
+}
+
+_gom ()
+{
+  local pid stderr
+  read -r pid < /proc/self/stat
+  pid="${pid%% *}"
+  reset_buffer "${pid}"
+  stderr="${exodia_buffers}/${pid}/0"
+  readonly pid
+
+  if not gomplate "${@}" 2> "${stderr}"
+  then
+    if is nonempty "${stderr}"
+    then
+      send_error 'The Golang Template processor failed with this error:'
+      xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_error"
+    else send_error 'The Golang Template processor failed'; fi
+    return 1
+  elif lt "${exodia_loglevel}" "${exodia_verblevel}" && is nonempty "${stderr}"
+  then
+    send_warn 'The Golang Template processor succeed but returns this warning:'
+    xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_warn"
+  elif is nonempty "${stderr}"
+  then xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_verb"; fi
+}
+
+build_request ()
+{
+  printf '%s/v%s%s\n' "${exodia_curlreqheader}" "${exodia_apiversion:-1.25}" "${1}"
+}
+
+get ()
+{
+  req="$(build_request "${req}")" _curl --request GET "${@}"
+}
+
+prepare_cache ()
+{
+  exodia_cache_escaped="${exodia_cache}/escaped.yaml"
+  exodia_cache_rendered="${exodia_cache}/rendered.yaml"
+
+  exodia_cache_context="${exodia_cache}/context"
+  exodia_cache_version_json="${exodia_cache_context}/version.json"
+  exodia_cache_info_json="${exodia_cache_context}/info.json"
+
+  exodia_cache_datasources="${exodia_cache}/datasources"
+  exodia_cache_header="${exodia_cache_datasources}/header"
+  exodia_cache_dsrendered="${exodia_cache_datasources}/rendered.yaml"
+
+  exodia_cache_explode="${exodia_cache}/explode"
+
+  exodia_cache_include="${exodia_cache}/include"
+
+  readonly exodia_cache_escaped exodia_cache_rendered \
+           exodia_cache_context exodia_cache_version_json exodia_cache_info_json \
+           exodia_cache_datasources exodia_cache_header exodia_cache_dsrendered \
+           exodia_cache_explode \
+           exodia_cache_include
+
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache_context}" "${exodia_cache_datasources}" "${exodia_cache_explode}" "${exodia_cache_include}"
+
+  send_note 'Preprocessing: Cache prepared'
+}
+
+explode_main_file ()
+{
+  _yq 'explode(.)' "${exodia_file}" > "${exodia_cache_rendered}"
+  send_note "Preprocessing: anchors into ${exodia_file} exploded"
+}
+
+define_context_datasources ()
+{
+  req='/version' get
+  coreutils --coreutils-prog=mv -f "${exodia_curlresp}" "${exodia_cache_version_json}"
+
+  exodia_apiversion="$(_gom --datasource "version=${exodia_cache_version_json}" --in '{{ (datasource "version").ApiVersion }}')"
+  req='/version' get
+  coreutils --coreutils-prog=mv -f "${exodia_curlresp}" "${exodia_cache_version_json}"
+
+  req='/info' get
+  coreutils --coreutils-prog=mv -f "${exodia_curlresp}" "${exodia_cache_info_json}"
+
+  send_note 'Preprocessing: Context datasources defined'
+}
+
+write_datasources_header ()
+{
+  # define variables for each datasource
+  _yq '[.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"] + ["{{ $INFO := (datasource \"info\") }}{{ $VERSION := (datasource \"version\") }}"] | join("")' "${exodia_cache_rendered}" > "${exodia_cache_header}"
+  send_note 'Preprocessing: Datasources header written'
+}
+
+expand_datasources_into_datasources ()
+{
+  local datasources last shas
+  datasources="$(_yq '[.datasources[].source] | join(" ")' "${exodia_cache_rendered}")"
+  _yq -i 'del(.datasources)' "${exodia_cache_rendered}"
+
+  set -f
+  # gather datasources into one 1 file
+  _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${exodia_cache_datasources}/0.yaml"
+  set +f
+
+  last="$(sha256sum "${exodia_cache_datasources}/0.yaml")"
+
+  until eq "${shas:+"${shas##* }"}" "${last}"
+  do
+    i="$(( ${i:-0} + 1 ))"
+    shas="${shas:+"${shas}" }${last}"
+
+    _yq '(..
+          # escape keys
+          | key = "{{ print \"" + key + "\" }}"
+          # add datasources as variables at the top of the file
+          | (select((key | line) == 1) | key = (load_str("'"${exodia_cache_header}"'") | trim) + key)) |= .' "${exodia_cache_datasources}/$(( ${i} - 1 )).yaml" > "${exodia_cache_datasources}/${i}.gom.yaml"
+    _gom --datasource "header=${exodia_cache_datasources}/$(( ${i} - 1 )).yaml" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_datasources}/${i}.gom.yaml" --out "${exodia_cache_datasources}/${i}.yaml"
+
+    last="$(sha256sum "${exodia_cache_datasources}/${i}.yaml")"
+    last="${last%% *}"
+  done
+
+  if rg -q "^\s*'[^']+'\s*:\s*'[^'{]*\{\{[^'}]*\}\}.*'" "${exodia_cache_datasources}/${i}.yaml"
+  then send_error 'Circular Golang template reference detected into datasources'; return 1; fi
+
+  coreutils --coreutils-prog=cp -f "${exodia_cache_datasources}/${i}.yaml" "${exodia_cache_dsrendered}"
+
+  send_note 'Preprocessing: Datasources fully expanded'
+}
+
+expand_datasources_into_main ()
+{
+  coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
+
+  _yq '(..
+        # escape:
+        # - keys
+        # - values into rules[].run[] arrays
+        | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
+  _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_escaped}" --out "${exodia_cache_rendered}"
+
+  send_note "Preprocessing: Datasources expanded into ${exodia_file}"
+}
+
+explode_extern_anchors ()
+{
+  # copy the filetree of the project
+  set -f
+  find "$(dirname -- "${exodia_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${exodia_mkdiropts:-} -p "${exodia_cache_explode}/"{} \;
+  set +f
+
+  _yq '.explode[] | .in as $in
+       # remove --- and ... of each file
+       | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" +
+                        (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)
+       # evaluate the result string as YAML parsable content then delete unnecessary keys
+       | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s "\"${exodia_cache_explode}/\" + .file" "${exodia_cache_rendered}"
+
+  _yq -i 'del(.explode)' "${exodia_cache_rendered}"
+
+  send_note 'Preprocessing: Extern anchors exploded'
+}
+
+# TODO: refactoring
+resolve_includes ()
+{
+  if eq "${#}" '0'
+  then
+    coreutils --coreutils-prog=rm -rf "${exodia_cache_include}/"*
+    coreutils --coreutils-prog=cp -f "${exodia_cache_rendered}" "${exodia_cache_include}/exodia.yaml"
+  fi
+
+  # use `set` instead of `local` for recursive functions is safer
+  set -- "${1:-"${exodia_cache_include}/exodia.yaml"}" "$(dirname -- "${1:-"${exodia_cache_include}/exodia.yaml"}")" "${PWD}"
+  cd "${2}"
+  set -- "${1}" "$(coreutils --coreutils-prog=realpath -s --relative-to="${exodia_cache_include}" "${2}")" "${3}"
+  local file yq_in
+  for file in $(_yq '.include[]' "${1}")
+  do
+    coreutils --coreutils-prog=mkdir -p "$(dirname -- "${file}")"
+    if is present "${exodia_cache_include}/${2}/${file}"
+    then send_error "Circular dependency detected into ${1} for ${file}"; return 1; fi
+    if is present "${exodia_cache_explode}/${2}/${file}"
+    then yq_in="${exodia_cache_explode}/${2}/${file}"
+    else yq_in="$(dirname -- "${exodia_file_abs}")/${2}/${file}"; fi
+    coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_include}/${2}/${file}.gom"
+
+    _yq 'explode(.)
+         # workaround to re-evaluate the result of the last filter
+         | @yaml | @yamld
+         # escape:
+         # - keys
+         # - values into rules[].run[] arrays
+         | (.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${yq_in}" >> "${exodia_cache_include}/${2}/${file}.gom"
+    _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_include}/${2}/${file}.gom" --out "${exodia_cache_include}/${2}/${file}"
+
+    resolve_includes "${exodia_cache_include}/${2}/${file}"
+
+    send_note "Preprocessing: Datasources expanded into ${2}/${file}"
+  done
+  cd "${3}"
+}
+
+convert_to_map ()
+{
+  local load includes
+
+  includes="$(find "${exodia_cache_include}" -type f -not -name *.gom -not -name exodia.yaml)"
+  load="$(set -f; printf ' *+ load("%s")' ${includes})"
+
+  coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
+
+  _yq ". ${load}"'
+       # remove unnecessary fields
+       | (del(.[] | select(key != "versions" and key != "rules"))
+       # escape:
+       # - keys
+       # - values with a key different of `id`, `depends_on` and `extends`
+       | (.. | key = "{{ print \"" + key + "\" }}") |= select(type == "!!str" and key != "{{ print \"id\" }}" and parent | key != "{{ print \"extends\" }}" and parent | key != "{{ print \"depends_on\" }}") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n")))
+       # convert rules[] array into a map
+       | ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
+       # convert rules[].run[] array into a map
+       |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; . + ($i | select(has("{{ print \"loop\" }}") == false) | [$i]) + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))])))
+    ' "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
+
+  _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_escaped}" --out "${exodia_cache_rendered}"
+
+  # TODO: add anchors when expanding ids ???
+  # TODO: see how to deal with register.id and from.id
+  send_note 'Preprocessing: YAML arrays converted into maps'
+}
+
+expand_extends ()
+{
+  : TODO
+  # change loop run and run[].loop into dictionnaries to:
+  #   resolve 'extends' (replace them with anchors and aliases then use yq explode)
+}
+
+generate_sh ()
+{
+  : TODO
+  # yq script to generate sh script.
+}
+
+not_cached ()
+{
+  if eq "${exodia_resetcache:-}" 'true' || not is present "${exodia_done}"; then return 0; else return 1; fi
+}
+
+init_runner ()
+{
+  exec 3>&2
+  coreutils --coreutils-prog=rm -r -f "${NAVY_RUN_PATH}/"*
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_buffers}" "${exodia_logs}" "${exodia_lines}" "${exodia_spins}" "${exodia_stops}" "${exodia_aliases}"
+  coreutils --coreutils-prog=ln -s -f "$(tty)" "${exodia_tty}"
+  kill -s USR1 "${exodia_loggerpid}"
+}
+
+preprocess ()
+{
+  if not_cached
+  then
+    # TODO: use cache when failure: do not do compute the cache again
+    send_spin 'cache' 'Preprocessing ...'
+    prepare_cache
+    explode_main_file
+    define_context_datasources
+    write_datasources_header
+    expand_datasources_into_datasources
+    expand_datasources_into_main
+    explode_extern_anchors
+    resolve_includes
+    convert_to_map
+    expand_extends
+    #resolve_depends_on
+    generate_sh
+    send_stop 'cache'
+  fi
+}
+
+run ()
+{
+  # current CLI:
+  # CWD="${PWD}" ./exodia
+
+  # depending of parsed options:
+  # - run sh script with GNU parallel
+  # - or use git to see dependencies as a tree ???
+  if eq "${exodia_help:-}" 'true'
+  then
+    help
+  elif eq "${exodia_version:-}" 'true'
+  then
+    version
+  else
+    IFS=' '
+    set -f
+    set -- ${exodia_userrules:-}
+    set +f
+    IFS="${exodia_ifs}"
+    until eq "${#}" '0'
+    do
+      case " ${exodia_rules:-} " in
+      ( *" ${1} "* ) : ;; #TODO
+      ( * ) unknown_option "${1}" ;;
+      esac
+      shift
+    done
+  fi
+}
+
+runner ()
+{
+  init_runner
+  parse_options "${@}"
+  prepare
+  preprocess
+  run
+}
+
+##############################################################################
+###################################   MAIN   #################################
+##############################################################################
+
+add_style ()
+{
+  exodia_esc="$(printf '\033')"
+  exodia_white="${exodia_esc}[38;5;15m"
+  exodia_red="${exodia_esc}[38;5;204m"
+  exodia_orange="${exodia_esc}[38;5;215m"
+  exodia_yellow="${exodia_esc}[38;5;228m"
+  exodia_green="${exodia_esc}[38;5;120m"
+  exodia_cyan="${exodia_esc}[38;5;045m"
+  exodia_blue="${exodia_esc}[38;5;069m"
+  exodia_purple="${exodia_esc}[38;5;135m"
+  exodia_pink="${exodia_esc}[38;5;207m"
+  exodia_bold="${exodia_esc}[1m"
+  exodia_erase_until_eol="${exodia_esc}[K"
+  exodia_sol="${exodia_esc}[G"
+  exodia_previous="${exodia_esc}[F"
+  exodia_hidecursor="${exodia_esc}[?25l"
+  exodia_showcursor="${exodia_esc}[?25h"
+  exodia_reset="${exodia_esc}[m"
+
+  exodia_rb196="${exodia_esc}[38;5;196m"
+  exodia_rb202="${exodia_esc}[38;5;202m"
+  exodia_rb208="${exodia_esc}[38;5;208m"
+  exodia_rb214="${exodia_esc}[38;5;214m"
+  exodia_rb220="${exodia_esc}[38;5;220m"
+  exodia_rb226="${exodia_esc}[38;5;226m"
+  exodia_rb190="${exodia_esc}[38;5;190m"
+  exodia_rb154="${exodia_esc}[38;5;154m"
+  exodia_rb118="${exodia_esc}[38;5;118m"
+  exodia_rb82="${exodia_esc}[38;5;082m"
+  exodia_rb46="${exodia_esc}[38;5;046m"
+  exodia_rb47="${exodia_esc}[38;5;047m"
+  exodia_rb48="${exodia_esc}[38;5;048m"
+  exodia_rb49="${exodia_esc}[38;5;049m"
+  exodia_rb50="${exodia_esc}[38;5;050m"
+  exodia_rb51="${exodia_esc}[38;5;051m"
+  exodia_rb45="${exodia_esc}[38;5;045m"
+  exodia_rb39="${exodia_esc}[38;5;039m"
+  exodia_rb33="${exodia_esc}[38;5;033m"
+  exodia_rb27="${exodia_esc}[38;5;027m"
+  exodia_rb21="${exodia_esc}[38;5;021m"
+  exodia_rb57="${exodia_esc}[38;5;057m"
+  exodia_rb93="${exodia_esc}[38;5;093m"
+  exodia_rb128="${exodia_esc}[38;5;129m"
+  exodia_rb165="${exodia_esc}[38;5;165m"
+  exodia_rb201="${exodia_esc}[38;5;201m"
+  exodia_rb200="${exodia_esc}[38;5;200m"
+  exodia_rb199="${exodia_esc}[38;5;199m"
+  exodia_rb198="${exodia_esc}[38;5;198m"
+  exodia_rb197="${exodia_esc}[38;5;197m"
+
+  readonly exodia_white exodia_red exodia_orange exodia_yellow exodia_green exodia_cyan exodia_blue exodia_purple exodia_pink \
+           exodia_bold \
+           exodia_erase_until_eol exodia_sol exodia_previous \
+           exodia_hidecursor exodia_showcursor \
+           exodia_reset \
+           exodia_rb196 exodia_rb202 exodia_rb208 exodia_rb214 exodia_rb220 exodia_rb226 \
+           exodia_rb190 exodia_rb154 exodia_rb118 exodia_rb82 exodia_rb46 exodia_rb47 \
+           exodia_rb48 exodia_rb49 exodia_rb50 exodia_rb51 exodia_rb45 exodia_rb39 \
+           exodia_rb33 exodia_rb27 exodia_rb21 exodia_rb57 exodia_rb93 exodia_rb128 \
+           exodia_rb165 exodia_rb201 exodia_rb200 exodia_rb199 exodia_rb198 exodia_rb197
+}
+
+fatal ()
+{
+  printf '%s %b%bFATAL%b %s\n' "$(date '+%T')" "${exodia_orange}" "${exodia_bold}" "${exodia_reset}" "${1}"
+}
+
+add_logger_reqchars ()
+{
+  exodia_rawlevel='-'
+  exodia_errorlevel='0'
+  exodia_warnlevel='1'
+  exodia_infolevel='2'
+  exodia_notelevel='3'
+  exodia_debuglevel='4'
+  exodia_tracelevel='5'
+  exodia_verblevel='6'
+  exodia_spinreq='S'
+  exodia_stopreq='K'
+  exodia_bufreq='B'
+  exodia_flushreq='F'
+  exodia_reqsep='/'
+  readonly exodia_rawlevel exodia_errorlevel exodia_warnlevel exodia_infolevel exodia_notelevel exodia_debuglevel exodia_tracelevel exodia_verblevel \
+           exodia_spinreq exodia_stopreq exodia_bufreq exodia_flushreq exodia_reqsep
+}
+
+harden ()
+{
+  local bin flag
+
+  IFS=':'
+  set -f
+  for bin in ${PATH}
+  do
+    case "${busybox:+busybox}${coreutils:+coreutils}${gnu:+gnu}" in
+    ( busybox|coreutils )
+      if can exec "${bin}/${1}" && \
+         is sym "${bin}/${1}" && \
+         eq "$(command basename -- "$(command readlink -f "${bin}/${1}")")" "${busybox:+busybox}${coreutils:+coreutils}"
+      then flag='true'; break; fi ;;
+    ( gnu )
+      if can exec "${bin}/${1}" && \
+         eq "$(command basename -- "$(command readlink -f "${bin}/${1}")")" "${1}"
+      then flag='true'; break; fi ;;
+    ( * )
+      if can exec "${bin}/${1}"; then flag='true'; break; fi ;;
+    esac
+  done
+  set +f
+  IFS="${exodia_ifs}"
+
+  if not eq "${flag:-}" 'true'
+  then fatal "${busybox:+Busybox }${coreutils:+Coreutils }${gnu:+GNU }${1} not found"; return 1; fi
+}
+
+check_deps ()
+{
+  # GNU `bc` is faster than Busybox `bc`, have unicode & escape sequences support
+  gnu='true' harden 'bc'
+
+  # GNU `find` is really faster than Busybox `find` and have debug options
+  gnu='true' harden 'find'
+
+  # Coreutils `head` is slower than Busybox `head`
+  busybox='true' harden 'head'
+
+  # GNU `sed` is a little bit slower than Busybox `sed`
+  busybox='true' harden 'sed'
+
+  # Coreutils `sort` is really faster than Busybox `sort`
+  coreutils='true' harden 'sort'
+
+  # `xargs` is slow, avoid it when possible. If not, GNU `xargs` is slower than Busybox `xargs`.
+  busybox='true' harden 'xargs'
+
+  # Coreutils `cp`, `ln`, `mkdir`, `mv`, `readlink` and `rm` have verbose option
+  coreutils='true' harden 'cp'
+  coreutils='true' harden 'ln'
+  coreutils='true' harden 'mkdir'
+  coreutils='true' harden 'mv'
+  coreutils='true' harden 'readlink'
+  coreutils='true' harden 'rm'
+
+  # Coreutils `realpath` has -s and --relative-to options
+  coreutils='true' harden 'realpath'
+
+  harden 'ansi2txt'
+  harden 'curl'
+  harden 'gomplate'
+  harden 'lolcat'
+  harden 'parallel'
+  harden 'stdoutbuf'
+  harden 'rg'
+  harden 'ts'
+  harden 'yq'
+
+  # check it with: grep -o -E '\w+' exodia | sort | uniq -c | sort -n
+  harden 'basename'
+  harden 'cat'
+  harden 'date'
+  harden 'dirname'
+  harden 'getconf'
+  harden 'kill'
+  harden 'mktemp'
+  harden 'sha256sum'
+  harden 'tr'
+  harden 'tty'
+  harden 'stty' || harden 'tput'
+  harden 'usleep'
+}
+
+init ()
+{
+  set -eu
+
+  exodia_ifs="${IFS}"
+  exodia_nl='
+'
+  NAVY_CACHE_PATH="${NAVY_CACHE_PATH:-/var/cache/exodia}"
+  NAVY_RUN_PATH="${NAVY_RUN_PATH:-/var/run/exodia}"
+  exodia_sha="$(find . -type f -exec sha256sum {} \; | sha256sum)"
+  exodia_sha="${exodia_sha%% *}"
+  exodia_cache="${NAVY_CACHE_PATH}/${exodia_sha}"
+  exodia_logs="${NAVY_RUN_PATH}/logs"
+  exodia_lines="${exodia_logs}/lines"
+  exodia_spins="${NAVY_RUN_PATH}/spins"
+  exodia_stops="${NAVY_RUN_PATH}/stops"
+  exodia_aliases="${NAVY_RUN_PATH}/aliases"
+  exodia_tty="${NAVY_RUN_PATH}/tty"
+  exodia_buffers="${NAVY_RUN_PATH}/buffers"
+  exodia_done="${NAVY_RUN_PATH}/done"
+  readonly NAVY_CACHE_PATH NAVY_RUN_PATH exodia_sha exodia_cache exodia_logs exodia_lines exodia_spins exodia_stops exodia_aliases exodia_tty exodia_buffers exodia_done exodia_ifs exodia_nl
+
+  add_logger_reqchars
+  add_style
+
+  check_deps
+
+  GOMPLATE_LEFT_DELIM='{{'
+  GOMPLATE_RIGHT_DELIM='}}'
+  PS4="${exodia_tracelevel}"
+
+  readonly GOMPLATE_LEFT_DELIM GOMPLATE_RIGHT_DELIM PS4
+  export GOMPLATE_LEFT_DELIM GOMPLATE_RIGHT_DELIM
+
+  coreutils --coreutils-prog=mkdir -p "${NAVY_CACHE_PATH}" "${NAVY_RUN_PATH}"
+}
+
+main ()
+{
+  init
+  logger &
+  exodia_loggerpid="${!}"
+  readonly exodia_loggerpid
+  trap "kill -s USR1 ${exodia_loggerpid}; wait" EXIT INT TERM
+  { runner "${@}"; } 2>&1 | listener
+}
+
+main "${@}"
+
+# ----------------------------------------------------------------------------
+# MEMO
+# ----------------------------------------------------------------------------
+#
+# regular:
+# curl -s --unix-socket /var/run/docker.sock -X DELETE http://v1.45/containers/hardcore_jang?force=true
+#
+# filters/urlencode:
+# curl -s --unix-socket /var/run/docker.sock 'http://1.45/images/json' -X GET -G --data-urlencode 'filters={"reference":{"172.17.2.3:5000/mywhalefleet/tiawl.local.*":true}}'
+#
+# attach: curl -s -N -T - -X POST --unix-socket ./docker.sock 'http://1.45/containers/aaebdff75c380b80556b9c2ce65b2c62ba4cdd59427d3f269d5a61d7b8a087b0/attach?stdout=1&stdin=1&stderr=1&stream=1' -H 'Upgrade: tcp' -H 'Connection: Upgrade'
+#
+# build:
+# tar c -f context.tar -C /tmp .
+# curl -s --data-binary @- --header 'Content-Type: application/x-tar' --no-buffer --unix-socket /var/run/docker.sock -X POST http://v1.45/build?dockerfile=Dockerfile&t=reg/proj/my-img:my-tag < context.tar

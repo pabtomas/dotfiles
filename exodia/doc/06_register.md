@@ -1,5 +1,7 @@
 # Register object
 
+TODO
+
 - **description**: The only use case of this object is in `Request.register`.
 - **exemple**: See `Request object`.
 

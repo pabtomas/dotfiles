@@ -41,12 +41,12 @@ RUN <<END_OF_RUN
     ln -s -f "$(command -v busybox)" "$(command -v head)"
     ln -s -f "$(command -v busybox)" "$(command -v xargs)"
 
-    mkdir -p /navy
+    mkdir -p /exodia
     unset http_proxy https_proxy
 END_OF_RUN
 
-COPY ./navy /usr/local/bin/
+COPY ./exodia /usr/local/bin/
 
-WORKDIR /navy
+WORKDIR /exodia
 
-ENTRYPOINT ["/usr/local/bin/navy"]
+ENTRYPOINT ["/usr/local/bin/exodia"]

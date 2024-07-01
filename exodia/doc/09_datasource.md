@@ -34,7 +34,7 @@
     method: GET
     register:
       query:
-        filters: '{"label":{"navy":true}}'
+        filters: '{"label":{"exodia":true}}'
       as:
         id: registercontainersjson
     ```
@@ -52,4 +52,4 @@
 - **required**:
     - required if used into the `datasources` list,
     - ignored if used into the `Register.as` attribute.
-- **description**: The path (relative to your main Navy file) of the YAML file you want to use as a Datasource.
+- **description**: The path (relative to your main Exodia file) of the YAML file you want to use as a Datasource.

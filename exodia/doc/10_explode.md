@@ -29,11 +29,11 @@
 
 - **type**: string
 - **required**: true
-- **description**: The path (relative to your main Navy file) of the YAML file that needs anchors from other YAML files.
+- **description**: The path (relative to your main Exodia file) of the YAML file that needs anchors from other YAML files.
 
 ### `Explode.anchors`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: A list of YAML filepaths (relative to your main Navy file) where anchors needed by the `Explode.in` file.
+- **description**: A list of YAML filepaths (relative to your main Exodia file) where anchors needed by the `Explode.in` file.

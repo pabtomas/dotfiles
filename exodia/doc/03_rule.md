@@ -1,10 +1,10 @@
 # Rule object
 
-- **description**: A set of interdependant Requests and/or Commands you want to run by invoking a simple command. You can thing a Navy rule as a GNU Make target. 
+- **description**: A set of interdependant Requests and/or Commands you want to run by invoking a simple command. You can thing a Exodia rule as a GNU Make target. 
 - **exemple**:
 ```yaml
 rules:
-  - id: 'new_alpine'
+  - id: 'alpine'
     description: 'create an Alpine container'
     run:
       - endpoint: /images/create
@@ -22,7 +22,7 @@ rules:
               Image: 'docker.io/library/alpine:latest'
 ```
 
-Now each time you are using `navy new_alpine` it will pull the latest alpine image and create a container based on this image.
+Now each time you are using `exodia alpine` it will pull the latest alpine image and create a container based on this image.
 
 ### `Rule.id`
 
@@ -35,7 +35,7 @@ Now each time you are using `navy new_alpine` it will pull the latest alpine ima
 - **type**: string
 - **required**: false
 - **default**: `""`
-- **description**: How the command will be described when Navy is called with its help option.
+- **description**: How the command will be described when Exodia is called with its help option.
 
 ### `Rule.run`
 

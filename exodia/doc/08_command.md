@@ -1,6 +1,8 @@
 # Command object
 
-- **description**: A custom command for specific need or to compensate Navy's lacks.
+TODO
+
+- **description**: A custom command for specific need or to compensate Exodia's lacks.
 - **exemples**:
 ```yaml
 rules:

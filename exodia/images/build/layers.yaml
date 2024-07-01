@@ -239,7 +239,7 @@ rules:
               t: '{{ $git.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
             context: '{{ $all.path.dockerfiles }}/{{ $git.id }}'
             depends_on:
-              - '{{ $dependencies.images.build.virtual.explorer }}'
+              - '{{ $dependencies.images.build.explorer }}'
             extends:
               - '{{ $dependencies.images.build.virtual._ }}'
           - id: '{{ $dependencies.images.build.shell }}'

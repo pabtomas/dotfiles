@@ -12,7 +12,7 @@ rules:
               HostConfig:
                 Privileged: false
               Labels:
-                navy: '{{ $project.id }}'
+                exodia: '{{ $project.id }}'
           - id: '{{ $dependencies.containers.create.virtual.docker }}'
             virtual: true
             query:
