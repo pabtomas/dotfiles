@@ -19,7 +19,8 @@ prefix:
     create: 'volumes{{ $all.sep.id }}create{{ $all.sep.id }}'
 
 commands:
-  attach '{{ $dependencies.prefix.commands }}attach'
+  attach: '{{ $dependencies.prefix.commands }}attach'
+  install: '{{ $dependencies.prefix.commands }}install'
 
 containers:
   create:
@@ -74,6 +75,7 @@ containers:
     spaceporn:
       relay: '{{ $dependencies.prefix.containers.start }}{{ $spacepornrelay.id }}'
       runner: '{{ $dependencies.prefix.containers.start }}{{ $spacepornrunner.id }}'
+    xserver: '{{ $dependencies.prefix.containers.start }}{{ $xserver.id }}'
 
 images:
   pull:

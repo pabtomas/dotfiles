@@ -785,6 +785,7 @@ define_context_datasources ()
 
 write_datasources_header ()
 {
+  # define variables for each datasource
   _yq '[.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"] + ["{{ $INFO := (datasource \"info\") }}{{ $VERSION := (datasource \"version\") }}"] | join("")' "${navy_cache_rendered}" > "${navy_cache_header}"
   send_note 'Preprocessing: Datasources header written'
 }
@@ -796,6 +797,7 @@ expand_datasources_into_datasources ()
   _yq -i 'del(.datasources)' "${navy_cache_rendered}"
 
   set -f
+  # gather datasources into one 1 file
   _yq -N '{filename: explode(.)} | ... style="single"' ${datasources} > "${navy_cache_datasources}/0.yaml"
   set +f
 
@@ -806,7 +808,11 @@ expand_datasources_into_datasources ()
     i="$(( ${i:-0} + 1 ))"
     shas="${shas:+"${shas}" }${last}"
 
-    _yq '(.. | key = "{{ print \"" + key + "\" }}" | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${navy_cache_datasources}/$(( ${i} - 1 )).yaml" > "${navy_cache_datasources}/${i}.gom.yaml"
+    _yq '(..
+          # escape keys
+          | key = "{{ print \"" + key + "\" }}"
+          # add datasources as variables at the top of the file
+          | (select((key | line) == 1) | key = (load_str("'"${navy_cache_header}"'") | trim) + key)) |= .' "${navy_cache_datasources}/$(( ${i} - 1 )).yaml" > "${navy_cache_datasources}/${i}.gom.yaml"
     _gom --datasource "header=${navy_cache_datasources}/$(( ${i} - 1 )).yaml" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_datasources}/${i}.gom.yaml" --out "${navy_cache_datasources}/${i}.yaml"
 
     last="$(sha256sum "${navy_cache_datasources}/${i}.yaml")"
@@ -825,8 +831,11 @@ expand_datasources_into_main ()
 {
   coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_escaped}"
 
-  # do not process templates into rules[].run[]
-  _yq '(.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${navy_cache_rendered}" >> "${navy_cache_escaped}"
+  _yq '(..
+        # escape:
+        # - keys
+        # - values into rules[].run[] arrays
+        | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${navy_cache_rendered}" >> "${navy_cache_escaped}"
   _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
 
   send_note "Preprocessing: Datasources expanded into ${navy_file}"
@@ -839,7 +848,12 @@ explode_extern_anchors ()
   find "$(dirname -- "${navy_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${navy_mkdiropts:-} -p "${navy_cache_explode}/"{} \;
   set +f
 
-  _yq '.explode[] | .in as $in | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" + (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim) | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s "\"${navy_cache_explode}/\" + .file" "${navy_cache_rendered}"
+  _yq '.explode[] | .in as $in
+       # remove --- and ... of each file
+       | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" +
+                        (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)
+       # evaluate the result string as YAML parsable content then delete unnecessary keys
+       | @yamld | explode(.) | .[] |= del(select(key != "rules" and key != "include")) | . * {"file": $in}' -s "\"${navy_cache_explode}/\" + .file" "${navy_cache_rendered}"
 
   _yq -i 'del(.explode)' "${navy_cache_rendered}"
 
@@ -870,7 +884,13 @@ resolve_includes ()
     else yq_in="$(dirname -- "${navy_file_abs}")/${2}/${file}"; fi
     coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_include}/${2}/${file}.gom"
 
-    _yq 'explode(.) | @yaml | @yamld | (.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${yq_in}" >> "${navy_cache_include}/${2}/${file}.gom"
+    _yq 'explode(.)
+         # workaround to re-evaluate the result of the last filter
+         | @yaml | @yamld
+         # escape:
+         # - keys
+         # - values into rules[].run[] arrays
+         | (.. | key = "{{ print \"" + key + "\" }}") |= . | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |= (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |= (.. | select (type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n"))))' "${yq_in}" >> "${navy_cache_include}/${2}/${file}.gom"
     _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_include}/${2}/${file}.gom" --out "${navy_cache_include}/${2}/${file}"
 
     resolve_includes "${navy_cache_include}/${2}/${file}"
@@ -887,9 +907,26 @@ convert_to_map ()
   includes="$(find "${navy_cache_include}" -type f -not -name *.gom -not -name navy.yaml)"
   load="$(set -f; printf ' *+ load("%s")' ${includes})"
 
-  _yq -i ". ${load}"' | .rules |= (.[] as $item ireduce ({}; . *+ {$item.id: ($item | del(.id))})) | del(.include)' "${navy_cache_rendered}"
+  coreutils --coreutils-prog=cp -f "${navy_cache_header}" "${navy_cache_escaped}"
 
-  # TODO: convert rules[].run[] => into map
+  _yq ". ${load}"'
+       # remove unnecessary fields
+       | (del(.[] | select(key != "versions" and key != "rules"))
+       # escape:
+       # - keys
+       # - values with a key different of `id`
+       | (.. | key = "{{ print \"" + key + "\" }}") |= select(key != "{{ print \"id\" }}" and type == "!!str") |= (. | sub("\\\\", "\\\\") | sub("\"", "\\\"") | split("\n") | .[] |= "{{ print \"" + (. | select(. | length > 0)) + "\" }}" | join("\n")))
+       # convert rules[] array into a map
+       | ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
+       # convert rules[].run[] array into a map
+       |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; . + ($i | select(has("{{ print \"loop\" }}") == false) | [$i]) + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))])))
+    ' "${navy_cache_rendered}" >> "${navy_cache_escaped}"
+
+  _gom --datasource "header=${navy_cache_dsrendered}" --datasource "info=${navy_cache_info_json}" --datasource "version=${navy_cache_version_json}" --file "${navy_cache_escaped}" --out "${navy_cache_rendered}"
+
+  # TODO: expand depends_on and extends
+  # TODO: add anchors when expanding ids ???
+  # TODO: see how to deal with register.id and from.id
   send_note 'Preprocessing: YAML arrays converted into maps'
 }
 
@@ -936,6 +973,7 @@ preprocess ()
     resolve_includes
     convert_to_map
     expand_extends
+    #resolve_depends_on
     generate_sh
     send_stop 'cache'
   fi

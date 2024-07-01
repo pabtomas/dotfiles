@@ -29,7 +29,7 @@ rules:
               - '{{ $dependencies.containers.start.carpenter.relay }}'
           - id: '{{ $dependencies.containers.start.controller }}'
             path:
-              id: '{{ controller.host }}'
+              id: '{{ $controller.host }}'
             depends_on:
               - '{{ $dependencies.containers.create.controller }}'
               - '{{ $dependencies.containers.start.builder }}'
@@ -109,13 +109,13 @@ rules:
               - '{{ $dependencies.containers.start.xserver }}'
           - id: '{{ $dependencies.containers.start.spaceporn.runner }}'
             path:
-              id: '{{ spacepornrunner.host }}'
+              id: '{{ $spacepornrunner.host }}'
             depends_on:
               - '{{ $dependencies.containers.create.spaceporn.runner }}'
               - '{{ $dependencies.containers.start.spaceporn.relay }}'
           - id: '{{ $dependencies.containers.start.xserver }}'
             path:
-              id: '{{ xserver.host }}'
+              id: '{{ $xserver.host }}'
             depends_on:
               - '{{ $dependencies.containers.create.xserver }}'
 
