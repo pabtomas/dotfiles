@@ -6,15 +6,16 @@ rules:
       - endpoint: /volumes
         method: GET
         register:
+          id: post.volumes.json
           query:
             filters: '{"label":{"exodia":{{ $project.id }}}}'
-          id: post.volumes.json
           errexit: false
           as:
             id: registerpostvolumes
       - endpoint: /volumes/{name}
         method: DELETE
         from:
+          id: delete.from.post.volumes.json
           filter: '{{ $array := "" }}{{ range $registerpostvolumes }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
           errexit: false
           depends_on:

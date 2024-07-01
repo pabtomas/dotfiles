@@ -33,6 +33,7 @@
     endpoint: /containers/json
     method: GET
     register:
+      id: register.containers.json
       query:
         filters: '{"label":{"exodia":true}}'
       as:

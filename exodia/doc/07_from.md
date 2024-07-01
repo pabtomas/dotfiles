@@ -7,11 +7,15 @@ TODO
 
 ### `From.id`
 
+TODO
+
 - **type**: string
 - **required**: true
 - **description**: See `Body.id`.
 
 ### `From.depends_on`
+
+TODO
 
 - **type**: list
 - **required**: false
@@ -19,6 +23,8 @@ TODO
 - **description**: See `Body.depends_on`.
 
 ### `From.errexit`
+
+TODO
 
 - **type**: boolean
 - **required**: false

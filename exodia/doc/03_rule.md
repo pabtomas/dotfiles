@@ -51,8 +51,10 @@ rules:
       - endpoint: /volumes/create
         method: POST
         loop:
-          - query:
+          - id: create.my-volume
+            query:
               Name: my-volume
-          - query:
+          - id: create.my-volume-2
+            query:
               Name: my-volume-2
 ```

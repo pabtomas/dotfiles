@@ -7,11 +7,15 @@ TODO
 
 ### `Register.id`
 
+TODO
+
 - **type**: string
 - **required**: true
 - **description**: See `Body.id`.
 
 ### `Register.depends_on`
+
+TODO
 
 - **type**: list
 - **required**: false
@@ -20,12 +24,16 @@ TODO
 
 ### `Register.errexit`
 
+TODO
+
 - **type**: boolean
 - **required**: false
 - **default**: `true`
 - **description**: See `Body.errexit`.
 
 ### `Register.query`
+
+TODO
 
 - **type**: dictionnary
 - **required**: false

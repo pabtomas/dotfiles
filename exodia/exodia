@@ -919,13 +919,19 @@ convert_to_map ()
        # convert rules[] array into a map
        | ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
        # convert rules[].run[] array into a map
-       |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; . + ($i | select(has("{{ print \"loop\" }}") == false) | [$i]) + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))])))
+       |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; .
+             # move rules[].run[].from.id to rules[].run[].id
+             + [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"from\" }}"].["{{ print \"id\" }}"])]
+             # move rules[].run[].register.id to rules[].run[].id
+             + [$i + {"{{ print \"id\" }}": $i.["{{ print \"register\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"register\" }}"].["{{ print \"id\" }}"])]
+             # convert rules[].run[].loop[] array into a map
+             + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))]))
+       |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
     ' "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
 
   _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_escaped}" --out "${exodia_cache_rendered}"
 
   # TODO: add anchors when expanding ids ???
-  # TODO: see how to deal with register.id and from.id
   send_note 'Preprocessing: YAML arrays converted into maps'
 }
 

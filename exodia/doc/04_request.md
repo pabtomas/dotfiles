@@ -16,9 +16,11 @@ A Request has also an optional attribute: `if`.
     endpoint: /networks/create
     method: POST
     loop:
-      - query:
+      - id: create.my-net
+        query:
           Name: my-net
-      - query:
+      - id: create.my-net-2
+        query:
           Name: my-net-2
     ```
     - This Request object will ask for the current network list and store the JSON answer from the Docker Engine as a Datasource:
@@ -36,6 +38,7 @@ A Request has also an optional attribute: `if`.
     endpoint: /networks/{id}
     method: DELETE
     from:
+      id: from.networks.json
       filter: '{{ $array := "" }}{{ range $registernetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
       depends_on:
         - networks.json

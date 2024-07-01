@@ -6,9 +6,9 @@ rules:
       - endpoint: /images/json
         method: GET
         register:
+          id: local.alpine.image.json
           query:
             filters: '{"reference":{"{{ $alpine.image.source }}":true}}'
-          id: local.alpine.image.json
           as:
             id: localalpineimage
             scope: '{{ $dependencies.images.pull.alpine }}'
@@ -25,9 +25,9 @@ rules:
       - endpoint: /images/json
         method: GET
         register:
+          id: local.bash.image.json
           query:
             filters: '{"reference":{"{{ $bash.image.source }}":true}}'
-          id: local.bash.image.json
           as:
             id: localbashimage
             scope: '{{ $dependencies.images.pull.bash }}'
@@ -44,9 +44,9 @@ rules:
       - endpoint: /images/json
         method: GET
         register:
+          id: local.buildkit.image.json
           query:
             filters: '{"reference":{"{{ $buildkit.image.source }}":true}}'
-          id: local.buildkit.image.json
           as:
             id: localbuildkitimage
             scope: '{{ $dependencies.images.pull.buildkit }}'
@@ -63,9 +63,9 @@ rules:
       - endpoint: /images/json
         method: GET
         register:
+          id: local.docker.image.json
           query:
             filters: '{"reference":{"{{ $docker.image.source }}":true}}'
-          id: local.docker.image.json
           as:
             id: localdockerimage
             scope: '{{ $dependencies.images.pull.docker }}'
@@ -82,9 +82,9 @@ rules:
       - endpoint: /images/json
         method: GET
         register:
+          id: local.registry.image.json
           query:
             filters: '{"reference":{"{{ $registry.image.source }}":true}}'
-          id: local.registry.image.json
           as:
             id: localregistryimage
             scope: '{{ $dependencies.images.pull.registry }}'
@@ -101,9 +101,9 @@ rules:
       - endpoint: /images/json
         method: GET
         register:
+          id: local.socketproxy.image.json
           query:
             filters: '{"reference":{"{{ $socketproxy.linuxserver.image.source }}":true}}'
-          id: local.socketproxy.image.json
           as:
             id: localsocketproxyimage
             scope: '{{ $dependencies.images.pull.socketproxy }}'

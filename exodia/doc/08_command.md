@@ -1,7 +1,5 @@
 # Command object
 
-TODO
-
 - **description**: A custom command for specific need or to compensate Exodia's lacks.
 - **exemples**:
 ```yaml
@@ -27,11 +25,15 @@ rules:
 
 ### `Command.id`
 
+TODO
+
 - **type**: string
 - **required**: true
 - **description**: See `Body.id`.
 
 ### `Command.depends_on`
+
+TODO
 
 - **type**: list
 - **required**: false
@@ -40,12 +42,16 @@ rules:
 
 ### `Command.errexit`
 
+TODO
+
 - **type**: boolean
 - **required**: false
 - **default**: `true`
 - **description**: See `Body.errexit`.
 
 ### `Command.if`
+
+TODO
 
 - **type**: boolean
 - **required**: false
