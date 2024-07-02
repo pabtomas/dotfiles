@@ -878,7 +878,7 @@ prepare_cache ()
 explode_main_file ()
 {
   _yq 'explode(.)' "${exodia_file}" > "${exodia_cache_rendered}"
-  send_note "Preprocessing: anchors into ${exodia_file} exploded"
+  send_note "Preprocessing: Anchors into ${exodia_file} exploded"
 }
 
 define_context_datasources ()
@@ -1015,7 +1015,7 @@ convert_to_objects ()
 expand_extends ()
 {
   _yq -i "${exodia_filter_expand_extends}" "${exodia_cache_rendered}"
-  send_note 'Preprocessing: extends expanded'
+  send_note 'Preprocessing: Extends expanded'
 }
 
 generate_sh ()
