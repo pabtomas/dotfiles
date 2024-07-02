@@ -834,6 +834,7 @@ expand_datasources_into_datasources ()
   send_note 'Preprocessing: Datasources fully expanded'
 }
 
+# TODO: remove cp ??
 expand_datasources_into_main ()
 {
   coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
@@ -940,6 +941,7 @@ resolve_includes ()
   cd "${3}"
 }
 
+# TODO: remove cp ??
 convert_to_objects ()
 {
   local load includes
@@ -1024,7 +1026,7 @@ preprocess ()
 {
   if not_cached
   then
-    # TODO: use cache when failure: do not do compute the cache again
+    # TODO: use cache when failure: do not compute the cache again
     send_spin 'cache' 'Preprocessing ...'
     prepare_cache
     explode_main_file
