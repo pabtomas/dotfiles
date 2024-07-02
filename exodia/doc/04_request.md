@@ -23,7 +23,7 @@ A Request has also an optional attribute: `if`.
         query:
           Name: my-net-2
     ```
-    - This Request object will ask for the current network list and store the JSON answer from the Docker Engine as a Datasource:
+    - This Request object will ask for the current network list and store the JSON response from the Docker Engine as a Datasource:
     ```yaml
     endpoint: /networks
     method: GET
@@ -68,7 +68,7 @@ A Request has also an optional attribute: `if`.
 - **type**: Register
 - **required**: false
 - **default**: `{}`
-- **description**: The Docker Engine answer of the Request will be stored as a JSON Datasource. It is useful if you want to use the result of this Request for another Request or Command later.
+- **description**: The Docker Engine reponse of the Request will be stored as a JSON Datasource. It is useful if you want to use the result of this Request for another Request or Command later.
 
 ### `Request.from`
 

@@ -441,20 +441,20 @@ send_stop  () { printf '%s%s\n' "${exodia_stopreq}" "${1}" 1>&3; }
 
 help ()
 {
-  send_raw 'A Docker Engine orchestrator'                                     \
-           ''                                                                 \
-           'Usage:'                                                           \
-           '  exodia [options] [rules]'                                         \
-           ''                                                                 \
-           'Rules:'                                                           \
-           '  TODO'                                                           \
-           ''                                                                 \
-           'Options:'                                                         \
-           '  -f, --file file       exodia main file (default: ./exodia.yaml)'    \
-           '  -r, --reset-cache     resets the cache'                         \
-           '  -q                    reduce log level, reusable 2 times'       \
-           '  -v                    increase log level, reusable 4 times'     \
-           '  -h, --help            help for exodia'                            \
+  send_raw 'A Docker Engine orchestrator'                                      \
+           ''                                                                  \
+           'Usage:'                                                            \
+           '  exodia [options] [rules]'                                        \
+           ''                                                                  \
+           'Rules:'                                                            \
+           '  TODO'                                                            \
+           ''                                                                  \
+           'Options:'                                                          \
+           '  -f, --file file       exodia main file (default: ./exodia.yaml)' \
+           '  -r, --reset-cache     resets the cache'                          \
+           '  -q                    reduce log level, reusable 2 times'        \
+           '  -v                    increase log level, reusable 4 times'      \
+           '  -h, --help            help for exodia'                           \
            '  -V, --version         version for exodia'
   return 1
 }

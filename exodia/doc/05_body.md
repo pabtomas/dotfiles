@@ -33,7 +33,7 @@ rules:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Exodia uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Exodia execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Exodia will run the Request after the Requests and Commands listed here are executed.
+- **description**: Exodia uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Exodia execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Exodia will run the Request after the Requests and Commands listed here will end their execution.
 
 ### `Body.errexit`
 

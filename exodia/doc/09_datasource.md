@@ -2,7 +2,7 @@
 
 - **description**:
     - A Datasource is a gomplate concept. Most of the time, you will find everything you need in [the gomplate documentation](https://docs.gomplate.ca/).
-    - Used with the `datasources` keyword, the Datasource object have to be YAML file. Used with the `Register.as` keyword, the Datasource object is a JSON answer from Docker Engine. A Datasource has 3 available attributes (each of them is described in its own section):
+    - Used with the `datasources` keyword, the Datasource object have to be YAML file. Used with the `Register.as` keyword, the Datasource object is a JSON response from Docker Engine. A Datasource has 3 available attributes (each of them is described in its own section):
         - id
         - source
 - **exemples**:

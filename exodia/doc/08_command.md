@@ -25,38 +25,30 @@ rules:
 
 ### `Command.id`
 
-TODO
-
 - **type**: string
 - **required**: true
-- **description**: See `Body.id`.
+- **description**: A unique ID attributed to a Command.
 
 ### `Command.depends_on`
-
-TODO
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: See `Body.depends_on`.
+- **description**: Exodia uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Exodia execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Exodia will run the Request after the Requests and Commands listed here will end their execution.
 
 ### `Command.errexit`
-
-TODO
 
 - **type**: boolean
 - **required**: false
 - **default**: `true`
-- **description**: See `Body.errexit`.
+- **description**: If the Request failed, Exodia stops its execution in failure.
 
 ### `Command.if`
-
-TODO
 
 - **type**: boolean
 - **required**: false
 - **default**: true
-- **description**: See `Request.if`.
+- **description**: The result of this expression must a boolean. It this expression is evaluated as true, the matching Request will be executed. Otherwise, it will not.
 
 ### `Command.argv`
 
