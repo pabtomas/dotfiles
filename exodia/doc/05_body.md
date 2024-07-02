@@ -112,7 +112,7 @@ rules:
               "USER":"root" # images.build.myimage prevails on images.build.virtual1 and images.build.virtual2
             }
     ```
-    - extending from a virtual or a non-virtual Body will not share same attributes:
+    - extending from a virtual or a non-virtual Body is different:
         - from a non-virtual Body, the extended Body will inherit these attributes: `query`, `path`, `context`.
         - from a virtual Body, the extended Body will inherit these attributes: `query`, `path`, `context`. `depends_on`.
 
