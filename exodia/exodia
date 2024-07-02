@@ -734,6 +734,117 @@ get ()
   req="$(build_request "${req}")" _curl --request GET "${@}"
 }
 
+add_filters ()
+{
+  exodia_filter_write_datasources_header='
+    # map each datasource as a variable in Golang templates
+    [.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"]
+    # add INFO & VERSION special variables
+    + ["{{ $INFO := (datasource \"info\") }}{{ $VERSION := (datasource \"version\") }}"]
+    # join to remove new lines without tr
+    | join("")'
+
+  exodia_filter_expand_datasources_into_datasources='
+    (..
+     # escape keys
+     | key = "{{ print \"" + key + "\" }}"
+     # add datasources as variables at the top of the file
+     | (select((key | line) == 1) | key = (load_str("'"${exodia_cache_header}"'") | trim) + key)) |= .'
+
+  exodia_filter_expand_datasources_into_main='
+    (..
+     # escape keys
+     | key = "{{ print \"" + key + "\" }}") |= .
+     # select recursively values into rules[].run[] array
+     | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |=
+        (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |=
+        (.. | select (type == "!!str") |= (.
+           # escape backslashes and double quotes characters
+           | sub("\\\\", "\\\\") | sub("\"", "\\\"")
+           # split on new line because Golang templates annotations are onelined
+           | split("\n") | .[] |=
+           # escape each line of the value
+           "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
+           # then join everything again with removed new lines
+           | join("\n"))))'
+
+  exodia_filter_explode_extern_anchors='
+    .explode[] | .in as $in
+    # load files where extern anchors are defined, remove trailing --- and ..., and join them as a string
+    | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" +
+    # load file where extern anchors are needed as a string, remove trailing --- and ..., and concat it to the previous string
+                     (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)
+    # parse the string result and evaluate it as YAML content
+    | @yamld
+    # explode extern aliases
+    | explode(.) | .[] |=
+      # delete unnecessary keys
+      del(select(key != "rules" and key != "include"))
+    # needed to split the exploded content into separated files
+    | . * {"file": $in}'
+
+  exodia_filter_resolve_includes='
+    explode(.)
+    # workaround to re-evaluate the result of the last filter
+    | @yaml | @yamld
+    # escape keys
+    | (.. | key = "{{ print \"" + key + "\" }}") |= .
+    # select recursively values into rules[].run[] array
+    | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |=
+       (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |=
+       (.. | select (type == "!!str") |=
+       # escape backslashes and double quotes characters
+       (. | sub("\\\\", "\\\\") | sub("\"", "\\\"")
+          # split on new line because Golang templates annotations are onelined
+          | split("\n") | .[] |=
+          # escape each line of the value
+          "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
+          # then join everything again with removed new lines
+          | join("\n"))))'
+
+  exodia_filter_convert_to_objects='
+    # remove unnecessary fields
+    | (del(.[] | select(key != "versions" and key != "rules"))
+    # escape keys
+    | (.. | key = "{{ print \"" + key + "\" }}") |=
+    # select keys different of `id`, `depends_on` and `extends`
+       select(type == "!!str" and key != "{{ print \"id\" }}"
+       and parent | key != "{{ print \"extends\" }}"
+       and parent | key != "{{ print \"depends_on\" }}") |=
+       # escape backslashes and double quotes characters
+       (. | sub("\\\\", "\\\\") | sub("\"", "\\\"")
+          # split on new line because Golang templates annotations are onelined
+          | split("\n") | .[] |=
+          # escape each line of the value
+          "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
+          # then join everything again with removed new lines
+          | join("\n")))
+    # convert rules[] array into an object
+    | ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
+    # before converting it as an object: into rules[].run[] array:
+    |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; .
+          # move rules[].run[].from.id to rules[].run[].id
+          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"from\" }}"].["{{ print \"id\" }}"])]
+          # move rules[].run[].register.id to rules[].run[].id
+          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"register\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"register\" }}"].["{{ print \"id\" }}"])]
+          # convert rules[].run[].loop[] array into an object
+          + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))]))
+    # convert rules[].run[] array into an object
+    |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
+
+  exodia_filter_expand_extends='
+    . as $root | .rules[].run |= .[] |= ((select(.extends | length > 0) | .extends[] as $id ireduce({}; $root.rules[].run[$id] as $extend
+    # from an other Body, the extended Body will inherit these attributes: `query`, `path`, `context` (and `depends_on` for virtual)
+    | .depends_on = (.depends_on *+ ($extend | select(.virtual) | .depends_on))
+    | .query = (.query * $extend.query)
+    | .path = (.path * $extend.path)
+    | .context = $extend.context)) *+ . | del(.extends))
+    # remove virtuals
+    | .rules.[].run[] |= (select(.virtual) | del(.))'
+
+  readonly exodia_filter_write_datasources_header exodia_filter_expand_datasources_into_datasources exodia_filter_expand_datasources_into_main exodia_filter_expand_datasources_into_datasources exodia_filter_resolve_includes exodia_filter_convert_to_objects exodia_filter_expand_extends
+}
+
 prepare_cache ()
 {
   exodia_cache_escaped="${exodia_cache}/escaped.yaml"
@@ -756,6 +867,8 @@ prepare_cache ()
            exodia_cache_datasources exodia_cache_header exodia_cache_dsrendered \
            exodia_cache_explode \
            exodia_cache_include
+
+  add_filters
 
   coreutils --coreutils-prog=mkdir -p "${exodia_cache_context}" "${exodia_cache_datasources}" "${exodia_cache_explode}" "${exodia_cache_include}"
 
@@ -785,13 +898,7 @@ define_context_datasources ()
 
 write_datasources_header ()
 {
-  _yq '# map each datasource as a variable in Golang templates
-       [.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"]
-       # add INFO & VERSION special variables
-       + ["{{ $INFO := (datasource \"info\") }}{{ $VERSION := (datasource \"version\") }}"]
-       # join to remove new lines without tr
-       | join("")
-    ' "${exodia_cache_rendered}" > "${exodia_cache_header}"
+  _yq "${exodia_filter_write_datasources_header}" "${exodia_cache_rendered}" > "${exodia_cache_header}"
   send_note 'Preprocessing: Datasources header written'
 }
 
@@ -813,13 +920,7 @@ expand_datasources_into_datasources ()
     i="$(( ${i:-0} + 1 ))"
     shas="${shas:+"${shas}" }${last}"
 
-    _yq '(..
-          # escape keys
-          | key = "{{ print \"" + key + "\" }}"
-          # add datasources as variables at the top of the file
-          | (select((key | line) == 1) | key = (load_str("'"${exodia_cache_header}"'") | trim) + key)) |= .
-      ' "${exodia_cache_datasources}/$(( ${i} - 1 )).yaml" > "${exodia_cache_datasources}/${i}.gom.yaml"
-
+    _yq "${exodia_filter_expand_datasources_into_datasources}" "${exodia_cache_datasources}/$(( ${i} - 1 )).yaml" > "${exodia_cache_datasources}/${i}.gom.yaml"
     _gom --datasource "header=${exodia_cache_datasources}/$(( ${i} - 1 )).yaml" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_datasources}/${i}.gom.yaml" --out "${exodia_cache_datasources}/${i}.yaml"
 
     last="$(sha256sum "${exodia_cache_datasources}/${i}.yaml")"
@@ -834,28 +935,12 @@ expand_datasources_into_datasources ()
   send_note 'Preprocessing: Datasources fully expanded'
 }
 
-# TODO: remove cp ??
 expand_datasources_into_main ()
 {
+  # cp is necessary because header content is not valid YAML content (yq will rentur an error)
   coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
 
-  _yq '(..
-        # escape keys
-        | key = "{{ print \"" + key + "\" }}") |= .
-        # select recursively values into rules[].run[] array
-        | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |=
-           (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |=
-           (.. | select (type == "!!str") |= (.
-              # escape backslashes and double quotes characters
-              | sub("\\\\", "\\\\") | sub("\"", "\\\"")
-              # split on new line because Golang templates annotations are onelined
-              | split("\n") | .[] |=
-              # escape each line of the value
-              "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
-              # then join everything again with removed new lines
-              | join("\n"))))
-    ' "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
-
+  _yq "${exodia_filter_expand_datasources_into_main}" "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
   _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_escaped}" --out "${exodia_cache_rendered}"
 
   send_note "Preprocessing: Datasources expanded into ${exodia_file}"
@@ -868,22 +953,10 @@ explode_extern_anchors ()
   find "$(dirname -- "${exodia_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${exodia_mkdiropts:-} -p "${exodia_cache_explode}/"{} \;
   set +f
 
-  _yq '.explode[] | .in as $in
-       # load files where extern anchors are defined, remove trailing --- and ..., and join them as a string
-       | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" +
-       # load file where extern anchors are needed as a string, remove trailing --- and ..., and concat it to the previous string
-                        (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)
-       # parse the string result and evaluate it as YAML content
-       | @yamld
-       # explode extern aliases
-       | explode(.) | .[] |=
-         # delete unnecessary keys
-         del(select(key != "rules" and key != "include"))
-       # needed to split the exploded content into separated files
-       | . * {"file": $in}
-       # split
-    ' -s "\"${exodia_cache_explode}/\" + .file" "${exodia_cache_rendered}"
+  _yq "${exodia_filter_explode_extern_anchors}" -s "\"${exodia_cache_explode}/\" + .file" "${exodia_cache_rendered}"
 
+  # needed because the previous yq execution use the rendered.yaml content to build new files.
+  # An other call is needed to edit rendered.yaml with its own content
   _yq -i 'del(.explode)' "${exodia_cache_rendered}"
 
   send_note 'Preprocessing: Extern anchors exploded'
@@ -913,25 +986,7 @@ resolve_includes ()
     else yq_in="$(dirname -- "${exodia_file_abs}")/${2}/${file}"; fi
     coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_include}/${2}/${file}.gom"
 
-    _yq 'explode(.)
-         # workaround to re-evaluate the result of the last filter
-         | @yaml | @yamld
-         # escape keys
-         | (.. | key = "{{ print \"" + key + "\" }}") |= .
-         # select recursively values into rules[].run[] array
-         | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |=
-            (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |=
-            (.. | select (type == "!!str") |=
-            # escape backslashes and double quotes characters
-            (. | sub("\\\\", "\\\\") | sub("\"", "\\\"")
-               # split on new line because Golang templates annotations are onelined
-               | split("\n") | .[] |=
-               # escape each line of the value
-               "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
-               # then join everything again with removed new lines
-               | join("\n"))))
-      ' "${yq_in}" >> "${exodia_cache_include}/${2}/${file}.gom"
-
+    _yq "${exodia_filter_resolve_includes}" "${yq_in}" >> "${exodia_cache_include}/${2}/${file}.gom"
     _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_include}/${2}/${file}.gom" --out "${exodia_cache_include}/${2}/${file}"
 
     resolve_includes "${exodia_cache_include}/${2}/${file}"
@@ -941,7 +996,6 @@ resolve_includes ()
   cd "${3}"
 }
 
-# TODO: remove cp ??
 convert_to_objects ()
 {
   local load includes
@@ -949,39 +1003,10 @@ convert_to_objects ()
   includes="$(find "${exodia_cache_include}" -type f -not -name *.gom -not -name exodia.yaml)"
   load="$(set -f; printf ' *+ load("%s")' ${includes})"
 
+  # cp is necessary because header content is not valid YAML content (yq will rentur an error)
   coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
 
-  _yq ". ${load}"'
-       # remove unnecessary fields
-       | (del(.[] | select(key != "versions" and key != "rules"))
-       # escape keys
-       | (.. | key = "{{ print \"" + key + "\" }}") |=
-       # select keys different of `id`, `depends_on` and `extends`
-          select(type == "!!str" and key != "{{ print \"id\" }}"
-          and parent | key != "{{ print \"extends\" }}"
-          and parent | key != "{{ print \"depends_on\" }}") |=
-          # escape backslashes and double quotes characters
-          (. | sub("\\\\", "\\\\") | sub("\"", "\\\"")
-             # split on new line because Golang templates annotations are onelined
-             | split("\n") | .[] |=
-             # escape each line of the value
-             "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
-             # then join everything again with removed new lines
-             | join("\n")))
-       # convert rules[] array into an object
-       | ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
-       # before converting it as an object: into rules[].run[] array:
-       |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; .
-             # move rules[].run[].from.id to rules[].run[].id
-             + [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"from\" }}"].["{{ print \"id\" }}"])]
-             # move rules[].run[].register.id to rules[].run[].id
-             + [$i + {"{{ print \"id\" }}": $i.["{{ print \"register\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"register\" }}"].["{{ print \"id\" }}"])]
-             # convert rules[].run[].loop[] array into an object
-             + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))]))
-       # convert rules[].run[] array into an object
-       |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
-    ' "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
-
+  _yq ". ${load}${exodia_filter_convert_to_objects}" "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
   _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_escaped}" --out "${exodia_cache_rendered}"
 
   send_note 'Preprocessing: YAML arrays converted into objects'
@@ -989,16 +1014,7 @@ convert_to_objects ()
 
 expand_extends ()
 {
-  _yq -i '. as $root | .rules[].run |= .[] |= ((select(.extends | length > 0) | .extends[] as $id ireduce({}; $root.rules[].run[$id] as $extend
-          # from an other Body, the extended Body will inherit these attributes: `query`, `path`, `context` (and `depends_on` for virtual)
-          | .depends_on = (.depends_on *+ ($extend | select(.virtual) | .depends_on))
-          | .query = (.query * $extend.query)
-          | .path = (.path * $extend.path)
-          | .context = $extend.context)) *+ . | del(.extends))
-          # remove virtuals
-          | .rules.[].run[] |= (select(.virtual) | del(.))
-    ' "${exodia_cache_rendered}"
-
+  _yq -i "${exodia_filter_expand_extends}" "${exodia_cache_rendered}"
   send_note 'Preprocessing: extends expanded'
 }
 
