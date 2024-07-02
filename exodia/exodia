@@ -987,7 +987,7 @@ convert_to_objects ()
 
 expand_extends ()
 {
-  _yq -i '. as $dot | .rules[].run |= .[] |= ((select(.extends | length > 0) | .extends[] as $id ireduce({}; $dot.rules[].run[$id] as $extend
+  _yq -i '. as $root | .rules[].run |= .[] |= ((select(.extends | length > 0) | .extends[] as $id ireduce({}; $root.rules[].run[$id] as $extend
           # from an other Body, the extended Body will inherit these attributes: `query`, `path`, `context` (and `depends_on` for virtual)
           | .depends_on = (.depends_on *+ ($extend | select(.virtual) | .depends_on))
           | .query = (.query * $extend.query)
