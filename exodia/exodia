@@ -15,7 +15,6 @@ is ()
   ( nonempty ) if [ -s "${2}" ]; then return 0; else return 1; fi ;;
   ( present )  if [ -e "${2}" ]; then return 0; else return 1; fi ;;
   ( sym )      if [ -L "${2}" ]; then return 0; else return 1; fi ;;
-  ( * ) ;;
   esac
 }
 
@@ -24,7 +23,6 @@ can ()
   case "${1}" in
   ( read )  if [ -r "${2}" ]; then return 0; else return 1; fi ;;
   ( exec )  if [ -x "${2}" ]; then return 0; else return 1; fi ;;
-  ( * ) ;;
   esac
 }
 
@@ -32,7 +30,6 @@ str ()
 {
   case "${1}" in
   ( empty ) if [ -z "${2}" ]; then return 0; else return 1; fi ;;
-  ( * ) ;;
   esac
 }
 
@@ -221,12 +218,11 @@ cols ()
 logs ()
 {
   local first_max_length_line max_line_length does_line_has_enought_chars eol
-  cols
 
   if not str empty "${1:-}"
   then
     first_max_length_line="$(printf "%$(( ${COLUMNS} + ${#exodia_bold} + ${#exodia_cyan} + ${#exodia_reset} - 9 ))s" | command tr ' ' '.')"
-    does_line_has_enought_chars="$(printf "%$(( ${COLUMNS} - 9 ))s" | command busybox sed 's/ /\[^\\n]/g')"
+    does_line_has_enought_chars="$(printf "%$(( ${COLUMNS} - 9 ))s" | command busybox sed 's@ @\[^\\n]@g')"
     max_line_length="$(printf "%$(( ${COLUMNS} - 9 ))s" | command tr ' ' '.')"
     set -f
     command busybox sed "/^${exodia_rawlevel}/ {
@@ -296,13 +292,15 @@ logger ()
 
   while str empty "${exodia_loggerstop:-}" || command find "${exodia_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_lines}/[0-9]*" -type f | read dummy
   do
+    cols
     logs_entries="$(command find "${exodia_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
-    spins_entries="$(command find "${exodia_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % cat %)"
+    max_spin_title_chars="$(printf "%$(( ${COLUMNS} - 15 ))s" | command busybox sed 's@ @[^"]@g')"
+    spins_entries="$(command find "${exodia_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '3i s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
     logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
     if str empty "${exodia_loggerstop:-}"; then _stop; fi
   done
 
-  printf '%b' "${exodia_showcursor}"
+  printf '%b%b' "${exodia_erase_until_eol}" "${exodia_showcursor}"
 }
 
 ##############################################################################
