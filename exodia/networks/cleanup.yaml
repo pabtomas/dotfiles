@@ -6,19 +6,19 @@ rules:
       - endpoint: /networks
         method: GET
         register:
-          id: post.networks.json
+          id: down.networks.json
           query:
             filters: '{"label":{"exodia":{{ $project.id }}}}'
           errexit: false
           as:
-            id: registerpostnetworks
+            id: registerdownnetworks
       - endpoint: /networks/{id}
         method: DELETE
         from:
-          id: remove.from.post.networks.json
-          filter: '{{ $array := "" }}{{ range $registerpostnetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+          id: remove.from.down.networks.json
+          filter: '{{ $array := "" }}{{ range $registerdownnetworks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
           errexit: false
           depends_on:
-            - post.networks.json
+            - down.networks.json
 
 ...

@@ -11,7 +11,6 @@ rules:
             filters: '{"reference":{"{{ $alpine.image.source }}":true}}'
           as:
             id: localalpineimage
-            scope: '{{ $dependencies.images.pull.alpine }}'
       - if: '{{ ne 1 (len $localalpineimage) }}'
         endpoint: /images/create
         method: POST
@@ -30,7 +29,6 @@ rules:
             filters: '{"reference":{"{{ $bash.image.source }}":true}}'
           as:
             id: localbashimage
-            scope: '{{ $dependencies.images.pull.bash }}'
       - if: '{{ ne 1 (len $localbashimage) }}'
         endpoint: /images/create
         method: POST
@@ -49,7 +47,6 @@ rules:
             filters: '{"reference":{"{{ $buildkit.image.source }}":true}}'
           as:
             id: localbuildkitimage
-            scope: '{{ $dependencies.images.pull.buildkit }}'
       - if: '{{ ne 1 (len $localbuildkitimage) }}'
         endpoint: /images/create
         method: POST
@@ -68,7 +65,6 @@ rules:
             filters: '{"reference":{"{{ $docker.image.source }}":true}}'
           as:
             id: localdockerimage
-            scope: '{{ $dependencies.images.pull.docker }}'
       - if: '{{ ne 1 (len $localdockerimage) }}'
         endpoint: /images/create
         method: POST
@@ -87,7 +83,6 @@ rules:
             filters: '{"reference":{"{{ $registry.image.source }}":true}}'
           as:
             id: localregistryimage
-            scope: '{{ $dependencies.images.pull.registry }}'
       - if: '{{ ne 1 (len $localregistryimage) }}'
         endpoint: /images/create
         method: POST
@@ -106,7 +101,6 @@ rules:
             filters: '{"reference":{"{{ $socketproxy.linuxserver.image.source }}":true}}'
           as:
             id: localsocketproxyimage
-            scope: '{{ $dependencies.images.pull.socketproxy }}'
       - if: '{{ ne 1 (len $localsocketproxyimage) }}'
         endpoint: /images/create
         method: POST

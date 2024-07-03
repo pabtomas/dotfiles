@@ -30,6 +30,14 @@ str ()
 {
   case "${1}" in
   ( empty ) if [ -z "${2}" ]; then return 0; else return 1; fi ;;
+  ( in ) case "${3}" in ( *" ${2} "* ) return 0 ;; ( * ) return 1 ;; esac ;;
+  esac
+}
+
+dir ()
+{
+  case "${1}" in
+  ( empty ) if find "${2}" -mindepth 1 -maxdepth 1 | read dummy; then return 1; else return 0; fi ;;
   esac
 }
 
@@ -592,7 +600,7 @@ verbose_mode ()
     prog="${1}"
     shift
     case "${prog}" in
-    ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
+    ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm|*=rmdir ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
     ( * ) if not command coreutils "${prog}" "${@}"; then return 1; fi ;;
     esac
     set -x
@@ -821,10 +829,18 @@ add_filters ()
     | ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
     # before converting it as an object: into rules[].run[] array:
     |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; .
-          # move rules[].run[].from.id to rules[].run[].id
-          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"from\" }}"].["{{ print \"id\" }}"])]
+          # copy rules[].run[].from.id to rules[].run[].id
+          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]}
+          # copy rules[].run[].from.depends_on to rules[].run[].depends_on
+                + {"{{ print \"depends_on\" }}": $i.["{{ print \"from\" }}"].["{{ print \"depends_on\" }}"] // []}
+                # delete rules[].run[].from.id and rules[].run[].from.depends_on
+                | del(.["{{ print \"from\" }}"].["{{ print \"id\" }}"]) | del(.["{{ print \"from\" }}"].["{{ print \"depends_on\" }}"])]
           # move rules[].run[].register.id to rules[].run[].id
-          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"register\" }}"].["{{ print \"id\" }}"]} | del(.["{{ print \"register\" }}"].["{{ print \"id\" }}"])]
+          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"register\" }}"].["{{ print \"id\" }}"]}
+          # copy rules[].run[].register.depends_on to rules[].run[].depends_on
+                + {"{{ print \"depends_on\" }}": $i.["{{ print \"register\" }}"].["{{ print \"depends_on\" }}"] // []}
+                # delete rules[].run[].register.id and rules[].run[].register.depends_on
+                | del(.["{{ print \"register\" }}"].["{{ print \"id\" }}"]) | del(.["{{ print \"register\" }}"].["{{ print \"depends_on\" }}"])]
           # convert rules[].run[].loop[] array into an object
           + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))]))
     # convert rules[].run[] array into an object
@@ -860,15 +876,19 @@ prepare_cache ()
 
   exodia_cache_include="${exodia_cache}/include"
 
+  exodia_cache_neighbors="${exodia_cache}/neighbors"
+  exodia_cache_topological="${exodia_cache}/topological"
+
   readonly exodia_cache_escaped exodia_cache_rendered \
            exodia_cache_context exodia_cache_version_json exodia_cache_info_json \
            exodia_cache_datasources exodia_cache_header exodia_cache_dsrendered \
            exodia_cache_explode \
-           exodia_cache_include
+           exodia_cache_include \
+           exodia_cache_neighbors exodia_cache_topological
 
   add_filters
 
-  coreutils --coreutils-prog=mkdir -p "${exodia_cache_context}" "${exodia_cache_datasources}" "${exodia_cache_explode}" "${exodia_cache_include}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache_context}" "${exodia_cache_datasources}" "${exodia_cache_explode}" "${exodia_cache_include}" "${exodia_cache_neighbors}" "${exodia_cache_topological}"
 
   send_note 'Preprocessing: Cache prepared'
 }
@@ -978,7 +998,7 @@ resolve_includes ()
   do
     coreutils --coreutils-prog=mkdir -p "$(dirname -- "${file}")"
     if is present "${exodia_cache_include}/${2}/${file}"
-    then send_error "Circular dependency detected into ${1} for ${file}"; return 1; fi
+    then send_error "Circular include detected into ${1} for ${file}"; return 1; fi
     if is present "${exodia_cache_explode}/${2}/${file}"
     then yq_in="${exodia_cache_explode}/${2}/${file}"
     else yq_in="$(dirname -- "${exodia_file_abs}")/${2}/${file}"; fi
@@ -1001,7 +1021,7 @@ convert_to_objects ()
   includes="$(find "${exodia_cache_include}" -type f -not -name *.gom -not -name exodia.yaml)"
   load="$(set -f; printf ' *+ load("%s")' ${includes})"
 
-  # cp is necessary because header content is not valid YAML content (yq will rentur an error)
+  # cp is necessary because header content is not valid YAML content (yq will return an error)
   coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
 
   _yq ". ${load}${exodia_filter_convert_to_objects}" "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
@@ -1016,31 +1036,40 @@ expand_extends ()
   send_note 'Preprocessing: Extends expanded'
 }
 
-topological_dfs ()
-{
-  : TODO
-  # tabCouleur[x] = GRIS
-  # for i in G.neighbors(x):
-  #     if tabCouleur[i] == BLANC:
-  #         topological_dfs(G, exodia_topological, i)
-
-  # tabCouleur[x] = NOIR
-  # exodia_topological.append(x)
-}
-
 topological_sort ()
 {
-  local white adj
-  adj="$(_yq '[.rules[].run[] | (parent | parent | key) + " " + key + " " + .depends_on[]] | join("\n")' "${exodia_cache_rendered}")"
-  exodia_topological=""
+  exodia_rules="$(_yq '.rules[] | key' "${exodia_cache_rendered}")"
 
-  white=" $(_yq '' "${exodia_cache_rendered}") "
-  # for i in G.vertices():
-  #     tabCouleur.append(BLANC)
+  local rule sorted absrule queue empties
+  for rule in ${exodia_rules}
+  do
+    sorted=''
+    absrule="${exodia_cache_neighbors}/${rule}"
+    set -f
+    coreutils --coreutils-prog=mkdir -p $(_yq '.rules["'"${rule}"'"].run[] | "'"${absrule}/"'" + key' "${exodia_cache_rendered}")
+    set +f
+    _yq '.rules["'"${rule}"'"].run[] | "'"${absrule}/"'" + key + "/" + .depends_on[]' -s '.' "${exodia_cache_rendered}"
+    queue="$(find "${absrule}" -type d -empty -printf '%P\n')${exodia_nl}"
+    (cd "${absrule}"; set -f; coreutils --coreutils-prog=rmdir ${queue})
 
-  # for x in G.vertices():
-  #     if tabCouleur[x] == BLANC:
-  #         topological_dfs(G, exodia_topological, x)
+    until str empty "${queue:-}"
+    do
+      sorted="${sorted:+"${sorted} "}${queue%%"${exodia_nl}"*}"
+      queue="${queue#*"${exodia_nl}"}"
+      coreutils --coreutils-prog=rm -f "${absrule}"/*/"${sorted##* }" "${absrule}"/*/"${sorted##* }.yml"
+      empties="$(find "${absrule}" -type d -empty -printf '%P\n')"
+      if not str empty "${empties}"
+      then
+        (cd "${absrule}"; set -f; coreutils --coreutils-prog=rmdir ${empties})
+        queue="${queue}${empties}${exodia_nl}"
+      fi
+    done
+
+    if not dir empty "${absrule}"; then send_error 'Circular dependencies detected'; return 1; fi
+
+    printf '%s\n' "${sorted}" > "${exodia_cache_topological}/${rule}"
+    send_note "Preprocessing: [${rule} rule] Topological sort done"
+  done
 }
 
 generate_sh ()
@@ -1265,13 +1294,14 @@ check_externals ()
   # `xargs` is slow, avoid it when possible. If not, GNU `xargs` is slower than Busybox `xargs`.
   busybox='true' harden 'xargs'
 
-  # Coreutils `cp`, `ln`, `mkdir`, `mv`, `readlink` and `rm` have verbose option
+  # Coreutils `cp`, `ln`, `mkdir`, `mv`, `readlink`, `rm` and `rmdir` have verbose option
   coreutils='true' harden 'cp'
   coreutils='true' harden 'ln'
   coreutils='true' harden 'mkdir'
   coreutils='true' harden 'mv'
   coreutils='true' harden 'readlink'
   coreutils='true' harden 'rm'
+  coreutils='true' harden 'rmdir'
 
   # Coreutils `realpath` has -s and --relative-to options
   coreutils='true' harden 'realpath'
