@@ -1016,6 +1016,33 @@ expand_extends ()
   send_note 'Preprocessing: Extends expanded'
 }
 
+topological_dfs ()
+{
+  : TODO
+  # tabCouleur[x] = GRIS
+  # for i in G.neighbors(x):
+  #     if tabCouleur[i] == BLANC:
+  #         topological_dfs(G, exodia_topological, i)
+
+  # tabCouleur[x] = NOIR
+  # exodia_topological.append(x)
+}
+
+topological_sort ()
+{
+  local white adj
+  adj="$(_yq '[.rules[].run[] | (parent | parent | key) + " " + key + " " + .depends_on[]] | join("\n")' "${exodia_cache_rendered}")"
+  exodia_topological=""
+
+  white=" $(_yq '' "${exodia_cache_rendered}") "
+  # for i in G.vertices():
+  #     tabCouleur.append(BLANC)
+
+  # for x in G.vertices():
+  #     if tabCouleur[x] == BLANC:
+  #         topological_dfs(G, exodia_topological, x)
+}
+
 generate_sh ()
 {
   : TODO
@@ -1052,7 +1079,7 @@ preprocess ()
     resolve_includes
     convert_to_objects
     expand_extends
-    #resolve_depends_on
+    topological_sort
     generate_sh
     send_stop 'cache'
   fi
@@ -1218,7 +1245,7 @@ harden ()
   then fatal "${busybox:+Busybox }${coreutils:+Coreutils }${gnu:+GNU }${1} not found"; return 1; fi
 }
 
-check_deps ()
+check_externals ()
 {
   # GNU `bc` is faster than Busybox `bc`, have unicode & escape sequences support
   gnu='true' harden 'bc'
@@ -1299,7 +1326,7 @@ init ()
   add_logger_reqchars
   add_style
 
-  check_deps
+  check_externals
 
   GOMPLATE_LEFT_DELIM='{{'
   GOMPLATE_RIGHT_DELIM='}}'
