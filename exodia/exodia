@@ -31,13 +31,14 @@ str ()
   case "${1}" in
   ( empty ) if [ -z "${2}" ]; then return 0; else return 1; fi ;;
   ( in ) case "${3}" in ( *" ${2} "* ) return 0 ;; ( * ) return 1 ;; esac ;;
+  ( join ) eval "${2}=\"\${${2}}\"' ${3}'" ;;
   esac
 }
 
 dir ()
 {
   case "${1}" in
-  ( empty ) if find "${2}" -mindepth 1 -maxdepth 1 | read dummy; then return 1; else return 0; fi ;;
+  ( empty ) if xtrace_safe "command find '${2}' -mindepth 1 -maxdepth 1 | read dummy"; then return 1; else return 0; fi ;;
   esac
 }
 
@@ -408,10 +409,10 @@ listener ()
     if str empty "${line}"; then empty_req "${i}"; continue; fi
     case "${line}" in
     ( ["${exodia_errorlevel}"-"${exodia_verblevel}${exodia_rawlevel}"]* ) logging_req "${line}" "${i}" ;;
-    ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req "${line}" "${i}"    ;;
-    ( "${exodia_stopreq}"* )                stop_req "${line}" "${i}"    ;;
-    ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req "${line}" "${i}"  ;;
-    ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req "${line}" "${i}"   ;;
+    ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req "${line}" "${i}"   ;;
+    ( "${exodia_stopreq}"* )                  stop_req "${line}" "${i}"   ;;
+    ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req "${line}" "${i}" ;;
+    ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req "${line}" "${i}"  ;;
     ( * ) unknown_req "${line}" "${i}" ;;
     esac
   done
@@ -604,7 +605,7 @@ verbose_mode ()
     esac
     set -x
   }
-  find () { { set +x; } 2> /dev/null; if not command find -D exec -D search "${@}" 2>&1 | send_verb; then return 1; fi; set -x; }
+  find () { { set +x; } 2> /dev/null; if not command find -D exec -D search "${@}"; then return 1; fi; set -x; }
   yq () { { set +x; } 2> /dev/null; if not command yq -v -M "${@}"; then return 1; fi; set -x; }
   gomplate () { { set +x; } 2> /dev/null; if not command gomplate -V "${@}"; then return 1; fi; set -x; }
   exodia_mkdiropts='-v'
@@ -635,24 +636,27 @@ prepare ()
 xtrace_safe ()
 {
   if ge "${exodia_loglevel}" "${exodia_tracelevel}"; then { set +x; } 2> /dev/null; fi
-  eval "${1}"
+  local status
+  if not eval "${1}"; then status='1'; fi
   if ge "${exodia_loglevel}" "${exodia_tracelevel}"; then set -x; fi
+  return "${status:-0}"
 }
 
 reset_buffer ()
 {
-  coreutils --coreutils-prog=rm -rf "${exodia_buffers}/${1}"
-  coreutils --coreutils-prog=mkdir -p "${exodia_buffers}/${1}"
+  read -r pid < /proc/self/stat
+  pid="${pid%% *}"
+  coreutils --coreutils-prog=rm -rf "${exodia_buffers}/${pid}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_buffers}/${pid}"
+  stderr="${exodia_buffers}/${pid}/0"
+  readonly pid
 }
 
 _curl ()
 {
   local pid stderr out
-  read -r pid < /proc/self/stat
-  pid="${pid%% *}"
-  reset_buffer "${pid}"
-  stderr="${exodia_buffers}/${pid}/0"
-  readonly pid req
+  reset_buffer
+  readonly req
 
   if not out="$(set -f; curl ${exodia_curlopts} --stderr "${stderr}" "${@}" "${req}")"
   then
@@ -679,14 +683,26 @@ _curl ()
   fi
 }
 
+_find ()
+{
+  local pid stderr
+  reset_buffer
+
+  if not find "${@}" 2> "${stderr}" 1>&"${fd:-1}"
+  then
+    if is nonempty "${stderr}"
+    then cat="${stderr}" send_error; fi
+    return 1
+  elif lt "${exodia_loglevel}" "${exodia_verblevel}" && is nonempty "${stderr}"
+  then cat="${stderr}" send_warn
+  elif is nonempty "${stderr}"
+  then cat="${stderr}" send_verb; fi
+}
+
 _yq ()
 {
   local pid stderr
-  read -r pid < /proc/self/stat
-  pid="${pid%% *}"
-  reset_buffer "${pid}"
-  stderr="${exodia_buffers}/${pid}/0"
-  readonly pid
+  reset_buffer
 
   if not yq -M "${@}" 2> "${stderr}"
   then
@@ -707,11 +723,7 @@ _yq ()
 _gom ()
 {
   local pid stderr
-  read -r pid < /proc/self/stat
-  pid="${pid%% *}"
-  reset_buffer "${pid}"
-  stderr="${exodia_buffers}/${pid}/0"
-  readonly pid
+  reset_buffer
 
   if not gomplate "${@}" 2> "${stderr}"
   then
@@ -739,122 +751,114 @@ get ()
   req="$(build_request "${req}")" _curl --request GET "${@}"
 }
 
-# TODO: rework for -vvv
 add_filters ()
 {
-  exodia_filter_write_datasources_header='
-    # map each datasource as a variable in Golang templates
-    [.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"]
-    # add INFO & VERSION special variables
-    + ["{{ $INFO := (datasource \"info\") }}{{ $VERSION := (datasource \"version\") }}"]
-    # join to remove new lines without tr
-    | join("")'
+  # map each datasource as a variable in Golang templates
+  exodia_filter_write_datasources_header='[.datasources[] | "{{ $" + .id + " := index (datasource \"header\") \"" + .source + "\" }}"]' \
+  # add INFO & VERSION special variables
+  str join exodia_filter_write_datasources_header '+ ["{{ $INFO := (datasource \"info\") }}{{ $VERSION := (datasource \"version\") }}"]' \
+  # join to remove new lines without tr
+  str join exodia_filter_write_datasources_header '| join("")'
 
-  exodia_filter_expand_datasources_into_datasources='
-    (..
-     # escape keys
-     | key = "{{ print \"" + key + "\" }}"
-     # add datasources as variables at the top of the file
-     | (select((key | line) == 1) | key = (load_str("'"${exodia_cache_header}"'") | trim) + key)) |= .'
+  exodia_filter_expand_datasources_into_datasources='(..'
+  # escape keys
+  str join exodia_filter_expand_datasources_into_datasources '| key = "{{ print \"" + key + "\" }}"'
+  # add datasources as variables at the top of the file
+  str join exodia_filter_expand_datasources_into_datasources '| (select((key | line) == 1) | key = (load_str("'"${exodia_cache_header}"'") | trim) + key)) |= .'
 
-  exodia_filter_expand_datasources_into_main='
-    (..
-     # escape keys
-     | key = "{{ print \"" + key + "\" }}") |= .
-     # select recursively values into rules[].run[] array
-     | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |=
-        (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |=
-        (.. | select (type == "!!str") |= (.
-           # escape backslashes and double quotes characters
-           | sub("\\\\", "\\\\") | sub("\"", "\\\"")
-           # split on new line because Golang templates annotations are onelined
-           | split("\n") | .[] |=
-           # escape each line of the value
-           "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
-           # then join everything again with removed new lines
-           | join("\n"))))'
+  exodia_filter_expand_datasources_into_main='(..'
+  # escape keys
+  str join exodia_filter_expand_datasources_into_main '| key = "{{ print \"" + key + "\" }}") |= .'
+  # select recursively values into rules[].run[] array
+  str join exodia_filter_expand_datasources_into_main '| ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |='
+  str join exodia_filter_expand_datasources_into_main '(select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |='
+  str join exodia_filter_expand_datasources_into_main '(.. | select (type == "!!str") |= (.'
+  # escape backslashes and double quotes characters
+  str join exodia_filter_expand_datasources_into_main '| sub("\\\\", "\\\\") | sub("\"", "\\\"")'
+  # split on new line because Golang templates annotations are onelined
+  str join exodia_filter_expand_datasources_into_main '| split("\n") | .[] |='
+  # escape each line of the value
+  str join exodia_filter_expand_datasources_into_main '"{{ print \"" + (. | select(. | length > 0)) + "\" }}"'
+  # then join everything again with removed new lines
+  str join exodia_filter_expand_datasources_into_main '| join("\n"))))'
 
-  exodia_filter_explode_extern_anchors='
-    .explode[] | .in as $in
-    # load files where extern anchors are defined, remove trailing --- and ..., and join them as a string
-    | ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" +
-    # load file where extern anchors are needed as a string, remove trailing --- and ..., and concat it to the previous string
-                     (load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)
-    # parse the string result and evaluate it as YAML content
-    | @yamld
-    # explode extern aliases
-    | explode(.) | .[] |=
-      # delete unnecessary keys
-      del(select(key != "rules" and key != "include"))
-    # needed to split the exploded content into separated files
-    | . * {"file": $in}'
+  exodia_filter_explode_extern_anchors='.explode[] | .in as $in'
+  # load files where extern anchors are defined, remove trailing --- and ..., and join them as a string
+  str join exodia_filter_explode_extern_anchors '| ([(.anchors[] | load_str(.) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)] | join("\n")) + "\n" +'
+  # load file where extern anchors are needed as a string, remove trailing --- and ..., and concat it to the previous string
+  str join exodia_filter_explode_extern_anchors '(load_str(.in) | trim | sub("^---", "") | sub("\.\.\.$", "") | trim)'
+  # parse the string result and evaluate it as YAML content
+  str join exodia_filter_explode_extern_anchors '| @yamld'
+  # explode extern aliases
+  str join exodia_filter_explode_extern_anchors '| explode(.) | .[] |='
+  # delete unnecessary keys
+  str join exodia_filter_explode_extern_anchors 'del(select(key != "rules" and key != "include"))'
+  # needed to split the exploded content into separated files
+  str join exodia_filter_explode_extern_anchors '| . * {"file": $in}'
 
-  exodia_filter_resolve_includes='
-    explode(.)
-    # workaround to re-evaluate the result of the last filter
-    | @yaml | @yamld
-    # escape keys
-    | (.. | key = "{{ print \"" + key + "\" }}") |= .
-    # select recursively values into rules[].run[] array
-    | ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |=
-       (select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |=
-       (.. | select (type == "!!str") |=
-       # escape backslashes and double quotes characters
-       (. | sub("\\\\", "\\\\") | sub("\"", "\\\"")
-          # split on new line because Golang templates annotations are onelined
-          | split("\n") | .[] |=
-          # escape each line of the value
-          "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
-          # then join everything again with removed new lines
-          | join("\n"))))'
+  exodia_filter_resolve_includes='explode(.)'
+  # workaround to re-evaluate the result of the last filter
+  str join exodia_filter_resolve_includes '| @yaml | @yamld'
+  # escape keys
+  str join exodia_filter_resolve_includes '| (.. | key = "{{ print \"" + key + "\" }}") |= .'
+  # select recursively values into rules[].run[] array
+  str join exodia_filter_resolve_includes '| ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |='
+  str join exodia_filter_resolve_includes '(select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |='
+  str join exodia_filter_resolve_includes '(.. | select (type == "!!str") |='
+  # escape backslashes and double quotes characters
+  str join exodia_filter_resolve_includes '(. | sub("\\\\", "\\\\") | sub("\"", "\\\"")'
+  # split on new line because Golang templates annotations are onelined
+  str join exodia_filter_resolve_includes '| split("\n") | .[] |='
+  # escape each line of the value
+  str join exodia_filter_resolve_includes '"{{ print \"" + (. | select(. | length > 0)) + "\" }}"'
+  # then join everything again with removed new lines
+  str join exodia_filter_resolve_includes '| join("\n"))))'
 
-  exodia_filter_convert_to_objects='
-    # remove unnecessary fields
-    | (del(.[] | select(key != "versions" and key != "rules"))
-    # escape keys
-    | (.. | key = "{{ print \"" + key + "\" }}") |=
-    # select keys different of `id`, `depends_on` and `extends`
-       select(type == "!!str" and key != "{{ print \"id\" }}"
-       and parent | key != "{{ print \"extends\" }}"
-       and parent | key != "{{ print \"depends_on\" }}") |=
-       # escape backslashes and double quotes characters
-       (. | sub("\\\\", "\\\\") | sub("\"", "\\\"")
-          # split on new line because Golang templates annotations are onelined
-          | split("\n") | .[] |=
-          # escape each line of the value
-          "{{ print \"" + (. | select(. | length > 0)) + "\" }}"
-          # then join everything again with removed new lines
-          | join("\n")))
-    # convert rules[] array into an object
-    | ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))
-    # before converting it as an object: into rules[].run[] array:
-    |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; .
-          # copy rules[].run[].from.id to rules[].run[].id
-          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]}
-          # copy rules[].run[].from.depends_on to rules[].run[].depends_on
-                + {"{{ print \"depends_on\" }}": $i.["{{ print \"from\" }}"].["{{ print \"depends_on\" }}"] // []}
-                # delete rules[].run[].from.id and rules[].run[].from.depends_on
-                | del(.["{{ print \"from\" }}"].["{{ print \"id\" }}"]) | del(.["{{ print \"from\" }}"].["{{ print \"depends_on\" }}"])]
-          # move rules[].run[].register.id to rules[].run[].id
-          + [$i + {"{{ print \"id\" }}": $i.["{{ print \"register\" }}"].["{{ print \"id\" }}"]}
-          # copy rules[].run[].register.depends_on to rules[].run[].depends_on
-                + {"{{ print \"depends_on\" }}": $i.["{{ print \"register\" }}"].["{{ print \"depends_on\" }}"] // []}
-                # delete rules[].run[].register.id and rules[].run[].register.depends_on
-                | del(.["{{ print \"register\" }}"].["{{ print \"id\" }}"]) | del(.["{{ print \"register\" }}"].["{{ print \"depends_on\" }}"])]
-          # convert rules[].run[].loop[] array into an object
-          + [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))]))
-    # convert rules[].run[] array into an object
-    |   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
+  # remove unnecessary fields
+  exodia_filter_convert_to_objects='| (del(.[] | select(key != "versions" and key != "rules"))'
+  # escape keys
+  str join exodia_filter_convert_to_objects '| (.. | key = "{{ print \"" + key + "\" }}") |='
+  # select keys different of `id`, `depends_on` and `extends`
+  str join exodia_filter_convert_to_objects 'select(type == "!!str" and key != "{{ print \"id\" }}"'
+  str join exodia_filter_convert_to_objects 'and parent | key != "{{ print \"extends\" }}"'
+  str join exodia_filter_convert_to_objects 'and parent | key != "{{ print \"depends_on\" }}") |='
+  # escape backslashes and double quotes characters
+  str join exodia_filter_convert_to_objects '(. | sub("\\\\", "\\\\") | sub("\"", "\\\"")'
+  # split on new line because Golang templates annotations are onelined
+  str join exodia_filter_convert_to_objects '| split("\n") | .[] |='
+  # escape each line of the value
+  str join exodia_filter_convert_to_objects '"{{ print \"" + (. | select(. | length > 0)) + "\" }}"'
+  # then join everything again with removed new lines
+  str join exodia_filter_convert_to_objects '| join("\n")))'
+  # convert rules[] array into an object
+  str join exodia_filter_convert_to_objects '| ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
+  # before converting it as an object: into rules[].run[] array:
+  str join exodia_filter_convert_to_objects '|   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; .'
+  # copy rules[].run[].from.id to rules[].run[].id
+  str join exodia_filter_convert_to_objects '+ [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]}'
+  # copy rules[].run[].from.depends_on to rules[].run[].depends_on
+  str join exodia_filter_convert_to_objects '+ {"{{ print \"depends_on\" }}": $i.["{{ print \"from\" }}"].["{{ print \"depends_on\" }}"] // []}'
+  # delete rules[].run[].from.id and rules[].run[].from.depends_on
+  str join exodia_filter_convert_to_objects '| del(.["{{ print \"from\" }}"].["{{ print \"id\" }}"]) | del(.["{{ print \"from\" }}"].["{{ print \"depends_on\" }}"])]'
+  # move rules[].run[].register.id to rules[].run[].id
+  str join exodia_filter_convert_to_objects '+ [$i + {"{{ print \"id\" }}": $i.["{{ print \"register\" }}"].["{{ print \"id\" }}"]}'
+  # copy rules[].run[].register.depends_on to rules[].run[].depends_on
+  str join exodia_filter_convert_to_objects '+ {"{{ print \"depends_on\" }}": $i.["{{ print \"register\" }}"].["{{ print \"depends_on\" }}"] // []}'
+  # delete rules[].run[].register.id and rules[].run[].register.depends_on
+  str join exodia_filter_convert_to_objects '| del(.["{{ print \"register\" }}"].["{{ print \"id\" }}"]) | del(.["{{ print \"register\" }}"].["{{ print \"depends_on\" }}"])]'
+  # convert rules[].run[].loop[] array into an object
+  str join exodia_filter_convert_to_objects '+ [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))]))'
+  # convert rules[].run[] array into an object
+  str join exodia_filter_convert_to_objects '|   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
 
-  exodia_filter_expand_extends='
-    . as $root | .rules[].run |= .[] |= ((select(.extends | length > 0) | .extends[] as $id ireduce({}; $root.rules[].run[$id] as $extend
-    # from an other Body, the extended Body will inherit these attributes: `query`, `path`, `context` (and `depends_on` for virtual)
-    | .depends_on = (.depends_on *+ ($extend | select(.virtual) | .depends_on))
-    | .query = (.query * $extend.query)
-    | .path = (.path * $extend.path)
-    | .context = $extend.context)) *+ . | del(.extends))
-    # remove virtuals
-    | .rules.[].run[] |= (select(.virtual) | del(.))'
+  exodia_filter_expand_extends='. as $root | .rules[].run |= .[] |= ((select(.extends | length > 0) | .extends[] as $id ireduce({}; $root.rules[].run[$id] as $extend'
+  # from an other Body, the extended Body will inherit these attributes: `query`, `path`, `context` (and `depends_on` for virtual)
+  str join exodia_filter_expand_extends '| .depends_on = (.depends_on *+ ($extend | select(.virtual) | .depends_on))'
+  str join exodia_filter_expand_extends '| .query = (.query * $extend.query)'
+  str join exodia_filter_expand_extends '| .path = (.path * $extend.path)'
+  str join exodia_filter_expand_extends '| .context = $extend.context)) *+ . | del(.extends))'
+  # remove virtuals
+  str join exodia_filter_expand_extends '| .rules.[].run[] |= (select(.virtual) | del(.))'
 
   readonly exodia_filter_write_datasources_header exodia_filter_expand_datasources_into_datasources exodia_filter_expand_datasources_into_main exodia_filter_expand_datasources_into_datasources exodia_filter_resolve_includes exodia_filter_convert_to_objects exodia_filter_expand_extends
 }
@@ -968,7 +972,7 @@ explode_extern_anchors ()
 {
   # copy the filetree of the project
   set -f
-  find "$(dirname -- "${exodia_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${exodia_mkdiropts:-} -p "${exodia_cache_explode}/"{} \;
+  fd='2' _find "$(dirname -- "${exodia_file}")" -mindepth 1 -not -path '*/.*' -type d -exec coreutils --coreutils-prog=mkdir ${exodia_mkdiropts:-} -p "${exodia_cache_explode}/"{} \;
   set +f
 
   _yq "${exodia_filter_explode_extern_anchors}" -s "\"${exodia_cache_explode}/\" + .file" "${exodia_cache_rendered}"
@@ -1018,13 +1022,13 @@ convert_to_objects ()
 {
   local load includes
 
-  includes="$(find "${exodia_cache_include}" -type f -not -name *.gom -not -name exodia.yaml)"
-  load="$(set -f; printf ' *+ load("%s")' ${includes})"
+  includes="$(_find "${exodia_cache_include}" -type f -not -name *.gom -not -name exodia.yaml -printf '%p ')"
+  if not str empty "${includes}"; then load="$(set -f; printf ' *+ load("%s")' ${includes})"; fi
 
   # cp is necessary because header content is not valid YAML content (yq will return an error)
   coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
 
-  _yq ". ${load}${exodia_filter_convert_to_objects}" "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
+  _yq ". ${load:-}${exodia_filter_convert_to_objects}" "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
   _gom --datasource "header=${exodia_cache_dsrendered}" --datasource "info=${exodia_cache_info_json}" --datasource "version=${exodia_cache_version_json}" --file "${exodia_cache_escaped}" --out "${exodia_cache_rendered}"
 
   send_note 'Preprocessing: YAML arrays converted into objects'
@@ -1038,7 +1042,7 @@ expand_extends ()
 
 topological_sort ()
 {
-  exodia_rules="$(_yq '.rules[] | key' "${exodia_cache_rendered}")"
+  exodia_rules="$(_yq '.rules | keys | join(" ")' "${exodia_cache_rendered}")"
 
   local rule sorted absrule queue
   for rule in ${exodia_rules}
@@ -1049,7 +1053,7 @@ topological_sort ()
     coreutils --coreutils-prog=mkdir -p $(_yq '.rules["'"${rule}"'"].run[] | "'"${absrule}/"'" + key' "${exodia_cache_rendered}")
     set +f
     _yq '.rules["'"${rule}"'"].run[] | "'"${absrule}/"'" + key + "/" + .depends_on[] + ".yaml"' -s '.' "${exodia_cache_rendered}"
-    queue="$(find "${absrule}" -mindepth 1 -maxdepth 1 -type d -empty -delete -printf '%P ')"
+    queue="$(_find "${absrule}" -mindepth 1 -maxdepth 1 -type d -empty -delete -printf '%P ')"
 
     until str empty "${queue:-}"
     do
@@ -1059,7 +1063,7 @@ topological_sort ()
       if not dir empty "${absrule}"
       then
         coreutils --coreutils-prog=rm -f "${absrule}"/*/"${sorted##* }.yaml"
-        queue="${queue}$(find "${absrule}" -mindepth 1 -maxdepth 1 -type d -empty -delete -printf '%P ')"
+        queue="${queue}$(_find "${absrule}" -mindepth 1 -maxdepth 1 -type d -empty -delete -printf '%P ')"
       fi
     done
 
