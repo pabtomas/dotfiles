@@ -402,7 +402,6 @@ listener ()
         is dir "${exodia_spins}"   && \
         is dir "${exodia_aliases}" && \
         is dir "${exodia_stops}"; do command usleep 10; done
-  # TODO: replace loop with sed + bc script ???
   while read -r line
   do
     i="$(( ${i:--1} + 1 ))"
@@ -600,7 +599,7 @@ verbose_mode ()
     prog="${1}"
     shift
     case "${prog}" in
-    ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm|*=rmdir ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
+    ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
     ( * ) if not command coreutils "${prog}" "${@}"; then return 1; fi ;;
     esac
     set -x
@@ -740,6 +739,7 @@ get ()
   req="$(build_request "${req}")" _curl --request GET "${@}"
 }
 
+# TODO: rework for -vvv
 add_filters ()
 {
   exodia_filter_write_datasources_header='
@@ -955,7 +955,7 @@ expand_datasources_into_datasources ()
 
 expand_datasources_into_main ()
 {
-  # cp is necessary because header content is not valid YAML content (yq will rentur an error)
+  # cp is necessary because header content is not valid YAML content (yq will return an error)
   coreutils --coreutils-prog=cp -f "${exodia_cache_header}" "${exodia_cache_escaped}"
 
   _yq "${exodia_filter_expand_datasources_into_main}" "${exodia_cache_rendered}" >> "${exodia_cache_escaped}"
@@ -1040,7 +1040,7 @@ topological_sort ()
 {
   exodia_rules="$(_yq '.rules[] | key' "${exodia_cache_rendered}")"
 
-  local rule sorted absrule queue empties
+  local rule sorted absrule queue
   for rule in ${exodia_rules}
   do
     sorted=''
@@ -1048,20 +1048,18 @@ topological_sort ()
     set -f
     coreutils --coreutils-prog=mkdir -p $(_yq '.rules["'"${rule}"'"].run[] | "'"${absrule}/"'" + key' "${exodia_cache_rendered}")
     set +f
-    _yq '.rules["'"${rule}"'"].run[] | "'"${absrule}/"'" + key + "/" + .depends_on[]' -s '.' "${exodia_cache_rendered}"
-    queue="$(find "${absrule}" -type d -empty -printf '%P\n')${exodia_nl}"
-    (cd "${absrule}"; set -f; coreutils --coreutils-prog=rmdir ${queue})
+    _yq '.rules["'"${rule}"'"].run[] | "'"${absrule}/"'" + key + "/" + .depends_on[] + ".yaml"' -s '.' "${exodia_cache_rendered}"
+    queue="$(find "${absrule}" -mindepth 1 -maxdepth 1 -type d -empty -delete -printf '%P ')"
 
     until str empty "${queue:-}"
     do
-      sorted="${sorted:+"${sorted} "}${queue%%"${exodia_nl}"*}"
-      queue="${queue#*"${exodia_nl}"}"
-      coreutils --coreutils-prog=rm -f "${absrule}"/*/"${sorted##* }" "${absrule}"/*/"${sorted##* }.yml"
-      empties="$(find "${absrule}" -type d -empty -printf '%P\n')"
-      if not str empty "${empties}"
+      sorted="${sorted:+"${sorted} "}${queue%% *}"
+      queue="${queue#* }"
+      queue="${queue#"${queue%%[![:space:]]*}"}"
+      if not dir empty "${absrule}"
       then
-        (cd "${absrule}"; set -f; coreutils --coreutils-prog=rmdir ${empties})
-        queue="${queue}${empties}${exodia_nl}"
+        coreutils --coreutils-prog=rm -f "${absrule}"/*/"${sorted##* }.yaml"
+        queue="${queue}$(find "${absrule}" -mindepth 1 -maxdepth 1 -type d -empty -delete -printf '%P ')"
       fi
     done
 
@@ -1294,14 +1292,13 @@ check_externals ()
   # `xargs` is slow, avoid it when possible. If not, GNU `xargs` is slower than Busybox `xargs`.
   busybox='true' harden 'xargs'
 
-  # Coreutils `cp`, `ln`, `mkdir`, `mv`, `readlink`, `rm` and `rmdir` have verbose option
+  # Coreutils `cp`, `ln`, `mkdir`, `mv`, `readlink`, and `rm` have verbose option
   coreutils='true' harden 'cp'
   coreutils='true' harden 'ln'
   coreutils='true' harden 'mkdir'
   coreutils='true' harden 'mv'
   coreutils='true' harden 'readlink'
   coreutils='true' harden 'rm'
-  coreutils='true' harden 'rmdir'
 
   # Coreutils `realpath` has -s and --relative-to options
   coreutils='true' harden 'realpath'
