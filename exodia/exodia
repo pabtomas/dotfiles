@@ -447,13 +447,15 @@ send_stop  () { printf '%s%s\n' "${exodia_stopreq}" "${1}" 1>&3; }
 
 help ()
 {
+  set -f
+  IFS="${exodia_nl}"
   send_raw 'A Docker Engine orchestrator'                                      \
            ''                                                                  \
            'Usage:'                                                            \
            '  exodia [options] [rules]'                                        \
            ''                                                                  \
            'Rules:'                                                            \
-           '  TODO'                                                            \
+           $(yq '.rules as $rules | $rules[] | "  " + key + " " + (" " * (([$rules[] | key | length] | max) - (key | length))) + "- " + .description' "${exodia_cache_rendered}") \
            ''                                                                  \
            'Options:'                                                          \
            '  -f, --file file       exodia main file (default: ./exodia.yaml)' \
@@ -462,6 +464,8 @@ help ()
            '  -v                    increase log level, reusable 4 times'      \
            '  -h, --help            help for exodia'                           \
            '  -V, --version         version for exodia'
+  IFS="${exodia_ifs}"
+  set +f
   return 1
 }
 
@@ -1130,6 +1134,9 @@ run ()
   elif eq "${exodia_version:-}" 'true'
   then
     version
+  elif str empty "${exodia_userrules:-}"
+  then
+    send_error 'Missing rule'; return 1
   else
     IFS=' '
     set -f
@@ -1319,7 +1326,6 @@ check_externals ()
 
   # check it with: grep -o -E '\w+' exodia | sort | uniq -c | sort -n
   harden 'basename'
-  harden 'cat'
   harden 'date'
   harden 'dirname'
   harden 'getconf'
