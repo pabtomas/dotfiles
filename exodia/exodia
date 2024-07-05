@@ -631,7 +631,9 @@ prepare ()
 
   send_note "Main file found: ${exodia_file}"
 
-  readonly exodia_resetcache exodia_file exodia_file_abs exodia_loglevel exodia_help exodia_version exodia_userrules
+  exodia_nproc="$(( $(nproc --all) + 1 ))"
+
+  readonly exodia_resetcache exodia_file exodia_file_abs exodia_loglevel exodia_help exodia_version exodia_userrules exodia_nproc
 
   prepare_logging
   prepare_curl
@@ -1120,23 +1122,39 @@ preprocess ()
   fi
 }
 
+njobs ()
+{
+  ps -o ppid > "${exodia_ppid}"
+  rg "${$}" "${exodia_ppid}" > "${exodia_jobs}"
+  rg -c '\w+' "${exodia_jobs}" > "${exodia_njobs}"
+}
+
+parallel ()
+{
+  "${@}" &
+  #"${@}" || { send_error "ID failed"; kill -s INT 0; } &
+
+  local n
+  until lt "${n:-"$(( ${exodia_nproc} + 1 ))"}" "${exodia_nproc}"
+  do
+    if not str empty "${n:-}"; then usleep 10; fi
+    njobs
+    read -r n < "${exodia_njobs}"
+  done
+}
+
 run ()
 {
   # current CLI:
   # CWD="${PWD}" ./exodia
 
   # depending of parsed options:
-  # - run sh script with GNU parallel
+  # - run sh script in parallel
   # - or use git to see dependencies as a tree ???
-  if eq "${exodia_help:-}" 'true'
-  then
-    help
-  elif eq "${exodia_version:-}" 'true'
-  then
-    version
+  if not str empty "${exodia_help:-}"; then help
+  elif not str empty "${exodia_version:-}"; then version
   elif str empty "${exodia_userrules:-}"
-  then
-    send_error 'Missing rule'; return 1
+  then send_error 'Missing rule'; return 1
   else
     IFS=' '
     set -f
@@ -1146,7 +1164,7 @@ run ()
     until eq "${#}" '0'
     do
       case " ${exodia_rules:-} " in
-      ( *" ${1} "* ) : ;; #TODO
+      ( *" ${1} "* ) : TODO ;;
       ( * ) unknown_option "${1}" ;;
       esac
       shift
@@ -1318,7 +1336,6 @@ check_externals ()
   harden 'curl'
   harden 'gomplate'
   harden 'lolcat'
-  harden 'parallel'
   harden 'stdoutbuf'
   harden 'rg'
   harden 'ts'
@@ -1331,6 +1348,8 @@ check_externals ()
   harden 'getconf'
   harden 'kill'
   harden 'mktemp'
+  harden 'nproc'
+  harden 'ps'
   harden 'sha256sum'
   harden 'tr'
   harden 'tty'
@@ -1357,8 +1376,11 @@ init ()
   exodia_aliases="${EXODIA_RUN_PATH}/aliases"
   exodia_tty="${EXODIA_RUN_PATH}/tty"
   exodia_buffers="${EXODIA_RUN_PATH}/buffers"
+  exodia_ppid="${EXODIA_RUN_PATH}/ppid"
+  exodia_jobs="${EXODIA_RUN_PATH}/jobs"
+  exodia_njobs="${EXODIA_RUN_PATH}/njobs"
   exodia_done="${EXODIA_RUN_PATH}/done"
-  readonly EXODIA_CACHE_PATH EXODIA_RUN_PATH exodia_sha exodia_cache exodia_logs exodia_lines exodia_spins exodia_stops exodia_aliases exodia_tty exodia_buffers exodia_done exodia_ifs exodia_nl
+  readonly EXODIA_CACHE_PATH EXODIA_RUN_PATH exodia_sha exodia_cache exodia_logs exodia_lines exodia_spins exodia_stops exodia_aliases exodia_tty exodia_buffers exodia_ppid exodia_jobs exodia_njobs exodia_done exodia_ifs exodia_nl
 
   add_logger_reqchars
   add_style
