@@ -363,9 +363,12 @@ flush_req ()
   i="${2}"
   alias="${line%%"${exodia_reqsep}"*}"
   line="${line#*"${exodia_reqsep}"}"
-  dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${alias}")"
-  command coreutils --coreutils-prog=mv -f "${dir}" "${exodia_run_lines}/${i}"
-  command coreutils --coreutils-prog=rm -f "${exodia_run_aliases}/${alias}"
+  if is present "${exodia_run_aliases}/${alias}"
+  then
+    dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${alias}")"
+    command coreutils --coreutils-prog=mv -f "${dir}" "${exodia_run_lines}/${i}"
+    command coreutils --coreutils-prog=rm -f "${exodia_run_aliases}/${alias}"
+  fi
 }
 
 logging_req ()
@@ -618,6 +621,7 @@ prepare ()
 
   send_note "Main file found: ${exodia_file}"
 
+  # total = nproc + 1 - listener - logger - runner
   exodia_nproc='2' #"$(( $(nproc --all) - 2 ))"
 
   readonly exodia_resetcache exodia_file exodia_file_abs exodia_loglevel exodia_help exodia_version exodia_userrules exodia_nproc
@@ -1110,15 +1114,20 @@ preprocess ()
     topological_sort
     generate_rules
     send_stop 'cache'
+    send_info 'Preprocessing done'
   fi
 }
 
 njobs ()
 {
+  # TODO:
+  # sleep 1 & sleep 1 & sleep 1 & jobs -p > /tmp/ps; ps -o pid=,stat= -p "$(echo -n $(cat /tmp/ps))" | rg -c "R$" || printf "0\n"
   jobs -p > "${exodia_run_ppid}"
   rg -c '\w+' "${exodia_run_ppid}" > "${exodia_run_njobs}"
 }
 
+# GNU parallel can not be used with unexported function. Dash does not have this
+# feature so we have to make our own parallel utility
 parallel ()
 {
   { "${@}" & } 2> /dev/null
@@ -1339,6 +1348,9 @@ check_externals ()
   harden 'ts'
   harden 'yq'
 
+  # TODO: check for GNU ps not busybox ps
+  harden 'ps'
+
   # check it with: grep -o -E '\w+' exodia | sort | uniq -c | sort -n
   harden 'basename'
   harden 'date'
@@ -1347,7 +1359,6 @@ check_externals ()
   harden 'kill'
   harden 'mktemp'
   harden 'nproc'
-  harden 'ps'
   harden 'sha256sum'
   harden 'tr'
   harden 'tty'
