@@ -33,6 +33,7 @@ str ()
   ( empty ) if [ -z "${2}" ]; then return 0; else return 1; fi ;;
   ( in ) case "${3}" in ( *" ${2} "* ) return 0 ;; ( * ) return 1 ;; esac ;;
   ( join ) eval "${2}=\"\${${2}}\"' ${3}'" ;;
+  ( repeat ) str="${2}" count="${3}" perl -E 'say $ENV{str} x $ENV{count}' ;;
   esac
 }
 
@@ -209,11 +210,9 @@ progress_bar ()
   : TODO
   # ▏▎▍▌▋▊▉█
   # ▁▁▁▁▁▁▁▁
-  # █████  ▕
-  # ▔▔▔▔▔▔▔▔
-  # ▁▁▁▁▁▁▁▁
   #▕█████   ▎
   # ▔▔▔▔▔▔▔▔
+  # dash -c 'k="196 202 208 214 220 190 154 118 82 46 47 48 49 50 51 45 39 33 27 21 93 129 165 201 200 199 198 197"; for i in $(shuf -n100 -i1-100); do k="${k#* } ${k%% *}"; [ ${i} = 1 ] && break; done; while [ ${s:-0} -le ${c:-0} ]; do c=$(( $(stty size | cut -d" " -f2) - 6 )); bar=" $(perl -E "say \"▁\" x ${c}")\n▕\033[48;5;${k%% *}m$(printf "%${s:-0}s\033[m%$(( $c - ${s:-0} ))s")▎$(( (${s:-0} * 100) / c ))%\n $(perl -E "say \"▔\" x ${c}")"; printf "%b\n\033[3F" "$bar"; sleep 0.1; s=$(( ${s:-0} + 1 )); if [ $(( (${s:-0} + 1) / 15 )) -ne $(( ${s:-0} / 15 )) ]; then k="${k#* } ${k%% *}"; fi; done'
 }
 
 cols ()
@@ -231,9 +230,9 @@ logs ()
 
   if not str empty "${1:-}"
   then
-    first_max_length_line="$(printf "%$(( ${COLUMNS} + ${#exodia_bold} + ${#exodia_cyan} + ${#exodia_reset} - 9 ))s" | command tr ' ' '.')"
-    does_line_has_enought_chars="$(printf "%$(( ${COLUMNS} - 9 ))s" | command busybox sed 's@ @\[^\\n]@g')"
-    max_line_length="$(printf "%$(( ${COLUMNS} - 9 ))s" | command tr ' ' '.')"
+    first_max_length_line="$(str repeat '.' "$(( ${COLUMNS} + ${#exodia_bold} + ${#exodia_cyan} + ${#exodia_reset} - 9 ))")"
+    does_line_has_enought_chars="$(str repeat '[^\n]' "$(( ${COLUMNS} - 9 ))")"
+    max_line_length="$(str repeat '.' "$(( ${COLUMNS} - 9 ))")"
     set -f
     command busybox sed "/^${exodia_rawlevel}/ {
                            b exit;
@@ -296,7 +295,7 @@ logger ()
   do
     cols
     logs_entries="$(command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
-    max_spin_title_chars="$(printf "%$(( ${COLUMNS} - 15 ))s" | command busybox sed 's@ @[^"]@g')"
+    max_spin_title_chars="$(str repeat '[^"]' "$(( ${COLUMNS} - 15 ))")"
     spins_entries="$(command find "${exodia_run_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '3i s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
     logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
     if str empty "${exodia_loggerstop:-}"; then _stop; fi
@@ -1129,16 +1128,17 @@ preprocess ()
 
 njobs ()
 {
-  # `jobs -p` keeps finished jobs into its list, `jobs` filters this list and keeps only running jobs
+  # `jobs -p` keeps finished jobs into its list, `jobs` refreshes this list
   jobs > /dev/null
   jobs -p > "${exodia_run_ppid}"
   rg -c '\w+' "${exodia_run_ppid}" > "${exodia_run_njobs}"
 }
 
-# GNU parallel can not be used with unexported function. Dash does not have this
+# GNU parallel can not be used with unexported functions. Dash does not have this
 # feature so we have to make our own parallel utility
 parallel ()
 {
+  # TODO: fix -vvv with parallel
   { "${@}" & } 2> /dev/null
   #"${@}" || { send_error "ID failed"; kill -s INT 0; } &
 
@@ -1351,7 +1351,6 @@ check_externals ()
   harden 'ansi2txt'
   harden 'curl'
   harden 'gomplate'
-  harden 'lolcat'
   harden 'stdoutbuf'
   harden 'rg'
   harden 'ts'
@@ -1365,6 +1364,7 @@ check_externals ()
   harden 'kill'
   harden 'mktemp'
   harden 'nproc'
+  harden 'perl'
   harden 'sha256sum'
   harden 'tr'
   harden 'tty'
