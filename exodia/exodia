@@ -1,6 +1,7 @@
 #! /usr/bin/env dash
 
 alias not='! '
+alias source='. '
 
 eq () { if [ "${1}" = "${2}" ];   then return 0; else return 1; fi; }
 gt () { if [ "${1}" -gt "${2}" ]; then return 0; else return 1; fi; }
@@ -218,7 +219,7 @@ progress_bar ()
 cols ()
 {
   local tty
-  tty="$(command coreutils --coreutils-prog=readlink -f "${exodia_tty}")"
+  tty="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_tty}")"
   COLUMNS="$(command stty -F "${tty}" size)"
   COLUMNS="${COLUMNS:+"${COLUMNS##* }"}"
   COLUMNS="${COLUMNS:-"$(command tput cols)"}"
@@ -269,19 +270,6 @@ logs ()
   fi
 }
 
-_stop ()
-{
-  local entries
-  entries="$(command find "${exodia_stops}" -mindepth 1 -maxdepth 1 -type l)"
-
-  if not str empty "${entries:-}"
-  then
-    set -f
-    command coreutils --coreutils-prog=rm -f ${entries} $(command coreutils --coreutils-prog=readlink -f ${entries})
-    set +f
-  fi
-}
-
 logger ()
 {
   trap 'exodia_loggerstart=1' USR1
@@ -289,8 +277,8 @@ logger ()
   add_time
 
   local field_logs field_spins logs_entries spins_entries arg_max
-  field_logs="$(printf '%s//\n' "${exodia_lines}" | command rg -o '/' | command rg -c '/')"
-  field_spins="$(printf '%s//\n' "${exodia_spins}" | command rg -o '/' | command rg -c '/')"
+  field_logs="$(printf '%s//\n' "${exodia_run_lines}" | command rg -o '/' | command rg -c '/')"
+  field_spins="$(printf '%s//\n' "${exodia_run_spins}" | command rg -o '/' | command rg -c '/')"
   arg_max="$(( $(command getconf ARG_MAX) / 4 - 1 ))"
 
   while str empty "${exodia_loggerstart:-}"; do command usleep 10; done
@@ -299,14 +287,13 @@ logger ()
 
   printf '%b' "${exodia_hidecursor}"
 
-  while str empty "${exodia_loggerstop:-}" || command find "${exodia_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_lines}/[0-9]*" -type f | read dummy
+  while str empty "${exodia_loggerstop:-}" || command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | read dummy
   do
     cols
-    logs_entries="$(command find "${exodia_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
+    logs_entries="$(command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
     max_spin_title_chars="$(printf "%$(( ${COLUMNS} - 15 ))s" | command busybox sed 's@ @[^"]@g')"
-    spins_entries="$(command find "${exodia_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '3i s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
+    spins_entries="$(command find "${exodia_run_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '3i s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
     logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
-    if str empty "${exodia_loggerstop:-}"; then _stop; fi
   done
 
   printf '%b%b' "${exodia_erase_until_eol}" "${exodia_showcursor}"
@@ -318,7 +305,9 @@ logger ()
 
 stop_req ()
 {
-  command coreutils --coreutils-prog=mv "${exodia_aliases}/${1#"${exodia_stopreq}"}" "${exodia_stops}/${2}"
+  local target
+  target="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${1#"${exodia_stopreq}"}")"
+  command coreutils --coreutils-prog=rm -f "${target}" "${exodia_run_aliases}/${1#"${exodia_stopreq}"}"
 }
 
 spin_req ()
@@ -347,8 +336,8 @@ s@^\(.*\) \(define spin_title (index) {\)\([^}]*\)} \([0-9]*\)$@\\1 spins_nts [\
       s@0\(_*\)$@1\\1@;   t n%d;
 
 :n%d; s@_\(_*\)$@0\\1@;   t n%d;
-' "${ts%???}" "$(printf '%s' "${line}" | command busybox sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${exodia_spins}/${i}"
-  command coreutils --coreutils-prog=ln -f -s "${exodia_spins}/${i}" "${exodia_aliases}/${alias}"
+' "${ts%???}" "$(printf '%s' "${line}" | command busybox sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${exodia_run_spins}/${i}"
+  command coreutils --coreutils-prog=ln -f -s "${exodia_run_spins}/${i}" "${exodia_run_aliases}/${alias}"
 }
 
 buffer_req ()
@@ -358,11 +347,11 @@ buffer_req ()
   i="${2}"
   alias="${line%%"${exodia_reqsep}"*}"
   line="${line#*"${exodia_reqsep}"}"
-  if is sym "${exodia_aliases}/${alias}"
-  then dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_aliases}/${alias}")"
+  if is sym "${exodia_run_aliases}/${alias}"
+  then dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${alias}")"
   else
-    dir="$(command mktemp -d -p "${exodia_lines}")"
-    command coreutils --coreutils-prog=ln -f -s "${dir}" "${exodia_aliases}/${alias}"
+    dir="$(command mktemp -d -p "${exodia_run_lines}")"
+    command coreutils --coreutils-prog=ln -f -s "${dir}" "${exodia_run_aliases}/${alias}"
   fi
   printf '%s\n' "${line}" > "${dir}/${i}"
 }
@@ -374,35 +363,35 @@ flush_req ()
   i="${2}"
   alias="${line%%"${exodia_reqsep}"*}"
   line="${line#*"${exodia_reqsep}"}"
-  dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_aliases}/${alias}")"
-  command coreutils --coreutils-prog=mv -f "${dir}" "${exodia_lines}/${i}"
-  command coreutils --coreutils-prog=rm -f "${exodia_aliases}/${alias}"
+  dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${alias}")"
+  command coreutils --coreutils-prog=mv -f "${dir}" "${exodia_run_lines}/${i}"
+  command coreutils --coreutils-prog=rm -f "${exodia_run_aliases}/${alias}"
 }
 
 logging_req ()
 {
-  printf '%s\n' "${1}" | command ansi2txt > "${exodia_lines}/${2}"
+  printf '%s\n' "${1}" | command ansi2txt > "${exodia_run_lines}/${2}"
 }
 
 unknown_req ()
 {
-  printf '0Unknown logger request: "%s"\n' "${1}" > "${exodia_lines}/${2}"
+  printf '0Unknown logger request: "%s"\n' "${1}" > "${exodia_run_lines}/${2}"
   return 1
 }
 
 empty_req ()
 {
-  printf '%s\n' "${PS4}" > "${exodia_lines}/${1}"
+  printf '%s\n' "${PS4}" > "${exodia_run_lines}/${1}"
 }
 
 listener ()
 {
   local line i
-  until is sym "${exodia_tty}"     && \
-        is dir "${exodia_lines}"   && \
-        is dir "${exodia_spins}"   && \
-        is dir "${exodia_aliases}" && \
-        is dir "${exodia_stops}"; do command usleep 10; done
+  until is sym "${exodia_run_tty}"     && \
+        is dir "${exodia_run_lines}"   && \
+        is dir "${exodia_run_spins}"   && \
+        is dir "${exodia_run_aliases}"
+        do command usleep 10; done
   while read -r line
   do
     i="$(( ${i:--1} + 1 ))"
@@ -410,7 +399,7 @@ listener ()
     case "${line}" in
     ( ["${exodia_errorlevel}"-"${exodia_verblevel}${exodia_rawlevel}"]* ) logging_req "${line}" "${i}" ;;
     ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req "${line}" "${i}"   ;;
-    ( "${exodia_stopreq}"* )                  stop_req "${line}" "${i}"   ;;
+    ( "${exodia_stopreq}"* )                  stop_req "${line}"          ;;
     ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req "${line}" "${i}" ;;
     ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req "${line}" "${i}"  ;;
     ( * ) unknown_req "${line}" "${i}" ;;
@@ -599,7 +588,6 @@ verbose_mode ()
 {
   coreutils ()
   {
-    { set +x; } 2> /dev/null
     local prog
     prog="${1}"
     shift
@@ -607,11 +595,10 @@ verbose_mode ()
     ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
     ( * ) if not command coreutils "${prog}" "${@}"; then return 1; fi ;;
     esac
-    set -x
-  }
-  find () { { set +x; } 2> /dev/null; if not command find -D exec -D search "${@}"; then return 1; fi; set -x; }
-  yq () { { set +x; } 2> /dev/null; if not command yq -v -M "${@}"; then return 1; fi; set -x; }
-  gomplate () { { set +x; } 2> /dev/null; if not command gomplate -V "${@}"; then return 1; fi; set -x; }
+  } 2> /dev/null
+  find () { if not command find -D exec -D search "${@}"; then return 1; fi; } 2> /dev/null
+  yq () { if not command yq -v -M "${@}"; then return 1; fi; } 2> /dev/null
+  gomplate () { if not command gomplate -V "${@}"; then return 1; fi; } 2> /dev/null
   exodia_mkdiropts='-v'
   readonly exodia_mkdiropts
 }
@@ -631,7 +618,7 @@ prepare ()
 
   send_note "Main file found: ${exodia_file}"
 
-  exodia_nproc="$(( $(nproc --all) + 1 ))"
+  exodia_nproc='2' #"$(( $(nproc --all) - 2 ))"
 
   readonly exodia_resetcache exodia_file exodia_file_abs exodia_loglevel exodia_help exodia_version exodia_userrules exodia_nproc
 
@@ -641,20 +628,18 @@ prepare ()
 
 xtrace_safe ()
 {
-  if ge "${exodia_loglevel}" "${exodia_tracelevel}"; then { set +x; } 2> /dev/null; fi
   local status
   if not eval "${1}"; then status='1'; fi
-  if ge "${exodia_loglevel}" "${exodia_tracelevel}"; then set -x; fi
   return "${status:-0}"
-}
+} 2> /dev/null
 
 reset_buffer ()
 {
   read -r pid < /proc/self/stat
   pid="${pid%% *}"
-  coreutils --coreutils-prog=rm -rf "${exodia_buffers}/${pid}"
-  coreutils --coreutils-prog=mkdir -p "${exodia_buffers}/${pid}"
-  stderr="${exodia_buffers}/${pid}/0"
+  coreutils --coreutils-prog=rm -rf "${exodia_run_buffers}/${pid}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_run_buffers}/${pid}"
+  stderr="${exodia_run_buffers}/${pid}/0"
   readonly pid
 }
 
@@ -778,7 +763,7 @@ add_filters ()
   # select recursively values into rules[].run[] array
   str join exodia_filter_expand_datasources_into_main '| ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |='
   str join exodia_filter_expand_datasources_into_main '(select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |='
-  str join exodia_filter_expand_datasources_into_main '(.. | select (type == "!!str") |= (.'
+  str join exodia_filter_expand_datasources_into_main '(.. | select(type == "!!str") |= (.'
   # escape backslashes and double quotes characters
   str join exodia_filter_expand_datasources_into_main '| sub("\\\\", "\\\\") | sub("\"", "\\\"")'
   # split on new line because Golang templates annotations are onelined
@@ -810,7 +795,7 @@ add_filters ()
   # select recursively values into rules[].run[] array
   str join exodia_filter_resolve_includes '| ((select(has("{{ print \"rules\" }}")) | .["{{ print \"rules\" }}"][]) |='
   str join exodia_filter_resolve_includes '(select(has("{{ print \"run\" }}")) | .["{{ print \"run\" }}"]) |='
-  str join exodia_filter_resolve_includes '(.. | select (type == "!!str") |='
+  str join exodia_filter_resolve_includes '(.. | select(type == "!!str") |='
   # escape backslashes and double quotes characters
   str join exodia_filter_resolve_includes '(. | sub("\\\\", "\\\\") | sub("\"", "\\\"")'
   # split on new line because Golang templates annotations are onelined
@@ -837,9 +822,9 @@ add_filters ()
   # then join everything again with removed new lines
   str join exodia_filter_convert_to_objects '| join("\n")))'
   # convert rules[] array into an object
-  str join exodia_filter_convert_to_objects '| ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
+  str join exodia_filter_convert_to_objects '| ((.["{{ print \"rules\" }}"] |= (.[] as $i ireduce({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
   # before converting it as an object: into rules[].run[] array:
-  str join exodia_filter_convert_to_objects '|   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ([]; .'
+  str join exodia_filter_convert_to_objects '|   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce([]; .'
   # copy rules[].run[].from.id to rules[].run[].id
   str join exodia_filter_convert_to_objects '+ [$i + {"{{ print \"id\" }}": $i.["{{ print \"from\" }}"].["{{ print \"id\" }}"]}'
   # copy rules[].run[].from.depends_on to rules[].run[].depends_on
@@ -855,7 +840,7 @@ add_filters ()
   # convert rules[].run[].loop[] array into an object
   str join exodia_filter_convert_to_objects '+ [$i | (.["{{ print \"loop\" }}"][] + ($i | del(.["{{ print \"loop\" }}"])))]))'
   # convert rules[].run[] array into an object
-  str join exodia_filter_convert_to_objects '|   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce ({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
+  str join exodia_filter_convert_to_objects '|   .["{{ print \"rules\" }}"][].["{{ print \"run\" }}"] |= (.[] as $i ireduce({}; . *+ {$i.["{{ print \"id\" }}"]: ($i | del(.["{{ print \"id\" }}"]))})))'
 
   exodia_filter_expand_extends='. as $root | .rules[].run |= .[] |= ((select(.extends | length > 0) | .extends[] as $id ireduce({}; $root.rules[].run[$id] as $extend'
   # from an other Body, the extended Body will inherit these attributes: `query`, `path`, `context` (and `depends_on` for virtual)
@@ -889,12 +874,15 @@ prepare_cache ()
   exodia_cache_neighbors="${exodia_cache}/neighbors"
   exodia_cache_topological="${exodia_cache}/topological"
 
+  exodia_cache_rules="${exodia_cache}/rules.sh"
+
   readonly exodia_cache_escaped exodia_cache_rendered \
            exodia_cache_context exodia_cache_version_json exodia_cache_info_json \
            exodia_cache_datasources exodia_cache_header exodia_cache_dsrendered \
            exodia_cache_explode \
            exodia_cache_include \
-           exodia_cache_neighbors exodia_cache_topological
+           exodia_cache_neighbors exodia_cache_topological \
+           exodia_cache_rules
 
   add_filters
 
@@ -1076,27 +1064,30 @@ topological_sort ()
     if not dir empty "${absrule}"; then send_error 'Circular dependencies detected'; return 1; fi
 
     printf '%s\n' "${sorted}" > "${exodia_cache_topological}/${rule}"
-    send_note "Preprocessing: [${rule} rule] Topological sort done"
+    send_note "Preprocessing: [${rule}] Topological sort done"
   done
 }
 
-generate_sh ()
+generate_rules ()
 {
-  : TODO
-  # yq script to generate sh script.
+  # TODO: here a simplified version of the YQ filter for development purposes
+
+  _yq '. as $root | $root.rules | keys | keys | .[] as $index | ($root.rules | keys | .[$index]) as $rule_id | $root.rules.[$rule_id] as $rule | "exodia_" + $index + " ()\n{\n  {\n    local pid\n    read -r pid < /proc/self/stat\n    pid=\"${pid%% *}\"\n    PS4=\"${exodia_bufreq}${exodia_reqsep}${pid}${exodia_reqsep}${PS4}\"\n  } 2> /dev/null\n  case \"${1}\" in\n" + ([$rule.run[] | "  ( \"" + key + "\" )\n    send_spin \"" + key + "\" \"[" + $rule_id + "] " + key + " ...\"\n" + (([.depends_on[] | "is present \"${exodia_run_rules}/" + $rule_id + "/" + . + "\""] | join(" && \\n          ") | select(. | length > 0) | "    until " + . + "\n    do usleep 10; done\n") // "") + ("    sleep 5\n") + "    : > \"${exodia_run_rules}/" + $rule_id + "/" + key + "\"\n    send_stop \"" + key + "\"\n    send_info \"[" + $rule_id + "] " + key + " done\" ;;" ] | join("\n")) + "\n  ( * ) ;;\n  esac\n  {\n    PS4=\"${exodia_tracelevel}\"\n    send_flush\n  } 2> /dev/null\n}"' "${exodia_cache_rendered}" > "${exodia_cache_rules}"
+
+  send_note "Preprocessing: Rules shell script generated"
 }
 
 not_cached ()
 {
-  if eq "${exodia_resetcache:-}" 'true' || not is present "${exodia_done}"; then return 0; else return 1; fi
+  if eq "${exodia_resetcache:-}" 'true' || not is present "${exodia_run_done}"; then return 0; else return 1; fi
 }
 
 init_runner ()
 {
   exec 3>&2
   coreutils --coreutils-prog=rm -r -f "${EXODIA_RUN_PATH}/"*
-  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_buffers}" "${exodia_logs}" "${exodia_lines}" "${exodia_spins}" "${exodia_stops}" "${exodia_aliases}"
-  coreutils --coreutils-prog=ln -s -f "$(tty)" "${exodia_tty}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_aliases}" "${exodia_run_rules}"
+  coreutils --coreutils-prog=ln -s -f "$(tty)" "${exodia_run_tty}"
   kill -s USR1 "${exodia_loggerpid}"
 }
 
@@ -1117,21 +1108,20 @@ preprocess ()
     convert_to_objects
     expand_extends
     topological_sort
-    generate_sh
+    generate_rules
     send_stop 'cache'
   fi
 }
 
 njobs ()
 {
-  ps -o ppid > "${exodia_ppid}"
-  rg "${$}" "${exodia_ppid}" > "${exodia_jobs}"
-  rg -c '\w+' "${exodia_jobs}" > "${exodia_njobs}"
+  jobs -p > "${exodia_run_ppid}"
+  rg -c '\w+' "${exodia_run_ppid}" > "${exodia_run_njobs}"
 }
 
 parallel ()
 {
-  "${@}" &
+  { "${@}" & } 2> /dev/null
   #"${@}" || { send_error "ID failed"; kill -s INT 0; } &
 
   local n
@@ -1139,7 +1129,7 @@ parallel ()
   do
     if not str empty "${n:-}"; then usleep 10; fi
     njobs
-    read -r n < "${exodia_njobs}"
+    read -r n < "${exodia_run_njobs}"
   done
 }
 
@@ -1148,9 +1138,7 @@ run ()
   # current CLI:
   # CWD="${PWD}" ./exodia
 
-  # depending of parsed options:
-  # - run sh script in parallel
-  # - or use git to see dependencies as a tree ???
+  local sort id
   if not str empty "${exodia_help:-}"; then help
   elif not str empty "${exodia_version:-}"; then version
   elif str empty "${exodia_userrules:-}"
@@ -1164,7 +1152,17 @@ run ()
     until eq "${#}" '0'
     do
       case " ${exodia_rules:-} " in
-      ( *" ${1} "* ) : TODO ;;
+      ( *" ${1} "* )
+        source "${exodia_cache_rules}"
+        coreutils --coreutils-prog=rm -rf "${exodia_run_rules}/${1}"
+        coreutils --coreutils-prog=mkdir -p "${exodia_run_rules}/${1}"
+        read -r sort < "${exodia_cache_topological}/${1}"
+        set -f
+        for id in ${sort}
+        do
+          parallel "exodia_$(_yq '. as $root | $root.rules | keys | keys | .[] as $index ireduce({}; . + { ($root.rules | keys | .[$index]): $index }) | .["'"${1}"'"]' "${exodia_cache_rendered}")" "${id}"
+        done
+        set +f ;;
       ( * ) unknown_option "${1}" ;;
       esac
       shift
@@ -1369,18 +1367,17 @@ init ()
   exodia_sha="$(find . -type f -exec sha256sum {} \; | sha256sum)"
   exodia_sha="${exodia_sha%% *}"
   exodia_cache="${EXODIA_CACHE_PATH}/${exodia_sha}"
-  exodia_logs="${EXODIA_RUN_PATH}/logs"
-  exodia_lines="${exodia_logs}/lines"
-  exodia_spins="${EXODIA_RUN_PATH}/spins"
-  exodia_stops="${EXODIA_RUN_PATH}/stops"
-  exodia_aliases="${EXODIA_RUN_PATH}/aliases"
-  exodia_tty="${EXODIA_RUN_PATH}/tty"
-  exodia_buffers="${EXODIA_RUN_PATH}/buffers"
-  exodia_ppid="${EXODIA_RUN_PATH}/ppid"
-  exodia_jobs="${EXODIA_RUN_PATH}/jobs"
-  exodia_njobs="${EXODIA_RUN_PATH}/njobs"
-  exodia_done="${EXODIA_RUN_PATH}/done"
-  readonly EXODIA_CACHE_PATH EXODIA_RUN_PATH exodia_sha exodia_cache exodia_logs exodia_lines exodia_spins exodia_stops exodia_aliases exodia_tty exodia_buffers exodia_ppid exodia_jobs exodia_njobs exodia_done exodia_ifs exodia_nl
+  exodia_run_logs="${EXODIA_RUN_PATH}/logs"
+  exodia_run_lines="${exodia_run_logs}/lines"
+  exodia_run_spins="${EXODIA_RUN_PATH}/spins"
+  exodia_run_aliases="${EXODIA_RUN_PATH}/aliases"
+  exodia_run_tty="${EXODIA_RUN_PATH}/tty"
+  exodia_run_buffers="${EXODIA_RUN_PATH}/buffers"
+  exodia_run_ppid="${EXODIA_RUN_PATH}/ppid"
+  exodia_run_njobs="${EXODIA_RUN_PATH}/njobs"
+  exodia_run_rules="${EXODIA_RUN_PATH}/rules"
+  exodia_run_done="${EXODIA_RUN_PATH}/done"
+  readonly EXODIA_CACHE_PATH EXODIA_RUN_PATH exodia_sha exodia_cache exodia_run_logs exodia_run_lines exodia_run_spins exodia_run_aliases exodia_run_tty exodia_run_buffers exodia_run_ppid exodia_run_njobs exodia_run_rules exodia_run_done exodia_ifs exodia_nl
 
   add_logger_reqchars
   add_style
@@ -1391,7 +1388,7 @@ init ()
   GOMPLATE_RIGHT_DELIM='}}'
   PS4="${exodia_tracelevel}"
 
-  readonly GOMPLATE_LEFT_DELIM GOMPLATE_RIGHT_DELIM PS4
+  readonly GOMPLATE_LEFT_DELIM GOMPLATE_RIGHT_DELIM
   export GOMPLATE_LEFT_DELIM GOMPLATE_RIGHT_DELIM
 
   coreutils --coreutils-prog=mkdir -p "${EXODIA_CACHE_PATH}" "${EXODIA_RUN_PATH}"
