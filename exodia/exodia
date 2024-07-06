@@ -270,6 +270,11 @@ logs ()
   fi
 }
 
+_stop ()
+{
+  command find "${exodia_run_stops}" -mindepth 1 -maxdepth 1 -type l -printf '%l\n' | command busybox xargs -I % rm -f %
+}
+
 logger ()
 {
   trap 'exodia_loggerstart=1' USR1
@@ -294,6 +299,7 @@ logger ()
     max_spin_title_chars="$(printf "%$(( ${COLUMNS} - 15 ))s" | command busybox sed 's@ @[^"]@g')"
     spins_entries="$(command find "${exodia_run_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '3i s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
     logs "${logs_entries:-}" "${spins_entries:-}" | spins "${spins_entries:-}" 1>&2
+    if str empty "${exodia_loggerstop:-}"; then _stop; fi
   done
 
   printf '%b%b' "${exodia_erase_until_eol}" "${exodia_showcursor}"
@@ -305,9 +311,7 @@ logger ()
 
 stop_req ()
 {
-  local target
-  target="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${1#"${exodia_stopreq}"}")"
-  command coreutils --coreutils-prog=rm -f "${target}" "${exodia_run_aliases}/${1#"${exodia_stopreq}"}"
+  command coreutils --coreutils-prog=mv "${exodia_run_aliases}/${1#"${exodia_stopreq}"}" "${exodia_run_stops}/${2}"
 }
 
 spin_req ()
@@ -393,7 +397,8 @@ listener ()
   until is sym "${exodia_run_tty}"     && \
         is dir "${exodia_run_lines}"   && \
         is dir "${exodia_run_spins}"   && \
-        is dir "${exodia_run_aliases}"
+        is dir "${exodia_run_aliases}" && \
+        is dir "${exodia_run_stops}"
         do command usleep 10; done
   while read -r line
   do
@@ -402,7 +407,7 @@ listener ()
     case "${line}" in
     ( ["${exodia_errorlevel}"-"${exodia_verblevel}${exodia_rawlevel}"]* ) logging_req "${line}" "${i}" ;;
     ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req "${line}" "${i}"   ;;
-    ( "${exodia_stopreq}"* )                  stop_req "${line}"          ;;
+    ( "${exodia_stopreq}"* )                  stop_req "${line}" "${i}"   ;;
     ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req "${line}" "${i}" ;;
     ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req "${line}" "${i}"  ;;
     ( * ) unknown_req "${line}" "${i}" ;;
@@ -622,7 +627,7 @@ prepare ()
   send_note "Main file found: ${exodia_file}"
 
   # total = nproc + 1 - listener - logger - runner
-  exodia_nproc='2' #"$(( $(nproc --all) - 2 ))"
+  exodia_nproc="$(( $(nproc --all) - 2 ))"
 
   readonly exodia_resetcache exodia_file exodia_file_abs exodia_loglevel exodia_help exodia_version exodia_userrules exodia_nproc
 
@@ -1076,7 +1081,11 @@ generate_rules ()
 {
   # TODO: here a simplified version of the YQ filter for development purposes
 
-  _yq '. as $root | $root.rules | keys | keys | .[] as $index | ($root.rules | keys | .[$index]) as $rule_id | $root.rules.[$rule_id] as $rule | "exodia_" + $index + " ()\n{\n  {\n    local pid\n    read -r pid < /proc/self/stat\n    pid=\"${pid%% *}\"\n    PS4=\"${exodia_bufreq}${exodia_reqsep}${pid}${exodia_reqsep}${PS4}\"\n  } 2> /dev/null\n  case \"${1}\" in\n" + ([$rule.run[] | "  ( \"" + key + "\" )\n    send_spin \"" + key + "\" \"[" + $rule_id + "] " + key + " ...\"\n" + (([.depends_on[] | "is present \"${exodia_run_rules}/" + $rule_id + "/" + . + "\""] | join(" && \\n          ") | select(. | length > 0) | "    until " + . + "\n    do usleep 10; done\n") // "") + ("    sleep 5\n") + "    : > \"${exodia_run_rules}/" + $rule_id + "/" + key + "\"\n    send_stop \"" + key + "\"\n    send_info \"[" + $rule_id + "] " + key + " done\" ;;" ] | join("\n")) + "\n  ( * ) ;;\n  esac\n  {\n    PS4=\"${exodia_tracelevel}\"\n    send_flush\n  } 2> /dev/null\n}"' "${exodia_cache_rendered}" > "${exodia_cache_rules}"
+  local random mod
+  random="[$(shuf -n15 -r -i1-5 | tr '\n' ',')]"
+  mod="$(shuf -n1 -i5-15)"
+  export random mod
+  _yq 'env(random) as $rd | . as $root | ($root.rules | keys | keys | .[]) as $index | ($root.rules | keys | .[$index]) as $rule_id | $root.rules.[$rule_id] as $rule | $rule.run | "exodia_" + $index + " ()\n{\n  {\n    local pid\n    read -r pid < /proc/self/stat\n    pid=\"${pid%% *}\"\n    PS4=\"${exodia_bufreq}${exodia_reqsep}${pid}${exodia_reqsep}${PS4}\"\n  } 2> /dev/null\n  case \"${1}\" in\n" + ([$rule.run[] | "  ( \"" + key + "\" )\n    send_spin \"" + key + "\" \"[" + $rule_id + "] " + key + " ...\"\n" + (([.depends_on[] | "is present \"${exodia_run_rules}/" + $rule_id + "/" + . + "\""] | join(" && \\n          ") | select(. | length > 0) | "    until " + . + "\n    do usleep 10; done\n") // "") + ("    sleep " + $rd[line % env(mod)] + "\n") + "    : > \"${exodia_run_rules}/" + $rule_id + "/" + key + "\"\n    send_stop \"" + key + "\"\n    send_info \"[" + $rule_id + "] " + key + " done\" ;;" ] | join("\n")) + "\n  ( * ) ;;\n  esac\n  {\n    PS4=\"${exodia_tracelevel}\"\n    send_flush\n  } 2> /dev/null\n}"' "${exodia_cache_rendered}" > "${exodia_cache_rules}"
 
   send_note "Preprocessing: Rules shell script generated"
 }
@@ -1090,7 +1099,7 @@ init_runner ()
 {
   exec 3>&2
   coreutils --coreutils-prog=rm -r -f "${EXODIA_RUN_PATH}/"*
-  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_aliases}" "${exodia_run_rules}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_stops}" "${exodia_run_aliases}" "${exodia_run_rules}"
   coreutils --coreutils-prog=ln -s -f "$(tty)" "${exodia_run_tty}"
   kill -s USR1 "${exodia_loggerpid}"
 }
@@ -1120,8 +1129,8 @@ preprocess ()
 
 njobs ()
 {
-  # TODO:
-  # sleep 1 & sleep 1 & sleep 1 & jobs -p > /tmp/ps; ps -o pid=,stat= -p "$(echo -n $(cat /tmp/ps))" | rg -c "R$" || printf "0\n"
+  # `jobs -p` keeps finished jobs into its list, `jobs` filters this list and keeps only running jobs
+  jobs > /dev/null
   jobs -p > "${exodia_run_ppid}"
   rg -c '\w+' "${exodia_run_ppid}" > "${exodia_run_njobs}"
 }
@@ -1348,9 +1357,6 @@ check_externals ()
   harden 'ts'
   harden 'yq'
 
-  # TODO: check for GNU ps not busybox ps
-  harden 'ps'
-
   # check it with: grep -o -E '\w+' exodia | sort | uniq -c | sort -n
   harden 'basename'
   harden 'date'
@@ -1381,6 +1387,7 @@ init ()
   exodia_run_logs="${EXODIA_RUN_PATH}/logs"
   exodia_run_lines="${exodia_run_logs}/lines"
   exodia_run_spins="${EXODIA_RUN_PATH}/spins"
+  exodia_run_stops="${EXODIA_RUN_PATH}/stops"
   exodia_run_aliases="${EXODIA_RUN_PATH}/aliases"
   exodia_run_tty="${EXODIA_RUN_PATH}/tty"
   exodia_run_buffers="${EXODIA_RUN_PATH}/buffers"
@@ -1388,7 +1395,7 @@ init ()
   exodia_run_njobs="${EXODIA_RUN_PATH}/njobs"
   exodia_run_rules="${EXODIA_RUN_PATH}/rules"
   exodia_run_done="${EXODIA_RUN_PATH}/done"
-  readonly EXODIA_CACHE_PATH EXODIA_RUN_PATH exodia_sha exodia_cache exodia_run_logs exodia_run_lines exodia_run_spins exodia_run_aliases exodia_run_tty exodia_run_buffers exodia_run_ppid exodia_run_njobs exodia_run_rules exodia_run_done exodia_ifs exodia_nl
+  readonly EXODIA_CACHE_PATH EXODIA_RUN_PATH exodia_sha exodia_cache exodia_run_logs exodia_run_lines exodia_run_spins exodia_run_stops exodia_run_aliases exodia_run_tty exodia_run_buffers exodia_run_ppid exodia_run_njobs exodia_run_rules exodia_run_done exodia_ifs exodia_nl
 
   add_logger_reqchars
   add_style
