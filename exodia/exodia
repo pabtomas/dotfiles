@@ -194,7 +194,8 @@ for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
   print \"${exodia_bold}${exodia_white}--:--:--\"\n\
   dummy = spin (nelapsed, index)\n\
 }\n\
-for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
+${2:+}
+for (index = 0; spins_nts [index] != 0; index = index + 1 ${2:+" + 3"})\n\
 {\n\
   print \"${exodia_previous}\"\n\
 }\n\
@@ -213,6 +214,12 @@ progress_bar ()
   #▕█████   ▎
   # ▔▔▔▔▔▔▔▔
   # dash -c 'k="196 202 208 214 220 190 154 118 82 46 47 48 49 50 51 45 39 33 27 21 93 129 165 201 200 199 198 197"; for i in $(shuf -n100 -i1-100); do k="${k#* } ${k%% *}"; [ ${i} = 1 ] && break; done; while [ ${s:-0} -le ${c:-0} ]; do c=$(( $(stty size | cut -d" " -f2) - 6 )); bar=" $(perl -E "say \"▁\" x ${c}")\n▕\033[48;5;${k%% *}m$(printf "%${s:-0}s\033[m%$(( $c - ${s:-0} ))s")▎$(( (${s:-0} * 100) / c ))%\n $(perl -E "say \"▔\" x ${c}")"; printf "%b\n\033[3F" "$bar"; sleep 0.1; s=$(( ${s:-0} + 1 )); if [ $(( (${s:-0} + 1) / 15 )) -ne $(( ${s:-0} / 15 )) ]; then k="${k#* } ${k%% *}"; fi; done'
+  #
+  # max of progressbar: command rg -o '\S+' "${exodia_cache_topological}/$(basename -- "${exodia_run_rules}/"*)" | command wc -l
+  #
+  # current progress: command find "${exodia_run_rules}" -mindepth 1 -maxdepth 1 -printf x | command wc -c
+  #
+  # timestamp of progressbar: command coreutils --coreutils-prog=stat -c '%.W' "${exodia_run_rules}"
 }
 
 cols ()
@@ -1098,7 +1105,7 @@ init_runner ()
 {
   exec 3>&2
   coreutils --coreutils-prog=rm -r -f "${EXODIA_RUN_PATH}/"*
-  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_stops}" "${exodia_run_aliases}" "${exodia_run_rules}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_stops}" "${exodia_run_aliases}"
   coreutils --coreutils-prog=ln -s -f "$(tty)" "${exodia_run_tty}"
   kill -s USR1 "${exodia_loggerpid}"
 }
@@ -1172,7 +1179,7 @@ run ()
       case " ${exodia_rules:-} " in
       ( *" ${1} "* )
         source "${exodia_cache_rules}"
-        coreutils --coreutils-prog=rm -rf "${exodia_run_rules}/${1}"
+        coreutils --coreutils-prog=rm -rf "${exodia_run_rules}"
         coreutils --coreutils-prog=mkdir -p "${exodia_run_rules}/${1}"
         read -r sort < "${exodia_cache_topological}/${1}"
         set -f
@@ -1348,6 +1355,9 @@ check_externals ()
   # Coreutils `realpath` has -s and --relative-to options
   coreutils='true' harden 'realpath'
 
+  # Coreutils `stat` has %W format and nanoseconds precision
+  coreutils='true' harden 'stat'
+
   harden 'ansi2txt'
   harden 'curl'
   harden 'gomplate'
@@ -1370,6 +1380,7 @@ check_externals ()
   harden 'tty'
   harden 'stty' || harden 'tput'
   harden 'usleep'
+  harden 'wc'
 }
 
 init ()
