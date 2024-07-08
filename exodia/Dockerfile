@@ -6,20 +6,21 @@ ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
 RUN <<END_OF_RUN
-    set -eux
+    set -euxo pipefail
     http_proxy="${HTTP_PROXY:-}"
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
 
     apk add --no-cache coreutils findutils moreutils bc curl yq gomplate ripgrep
 
-    apk add --no-cache --virtual __install_dash make automake autoconf git build-base gcc
-    git clone https://git.kernel.org/pub/scm/utils/dash/dash.git
-    env -C /dash ./autogen.sh
-    env -C /dash ./configure
-    make -C /dash
-    make -C /dash install
-    apk del __install_dash
+    #apk add --no-cache --virtual __install_dash make automake autoconf git build-base gcc
+    #git clone https://git.kernel.org/pub/scm/utils/dash/dash.git
+    #env -C /dash ./autogen.sh
+    #env -C /dash ./configure
+    #make -C /dash
+    #make -C /dash install
+    #rm -rf /dash
+    #apk del __install_dash
 
     apk add --no-cache --virtual __install_ansi2txt cmake git build-base gcc
     git clone https://github.com/kilobyte/colorized-logs.git
