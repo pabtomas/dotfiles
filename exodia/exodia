@@ -257,10 +257,7 @@ progress = ${pbar_i}\n\
 dummy = progressbar (progress, max)\n\
 "}"}\
 print \"${exodia_erase_until_endofscreen}\"\n\
-for (; index > 0 ${pbar_i:+"${pbar_max:+"- 3"}"}; index = index - 1)\n\
-{\n\
-  print \"${exodia_previous}\"\n\
-}\n\
+for (; index > 0 ${pbar_i:+"${pbar_max:+"- 3"}"}; index = index - 1) print \"${exodia_previous}\"\n\
 print \"\\\a\"\n@" \
       | BC_LINE_LENGTH='0' command bc -q | command stdoutbuf
   else
@@ -268,17 +265,20 @@ print \"\\\a\"\n@" \
   fi
 }
 
-# TODO: why down fails ?
 # TODO: does `./exodia -v up down` works ?
 pbar_vars ()
 {
   if is dir "${exodia_run_rules}"
   then
-    local progress max
+    local progress max bin
     progress="$(command find "${exodia_run_rules}" -mindepth 2 -maxdepth 2 -printf x | command wc -c)"
     max="$(command rg -o '\S+' "${exodia_cache_topological}/$(basename -- "${exodia_run_rules}/"*)" | command wc -l)"
     progress="$(( (${progress} * ${pbar_max}) / ${max} ))"
-    pbar_i="$(( ${pbar_i:-0} < ${progress} ? ${pbar_i:-0} + (1 << ((${progress} - ${pbar_i:-0}) / 30)) : ${pbar_i:-0} ))"
+    exp="$(( (${progress} - ${pbar_i:-0}) / 10 ))"
+    bin="$(command dc -e "${exp} 2op")"
+    bin="$(( ${#bin} - 1 ))"
+    exp="$(( ${exp} < ${bin} ? ${exp} : ${bin} ))"
+    pbar_i="$(( ${pbar_i:-0} < ${progress} ? ${pbar_i:-0} + (1 << ${exp}) : ${pbar_i:-0} ))"
   fi
 }
 
@@ -346,6 +346,8 @@ _stop ()
 }
 
 # TODO: logger is slower and slower: something goes wrong in /var/run/
+# TODO: help does not work
+# TODO: up fails
 logger ()
 {
   trap 'exodia_loggerstart=1' USR1
@@ -397,23 +399,23 @@ spin_req ()
   line="${line#*"${exodia_reqsep}"}"
   ts="$(command date '+%s%N')"
   printf '
-s@^\(.*\) \(define spin_title (index) {\)\([^}]*\)} \([0-9]*\)$@\\1 spins_nts [\\4] = %s; \\2\\3if (index == \\4) print "%s"; } \\4@;
+s@^\\(.*\\) \\(define spin_title (index) {\\)\\([^}]*\\)} \\([0-9]*\\)$@\\1 spins_nts [\\4] = %s; \\2\\3if (index == \\4) print "%s"; } \\4@;
 
-                          t d%d;
-:d%d; s@9\(_*\)$@_\\1@;   t d%d;
+                             t d%d;
+:d%d; s@9\\(_*\\)$@_\\1@;    t d%d;
 
-      s@ \(_\+\)$@ 1\\1@; t n%d;
-      s@8\(_*\)$@9\\1@;   t n%d;
-      s@7\(_*\)$@8\\1@;   t n%d;
-      s@6\(_*\)$@7\\1@;   t n%d;
-      s@5\(_*\)$@6\\1@;   t n%d;
-      s@4\(_*\)$@5\\1@;   t n%d;
-      s@3\(_*\)$@4\\1@;   t n%d;
-      s@2\(_*\)$@3\\1@;   t n%d;
-      s@1\(_*\)$@2\\1@;   t n%d;
-      s@0\(_*\)$@1\\1@;   t n%d;
+      s@ \\(_\\+\\)$@ 1\\1@; t n%d;
+      s@8\\(_*\\)$@9\\1@;    t n%d;
+      s@7\\(_*\\)$@8\\1@;    t n%d;
+      s@6\\(_*\\)$@7\\1@;    t n%d;
+      s@5\\(_*\\)$@6\\1@;    t n%d;
+      s@4\\(_*\\)$@5\\1@;    t n%d;
+      s@3\\(_*\\)$@4\\1@;    t n%d;
+      s@2\\(_*\\)$@3\\1@;    t n%d;
+      s@1\\(_*\\)$@2\\1@;    t n%d;
+      s@0\\(_*\\)$@1\\1@;    t n%d;
 
-:n%d; s@_\(_*\)$@0\\1@;   t n%d;
+:n%d; s@_\\(_*\\)$@0\\1@;    t n%d;
 ' "${ts%???}" "$(printf '%s' "${line}" | command busybox sed -e 's@\\@\\\\@g; s@"@\\q@g')" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" "${i}" >> "${exodia_run_spins}/${i}"
   command coreutils --coreutils-prog=ln -f -s "${exodia_run_spins}/${i}" "${exodia_run_aliases}/${alias}"
 }
@@ -815,16 +817,6 @@ _gom ()
   then xtrace_safe "command yq -M -p 'json' -o 'json' ${stderr} | send_verb"; fi
 }
 
-build_request ()
-{
-  printf '%s/v%s%s\n' "${exodia_curlreqheader}" "${exodia_apiversion:-1.25}" "${1}"
-}
-
-get ()
-{
-  req="$(build_request "${req}")" _curl --request GET "${@}"
-}
-
 add_filters ()
 {
   # map each datasource as a variable in Golang templates
@@ -950,6 +942,16 @@ explode_main_file ()
 {
   _yq 'explode(.)' "${exodia_file}" > "${exodia_cache_rendered}"
   send_note "Preprocessing: Anchors into ${exodia_file} exploded"
+}
+
+build_request ()
+{
+  printf '%s/v%s%s\n' "${exodia_curlreqheader}" "${exodia_apiversion:-1.25}" "${1}"
+}
+
+get ()
+{
+  req="$(build_request "${req}")" _curl --request GET "${@}"
 }
 
 define_context_datasources ()
@@ -1493,9 +1495,9 @@ check_externals ()
   # check it with: grep -o -E '\w+' exodia | sort | uniq -c | sort -n
   harden 'basename'
   harden 'date'
+  harden 'dc'
   harden 'dirname'
   harden 'getconf'
-  harden 'kill'
   harden 'mktemp'
   harden 'nproc'
   harden 'perl'
@@ -1509,7 +1511,7 @@ check_externals ()
 
 init ()
 {
-  set -eu
+  set -euo pipefail
 
   exodia_ifs="${IFS}"
   exodia_nl='
@@ -1539,10 +1541,8 @@ main ()
   logger &
   exodia_loggerpid="${!}"
   readonly exodia_loggerpid
-  trap "kill -s USR1 ${exodia_loggerpid}; wait" INT TERM
-  trap "kill -s USR2 ${exodia_loggerpid}; wait" EXIT
-  # TODO: why this does not works:
-  #trap "if eq \"\${!}\" '0'; then sig='USR2'; else sig='USR1'; fi; kill -s \"\${sig}\" '${exodia_loggerpid}'; wait" EXIT
+  trap "kill -s USR1 '${exodia_loggerpid}'; wait" INT TERM
+  trap "kill -s \"USR\$(( 2 - (\${?} > 0 ? 1 : 0) ))\" '${exodia_loggerpid}'; wait" EXIT
   { runner "${@}"; } 2>&1 | listener
 }
 
