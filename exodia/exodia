@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /usr/bin/env ash
 
 alias not='! '
 alias source='. '
@@ -39,9 +39,26 @@ str ()
 
 dir ()
 {
+  local dir min max type success
   case "${1}" in
-  ( empty ) if xtrace_safe "command find '${2}' -mindepth 1 -maxdepth 1 | read dummy"; then return 1; else return 0; fi ;;
+  ( empty ) dir="${2}"; min='1'; max='1'; success='1' ;;
+  ( contains )
+    min='1'
+    case "${2}" in
+    ( file ) dir="${3}"; max='1'; type='f' ;;
+    esac
+    case "${3}" in
+    ( recursively ) dir="${4}"; max='' ;;
+    esac ;;
   esac
+  if xtrace_safe "command find '${dir}' ${min:+"-mindepth ${min}"} ${max:+"-maxdepth ${max}"} ${type:+"-type ${type}"} | read dummy || handle_pipefails \"\${?}\""; then return "${success:-0}"; else return "$(( 1 - ${success:-0} ))"; fi
+}
+
+# ignore exit code 141 from command pipes when reader exits before writer
+handle_pipefails ()
+{
+  if eq "${1}" '141'; then set -- '0'; fi
+  return "${1}"
 }
 
 ##############################################################################
@@ -70,7 +87,7 @@ animations ()
 {
   local escape_for_bc_print spin_title_fn
 
-  if not str empty "${spins_entries:-}" || lt "${pbar_i:-1}" "${pbar_max:-0}"
+  if not str empty "${spins_entries:-}" || lt "${pbar_i:-"${pbar_max:-0}"}" "${pbar_max:-0}"
   then
     escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\.[0-9]\+ \)[0-2][0-9]:[0-5][0-9]:[0-5][0-9] '"${exodia_rawlevel}"'@\1@; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "'"${exodia_erase_until_endofline}"'@; s@$@\\n";@'
     spin_title_fn='s@$@ define spin_title (index) { } 0@'
@@ -266,20 +283,24 @@ print \"\\\a\"\n@" \
 }
 
 # TODO: does `./exodia -v up down` works ?
+# TODO: fix -vvv
 pbar_vars ()
 {
-  if is dir "${exodia_run_rules}"
+  if is dir "${exodia_run_progress}"
   then
-    local progress max bin
-    progress="$(command find "${exodia_run_rules}" -mindepth 2 -maxdepth 2 -printf x | command wc -c)"
-    max="$(command rg -o '\S+' "${exodia_cache_topological}/$(basename -- "${exodia_run_rules}/"*)" | command wc -l)"
-    progress="$(( (${progress} * ${pbar_max}) / ${max} ))"
-    exp="$(( (${progress} - ${pbar_i:-0}) / 10 ))"
-    bin="$(command dc -e "${exp} 2op")"
-    bin="$(( ${#bin} - 1 ))"
-    exp="$(( ${exp} < ${bin} ? ${exp} : ${bin} ))"
-    pbar_i="$(( ${pbar_i:-0} < ${progress} ? ${pbar_i:-0} + (1 << ${exp}) : ${pbar_i:-0} ))"
-  fi
+    if lt "${pbar_i:-0}" "${pbar_max:-0}"
+    then
+      local progress max bin exp
+      progress="$(command find "${exodia_run_progress}" -mindepth 1 -maxdepth 1 -printf x | command wc -c)"
+      max="$(command rg -o '\S+' "${exodia_run_topological}" | command wc -l)"
+      progress="$(( (${progress} * ${pbar_max}) / ${max} ))"
+      exp="$(( (${progress} - ${pbar_i:-0}) / 10 ))"
+      bin="$(DC_LINE_LENGTH=0 command dc -e "${exp} 2op")"
+      bin="$(( ${#bin} - 1 ))"
+      exp="$(( ${exp} < ${bin} ? ${exp} : ${bin} ))"
+      pbar_i="$(( ${pbar_i:-0} < ${progress} ? ${pbar_i:-0} + (1 << ${exp}) : ${pbar_i:-0} ))"
+    fi
+  else unset pbar_i; fi
 }
 
 cols_vars ()
@@ -336,18 +357,17 @@ logs ()
 
     command coreutils --coreutils-prog=rm -f ${logs_entries}
     set +f
-  elif not str empty "${spins_entries:-}" || lt "${pbar_i:-1}" "${pbar_max:-0}"
+  elif not str empty "${spins_entries:-}" || lt "${pbar_i:-"${pbar_max:-0}"}" "${pbar_max:-0}"
   then printf '%b%b' "${exodia_previous}" "${endofline}"; fi
 }
 
 _stop ()
 {
-  command find "${exodia_run_stops}" -mindepth 1 -maxdepth 1 -type l -printf '%l\n' | command busybox xargs -I % rm -f %
+  if not dir contains file recursively "${exodia_run_lines}"
+  then command rm -f "$(command readlink -f "${exodia_run_stop}")" "${exodia_run_stop}"; fi
 }
 
 # TODO: logger is slower and slower: something goes wrong in /var/run/
-# TODO: help does not work
-# TODO: up fails
 logger ()
 {
   trap 'exodia_loggerstart=1' USR1
@@ -355,8 +375,7 @@ logger ()
   add_time
 
   local field_logs field_spins logs_entries spins_entries arg_max \
-        prevcols first_max_length_line max_line_length does_line_has_enought_chars endofline max_spin_title_chars pbar_top pbar_bottom \
-        pbar_max pbar_i
+        prevcols first_max_length_line max_line_length does_line_has_enought_chars endofline max_spin_title_chars pbar_top pbar_bottom
   field_logs="$(printf '%s//\n' "${exodia_run_lines}" | command rg -o '/' | command rg -c '/')"
   field_spins="$(printf '%s//\n' "${exodia_run_spins}" | command rg -o '/' | command rg -c '/')"
   arg_max="$(( $(command getconf ARG_MAX) / 4 - 1 ))"
@@ -368,12 +387,13 @@ logger ()
 
   printf '%b' "${exodia_hidecursor}"
 
-  while str empty "${exodia_loggerstop:-}" || lt "${pbar_i:--1}" "${pbar_max:-0}" || command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | read dummy
+  while str empty "${exodia_loggerstop:-}" || lt "${pbar_i:-"${pbar_max:-0}"}" "${pbar_max:-0}" || command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | read dummy || handle_pipefails "${?}"
   do
+    local pbar_max pbar_i
     cols_vars
     pbar_vars
     logs_entries="$(command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
-    spins_entries="$(command find "${exodia_run_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '3i s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
+    spins_entries="$(command find "${exodia_run_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '1a s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
     logs | animations 1>&2
     _stop
   done
@@ -387,28 +407,28 @@ logger ()
 
 stop_req ()
 {
-  command coreutils --coreutils-prog=mv "${exodia_run_aliases}/${line#"${exodia_stopreq}"}" "${exodia_run_stops}/${i}"
+  command coreutils --coreutils-prog=mv "${exodia_run_aliases}/${line#"${exodia_stopreq}"}" "${exodia_run_stop}"
 }
 
 spin_req ()
 {
   line="${line#"${exodia_spinreq}${exodia_reqsep}"}"
   printf '%s\n' "${line#*"${exodia_reqsep}"}" | command busybox sed 's@\\@\\\\@g; s@"@\\q@g' | command ts '%.s' | command busybox sed '
-    s@\([0-9]\+\)\.\([0-9]\+\) \(.*\)@s\@^\\(.*\\) \\(define spin_title (index) {\\)\\([^}]*\\)} \\([0-9]*\\)$\@\\1 spins_nts [\\4] = \1\2; \\2\\3if (index == \\4) print "\3"; } \\4\@;'"\
-                                   t d${i};\
-:d${i}; s\@9\\(_*\\)\$\@_\\1\@;    t d${i};\
-        s\@ \\(_\\+\\)\$\@ 1\\1\@; t n${i};\
-        s\@8\\(_*\\)\$\@9\\1\@;    t n${i};\
-        s\@7\\(_*\\)\$\@8\\1\@;    t n${i};\
-        s\@6\\(_*\\)\$\@7\\1\@;    t n${i};\
-        s\@5\\(_*\\)\$\@6\\1\@;    t n${i};\
-        s\@4\\(_*\\)\$\@5\\1\@;    t n${i};\
-        s\@3\\(_*\\)\$\@4\\1\@;    t n${i};\
-        s\@2\\(_*\\)\$\@3\\1\@;    t n${i};\
-        s\@1\\(_*\\)\$\@2\\1\@;    t n${i};\
-        s\@0\\(_*\\)\$\@1\\1\@;    t n${i};\
-:n${i}; s\@_\\(_*\\)\$\@0\\1\@;    t n${i};\
-@" >> "${exodia_run_spins}/${i}"
+    s@\([0-9]\+\)\.\([0-9]\+\) \(.*\)@s\@^\\(.*\\) \\(define spin_title (index) {\\)\\([^}]*\\)} \\([0-9]*\\)$\@\\1 spins_nts [\\4] = \1\2; \\2\\3if (index == \\4) print "\3"; } \\4\@;\n\
+                                       t d'"${i}"';\n\
+:d'"${i}"'; s\@9\\(_*\\)\$\@_\\1\@;    t d'"${i}"';\n\
+            s\@ \\(_\\+\\)\$\@ 1\\1\@; t n'"${i}"';\n\
+            s\@8\\(_*\\)\$\@9\\1\@;    t n'"${i}"';\n\
+            s\@7\\(_*\\)\$\@8\\1\@;    t n'"${i}"';\n\
+            s\@6\\(_*\\)\$\@7\\1\@;    t n'"${i}"';\n\
+            s\@5\\(_*\\)\$\@6\\1\@;    t n'"${i}"';\n\
+            s\@4\\(_*\\)\$\@5\\1\@;    t n'"${i}"';\n\
+            s\@3\\(_*\\)\$\@4\\1\@;    t n'"${i}"';\n\
+            s\@2\\(_*\\)\$\@3\\1\@;    t n'"${i}"';\n\
+            s\@1\\(_*\\)\$\@2\\1\@;    t n'"${i}"';\n\
+            s\@0\\(_*\\)\$\@1\\1\@;    t n'"${i}"';\n\
+:n'"${i}"'; s\@_\\(_*\\)\$\@0\\1\@;    t n'"${i}"';\n\
+@' >> "${exodia_run_spins}/${i}"
   command coreutils --coreutils-prog=ln -f -s "${exodia_run_spins}/${i}" "${exodia_run_aliases}/"${line%%"${exodia_reqsep}"*}""
 }
 
@@ -441,9 +461,21 @@ flush_req ()
   fi
 }
 
+bar_req ()
+{
+  command coreutils --coreutils-prog=cp -f "${exodia_cache_topological}/${line#"${exodia_barreq}"}" "${exodia_run_topological}"
+  command coreutils --coreutils-prog=rm -rf "${exodia_run_progress}"
+  command coreutils --coreutils-prog=mkdir -p "${exodia_run_progress}"
+}
+
+prog_req ()
+{
+  : > "${exodia_run_progress}/${i}"
+}
+
 logging_req ()
 {
-  printf '%s\n' "${line}" > "${exodia_run_lines}/${i}"
+  printf '%s\n' "${line}" | command stdbuf -oL ansi2txt > "${exodia_run_lines}/${i}"
 }
 
 unknown_req ()
@@ -459,25 +491,40 @@ empty_req ()
 
 listener ()
 {
-  local line i
+  local line i stock
   until is sym "${exodia_run_tty}"     && \
         is dir "${exodia_run_lines}"   && \
         is dir "${exodia_run_spins}"   && \
-        is dir "${exodia_run_aliases}" && \
-        is dir "${exodia_run_stops}"
+        is dir "${exodia_run_aliases}"
         do command usleep 10; done
-  command ansi2txt | while read -r line
+  while read -r line || not str empty "${stock:-}"
   do
-    i="$(( ${i:--1} + 1 ))"
-    if str empty "${line}"; then empty_req; continue; fi
-    case "${line}" in
-    ( ["${exodia_errorlevel}"-"${exodia_verblevel}${exodia_rawlevel}"]* ) logging_req ;;
-    ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req    ;;
-    ( "${exodia_stopreq}"* )                  stop_req    ;;
-    ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req  ;;
-    ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req   ;;
-    ( * )                                     unknown_req ;;
-    esac
+    stock="${stock:-}${line}"$'\n'
+    if is present "${exodia_run_stop}"; then continue; fi
+    set -f
+    IFS=$'\n'
+    set -- ${stock:-}
+    IFS="${exodia_ifs}"
+    set +f
+    until eq "${#}" '0'
+    do
+      line="${1}"
+      shift
+      i="$(( ${i:--1} + 1 ))"
+      if str empty "${line}"; then empty_req; continue; fi
+      case "${line}" in
+      ( ["${exodia_errorlevel}"-"${exodia_verblevel}${exodia_rawlevel}"]* ) logging_req ;;
+      ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req          ;;
+      ( "${exodia_stopreq}"* )                  stop_req;   break ;;
+      ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req        ;;
+      ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req         ;;
+      ( "${exodia_barreq}"* )                   bar_req           ;;
+      ( "${exodia_progreq}" )                   prog_req          ;;
+      ( * )                                     unknown_req       ;;
+      esac
+    done
+    if not eq "${#}" '0'; then IFS=$'\n'; stock="${*}"$'\n'; IFS="${exodia_ifs}"
+    else stock=''; fi
   done
 }
 
@@ -491,22 +538,26 @@ _send ()
   if str empty "${cat:-}" && eq "${#}" '0'; then sed "s@^@${pfx}@"
   elif str empty "${cat:-}"; then printf -- "${pfx}%b\n" "${@}"
   elif is nonempty "${cat}"; then sed "s@^@${pfx}@" "${cat}"; fi 1>&3;
+  unset buffered cat
 }
 
 send () { if ge "${exodia_loglevel}" "${lvl}"; then pfx="${lvl}" _send "${@}"; fi; }
 
-send_raw   () { pfx="${exodia_rawlevel}"   _send "${@}"; }
-send_error () { pfx="${exodia_errorlevel}" _send "${@}"; }
-send_warn  () { lvl="${exodia_warnlevel}"   send "${@}"; }
-send_info  () { lvl="${exodia_infolevel}"   send "${@}"; }
-send_note  () { lvl="${exodia_notelevel}"   send "${@}"; }
-send_debug () { lvl="${exodia_debuglevel}"  send "${@}"; }
-send_verb  () { lvl="${exodia_verblevel}"   send "${@}"; }
+send_raw   ()    { pfx="${exodia_rawlevel}"   _send "${@}"; }
+send_error ()    { pfx="${exodia_errorlevel}" _send "${@}"; }
+send_warn  ()    { lvl="${exodia_warnlevel}"   send "${@}"; }
+send_info  ()    { lvl="${exodia_infolevel}"   send "${@}"; }
+send_note  ()    { lvl="${exodia_notelevel}"   send "${@}"; }
+send_debug ()    { lvl="${exodia_debuglevel}"  send "${@}"; }
+send_verb  ()    { lvl="${exodia_verblevel}"   send "${@}"; }
 
-send_flush () { printf '%s%s%s%s\n' "${exodia_flushreq}" "${exodia_reqsep}" "${pid}" "${exodia_reqsep}" 1>&3; }
+send_flush ()    { printf '%s%s%s%s\n' "${exodia_flushreq}" "${exodia_reqsep}" "${pid}" "${exodia_reqsep}" 1>&3; }
 
-send_spin ()  { printf '%s%s%s%s%s\n' "${exodia_spinreq}" "${exodia_reqsep}" "${1}" "${exodia_reqsep}" "${2}" 1>&3; }
-send_stop  () { printf '%s%s\n' "${exodia_stopreq}" "${1}" 1>&3; }
+send_spin ()     { printf '%s%s%s%s%s\n' "${exodia_spinreq}" "${exodia_reqsep}" "${1}" "${exodia_reqsep}" "${2}" 1>&3; }
+send_stop  ()    { printf '%s%s\n' "${exodia_stopreq}" "${1}" 1>&3; }
+
+send_bar ()      { printf '%s%s\n' "${exodia_barreq}" "${1}" 1>&3; }
+send_progress () { printf '%s\n' "${exodia_progreq}" 1>&3; }
 
 help ()
 {
@@ -1123,7 +1174,7 @@ generate_rules ()
   random="[$(shuf -n15 -r -i1-5 | tr '\n' ',')]"
   mod="$(shuf -n1 -i5-15)"
   export random mod
-  _yq 'env(random) as $rd | . as $root | ($root.rules | keys | keys | .[]) as $index | ($root.rules | keys | .[$index]) as $rule_id | $root.rules.[$rule_id] as $rule | $rule.run | "exodia_" + $index + " ()\n{\n  {\n    local pid\n    read -r pid < /proc/self/stat\n    pid=\"${pid%% *}\"\n    PS4=\"${exodia_bufreq}${exodia_reqsep}${pid}${exodia_reqsep}${PS4}\"\n  } 2> /dev/null\n  case \"${1}\" in\n" + ([$rule.run[] | "  ( \"" + key + "\" )\n    send_spin \"" + key + "\" \"[" + $rule_id + "] " + key + " ...\"\n" + (([.depends_on[] | "is present \"${exodia_run_rules}/" + $rule_id + "/" + . + "\""] | join(" && \\n          ") | select(. | length > 0) | "    until " + . + "\n    do usleep 10; done\n") // "") + ("    sleep " + $rd[line % env(mod)] + "\n") + "    : > \"${exodia_run_rules}/" + $rule_id + "/" + key + "\"\n    send_stop \"" + key + "\"\n    send_info \"[" + $rule_id + "] " + key + " succeed\" ;;" ] | join("\n")) + "\n  ( * ) ;;\n  esac\n  {\n    PS4=\"${exodia_tracelevel}\"\n    send_flush\n  } 2> /dev/null\n}"' "${exodia_cache_rendered}" > "${exodia_cache_rules}"
+  _yq 'env(random) as $rd | . as $root | ($root.rules | keys | keys | .[]) as $index | ($root.rules | keys | .[$index]) as $rule_id | $root.rules.[$rule_id] as $rule | $rule.run | "exodia_" + $index + " ()\n{\n  {\n    local pid\n    read -r pid < /proc/self/stat\n    pid=\"${pid%% *}\"\n    PS4=\"${exodia_bufreq}${exodia_reqsep}${pid}${exodia_reqsep}${PS4}\"\n  } 2> /dev/null\n  case \"${1}\" in\n" + ([$rule.run[] | "  ( \"" + key + "\" )\n    send_spin \"" + key + "\" \"[" + $rule_id + "] " + key + " ...\"\n" + (([.depends_on[] | "is present \"${exodia_run_rules}/" + $rule_id + "/" + . + "\""] | join(" && \\n          ") | select(. | length > 0) | "    until " + . + "\n    do usleep 10; done\n") // "") + ("    sleep " + $rd[line % env(mod)] + "\n") + "    : > \"${exodia_run_rules}/" + $rule_id + "/" + key + "\"\n    send_stop \"" + key + "\"\n    send_info \"[" + $rule_id + "] " + key + " succeed\" ;;" ] | join("\n")) + "\n  ( * ) ;;\n  esac\n  send_progress\n  {\n    PS4=\"${exodia_tracelevel}\"\n    send_flush\n  } 2> /dev/null\n}"' "${exodia_cache_rendered}" > "${exodia_cache_rules}"
 
   send_note "Preprocessing: Rules shell script generated"
 }
@@ -1137,7 +1188,7 @@ init_runner ()
 {
   exec 3>&2
   coreutils --coreutils-prog=rm -r -f "${EXODIA_RUN_PATH}/"*
-  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_stops}" "${exodia_run_aliases}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_aliases}"
   coreutils --coreutils-prog=ln -s -f "$(tty)" "${exodia_run_tty}"
   kill -s USR1 "${exodia_loggerpid}"
 }
@@ -1171,6 +1222,7 @@ njobs ()
   jobs > /dev/null
   jobs -p > "${exodia_run_ppid}"
   rg -c '\w+' "${exodia_run_ppid}" > "${exodia_run_njobs}"
+  read -r n < "${exodia_run_njobs}"
 }
 
 # GNU parallel can not be used with unexported functions. Dash does not have this
@@ -1182,12 +1234,8 @@ parallel ()
   #"${@}" || { send_error "ID failed"; kill -s INT 0; } &
 
   local n
-  until lt "${n:-"$(( ${exodia_nproc} + 1 ))"}" "${exodia_nproc}"
-  do
-    if not str empty "${n:-}"; then usleep 10; fi
-    njobs
-    read -r n < "${exodia_run_njobs}"
-  done
+  njobs
+  if ge "${n}" "${exodia_nproc}"; then wait -n; fi
 }
 
 run ()
@@ -1214,6 +1262,7 @@ run ()
         coreutils --coreutils-prog=rm -rf "${exodia_run_rules}"
         coreutils --coreutils-prog=mkdir -p "${exodia_run_rules}/${1}"
         read -r sort < "${exodia_cache_topological}/${1}"
+        send_bar "${1}"
         set -f
         for id in ${sort}
         do
@@ -1354,9 +1403,11 @@ add_logger_reqchars ()
   exodia_stopreq='K'
   exodia_bufreq='B'
   exodia_flushreq='F'
+  exodia_barreq='P'
+  exodia_progreq='p'
   exodia_reqsep='/'
   readonly exodia_rawlevel exodia_errorlevel exodia_warnlevel exodia_infolevel exodia_notelevel exodia_debuglevel exodia_tracelevel exodia_verblevel \
-           exodia_spinreq exodia_stopreq exodia_bufreq exodia_flushreq exodia_reqsep
+           exodia_spinreq exodia_stopreq exodia_bufreq exodia_flushreq exodia_reqsep exodia_barreq exodia_progreq
 }
 
 add_cache ()
@@ -1402,16 +1453,18 @@ add_run ()
   exodia_run_logs="${EXODIA_RUN_PATH}/logs"
   exodia_run_lines="${exodia_run_logs}/lines"
   exodia_run_spins="${EXODIA_RUN_PATH}/spins"
-  exodia_run_stops="${EXODIA_RUN_PATH}/stops"
+  exodia_run_stop="${EXODIA_RUN_PATH}/stop"
   exodia_run_aliases="${EXODIA_RUN_PATH}/aliases"
   exodia_run_tty="${EXODIA_RUN_PATH}/tty"
   exodia_run_buffers="${EXODIA_RUN_PATH}/buffers"
   exodia_run_ppid="${EXODIA_RUN_PATH}/ppid"
   exodia_run_njobs="${EXODIA_RUN_PATH}/njobs"
   exodia_run_rules="${EXODIA_RUN_PATH}/rules"
+  exodia_run_progress="${EXODIA_RUN_PATH}/progress"
+  exodia_run_topological="${EXODIA_RUN_PATH}/topological"
   exodia_run_done="${EXODIA_RUN_PATH}/done"
 
-  readonly EXODIA_RUN_PATH exodia_run_logs exodia_run_lines exodia_run_spins exodia_run_stops exodia_run_aliases exodia_run_tty exodia_run_buffers exodia_run_ppid exodia_run_njobs exodia_run_rules exodia_run_done
+  readonly EXODIA_RUN_PATH exodia_run_logs exodia_run_lines exodia_run_spins exodia_run_stop exodia_run_aliases exodia_run_tty exodia_run_buffers exodia_run_ppid exodia_run_njobs exodia_run_rules exodia_run_progress exodia_run_topological exodia_run_done
 }
 
 harden ()
@@ -1474,7 +1527,10 @@ check_externals ()
   # Coreutils `realpath` has -s and --relative-to options
   coreutils='true' harden 'realpath'
 
+  # remove this for the next YQ release
   harden 'ansi2txt'
+  harden 'stdbuf'
+
   harden 'curl'
   harden 'gomplate'
   harden 'stdoutbuf'
@@ -1496,9 +1552,6 @@ check_externals ()
   harden 'stty' || harden 'tput'
   harden 'usleep'
   harden 'wc'
-
-  if not eq "$(basename -- "$(coreutils --coreutils-prog=readlink -f "/proc/${$}/exe")")" 'busybox'
-  then fatal "The Exodia script needs to be run with the Busybox Shell"; return 1; fi
 }
 
 init ()
