@@ -61,6 +61,14 @@ handle_pipefails ()
   return "${1}"
 }
 
+# commands in a same pipe can make xtrace messy
+xtrace_safe ()
+{
+  local status
+  if not eval "${1}"; then status='1'; fi
+  return "${status:-0}"
+} 2> /dev/null
+
 ##############################################################################
 ##################################   LOGGER   ################################
 ##############################################################################
@@ -751,13 +759,6 @@ prepare ()
   prepare_logging
   prepare_curl
 }
-
-xtrace_safe ()
-{
-  local status
-  if not eval "${1}"; then status='1'; fi
-  return "${status:-0}"
-} 2> /dev/null
 
 reset_buffer ()
 {
