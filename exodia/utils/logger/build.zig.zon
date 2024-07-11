@@ -1,19 +1,23 @@
 .{
-  .name = "exodia-logger",
-  .version = "0.0.0",
-  .dependencies = .{
-    .termsize = .{
-      .url = "https://github.com/softprops/zig-termsize/archive/refs/tags/v0.1.0.tar.gz",
-      .hash = "1220c37fb03650fd86dff19134116a2bd7e8e20731193aa30f11769881a2d558c8c1",
+    .name = "exodia-logger",
+    .version = "0.0.0",
+    .dependencies = .{
+        .termsize = .{
+            .url = "https://github.com/softprops/zig-termsize/archive/refs/tags/v0.1.0.tar.gz",
+            .hash = "1220c37fb03650fd86dff19134116a2bd7e8e20731193aa30f11769881a2d558c8c1",
+        },
+        .@"zig-datetime" = .{
+            .url = "https://github.com/frmdstryr/zig-datetime/archive/eb05569fc75a18b343f9992e5e628c2b69456d10.tar.gz",
+            .hash = "1220f7f4a9210f6ce3949446276566b0a22775e85dc6b81daf7aae55e0ec5588f4dc",
+        },
+        .@"ansi-term" = .{
+            .url = "https://github.com/ziglibs/ansi-term/archive/0bb62115db6749044765fdb37c9791388e7970f2.tar.gz",
+            .hash = "12200719196e0abd325efa248fb03882c8fa2c7130e3ae1d57dbff72afc846b28495",
+        },
     },
-    .@"zig-datetime" = .{
-      .url = "https://github.com/frmdstryr/zig-datetime/archive/eb05569fc75a18b343f9992e5e628c2b69456d10.tar.gz",
-      .hash = "1220f7f4a9210f6ce3949446276566b0a22775e85dc6b81daf7aae55e0ec5588f4dc",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
     },
-  },
-  .paths = .{
-    "build.zig",
-    "build.zig.zon",
-    "src",
-  },
 }

@@ -13,6 +13,11 @@ pub fn build (builder: *std.Build) void
     .optimize = optimize,
   });
 
+  const ansiterm = builder.dependency ("ansi-term", .{
+    .target = target,
+    .optimize = optimize,
+  }).module ("ansi-term");
+
   const termsize = builder.dependency ("termsize", .{
     .target = target,
     .optimize = optimize,
@@ -23,6 +28,7 @@ pub fn build (builder: *std.Build) void
     .optimize = optimize,
   }).module ("zig-datetime");
 
+  logger.root_module.addImport ("ansiterm", ansiterm);
   logger.root_module.addImport ("termsize", termsize);
   logger.root_module.addImport ("datetime", datetime);
 
