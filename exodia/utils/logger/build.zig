@@ -12,7 +12,6 @@ pub fn build (builder: *std.Build) void
     .target = target,
     .optimize = optimize,
   });
-  logger.linkLibC();
 
   const ansiterm = builder.dependency ("ansi-term", .{
     .target = target,
