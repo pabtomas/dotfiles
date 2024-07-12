@@ -3,6 +3,7 @@ const std = @import ("std");
 pub fn build (builder: *std.Build) void
 {
   const target = builder.standardTargetOptions (.{});
+  //const optimize = std.builtin.OptimizeMode.ReleaseSafe;
   const optimize = std.builtin.OptimizeMode.Debug;
   //const optimize = std.builtin.OptimizeMode.ReleaseFast;
 
@@ -28,9 +29,15 @@ pub fn build (builder: *std.Build) void
     .optimize = optimize,
   }).module ("zig-datetime");
 
+  const jdz_allocator = builder.dependency ("jdz_allocator", .{
+    .target = target,
+    .optimize = optimize,
+  }).module ("jdz_allocator");
+
   logger.root_module.addImport ("ansiterm", ansiterm);
   logger.root_module.addImport ("termsize", termsize);
   logger.root_module.addImport ("datetime", datetime);
+  logger.root_module.addImport ("jdz", jdz_allocator);
 
   builder.installArtifact (logger);
 }

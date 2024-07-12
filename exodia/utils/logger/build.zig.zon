@@ -14,6 +14,10 @@
             .url = "https://github.com/ziglibs/ansi-term/archive/0bb62115db6749044765fdb37c9791388e7970f2.tar.gz",
             .hash = "12200719196e0abd325efa248fb03882c8fa2c7130e3ae1d57dbff72afc846b28495",
         },
+        .jdz_allocator = .{
+            .url = "https://github.com/joadnacer/jdz_allocator/archive/ea14e0efc3328a6b9e7dd53bb91b9eec2efe3f96.tar.gz",
+            .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
+        },
     },
     .paths = .{
         "build.zig",
