@@ -11,16 +11,7 @@ RUN <<END_OF_RUN
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
 
-    apk add --no-cache coreutils findutils moreutils bc curl yq gomplate ripgrep
-
-    #apk add --no-cache --virtual __install_dash make automake autoconf git build-base gcc
-    #git clone https://git.kernel.org/pub/scm/utils/dash/dash.git
-    #env -C /dash ./autogen.sh
-    #env -C /dash ./configure
-    #make -C /dash
-    #make -C /dash install
-    #rm -rf /dash
-    #apk del __install_dash
+    apk add --no-cache coreutils findutils moreutils curl yq gomplate ripgrep
 
     apk add --no-cache --virtual __install_ansi2txt cmake git build-base gcc
     git clone https://github.com/kilobyte/colorized-logs.git
@@ -45,9 +36,6 @@ RUN <<END_OF_RUN
       zig build -p /usr/local
     done
     rm -rf "${tmp_xz}" "${tmp_zig}" /usr/local/bin/lib /usr/local/bin/zig /tmp/utils
-
-    ln -s -f "$(command -v busybox)" "$(command -v head)"
-    ln -s -f "$(command -v busybox)" "$(command -v xargs)"
 
     mkdir -p /exodia
     unset http_proxy https_proxy

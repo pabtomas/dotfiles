@@ -6,6 +6,7 @@ const datetime = @import ("datetime").datetime;
 
 const Color = enum (u8)
 {
+  // log colors
   red    = 204,
   yellow = 227,
   green  = 119,
@@ -14,6 +15,8 @@ const Color = enum (u8)
   purple = 135,
   pink   = 207,
   white  = 15,
+
+  // spin colors
   @"196" = 196,
   @"202" = 202,
   @"208" = 208,
@@ -44,6 +47,15 @@ const Color = enum (u8)
   @"199" = 199,
   @"198" = 198,
   @"197" = 197,
+
+  // progressbar colors
+  @"203" = 203,
+  @"209" = 209,
+  @"215" = 215,
+  @"221" = 221,
+  @"191" = 191,
+  @"155" = 155,
+  @"83" = 83,
 };
 
 const Log = struct
@@ -96,6 +108,7 @@ const Log = struct
         try Logger.stderr.writeAll (" " ** Logger.level_length);
       }
       try Logger.stderr.writeAll (message);
+      try ansiterm.clear.clearFromCursorToLineEnd (Logger.stderr);
     }
   };
 
@@ -125,15 +138,17 @@ const Log = struct
   fn render (self: *@This ()) !void
   {
     var max_entry_length: usize = undefined;
+    var looping = true;
 
-    while (self.message.len > 0)
+    while (looping)
     {
-      //max_entry_length = (try termsize.termSize (Logger.stderr_file)).?.width - Logger.header_length;
-      max_entry_length = @min (10, self.message.len);
+      max_entry_length = @min (Logger.cols - Logger.header_length, self.message.len);
+      //max_entry_length = @min (10, self.message.len);
       try self.level.render (self.message [0 .. max_entry_length], &self.header);
       self.message = self.message [max_entry_length ..];
       try Logger.stderr.writeByte ('\n');
       try Logger.buffered_stderr.flush (); // don't forget to flush!
+      looping = (self.message.len > 0);
     }
   }
 };
@@ -200,7 +215,7 @@ const Spin = struct
                             .message = undefined,
                             .birth = datetime.Datetime.now (),
                           };
-    const max_entry_length: usize = (try termsize.termSize (Logger.stderr_file)).?.width - Logger.header_length;
+    const max_entry_length = Logger.cols - Logger.header_length;
     std.mem.copyBackwards (u8, &self.id, id [0 .. id.len]);
     std.mem.copyBackwards (u8, &self.message, message [0 .. @min (max_entry_length, @min (message.len, @This ().message_max_length))]);
     return self;
@@ -287,6 +302,109 @@ const Buffer = struct
   }
 };
 
+const Bar = struct
+{
+  const colors: [10] u8 = .{ 204, 203, 209, 215, 221, 227, 191, 155, 119, 83, };
+  const offsets: [7] *const [3:0] u8 = .{ "▏", "▎", "▍", "▌", "▋", "▊", "▉", };
+  const coef = 10;
+
+  max: u32 = 0,
+  progress: u32 = 0,
+  term_cursor: u32 = 0,
+  running: bool = false,
+  last: datetime.Datetime = undefined,
+
+  fn init (max: u32) @This ()
+  {
+    return .{ .max = max, .running = true, .last = datetime.Datetime.now (), };
+  }
+
+  fn incr (self: *@This ()) !void
+  {
+    if (self.progress == self.max) return error.BarMaxReached;
+    self.progress = self.progress + 1;
+  }
+
+  fn top (_: @This ()) !void
+  {
+    try Logger.stderr.writeByte (' ');
+    try ansiterm.format.updateStyle (Logger.stderr, .{
+        .foreground = .{ .Fixed = @intFromEnum (Color.white), },
+        .font_style = .{ .bold = true, },
+      }, null);
+    for (0 .. (Logger.cols - 6)) |_| try Logger.stderr.writeAll ("▁");
+    try ansiterm.clear.clearFromCursorToLineEnd (Logger.stderr);
+    try Logger.stderr.writeByte ('\n');
+  }
+
+  fn middle (self: *@This (), term_max: u32) !void
+  {
+    const offset_index = self.term_cursor % (@This ().offsets.len + 1);
+    const percent = (self.term_cursor * 100) / term_max;
+    var buffer: [4] u8 = undefined;
+    var i: u16 = 8;
+
+    try Logger.stderr.writeAll ("▕");
+    try ansiterm.format.updateStyle (Logger.stderr, .{
+        .background = .{ .Fixed = @This ().colors [@min (percent / @This ().colors.len, @This ().colors.len - 1)], },
+        .font_style = .{ .bold = true, },
+      }, null);
+    while (i <= self.term_cursor) { try Logger.stderr.writeByte (' '); i = i + 8; }
+    try ansiterm.format.resetStyle (Logger.stderr);
+    try ansiterm.format.updateStyle (Logger.stderr, .{
+        .foreground = .{ .Fixed = @This ().colors [@min (percent / @This ().colors.len, @This ().colors.len - 1)], },
+        .font_style = .{ .bold = true, },
+      }, null);
+    if (self.term_cursor < term_max and (offset_index > 0)) try Logger.stderr.writeAll (@This ().offsets [offset_index - 1]);
+    try ansiterm.format.resetStyle (Logger.stderr);
+    if (offset_index == 0) i = i - 8;
+    while (i < term_max) { try Logger.stderr.writeByte (' '); i = i + 8; }
+    try ansiterm.format.updateStyle (Logger.stderr, .{
+        .foreground = .{ .Fixed = @intFromEnum (Color.white), },
+        .font_style = .{ .bold = true, },
+      }, null);
+    try Logger.stderr.writeAll ("▎");
+    try Logger.stderr.writeAll (try std.fmt.bufPrint (&buffer, "{d}%", .{ percent, }));
+    try ansiterm.clear.clearFromCursorToLineEnd (Logger.stderr);
+    try Logger.stderr.writeByte ('\n');
+  }
+
+  fn bottom (_: @This ()) !void
+  {
+    try Logger.stderr.writeByte (' ');
+    for (0 .. (Logger.cols - 6)) |_| try Logger.stderr.writeAll ("▔");
+    try ansiterm.format.resetStyle (Logger.stderr);
+    try ansiterm.clear.clearFromCursorToLineEnd (Logger.stderr);
+    try Logger.stderr.writeByte ('\n');
+  }
+
+  fn render (self: *@This ()) !bool
+  {
+    const term_max = (Logger.cols - 6) * 8;
+    if (self.term_cursor >= term_max) self.running = false;
+    if (!self.running) return false;
+
+    const term_progress = (self.progress * term_max) / self.max;
+
+    var now = datetime.Datetime.now ();
+    const delta = now.sub (self.last);
+    if (self.term_cursor < term_progress and delta.nanoseconds > 10_000_000)
+    {
+      const gap = (term_progress - self.term_cursor) / @This ().coef;
+      const log = std.math.log2 (@max (gap, 2)) - 1;
+      const shift = @min (gap, log);
+      self.term_cursor = self.term_cursor + std.math.shl (u32, 1, shift);
+      self.last = now;
+    }
+
+    try self.top ();
+    try self.middle (term_max);
+    try self.bottom ();
+
+    return true;
+  }
+};
+
 // TODO: getters/setters
 const Logger = struct
 {
@@ -306,22 +424,35 @@ const Logger = struct
   var buffered_stderr = std.io.bufferedWriter (stderr_writer);
   var stderr = buffered_stderr.writer ();
 
+  var cols: u16 = undefined;
+  const separator: u8 = 7;
+
   logs: std.BoundedArray ([] const u8, logs_size),
   mutex: std.Thread.Mutex = .{},
   condition: std.Thread.Condition = .{},
   looping: bool = true,
   spins: std.BoundedArray (Spin, spins_size),
   buffers: std.BoundedArray (Buffer, buffers_size),
+  bar: Bar = undefined,
+
+  fba_buffer: [Buffer.size] u8 = undefined,
+  fba: std.heap.FixedBufferAllocator,
+  allocator: std.mem.Allocator,
 
   fn init () !@This ()
   {
     if (!@This ().stderr_file.supportsAnsiEscapeCodes ())
       return error.UnsupportedAnsiEscapeCodes;
 
+    var fba_buffer: [Buffer.size] u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init (&fba_buffer);
     return .{
-              .logs    = try std.BoundedArray ([] const u8, logs_size).init (0),
-              .spins   = try std.BoundedArray (Spin, spins_size).init (0),
-              .buffers = try std.BoundedArray (Buffer, buffers_size).init (0),
+              .logs       = try std.BoundedArray ([] const u8, logs_size).init (0),
+              .spins      = try std.BoundedArray (Spin, spins_size).init (0),
+              .buffers    = try std.BoundedArray (Buffer, buffers_size).init (0),
+              .fba_buffer = fba_buffer,
+              .fba        = fba,
+              .allocator  = fba.allocator (),
             };
   }
 
@@ -330,21 +461,54 @@ const Logger = struct
     self.looping = false;
   }
 
-  fn enqueue (self: *@This (), entry: [] const u8) void
+  fn enqueue (self: *@This (), array: std.BoundedArray (u8, Buffer.size)) !void
   {
     self.mutex.lock ();
     defer self.mutex.unlock ();
 
     while (self.logs.slice ().len == logs_size) self.condition.wait (&self.mutex);
 
-    self.logs.appendAssumeCapacity (entry);
+    self.logs.appendAssumeCapacity (self.allocator.dupe (u8, array.slice ()) catch |err| blk: {
+      if (err == error.OutOfMemory)
+      {
+        self.fba.reset ();
+        self.allocator = self.fba.allocator ();
+        break :blk try self.allocator.dupe (u8, array.slice ());
+      } else return err;
+    });
+  }
+
+  fn empty (self: *@This ()) !bool
+  {
+    if (!self.mutex.tryLock ()) return true;
+    defer self.mutex.unlock ();
+
+    var index: usize = 0;
+    while (index < self.logs.slice ().len)
+    {
+      try self.response (self.logs.swapRemove (index));
+      index = index + 1;
+    }
+
+    while (self.logs.popOrNull ()) |entry| try self.response (entry);
+
+    self.condition.signal ();
+
+    return (index == 0);
+  }
+
+  fn log_response (self: *@This (), entry: [] const u8) !void
+  {
+    var log = try Log.init (entry);
+    try log.render ();
+    try self.animation ();
   }
 
   fn spin_response (self: *@This (), entry: [] const u8) !void
   {
     if (self.spins.slice ().len == spins_size) return error.MaxSpinsReached;
 
-    var it = std.mem.tokenizeScalar (u8, entry [2 ..], 0);
+    var it = std.mem.tokenizeScalar (u8, entry [2 ..], @This ().separator);
     var index: usize = 0;
     var pair: [2][] const u8 = undefined;
     while (it.next ()) |token|
@@ -379,7 +543,7 @@ const Logger = struct
   {
     if (self.buffers.slice ().len == buffers_size) return error.MaxBuffersReached;
 
-    var it = std.mem.tokenizeScalar (u8, entry [2 ..], 0);
+    var it = std.mem.tokenizeScalar (u8, entry [2 ..], @This ().separator);
     var index: usize = 0;
     var pair: [2][] const u8 = undefined;
     while (it.next ()) |token|
@@ -401,7 +565,7 @@ const Logger = struct
 
     if (self.buffers.get (index).array.slice ().len + pair [1].len + 1 >= Buffer.size) return error.BufferSizeOverflow;
     self.buffers.slice ()[index].array.appendSliceAssumeCapacity (pair [1]);
-    self.buffers.slice ()[index].array.appendAssumeCapacity (0);
+    self.buffers.slice ()[index].array.appendAssumeCapacity (@This ().separator);
   }
 
   fn flush_response (self: *@This (), entry: [] const u8) !void
@@ -416,11 +580,20 @@ const Logger = struct
       index = index + 1;
     } else return error.UnknownBufferId;
 
-    var it = std.mem.tokenizeScalar (u8, self.buffers.get (index).array.slice (), 0);
-    var log: Log = undefined;
-    while (it.next ()) |token| { log = try Log.init (token); try log.render (); }
+    var it = std.mem.tokenizeScalar (u8, self.buffers.get (index).array.slice (), @This ().separator);
+    while (it.next ()) |token| try self.log_response (token);
 
     _ = self.buffers.orderedRemove (index);
+  }
+
+  fn bar_response (self: *@This (), entry: [] const u8) !void
+  {
+    self.bar = Bar.init (try std.fmt.parseInt (u32, entry [1 ..], 10));
+  }
+
+  fn progress_response (self: *@This ()) !void
+  {
+    try self.bar.incr ();
   }
 
   fn response (self: *@This (), entry: [] const u8) !void
@@ -431,49 +604,38 @@ const Logger = struct
       'F'  => try self.flush_response (entry),
       'S'  => try self.spin_response (entry),
       'K'  => try self.kill_response (entry),
-      else => { var log = try Log.init (entry); try log.render (); },
+      'P'  => try self.bar_response (entry),
+      'p'  => try self.progress_response (),
+      else => try self.log_response (entry),
     }
+    self.allocator.free (entry);
   }
 
-  fn empty (self: *@This ()) !bool
-  {
-    if (!self.mutex.tryLock ()) return true;
-    defer self.mutex.unlock ();
-
-    var index: usize = 0;
-    while (index < self.logs.slice ().len)
-    {
-      try self.response (self.logs.swapRemove (index));
-      index = index + 1;
-    }
-
-    while (self.logs.popOrNull ()) |entry| try self.response (entry);
-
-    self.condition.signal ();
-
-    return (index == 0);
-  }
-
-  fn animation (self: @This ()) !void
+  fn animation (self: *@This ()) !void
   {
     for (self.spins.slice ()) |spin| try spin.render ();
-    try ansiterm.clear.clearFromCursorToScreenEnd (Logger.stderr);
-    for (self.spins.slice ()) |_| try ansiterm.cursor.cursorPreviousLine (Logger.stderr, 1);
-    try Logger.buffered_stderr.flush (); // don't forget to flush!
+    const rendered_bar = try self.bar.render ();
+    try ansiterm.clear.clearFromCursorToScreenEnd (@This ().stderr);
+    for (self.spins.slice ()) |_| try ansiterm.cursor.cursorPreviousLine (@This ().stderr, 1);
+    if (rendered_bar) for (0 .. 3) |_| try ansiterm.cursor.cursorPreviousLine (@This ().stderr, 1);
+    try @This ().buffered_stderr.flush (); // don't forget to flush!
   }
 
   fn loop (self: *@This ()) !void
   {
-    try ansiterm.cursor.hideCursor (Logger.stderr);
+    try ansiterm.cursor.hideCursor (@This ().stderr);
     defer
     {
-      ansiterm.clear.clearFromCursorToScreenEnd (Logger.stderr) catch {};
-      ansiterm.cursor.showCursor (Logger.stderr) catch {};
-      Logger.buffered_stderr.flush () catch {}; // don't forget to flush!
+      ansiterm.clear.clearFromCursorToScreenEnd (@This ().stderr) catch {};
+      ansiterm.cursor.showCursor (@This ().stderr) catch {};
+      @This ().buffered_stderr.flush () catch {}; // don't forget to flush!
     }
-    while (self.looping or self.logs.slice ().len > 0
-      or self.spins.slice ().len > 0  or self.buffers.slice ().len > 0)
-        if (try self.empty ()) try self.animation ();
+    while (self.looping or self.logs.slice ().len > 0 or self.bar.running
+      or self.spins.slice ().len > 0 or self.buffers.slice ().len > 0)
+    {
+      @This ().cols = (try termsize.termSize (@This ().stderr_file)).?.width;
+      if (try self.empty ()) try self.animation ();
+    }
   }
 };
 
@@ -488,10 +650,6 @@ pub fn main () !void
 
   var buffer_array: std.BoundedArray (u8, Buffer.size) = undefined;
   const buffer = buffer_array.writer ();
-
-  var dupe_buffer: [Buffer.size] u8 = undefined;
-  var fba = std.heap.FixedBufferAllocator.init (&dupe_buffer);
-  const allocator = fba.allocator();
 
   const thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
   defer thread.join ();
@@ -508,6 +666,6 @@ pub fn main () !void
     };
 
     if (looping or buffer_array.slice ().len > 0)
-      logger.enqueue (try allocator.dupe (u8, buffer_array.slice ()));
+      try logger.enqueue (buffer_array);
   }
 }

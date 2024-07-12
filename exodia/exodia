@@ -33,7 +33,6 @@ str ()
   ( empty )  if [ -z "${2}" ]; then return 0; else return 1; fi ;;
   ( in )     case "${3}" in ( *" ${2} "* ) return 0 ;; ( * ) return 1 ;; esac ;;
   ( join )   eval "${2}=\"\${${2}}\"' ${3}'" ;;
-  ( repeat ) str="${2}" count="${3}" perl -E 'say $ENV{str} x $ENV{count}' ;;
   esac
 }
 
@@ -42,14 +41,6 @@ dir ()
   local dir min max type success
   case "${1}" in
   ( empty ) dir="${2}"; min='1'; max='1'; success='1' ;;
-  ( contains )
-    min='1'
-    case "${2}" in
-    ( file ) dir="${3}"; max='1'; type='f' ;;
-    esac
-    case "${3}" in
-    ( recursively ) dir="${4}"; max='' ;;
-    esac ;;
   esac
   if xtrace_safe "command find '${dir}' ${min:+"-mindepth ${min}"} ${max:+"-maxdepth ${max}"} ${type:+"-type ${type}"} | read dummy || handle_pipefails \"\${?}\""; then return "${success:-0}"; else return "$(( 1 - ${success:-0} ))"; fi
 }
@@ -68,473 +59,6 @@ xtrace_safe ()
   if not eval "${1}"; then status='1'; fi
   return "${status:-0}"
 } 2> /dev/null
-
-##############################################################################
-##################################   LOGGER   ################################
-##############################################################################
-
-add_time ()
-{
-  exodia_s_per_min='60'
-  exodia_min_per_h='60'
-  exodia_s_per_h='3600'
-  exodia_us_per_cs='10000'
-  exodia_us_per_ds='100000'
-  exodia_us_per_s='1000000'
-  exodia_us_per_10s='10000000'
-  exodia_us_per_min='60000000'
-  exodia_us_per_10min='600000000'
-  exodia_us_per_h='3600000000'
-  exodia_us_per_10h='36000000000'
-  exodia_us_per_100h='360000000000'
-
-  readonly exodia_s_per_min exodia_min_per_h exodia_s_per_h exodia_us_per_cs exodia_us_per_ds exodia_us_per_s exodia_us_per_10s exodia_us_per_min exodia_us_per_10min exodia_us_per_h exodia_us_per_10h exodia_us_per_100h
-}
-
-animations ()
-{
-  local escape_for_bc_print spin_title_fn
-
-  if not str empty "${spins_entries:-}" || lt "${pbar_i:-"${pbar_max:-0}"}" "${pbar_max:-0}"
-  then
-    escape_for_bc_print='s@\\@\\\\@g; s@"@\\q@g; s@^\([0-9]\+\.[0-9]\+ \)[0-2][0-9]:[0-5][0-9]:[0-5][0-9] '"${exodia_rawlevel}"'@\1@; s@^\([0-9]\+\)\.\([0-9]\+\) @\1\2print "'"${exodia_erase_until_endofline}"'@; s@$@\\n";@'
-    spin_title_fn='s@$@ define spin_title (index) { } 0@'
-    command ts '%.s %T' | command busybox sed -e "${escape_for_bc_print};${spin_title_fn}" -e "${spins_entries:-}" -e "
-      s@\(.*\); \(define spin_title (index) {\)@\1\n\2@;
-      s@ [0-9]\+\$@;\n@;
-      s@^[0-9]\+@scale = 0\ncnts = \0\n@;
-      s@\$@\
-define spin_color (index)\n\
-{\n\
-  if (index ==  0) { print \"${exodia_rb196}\"; return 0; }\n\
-  if (index ==  1) { print \"${exodia_rb202}\"; return 0; }\n\
-  if (index ==  2) { print \"${exodia_rb208}\"; return 0; }\n\
-  if (index ==  3) { print \"${exodia_rb214}\"; return 0; }\n\
-  if (index ==  4) { print \"${exodia_rb220}\"; return 0; }\n\
-  if (index ==  5) { print \"${exodia_rb226}\"; return 0; }\n\
-  if (index ==  6) { print \"${exodia_rb190}\"; return 0; }\n\
-  if (index ==  7) { print \"${exodia_rb154}\"; return 0; }\n\
-  if (index ==  8) { print \"${exodia_rb118}\"; return 0; }\n\
-  if (index ==  9) { print \"${exodia_rb082}\"; return 0; }\n\
-  if (index == 10) { print \"${exodia_rb046}\"; return 0; }\n\
-  if (index == 11) { print \"${exodia_rb047}\"; return 0; }\n\
-  if (index == 12) { print \"${exodia_rb048}\"; return 0; }\n\
-  if (index == 13) { print \"${exodia_rb049}\"; return 0; }\n\
-  if (index == 14) { print \"${exodia_rb050}\"; return 0; }\n\
-  if (index == 15) { print \"${exodia_rb051}\"; return 0; }\n\
-  if (index == 16) { print \"${exodia_rb045}\"; return 0; }\n\
-  if (index == 17) { print \"${exodia_rb039}\"; return 0; }\n\
-  if (index == 18) { print \"${exodia_rb033}\"; return 0; }\n\
-  if (index == 19) { print \"${exodia_rb027}\"; return 0; }\n\
-  if (index == 20) { print \"${exodia_rb021}\"; return 0; }\n\
-  if (index == 21) { print \"${exodia_rb057}\"; return 0; }\n\
-  if (index == 22) { print \"${exodia_rb093}\"; return 0; }\n\
-  if (index == 23) { print \"${exodia_rb128}\"; return 0; }\n\
-  if (index == 24) { print \"${exodia_rb165}\"; return 0; }\n\
-  if (index == 25) { print \"${exodia_rb201}\"; return 0; }\n\
-  if (index == 26) { print \"${exodia_rb200}\"; return 0; }\n\
-  if (index == 27) { print \"${exodia_rb199}\"; return 0; }\n\
-  if (index == 28) { print \"${exodia_rb198}\"; return 0; }\n\
-  if (index == 29) { print \"${exodia_rb197}\"; return 0; }\n\
-}\n\
-\
-define spin_pattern (index)\n\
-{\n\
-  if (index ==  0)                 { print \" ⠄     \"; return 0; }\n\
-  if (index ==  1)                 { print \" ⠔     \"; return 0; }\n\
-  if (index ==  2)                 { print \" ⠐⠁    \"; return 0; }\n\
-  if (index ==  3)                 { print \"  ⠉    \"; return 0; }\n\
-  if (index ==  4)                 { print \"  ⠈⠂   \"; return 0; }\n\
-  if (index ==  5)                 { print \"   ⠢   \"; return 0; }\n\
-  if (index ==  6)                 { print \"   ⠠⠄  \"; return 0; }\n\
-  if (index ==  7)                 { print \"    ⠔  \"; return 0; }\n\
-  if (index ==  8)                 { print \"    ⠐⠁ \"; return 0; }\n\
-  if (index ==  9)                 { print \"     ⠉ \"; return 0; }\n\
-  if (index == 10)                 { print \"     ⠘ \"; return 0; }\n\
-  if (index == 11)                 { print \"     ⠔ \"; return 0; }\n\
-  if (index == 12)                 { print \"    ⠠⠄ \"; return 0; }\n\
-  if (index == 13)                 { print \"    ⠢  \"; return 0; }\n\
-  if (index == 14)                 { print \"   ⠈⠂  \"; return 0; }\n\
-  if (index == 15)                 { print \"   ⠉   \"; return 0; }\n\
-  if (index == 16)                 { print \"  ⠐⠁   \"; return 0; }\n\
-  if (index == 17)                 { print \"  ⠔    \"; return 0; }\n\
-  if (index == 18)                 { print \" ⠠⠄    \"; return 0; }\n\
-  if (index == 19)                 { print \" ⠢     \"; return 0; }\n\
-  if (index == 20)                 { print \" ⠃     \"; return 0; }\n\
-  if (index == 21)                 { print \" ⠉     \"; return 0; }\n\
-  if (index == 22)                 { print \" ⠈⠂    \"; return 0; }\n\
-  if (index == 23)                 { print \"  ⠢    \"; return 0; }\n\
-  if (index == 24)                 { print \"  ⠠⠄   \"; return 0; }\n\
-  if (index == 25)                 { print \"   ⠔   \"; return 0; }\n\
-  if (index == 26)                 { print \"   ⠐⠁  \"; return 0; }\n\
-  if (index == 27)                 { print \"    ⠉  \"; return 0; }\n\
-  if (index == 28)                 { print \"    ⠈⠂ \"; return 0; }\n\
-  if (index == 29)                 { print \"     ⠢ \"; return 0; }\n\
-  if (index == 30)                 { print \"     ⠠ \"; return 0; }\n\
-  if (index >  30 \&\& index < 34) { print \"       \"; return 0; }\n\
-}\n\
-\
-define spin (nelapsed, index)\n\
-{\n\
-  dummy = spin_color ((nelapsed / (5 * ${exodia_us_per_ds})) % 30)\n\
-  dummy = spin_pattern ((nelapsed / ${exodia_us_per_ds}) % 34)\n\
-  print \"${exodia_white}\"\n\
-  dummy = spin_title (index)\n\
-  print \"${exodia_reset}${exodia_erase_until_endofline}\"\n\
-}\n\
-\
-for (index = 0; spins_nts [index] != 0; index = index + 1)\n\
-{\n\
-  nts = spins_nts [index]\n\
-  nelapsed = cnts - nts\n\
-  ns = nelapsed % ${exodia_us_per_s}\n\
-  cs = ns / ${exodia_us_per_cs}\n\
-  elapsed = (nelapsed - ns) / ${exodia_us_per_s}\n\
-\
-  if (index > 0) print \"\\\n\"\n\
-\
-  if (nelapsed < ${exodia_us_per_10s}) print \" \"\n\
-  if (nelapsed < ${exodia_us_per_min})\n\
-  {\n\
-    if (cs > 9) { print \"   ${exodia_bold}${exodia_white}\", elapsed, \".\", cs; dummy = spin (nelapsed, index); continue; }\n\
-    if (cs < 10) { print \"   ${exodia_bold}${exodia_white}\", elapsed, \".0\", cs; dummy = spin (nelapsed, index); continue; }\n\
-  }\n\
-  if (nelapsed >= ${exodia_us_per_min} \&\& nelapsed < ${exodia_us_per_10min}) print \" \"\n\
-  if (nelapsed >= ${exodia_us_per_min} \&\& nelapsed < ${exodia_us_per_h})\n\
-  {\n\
-    sec = elapsed % ${exodia_s_per_min}\n\
-    if (sec > 9) { print \"   ${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_min}, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
-    if (sec < 10) { print \"   ${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_min}, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
-  }\n\
-  if (nelapsed >= ${exodia_us_per_h} \&\& nelapsed < ${exodia_us_per_10h}) print \" \"\n\
-  if (nelapsed >= ${exodia_us_per_h} \&\& nelapsed < ${exodia_us_per_100h})\n\
-  {\n\
-    sec = elapsed % ${exodia_s_per_min}\n\
-    min = (elapsed / ${exodia_s_per_min}) % ${exodia_min_per_h}\n\
-    if (sec > 9 \&\& min > 9) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":\", min, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
-    if (sec < 10 \&\& min > 9) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":\", min, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
-    if (sec > 9 \&\& min < 10) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":0\", min, \":\", sec; dummy = spin (nelapsed, index); continue; }\n\
-    if (sec < 10 \&\& min < 10) { print \"${exodia_bold}${exodia_white}\", elapsed / ${exodia_s_per_h}, \":0\", min, \":0\", sec; dummy = spin (nelapsed, index); continue; }\n\
-  }\n\
-  print \"${exodia_bold}${exodia_white}--:--:--\"\n\
-  dummy = spin (nelapsed, index)\n\
-}\n\
-${pbar_i:+"${pbar_max:+"\
-if (index > 0) print \"\\\n\"\n\
-define progressbar_offset (progress)\n\
-{\n\
-  progress = progress % 8\n\
-  if (progress == 0) { print \" \"; return 0; }\n\
-  if (progress == 1) { print \"▏\"; return 0; }\n\
-  if (progress == 2) { print \"▎\"; return 0; }\n\
-  if (progress == 3) { print \"▍\"; return 0; }\n\
-  if (progress == 4) { print \"▌\"; return 0; }\n\
-  if (progress == 5) { print \"▋\"; return 0; }\n\
-  if (progress == 6) { print \"▊\"; return 0; }\n\
-  print \"▉\"\n\
-}\n\
-\
-define progressbar_fg (percent)\n\
-{\n\
-  if (percent < 10) { print \"${exodia_rb204}\"; return 0; }\n\
-  if (percent < 20) { print \"${exodia_rb203}\"; return 0; }\n\
-  if (percent < 30) { print \"${exodia_rb209}\"; return 0; }\n\
-  if (percent < 40) { print \"${exodia_rb215}\"; return 0; }\n\
-  if (percent < 50) { print \"${exodia_rb221}\"; return 0; }\n\
-  if (percent < 60) { print \"${exodia_rb227}\"; return 0; }\n\
-  if (percent < 70) { print \"${exodia_rb191}\"; return 0; }\n\
-  if (percent < 80) { print \"${exodia_rb155}\"; return 0; }\n\
-  if (percent < 90) { print \"${exodia_rb119}\"; return 0; }\n\
-  print \"${exodia_rb083}\"\n\
-}\n\
-\
-define progressbar_bg (percent)\n\
-{\n\
-  if (percent < 10) { print \"${exodia_rb204_bg}\"; return 0; }\n\
-  if (percent < 20) { print \"${exodia_rb203_bg}\"; return 0; }\n\
-  if (percent < 30) { print \"${exodia_rb209_bg}\"; return 0; }\n\
-  if (percent < 40) { print \"${exodia_rb215_bg}\"; return 0; }\n\
-  if (percent < 50) { print \"${exodia_rb221_bg}\"; return 0; }\n\
-  if (percent < 60) { print \"${exodia_rb227_bg}\"; return 0; }\n\
-  if (percent < 70) { print \"${exodia_rb191_bg}\"; return 0; }\n\
-  if (percent < 80) { print \"${exodia_rb155_bg}\"; return 0; }\n\
-  if (percent < 90) { print \"${exodia_rb119_bg}\"; return 0; }\n\
-  print \"${exodia_rb083_bg}\"\n\
-}\n\
-\
-define progressbar (progress, max)\n\
-{\n\
-  percent = (progress * 100) / max\n\
-  print \"${exodia_startofline}${exodia_erase_until_endofline} ${exodia_white}${exodia_bold}${pbar_top}\\\n${exodia_erase_until_endofline}▕\"\n\
-  dummy = progressbar_bg (percent)\n\
-  for (i = 8; i <= progress; i = i + 8) print \" \"\n\
-  print \"${exodia_reset}\"\n\
-  dummy = progressbar_fg (percent)\n\
-  if (progress != max) dummy = progressbar_offset (progress)\n\
-  print \"${exodia_reset}\"\n\
-  for (; i < max; i = i + 8) print \" \"\n\
-  print \"${exodia_white}${exodia_bold}▎\", percent, \"%\\\n${exodia_erase_until_endofline} ${pbar_bottom}${exodia_reset}\"\n\
-}\n\
-\
-max = ${pbar_max}\n\
-progress = ${pbar_i}\n\
-\
-dummy = progressbar (progress, max)\n\
-"}"}\
-print \"${exodia_erase_until_endofscreen}\"\n\
-for (; index > 0 ${pbar_i:+"${pbar_max:+"- 3"}"}; index = index - 1) print \"${exodia_previous}\"\n\
-print \"\\\a\"\n@" \
-      | BC_LINE_LENGTH='0' command bc -q | command stdoutbuf
-  else
-    command ts '%T' | command busybox sed "s@^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ${exodia_rawlevel}@${exodia_erase_until_endofline}@"
-  fi
-}
-
-# TODO: does `./exodia -v up down` works ?
-# TODO: fix -vvv
-pbar_vars ()
-{
-  if is dir "${exodia_run_progress}"
-  then
-    if lt "${pbar_i:-0}" "${pbar_max:-0}"
-    then
-      local progress max bin exp
-      progress="$(command find "${exodia_run_progress}" -mindepth 1 -maxdepth 1 -printf x | command wc -c)"
-      max="$(command rg -o '\S+' "${exodia_run_topological}" | command wc -l)"
-      progress="$(( (${progress} * ${pbar_max}) / ${max} ))"
-      exp="$(( (${progress} - ${pbar_i:-0}) / 10 ))"
-      bin="$(DC_LINE_LENGTH=0 command dc -e "${exp} 2op")"
-      bin="$(( ${#bin} - 1 ))"
-      exp="$(( ${exp} < ${bin} ? ${exp} : ${bin} ))"
-      pbar_i="$(( ${pbar_i:-0} < ${progress} ? ${pbar_i:-0} + (1 << ${exp}) : ${pbar_i:-0} ))"
-    fi
-  else unset pbar_i; fi
-}
-
-cols_vars ()
-{
-  local tty
-  tty="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_tty}")"
-  prevcols="${COLUMNS:--1}"
-  COLUMNS="$(command stty -F "${tty}" size)"
-  COLUMNS="${COLUMNS:+"${COLUMNS##* }"}"
-  COLUMNS="${COLUMNS:-"$(command tput cols)"}"
-  if not eq "${prevcols}" "${COLUMNS}"
-  then
-    first_max_length_line="$(str repeat '.' "$(( ${COLUMNS} + ${#exodia_bold} + ${#exodia_cyan} + ${#exodia_reset} - 9 ))")"
-    does_line_has_enought_chars="$(str repeat '[^\n]' "$(( ${COLUMNS} - 9 ))")"
-    max_line_length="$(str repeat '.' "$(( ${COLUMNS} - 9 ))")"
-    max_spin_title_chars="$(str repeat '[^"]' "$(( ${COLUMNS} - 15 ))")"
-    pbar_top="$(str repeat '▁' "$(( ${COLUMNS} - 6 ))")"
-    pbar_bottom="$(str repeat '▔' "$(( ${COLUMNS} - 6 ))")"
-    pbar_max="$(( (${COLUMNS} - 6) * 8 ))"
-    endofline="${exodia_esc}[${COLUMNS}G"
-  fi
-}
-
-logs ()
-{
-  if not str empty "${logs_entries:-}"
-  then
-    set -f
-    command busybox sed "/^${exodia_rawlevel}/ {
-                           b exit;
-                         }
-                         s@^${exodia_errorlevel}@${exodia_red}ERROR ${exodia_reset}@;    t header;
-                         s@^${exodia_warnlevel}@${exodia_yellow} WARN ${exodia_reset}@;  t header;
-                         s@^${exodia_infolevel}@${exodia_green} INFO ${exodia_reset}@;   t header;
-                         s@^${exodia_notelevel}@${exodia_cyan} NOTE ${exodia_reset}@;    t header;
-                         s@^${exodia_debuglevel}@${exodia_blue}DEBUG ${exodia_reset}@;   t header;
-                         s@^${exodia_tracelevel}@${exodia_purple}TRACE ${exodia_reset}@; t header;
-                         s@^${exodia_verblevel}@${exodia_pink} VERB ${exodia_reset}@;
-                :header; s@^@${exodia_bold}@;                                            t reset_T_smaller;
-       :reset_T_smaller; s@^${first_max_length_line}@&\n@;                               T smaller; t loop;
-                  :loop; s@\n\$@@;                                                       t equal;
-                         h;
-                         s@\(.\)\n.*@\1@;
-                         p;
-                         g;
-                         s@.*\n@@;
-                         s@^@      @;                                                    t reset_t_loop;
-          :reset_t_loop; /${does_line_has_enought_chars}$/ {
-                           s@^${max_line_length}@\0\n@;                                  t loop;
-                         };
-                 :equal;
-               :smaller;
-                  :exit;" ${logs_entries}
-
-    command coreutils --coreutils-prog=rm -f ${logs_entries}
-    set +f
-  elif not str empty "${spins_entries:-}" || lt "${pbar_i:-"${pbar_max:-0}"}" "${pbar_max:-0}"
-  then printf '%b%b' "${exodia_previous}" "${endofline}"; fi
-}
-
-_stop ()
-{
-  if not dir contains file recursively "${exodia_run_lines}"
-  then command rm -f "$(command readlink -f "${exodia_run_stop}")" "${exodia_run_stop}"; fi
-}
-
-# TODO: logger is slower and slower: something goes wrong in /var/run/
-logger ()
-{
-  trap 'exodia_loggerstart=1' USR1
-
-  add_time
-
-  local field_logs field_spins logs_entries spins_entries arg_max \
-        prevcols first_max_length_line max_line_length does_line_has_enought_chars endofline max_spin_title_chars pbar_top pbar_bottom
-  field_logs="$(printf '%s//\n' "${exodia_run_lines}" | command rg -o '/' | command rg -c '/')"
-  field_spins="$(printf '%s//\n' "${exodia_run_spins}" | command rg -o '/' | command rg -c '/')"
-  arg_max="$(( $(command getconf ARG_MAX) / 4 - 1 ))"
-
-  while str empty "${exodia_loggerstart:-}"; do command usleep 10; done
-
-  trap 'exodia_loggerstop=1; pbar_i="${pbar_max:-0}"' USR1
-  trap 'exodia_loggerstop=1' USR2
-
-  printf '%b' "${exodia_hidecursor}"
-
-  while str empty "${exodia_loggerstop:-}" || lt "${pbar_i:-"${pbar_max:-0}"}" "${pbar_max:-0}" || command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | read dummy || handle_pipefails "${?}"
-  do
-    local pbar_max pbar_i
-    cols_vars
-    pbar_vars
-    logs_entries="$(command find "${exodia_run_lines}" -mindepth 1 -maxdepth 2 -not -name '[^0-9]*' -path "${exodia_run_lines}/[0-9]*" -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_logs}" -k "$(( ${field_logs} + 1 ))" | command busybox head -n "${arg_max}")"
-    spins_entries="$(command find "${exodia_run_spins}" -mindepth 1 -maxdepth 1 -type f | command coreutils --coreutils-prog=sort -n -t '/' -k "${field_spins}" | command busybox xargs -I % busybox sed '1a s@ print "\\('"${max_spin_title_chars}"'\\)[^"]*"; } \\([0-9]*\\)\$@ print "\\1"; } \\2@' %)"
-    logs | animations 1>&2
-    _stop
-  done
-
-  printf '%b%b' "${exodia_erase_until_endofscreen}" "${exodia_showcursor}"
-}
-
-##############################################################################
-#################################   LISTENER   ###############################
-##############################################################################
-
-stop_req ()
-{
-  command coreutils --coreutils-prog=mv "${exodia_run_aliases}/${line#"${exodia_stopreq}"}" "${exodia_run_stop}"
-}
-
-spin_req ()
-{
-  line="${line#"${exodia_spinreq}${exodia_reqsep}"}"
-  printf '%s\n' "${line#*"${exodia_reqsep}"}" | command busybox sed 's@\\@\\\\@g; s@"@\\q@g' | command ts '%.s' | command busybox sed '
-    s@\([0-9]\+\)\.\([0-9]\+\) \(.*\)@s\@^\\(.*\\) \\(define spin_title (index) {\\)\\([^}]*\\)} \\([0-9]*\\)$\@\\1 spins_nts [\\4] = \1\2; \\2\\3if (index == \\4) print "\3"; } \\4\@;\n\
-                                       t d'"${i}"';\n\
-:d'"${i}"'; s\@9\\(_*\\)\$\@_\\1\@;    t d'"${i}"';\n\
-            s\@ \\(_\\+\\)\$\@ 1\\1\@; t n'"${i}"';\n\
-            s\@8\\(_*\\)\$\@9\\1\@;    t n'"${i}"';\n\
-            s\@7\\(_*\\)\$\@8\\1\@;    t n'"${i}"';\n\
-            s\@6\\(_*\\)\$\@7\\1\@;    t n'"${i}"';\n\
-            s\@5\\(_*\\)\$\@6\\1\@;    t n'"${i}"';\n\
-            s\@4\\(_*\\)\$\@5\\1\@;    t n'"${i}"';\n\
-            s\@3\\(_*\\)\$\@4\\1\@;    t n'"${i}"';\n\
-            s\@2\\(_*\\)\$\@3\\1\@;    t n'"${i}"';\n\
-            s\@1\\(_*\\)\$\@2\\1\@;    t n'"${i}"';\n\
-            s\@0\\(_*\\)\$\@1\\1\@;    t n'"${i}"';\n\
-:n'"${i}"'; s\@_\\(_*\\)\$\@0\\1\@;    t n'"${i}"';\n\
-@' >> "${exodia_run_spins}/${i}"
-  command coreutils --coreutils-prog=ln -f -s "${exodia_run_spins}/${i}" "${exodia_run_aliases}/"${line%%"${exodia_reqsep}"*}""
-}
-
-buffer_req ()
-{
-  local alias dir
-  line="${line#"${exodia_bufreq}${exodia_reqsep}"}"
-  alias="${line%%"${exodia_reqsep}"*}"
-  line="${line#*"${exodia_reqsep}"}"
-  if is sym "${exodia_run_aliases}/${alias}"
-  then dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${alias}")"
-  else
-    dir="$(command mktemp -d -p "${exodia_run_lines}")"
-    command coreutils --coreutils-prog=ln -f -s "${dir}" "${exodia_run_aliases}/${alias}"
-  fi
-  printf '%s\n' "${line}" > "${dir}/${i}"
-}
-
-flush_req ()
-{
-  local alias dir
-  line="${line#"${exodia_flushreq}${exodia_reqsep}"}"
-  alias="${line%%"${exodia_reqsep}"*}"
-  line="${line#*"${exodia_reqsep}"}"
-  if is present "${exodia_run_aliases}/${alias}"
-  then
-    dir="$(command coreutils --coreutils-prog=readlink -f "${exodia_run_aliases}/${alias}")"
-    command coreutils --coreutils-prog=mv -f "${dir}" "${exodia_run_lines}/${i}"
-    command coreutils --coreutils-prog=rm -f "${exodia_run_aliases}/${alias}"
-  fi
-}
-
-bar_req ()
-{
-  command coreutils --coreutils-prog=cp -f "${exodia_cache_topological}/${line#"${exodia_barreq}"}" "${exodia_run_topological}"
-  command coreutils --coreutils-prog=rm -rf "${exodia_run_progress}"
-  command coreutils --coreutils-prog=mkdir -p "${exodia_run_progress}"
-}
-
-prog_req ()
-{
-  : > "${exodia_run_progress}/${i}"
-}
-
-logging_req ()
-{
-  printf '%s\n' "${line}" | command stdbuf -oL ansi2txt > "${exodia_run_lines}/${i}"
-}
-
-unknown_req ()
-{
-  printf '0Unknown logger request: "%s"\n' "${line}" > "${exodia_run_lines}/${i}"
-  return 1
-}
-
-empty_req ()
-{
-  printf '%s\n' "${PS4}" > "${exodia_run_lines}/${i}"
-}
-
-listener ()
-{
-  local line i stock
-  until is sym "${exodia_run_tty}"     && \
-        is dir "${exodia_run_lines}"   && \
-        is dir "${exodia_run_spins}"   && \
-        is dir "${exodia_run_aliases}"
-        do command usleep 10; done
-  while read -r line || not str empty "${stock:-}"
-  do
-    stock="${stock:-}${line}"$'\n'
-    if is present "${exodia_run_stop}"; then continue; fi
-    set -f
-    IFS=$'\n'
-    set -- ${stock:-}
-    IFS="${exodia_ifs}"
-    set +f
-    until eq "${#}" '0'
-    do
-      line="${1}"
-      shift
-      i="$(( ${i:--1} + 1 ))"
-      if str empty "${line}"; then empty_req; continue; fi
-      case "${line}" in
-      ( ["${exodia_errorlevel}"-"${exodia_verblevel}${exodia_rawlevel}"]* ) logging_req ;;
-      ( "${exodia_spinreq}${exodia_reqsep}"* )  spin_req          ;;
-      ( "${exodia_stopreq}"* )                  stop_req;   break ;;
-      ( "${exodia_bufreq}${exodia_reqsep}"* )   buffer_req        ;;
-      ( "${exodia_flushreq}${exodia_reqsep}"* ) flush_req         ;;
-      ( "${exodia_barreq}"* )                   bar_req           ;;
-      ( "${exodia_progreq}" )                   prog_req          ;;
-      ( * )                                     unknown_req       ;;
-      esac
-    done
-    if not eq "${#}" '0'; then IFS=$'\n'; stock="${*}"$'\n'; IFS="${exodia_ifs}"
-    else stock=''; fi
-  done
-}
 
 ##############################################################################
 ##################################   RUNNER   ################################
@@ -559,7 +83,7 @@ send_note  ()    { lvl="${exodia_notelevel}"   send "${@}"; }
 send_debug ()    { lvl="${exodia_debuglevel}"  send "${@}"; }
 send_verb  ()    { lvl="${exodia_verblevel}"   send "${@}"; }
 
-send_flush ()    { printf '%s%s%s%s\n' "${exodia_flushreq}" "${exodia_reqsep}" "${pid}" "${exodia_reqsep}" 1>&3; }
+send_flush ()    { printf '%s%s\n' "${exodia_flushreq}" "${pid}" 1>&3; }
 
 send_spin ()     { printf '%s%s%s%s%s\n' "${exodia_spinreq}" "${exodia_reqsep}" "${1}" "${exodia_reqsep}" "${2}" 1>&3; }
 send_stop  ()    { printf '%s%s\n' "${exodia_stopreq}" "${1}" 1>&3; }
@@ -725,7 +249,7 @@ verbose_mode ()
     prog="${1}"
     shift
     case "${prog}" in
-    ( *=cp|*=ln|*=mkdir|*=mv|*=readlink|*=rm ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
+    ( *=cp|*=mkdir|*=mv|*=rm ) if not command coreutils "${prog}" -v "${@}" 2>&1 | send_verb; then return 1; fi ;;
     ( * ) if not command coreutils "${prog}" "${@}"; then return 1; fi ;;
     esac
   } 2> /dev/null
@@ -1189,9 +713,7 @@ init_runner ()
 {
   exec 3>&2
   coreutils --coreutils-prog=rm -r -f "${EXODIA_RUN_PATH}/"*
-  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}" "${exodia_run_logs}" "${exodia_run_lines}" "${exodia_run_spins}" "${exodia_run_aliases}"
-  coreutils --coreutils-prog=ln -s -f "$(tty)" "${exodia_run_tty}"
-  kill -s USR1 "${exodia_loggerpid}"
+  coreutils --coreutils-prog=mkdir -p "${exodia_cache}" "${exodia_run_buffers}"
 }
 
 preprocess ()
@@ -1293,96 +815,11 @@ runner ()
 add_style ()
 {
   exodia_esc="$(printf '\033')"
-  exodia_white="${exodia_esc}[38;5;15m"
-  exodia_red="${exodia_esc}[38;5;204m"
   exodia_orange="${exodia_esc}[38;5;215m"
-  exodia_yellow="${exodia_esc}[38;5;227m"
-  exodia_green="${exodia_esc}[38;5;119m"
-  exodia_cyan="${exodia_esc}[38;5;081m"
-  exodia_blue="${exodia_esc}[38;5;069m"
-  exodia_purple="${exodia_esc}[38;5;135m"
-  exodia_pink="${exodia_esc}[38;5;207m"
   exodia_bold="${exodia_esc}[1m"
-  exodia_erase_until_endofline="${exodia_esc}[K"
-  exodia_erase_until_endofscreen="${exodia_esc}[J"
-  exodia_previous="${exodia_esc}[F"
-  exodia_startofline="${exodia_esc}[G"
-  exodia_hidecursor="${exodia_esc}[?25l"
-  exodia_showcursor="${exodia_esc}[?25h"
   exodia_reset="${exodia_esc}[m"
 
-  exodia_rb204="${exodia_esc}[38;5;204m"
-  exodia_rb204_bg="${exodia_esc}[48;5;204m"
-  exodia_rb203="${exodia_esc}[38;5;203m"
-  exodia_rb203_bg="${exodia_esc}[48;5;203m"
-  exodia_rb209="${exodia_esc}[38;5;209m"
-  exodia_rb209_bg="${exodia_esc}[48;5;209m"
-  exodia_rb215="${exodia_esc}[38;5;215m"
-  exodia_rb215_bg="${exodia_esc}[48;5;215m"
-  exodia_rb221="${exodia_esc}[38;5;221m"
-  exodia_rb221_bg="${exodia_esc}[48;5;221m"
-  exodia_rb227="${exodia_esc}[38;5;227m"
-  exodia_rb227_bg="${exodia_esc}[48;5;227m"
-  exodia_rb191="${exodia_esc}[38;5;191m"
-  exodia_rb191_bg="${exodia_esc}[48;5;191m"
-  exodia_rb155="${exodia_esc}[38;5;155m"
-  exodia_rb155_bg="${exodia_esc}[48;5;155m"
-  exodia_rb119="${exodia_esc}[38;5;119m"
-  exodia_rb119_bg="${exodia_esc}[48;5;119m"
-  exodia_rb083="${exodia_esc}[38;5;083m"
-  exodia_rb083_bg="${exodia_esc}[48;5;083m"
-
-  exodia_rb196="${exodia_esc}[38;5;196m"
-  exodia_rb202="${exodia_esc}[38;5;202m"
-  exodia_rb208="${exodia_esc}[38;5;208m"
-  exodia_rb214="${exodia_esc}[38;5;214m"
-  exodia_rb220="${exodia_esc}[38;5;220m"
-  exodia_rb226="${exodia_esc}[38;5;226m"
-  exodia_rb190="${exodia_esc}[38;5;190m"
-  exodia_rb154="${exodia_esc}[38;5;154m"
-  exodia_rb118="${exodia_esc}[38;5;118m"
-  exodia_rb082="${exodia_esc}[38;5;082m"
-  exodia_rb046="${exodia_esc}[38;5;046m"
-  exodia_rb047="${exodia_esc}[38;5;047m"
-  exodia_rb048="${exodia_esc}[38;5;048m"
-  exodia_rb049="${exodia_esc}[38;5;049m"
-  exodia_rb050="${exodia_esc}[38;5;050m"
-  exodia_rb051="${exodia_esc}[38;5;051m"
-  exodia_rb045="${exodia_esc}[38;5;045m"
-  exodia_rb039="${exodia_esc}[38;5;039m"
-  exodia_rb033="${exodia_esc}[38;5;033m"
-  exodia_rb027="${exodia_esc}[38;5;027m"
-  exodia_rb021="${exodia_esc}[38;5;021m"
-  exodia_rb057="${exodia_esc}[38;5;057m"
-  exodia_rb093="${exodia_esc}[38;5;093m"
-  exodia_rb128="${exodia_esc}[38;5;129m"
-  exodia_rb165="${exodia_esc}[38;5;165m"
-  exodia_rb201="${exodia_esc}[38;5;201m"
-  exodia_rb200="${exodia_esc}[38;5;200m"
-  exodia_rb199="${exodia_esc}[38;5;199m"
-  exodia_rb198="${exodia_esc}[38;5;198m"
-  exodia_rb197="${exodia_esc}[38;5;197m"
-
-  readonly exodia_white exodia_red exodia_orange exodia_yellow exodia_green exodia_cyan exodia_blue exodia_purple exodia_pink \
-           exodia_bold \
-           exodia_erase_until_endofline exodia_erase_until_endofscreen exodia_previous exodia_startofline \
-           exodia_hidecursor exodia_showcursor \
-           exodia_reset \
-           exodia_rb196 exodia_rb202 exodia_rb208 exodia_rb214 exodia_rb220 exodia_rb226 \
-           exodia_rb190 exodia_rb154 exodia_rb118 exodia_rb082 exodia_rb046 exodia_rb047 \
-           exodia_rb048 exodia_rb049 exodia_rb050 exodia_rb051 exodia_rb045 exodia_rb039 \
-           exodia_rb033 exodia_rb027 exodia_rb021 exodia_rb057 exodia_rb093 exodia_rb128 \
-           exodia_rb165 exodia_rb201 exodia_rb200 exodia_rb199 exodia_rb198 exodia_rb197 \
-           exodia_rb204 exodia_rb204_bg \
-           exodia_rb203 exodia_rb203_bg \
-           exodia_rb209 exodia_rb209_bg \
-           exodia_rb215 exodia_rb215_bg \
-           exodia_rb221 exodia_rb221_bg \
-           exodia_rb227 exodia_rb227_bg \
-           exodia_rb191 exodia_rb191_bg \
-           exodia_rb155 exodia_rb155_bg \
-           exodia_rb119 exodia_rb119_bg \
-           exodia_rb083 exodia_rb083_bg
+  readonly exodia_orange exodia_bold exodia_reset
 }
 
 fatal ()
@@ -1406,7 +843,7 @@ add_logger_reqchars ()
   exodia_flushreq='F'
   exodia_barreq='P'
   exodia_progreq='p'
-  exodia_reqsep='/'
+  exodia_reqsep=$'\7'
   readonly exodia_rawlevel exodia_errorlevel exodia_warnlevel exodia_infolevel exodia_notelevel exodia_debuglevel exodia_tracelevel exodia_verblevel \
            exodia_spinreq exodia_stopreq exodia_bufreq exodia_flushreq exodia_reqsep exodia_barreq exodia_progreq
 }
@@ -1414,7 +851,7 @@ add_logger_reqchars ()
 add_cache ()
 {
   EXODIA_CACHE_PATH="${EXODIA_CACHE_PATH:-/var/cache/exodia}"
-  exodia_sha="$(find . -type f -exec sha256sum {} \; | sha256sum)"
+  exodia_sha="$(find . -type f -not -path '*/.*' -exec sha256sum {} \; | sha256sum)"
   exodia_sha="${exodia_sha%% *}"
   exodia_cache="${EXODIA_CACHE_PATH}/${exodia_sha}"
 
@@ -1451,21 +888,14 @@ add_cache ()
 add_run ()
 {
   EXODIA_RUN_PATH="${EXODIA_RUN_PATH:-/var/run/exodia}"
-  exodia_run_logs="${EXODIA_RUN_PATH}/logs"
-  exodia_run_lines="${exodia_run_logs}/lines"
-  exodia_run_spins="${EXODIA_RUN_PATH}/spins"
   exodia_run_stop="${EXODIA_RUN_PATH}/stop"
-  exodia_run_aliases="${EXODIA_RUN_PATH}/aliases"
-  exodia_run_tty="${EXODIA_RUN_PATH}/tty"
   exodia_run_buffers="${EXODIA_RUN_PATH}/buffers"
   exodia_run_ppid="${EXODIA_RUN_PATH}/ppid"
   exodia_run_njobs="${EXODIA_RUN_PATH}/njobs"
   exodia_run_rules="${EXODIA_RUN_PATH}/rules"
-  exodia_run_progress="${EXODIA_RUN_PATH}/progress"
-  exodia_run_topological="${EXODIA_RUN_PATH}/topological"
   exodia_run_done="${EXODIA_RUN_PATH}/done"
 
-  readonly EXODIA_RUN_PATH exodia_run_logs exodia_run_lines exodia_run_spins exodia_run_stop exodia_run_aliases exodia_run_tty exodia_run_buffers exodia_run_ppid exodia_run_njobs exodia_run_rules exodia_run_progress exodia_run_topological exodia_run_done
+  readonly EXODIA_RUN_PATH exodia_run_stop exodia_run_buffers exodia_run_ppid exodia_run_njobs exodia_run_rules exodia_run_done
 }
 
 harden ()
@@ -1499,30 +929,16 @@ harden ()
 
 check_externals ()
 {
-  # GNU `bc` is faster than Busybox `bc`, have unicode & escape sequences support
-  gnu='true' harden 'bc'
-
   # GNU `find` is really faster than Busybox `find` and have debug options
   gnu='true' harden 'find'
-
-  # Coreutils `head` is slower than Busybox `head`
-  busybox='true' harden 'head'
 
   # GNU `sed` is a little bit slower than Busybox `sed`
   busybox='true' harden 'sed'
 
-  # Coreutils `sort` is really faster than Busybox `sort`
-  coreutils='true' harden 'sort'
-
-  # `xargs` is slow, avoid it when possible. If not, GNU `xargs` is slower than Busybox `xargs`.
-  busybox='true' harden 'xargs'
-
-  # Coreutils `cp`, `ln`, `mkdir`, `mv`, `readlink`, and `rm` have verbose option
+  # Coreutils `cp`, `mkdir`, `mv`  and `rm` have verbose option
   coreutils='true' harden 'cp'
-  coreutils='true' harden 'ln'
   coreutils='true' harden 'mkdir'
   coreutils='true' harden 'mv'
-  coreutils='true' harden 'readlink'
   coreutils='true' harden 'rm'
 
   # Coreutils `realpath` has -s and --relative-to options
@@ -1534,25 +950,17 @@ check_externals ()
 
   harden 'curl'
   harden 'gomplate'
-  harden 'stdoutbuf'
+  harden 'exodia-logger'
   harden 'rg'
   harden 'ts'
   harden 'yq'
 
   # check it with: grep -o -E '\w+' exodia | sort | uniq -c | sort -n
   harden 'basename'
-  harden 'dc'
   harden 'dirname'
-  harden 'getconf'
-  harden 'mktemp'
   harden 'nproc'
-  harden 'perl'
   harden 'sha256sum'
-  harden 'tr'
-  harden 'tty'
-  harden 'stty' || harden 'tput'
   harden 'usleep'
-  harden 'wc'
 }
 
 init ()
@@ -1582,12 +990,7 @@ init ()
 main ()
 {
   init
-  logger &
-  exodia_loggerpid="${!}"
-  readonly exodia_loggerpid
-  trap "kill -s USR1 '${exodia_loggerpid}'; wait" INT TERM
-  trap "kill -s \"USR\$(( 2 - (\${?} > 0 ? 1 : 0) ))\" '${exodia_loggerpid}'; wait" EXIT
-  { runner "${@}"; } 2>&1 | listener
+  { runner "${@}"; } 2>&1 | stdbuf -oL ansi2txt | exodia-logger
 }
 
 main "${@}"
