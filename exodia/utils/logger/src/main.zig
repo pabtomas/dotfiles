@@ -118,11 +118,11 @@ const Log = struct
   message: [] const u8,
   first: bool = true,
 
-  fn init (request: *Request) !@This ()
+  fn init (request: *Request) @This ()
   {
     return .{
-      .header = request.kind.header,
-      .message = request.data.message,
+      .header = request.kind.log,
+      .message = request.data.?.message,
     };
   }
 
@@ -190,14 +190,12 @@ const Spin = struct
   message: [] const u8,
   birth: datetime.Datetime,
 
-  fn init (message: [] const u8) !@This ()
+  fn init (message: [] const u8) @This ()
   {
-    var self: @This () = .{
-                            // TODO: dupe
-                            .message = undefined,
-                            .birth = datetime.Datetime.now (),
-                          };
-    return self;
+    return .{
+      .message = message,
+      .birth = datetime.Datetime.now (),
+    };
   }
 
   fn chrono (self: @This ()) !u64
@@ -234,7 +232,7 @@ const Spin = struct
     return (days * std.time.s_per_day + sec) * ds_per_s + ns / ns_per_ds;
   }
 
-  fn render (self: @This (), first: bool) !void
+  fn render (self: *@This (), first: bool) !void
   {
     if (Logger.cols == null) return;
     if (!first) try Logger.stderr.writeByte ('\n');
@@ -276,9 +274,9 @@ const Bar = struct
     return .{ .max = max, .running = true, .last = datetime.Datetime.now (), };
   }
 
-  fn incr (self: *@This ()) !void
+  fn incr (self: *@This ()) void
   {
-    if (self.progress == self.max) return error.BarMaxReached;
+    std.debug.assert (self.progress < self.max);
     self.progress = self.progress + 1;
   }
 
@@ -385,27 +383,24 @@ const Request = struct
   };
 
   kind: @This ().Kind,
-  data: ?@This ().Data,
+  data: ?@This ().Data = null,
 };
 
 const Queue = struct
 {
   id: [] const u8,
-  array: std.DoublyLinkedList (Request),
+  list: std.DoublyLinkedList (Request) = .{},
 
-  fn init (id: [] const u8) !@This ()
+  fn init (id: [] const u8) @This ()
   {
-    return .{
-      .id = return,
-      .array = try std.DoublyLinkedList (Request),
-    };
+    return .{ .id = id, };
   }
 
-  fn append (self: *@This (), allocator: *std.mem.Allocator, request: *Request) !void
+  fn append (self: *@This (), allocator: *const std.mem.Allocator, request: Request) !void
   {
     const node = try allocator.create (std.DoublyLinkedList (Request).Node);
-    node.* = .{ .data = request.*, };
-    request.append (node);
+    node.* = .{ .data = request, };
+    self.list.append (node);
   }
 };
 
@@ -428,20 +423,20 @@ const Logger = struct
   spins: std.StringHashMap (Spin),
   buffers: std.StringHashMap (Queue),
   bar: Bar = undefined,
-  allocator: std.mem.Allocator,
+  allocator: *const std.mem.Allocator,
   looping: bool = true,
 
-  fn init (nproc: usize) !@This ()
+  fn init (nproc: u32, allocator: *const std.mem.Allocator) !@This ()
   {
     if (@This ().stderr_file.supportsAnsiEscapeCodes ()) @This ().cols = 0;
     var self: @This () = .{
-      .requests  = try Queue.init ("root"),
-      .allocator = JdzGlobalAllocator.allocator (),
+      .requests  = Queue.init ("root"),
+      .allocator = allocator,
       .spins     = undefined,
       .buffers   = undefined,
     };
-    self.spins = try std.StringHashMap (Spin).init (self.allocator);
-    self.buffers = try std.StringHashMap (Queue).init (self.allocator);
+    self.spins = std.StringHashMap (Spin).init (self.allocator.*);
+    self.buffers = std.StringHashMap (Queue).init (self.allocator.*);
     try self.spins.ensureTotalCapacity (nproc);
     try self.buffers.ensureTotalCapacity (nproc);
     return self;
@@ -452,11 +447,11 @@ const Logger = struct
     self.looping = false;
   }
 
-  fn enqueue (self: *@This (), request: *Request) !void
+  fn enqueue (self: *@This (), request: Request) !void
   {
     self.mutex.lock ();
     defer self.mutex.unlock ();
-    try self.requests.append (&self.allocator, request);
+    try self.requests.append (self.allocator, request);
   }
 
   fn dequeue (self: *@This ()) !bool
@@ -464,16 +459,19 @@ const Logger = struct
     if (!self.mutex.tryLock ()) return false;
     defer self.mutex.unlock ();
     var log_rendered = false;
-    while (self.requests.pop ()) |request|
-      log_rendered = try self.response (request) or log_rendered;
+    while (self.requests.list.pop ()) |request|
+    {
+      log_rendered = try self.response (&request.data) or log_rendered;
+      self.allocator.destroy (request);
+    }
     return log_rendered;
   }
 
   fn logResponse (self: *@This (), request: *Request) !void
   {
     std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.log);
-    std.debug.assert (std.meta.activetag (request.data.?) == request.data.message);
-    var log = try Log.init (request);
+    std.debug.assert (std.meta.activeTag (request.data.?) == Request.Data.message);
+    var log = Log.init (request);
     var looping = true;
     while (looping)
     {
@@ -482,18 +480,18 @@ const Logger = struct
     }
   }
 
-  fn spinResponse (self: *@This (), request: *Request) !void
+  fn spinResponse (self: *@This (), request: *Request) void
   {
     std.debug.assert (self.spins.count () < self.spins.capacity ());
     std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.spin);
     std.debug.assert (request.kind.spin.len > 0);
     std.debug.assert (!self.spins.contains (request.kind.spin));
     std.debug.assert (request.data != null);
-    std.debug.assert (std.meta.activetag (request.data.?) == request.data.message);
+    std.debug.assert (std.meta.activeTag (request.data.?) == Request.Data.message);
     self.spins.putAssumeCapacity (request.kind.spin, Spin.init (request.data.?.message));
   }
 
-  fn killResponse (self: *@This (), request: *Request) !void
+  fn killResponse (self: *@This (), request: *Request) void
   {
     std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.kill);
     std.debug.assert (request.kind.kill.len > 0);
@@ -506,32 +504,31 @@ const Logger = struct
     std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.buffer);
     std.debug.assert (request.kind.buffer.len > 0);
     if (!self.buffers.contains (request.kind.buffer))
-      self.buffers.putAssumeCapacity (request.kind.buffer, std.DoublyLinkedList (Request));
-    try self.buffers.getPtr (request.kind.buffer).?.append (&self.allocator, request);
+      self.buffers.putAssumeCapacity (request.kind.buffer, Queue.init (request.kind.buffer));
+    try self.buffers.getPtr (request.kind.buffer).?.append (self.allocator, request.*);
   }
 
-  fn flushResponse (self: *@This (), request: *Request) !void
+  fn flushResponse (self: *@This (), request: *Request) void
   {
     std.debug.assert (self.buffers.count () > 0);
     std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.flush);
     std.debug.assert (request.kind.flush.len > 0);
     std.debug.assert (self.buffers.contains (request.kind.flush));
-    while (self.buffers.getPtr (request.kind.flush).?.pop ()) |node| self.requests.prepend (node);
+    while (self.buffers.getPtr (request.kind.flush).?.list.pop ()) |node| self.requests.list.prepend (node);
   }
 
-  fn barResponse (self: *@This (), request: *Request) !void
+  fn barResponse (self: *@This (), request: *Request) void
   {
     std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.bar);
     std.debug.assert (request.data != null);
     std.debug.assert (std.meta.activeTag (request.data.?) == Request.Data.max);
     std.debug.assert (request.data.?.max > 0);
-    self.bar = Bar.init (request.data.max);
+    self.bar = Bar.init (request.data.?.max);
   }
 
-  fn progressResponse (self: *@This ()) !void
+  fn progressResponse (self: *@This ()) void
   {
-    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.progress);
-    try self.bar.incr ();
+    self.bar.incr ();
   }
 
   fn response (self: *@This (), request: *Request) !bool
@@ -540,31 +537,31 @@ const Logger = struct
     switch (request.kind)
     {
       .buffer   => try self.bufferResponse (request),
-      .flush    => try self.flushResponse (request),
-      .spin     => try self.spinResponse (request),
-      .kill     => try self.killResponse (request),
-      .bar      => try self.barResponse (request),
-      .progress => try self.progressResponse (),
+      .flush    => self.flushResponse (request),
+      .spin     => self.spinResponse (request),
+      .kill     => self.killResponse (request),
+      .bar      => self.barResponse (request),
+      .progress => self.progressResponse (),
       .log      => {
                      try self.logResponse (request);
                      log_rendered = true;
                    },
     }
-    self.allocator.free (request);
     return log_rendered;
   }
 
   fn animation (self: *@This ()) !void
   {
     var spin_rendered = false;
-    for (0 .. self.spins.len) |i|
+    var it = self.spins.keyIterator ();
+    while (it.next ()) |key|
     {
-      try self.spins.slice ()[i].render (!spin_rendered);
+      try self.spins.getPtr (key.*).?.render (!spin_rendered);
       spin_rendered = true;
     }
     const bar_rendered = try self.bar.render (!spin_rendered);
     try @This ().clearFromCursorToScreenEnd ();
-     for (0 .. self.spins.len) |i|
+     for (0 .. self.spins.count ()) |i|
        if (i == 0) try @This ().cursorStartLine ()
        else try @This ().cursorPreviousLine ();
      if (bar_rendered) for (0 .. 3) |i|
@@ -586,12 +583,14 @@ const Logger = struct
       @This ().clearFromCursorToScreenEnd () catch {};
       @This ().showCursor () catch {};
       @This ().buffered_stderr.flush () catch {}; // don't forget to flush!
+      self.spins.deinit ();
+      self.buffers.deinit ();
       JdzGlobalAllocator.deinit ();
       JdzGlobalAllocator.deinitThread ();
     }
     try @This ().hideCursor ();
-    while (self.looping or self.requests.array.len > 0 or self.bar.running
-      or self.spins.len > 0 or self.buffers.len > 0)
+    while (self.looping or self.requests.list.len > 0 or self.bar.running
+      or self.spins.count () > 0 or self.buffers.count () > 0)
     {
       try @This ().updateCols ();
       if (!try self.dequeue ()) try self.animation ();
@@ -644,19 +643,34 @@ const Logger = struct
   }
 };
 
-pub fn main () !void
+fn main_with (allocator: *const std.mem.Allocator) !void
 {
   const nproc = try std.Thread.getCpuCount ();
-  var logger = try Logger.init (nproc);
+  var logger = try Logger.init (@intCast (nproc), allocator);
 
   const thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
   defer thread.join ();
   defer logger.deinit ();
 
-  logger.enqueue (.{ .kind = .{ .WARN, }, .data = .{ .message = "Test", }, });
+  try logger.enqueue (.{ .kind = .{ .log = .WARN, }, .data = .{ .message = "Test", }, });
+  try logger.enqueue (.{ .kind = .{ .spin = "cache", }, .data = .{ .message = "In progress ...", }, });
+  std.time.sleep (5_000_000_000);
+  try logger.enqueue (.{ .kind = .{ .kill = "cache", }, });
 
   //var looping = true;
   //while (looping)
   //{
   //}
+}
+
+pub fn main () !void
+{
+  const allocator = JdzGlobalAllocator.allocator ();
+  try main_with (&allocator);
+}
+
+test "leak"
+{
+  const allocator = std.testing.allocator;
+  try main_with (&allocator);
 }

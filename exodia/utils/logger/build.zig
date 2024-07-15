@@ -1,15 +1,14 @@
 const std = @import ("std");
 
-pub fn build (builder: *std.Build) void
+pub fn build (builder: *std.Build) !void
 {
   const target = builder.standardTargetOptions (.{});
-  //const optimize = std.builtin.OptimizeMode.ReleaseSafe;
   const optimize = std.builtin.OptimizeMode.Debug;
-  //const optimize = std.builtin.OptimizeMode.ReleaseFast;
 
   const logger = builder.addExecutable (.{
     .name = "exodia-logger",
-    .root_source_file = builder.path ("src/main.zig"),
+    .root_source_file = .{ .cwd_relative = try builder.build_root.join (
+      builder.allocator, &.{ "src", "main.zig", }), },
     .target = target,
     .optimize = optimize,
   });
@@ -38,6 +37,24 @@ pub fn build (builder: *std.Build) void
   logger.root_module.addImport ("termsize", termsize);
   logger.root_module.addImport ("datetime", datetime);
   logger.root_module.addImport ("jdz", jdz_allocator);
+
+  const unit_tests = builder.addTest (.{
+    .target = target,
+    .optimize = optimize,
+    .root_source_file = .{ .cwd_relative = try builder.build_root.join (
+      builder.allocator, &.{ "src", "main.zig", }), },
+  });
+  unit_tests.step.dependOn (builder.getInstallStep ());
+
+  const run_unit_tests = builder.addRunArtifact (unit_tests);
+
+  const test_step = builder.step ("test", "Run tests");
+  test_step.dependOn (&run_unit_tests.step);
+
+  unit_tests.root_module.addImport ("ansiterm", ansiterm);
+  unit_tests.root_module.addImport ("termsize", termsize);
+  unit_tests.root_module.addImport ("datetime", datetime);
+  unit_tests.root_module.addImport ("jdz", jdz_allocator);
 
   builder.installArtifact (logger);
 }
