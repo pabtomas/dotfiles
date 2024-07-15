@@ -114,30 +114,15 @@ const Log = struct
     }
   };
 
-  header: Header,
+  header: @This ().Header,
   message: [] const u8,
   first: bool = true,
 
-  fn init (request: [] const u8) !@This ()
+  fn init (request: *Request) !@This ()
   {
     return .{
-      .header = switch (request [0])
-      {
-        '0'  => .ERROR,
-        '1'  => .WARN,
-        '2'  => .INFO,
-        '3'  => .NOTE,
-        '4'  => .DEBUG,
-        '5'  => .TRACE,
-        '6'  => .VERB,
-        '-'  => .RAW,
-        else => {
-          std.debug.print ("First character: '{c}' [{d:0>3}]\nRequest: '{s}'\n",
-            .{ request [0], request [0], request, });
-          return error.UnknownLogRequest;
-        },
-      },
-      .message = request [1 ..],
+      .header = request.kind.header,
+      .message = request.data.message,
     };
   }
 
@@ -202,22 +187,16 @@ const Spin = struct
     46, 47, 48, 49, 50, 51, 45, 39, 33, 27, 21, 57, 93, 128, 165, 201, 200,
     199, 198, 197, };
 
-  id: [Logger.id_max_length] u8,
-  id_length: usize,
-  message: [@This ().message_max_length] u8,
+  message: [] const u8,
   birth: datetime.Datetime,
 
-  fn init (id: [] const u8, message: [] const u8) !@This ()
+  fn init (message: [] const u8) !@This ()
   {
-    if (id.len > Logger.id_max_length) return error.SpinIdTooLong;
     var self: @This () = .{
-                            .id = undefined,
-                            .id_length = id.len,
+                            // TODO: dupe
                             .message = undefined,
                             .birth = datetime.Datetime.now (),
                           };
-    std.mem.copyBackwards (u8, &self.id, id [0 .. id.len]);
-    std.mem.copyBackwards (u8, &self.message, message [0 .. @min (message.len, @This ().message_max_length)]);
     return self;
   }
 
@@ -384,39 +363,54 @@ const Bar = struct
   }
 };
 
-const RequestsBuffer = struct
+const Request = struct
 {
-  const size: usize = 1024;
+  const DataTag = enum { message, max, };
+  const Data = union (DataTag)
+  {
+    message: [] const u8,
+    max: u32,
+  };
 
-  id: [Logger.id_max_length] u8,
-  id_length: usize,
-  array: std.BoundedArray ([] u8, @This ().size),
+  const KindTag = enum { buffer, flush, spin, kill, bar, progress, log, };
+  const Kind = union (KindTag)
+  {
+    buffer: [] const u8,
+    flush: [] const u8,
+    spin: [] const u8,
+    kill: [] const u8,
+    bar: void,
+    progress: void,
+    log: Log.Header,
+  };
+
+  kind: @This ().Kind,
+  data: ?@This ().Data,
+};
+
+const Queue = struct
+{
+  id: [] const u8,
+  array: std.DoublyLinkedList (Request),
 
   fn init (id: [] const u8) !@This ()
   {
-    if (id.len > Logger.id_max_length) return error.RequestsBufferIdTooLong;
-    var self: @This () = .{
-                            .id = undefined,
-                            .id_length = id.len,
-                            .array = try std.BoundedArray ([] u8, @This ().size).init (0),
-                          };
-    std.mem.copyBackwards (u8, &self.id, id [0 .. id.len]);
-    return self;
+    return .{
+      .id = return,
+      .array = try std.DoublyLinkedList (Request),
+    };
+  }
+
+  fn append (self: *@This (), allocator: *std.mem.Allocator, request: *Request) !void
+  {
+    const node = try allocator.create (std.DoublyLinkedList (Request).Node);
+    node.* = .{ .data = request.*, };
+    request.append (node);
   }
 };
 
 const Logger = struct
 {
-  const spins_size: usize = 128;
-
-  // Here 121 is a magic number: if I increase it to 122: Segfault at runtime
-  const buffers_size: usize = 121;
-  //const buffers_size = spins_size;
-
-  const id_max_length: usize = 128;
-
-  const buffer_length: usize = 65536;
-
   const space: u16 = 1;
   const time_length: u16 = 8 + @This ().space;
   const level_length: u16 = 5 + @This ().space;
@@ -428,27 +422,29 @@ const Logger = struct
   var stderr = buffered_stderr.writer ();
 
   var cols: ?u16 = null;
-  const separator: u8 = 7;
 
-  requests: RequestsBuffer,
   mutex: std.Thread.Mutex = .{},
-  condition: std.Thread.Condition = .{},
-  looping: bool = true,
-  spins: std.BoundedArray (Spin, @This ().spins_size),
-  buffers: std.BoundedArray (RequestsBuffer, @This ().buffers_size),
-  flush: ?usize = null,
+  requests: Queue,
+  spins: std.StringHashMap (Spin),
+  buffers: std.StringHashMap (Queue),
   bar: Bar = undefined,
   allocator: std.mem.Allocator,
+  looping: bool = true,
 
-  fn init () !@This ()
+  fn init (nproc: usize) !@This ()
   {
     if (@This ().stderr_file.supportsAnsiEscapeCodes ()) @This ().cols = 0;
-    return .{
-      .requests   = try RequestsBuffer.init ("root"),
-      .spins      = try std.BoundedArray (Spin, @This ().spins_size).init (0),
-      .buffers    = try std.BoundedArray (RequestsBuffer, @This ().buffers_size).init (0),
+    var self: @This () = .{
+      .requests  = try Queue.init ("root"),
       .allocator = JdzGlobalAllocator.allocator (),
+      .spins     = undefined,
+      .buffers   = undefined,
     };
+    self.spins = try std.StringHashMap (Spin).init (self.allocator);
+    self.buffers = try std.StringHashMap (Queue).init (self.allocator);
+    try self.spins.ensureTotalCapacity (nproc);
+    try self.buffers.ensureTotalCapacity (nproc);
+    return self;
   }
 
   fn deinit (self: *@This ()) void
@@ -456,73 +452,28 @@ const Logger = struct
     self.looping = false;
   }
 
-  fn addRequest (self: *@This (), requests: *RequestsBuffer, slice: [] const u8) !void
-  {
-    if (requests.array.len >= RequestsBuffer.size) return error.RequestsBufferSizeOverflow;
-
-    requests.array.len += 1;
-    requests.array.slice ()[requests.array.len - 1] = try self.allocator.alloc (u8, slice.len);
-    @memcpy (requests.array.slice ()[requests.array.len - 1], slice);
-  }
-
-  fn enqueue (self: *@This (), array: *std.BoundedArray (u8, @This ().buffer_length)) !void
+  fn enqueue (self: *@This (), request: *Request) !void
   {
     self.mutex.lock ();
     defer self.mutex.unlock ();
-
-    while (self.requests.array.len >= RequestsBuffer.size) self.condition.wait (&self.mutex);
-
-    try self.addRequest (&self.requests, array.slice ());
-  }
-
-  fn emptyRequestsBuffer (self: *@This (), requests: *RequestsBuffer) !bool
-  {
-    var index: usize = 0;
-    var log_rendered = false;
-    while (index < requests.array.len)
-    {
-      log_rendered = try self.response (requests.array.swapRemove (index)) or log_rendered;
-      index = index + 1;
-    }
-
-    while (requests.array.popOrNull ()) |request|
-      log_rendered = try self.response (request) or log_rendered;
-    return log_rendered;
+    try self.requests.append (&self.allocator, request);
   }
 
   fn dequeue (self: *@This ()) !bool
   {
     if (!self.mutex.tryLock ()) return false;
     defer self.mutex.unlock ();
-    var looping = true;
     var log_rendered = false;
-
-    while (looping)
-    {
-      if (self.flush) |flush|
-      {
-        log_rendered = self.emptyRequestsBuffer (&self.buffers.slice ()[flush]) catch |err| {
-          if (err == error.Flushed) return error.FlushOccuredDuringFlush else return err;
-        } or log_rendered;
-        _ = self.buffers.orderedRemove (flush);
-        self.flush = null;
-      }
-
-      log_rendered = self.emptyRequestsBuffer (&self.requests) catch |err| {
-        if (err == error.Flushed) continue else return err;
-      } or log_rendered;
-
-      looping = false;
-    }
-
-    self.condition.signal ();
-
+    while (self.requests.pop ()) |request|
+      log_rendered = try self.response (request) or log_rendered;
     return log_rendered;
   }
 
-  fn logResponse (self: *@This (), entry: [] const u8) !void
+  fn logResponse (self: *@This (), request: *Request) !void
   {
-    var log = try Log.init (entry);
+    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.log);
+    std.debug.assert (std.meta.activetag (request.data.?) == request.data.message);
+    var log = try Log.init (request);
     var looping = true;
     while (looping)
     {
@@ -531,112 +482,73 @@ const Logger = struct
     }
   }
 
-  fn spinResponse (self: *@This (), entry: [] const u8) !void
+  fn spinResponse (self: *@This (), request: *Request) !void
   {
-    if (self.spins.len == @This ().spins_size) return error.MaxSpinsReached;
-
-    var it = std.mem.tokenizeScalar (u8, entry [2 ..], @This ().separator);
-    var index: usize = 0;
-    var pair: [2][] const u8 = undefined;
-    while (it.next ()) |token|
-    {
-      switch (index)
-      {
-        0, 1 => pair [index] = token,
-        else => return error.SeparatorInSpinMessageOrSpinId,
-      }
-      index = index + 1;
-    }
-
-    self.spins.appendAssumeCapacity (try Spin.init (pair [0], pair [1]));
+    std.debug.assert (self.spins.count () < self.spins.capacity ());
+    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.spin);
+    std.debug.assert (request.kind.spin.len > 0);
+    std.debug.assert (!self.spins.contains (request.kind.spin));
+    std.debug.assert (request.data != null);
+    std.debug.assert (std.meta.activetag (request.data.?) == request.data.message);
+    self.spins.putAssumeCapacity (request.kind.spin, Spin.init (request.data.?.message));
   }
 
-  fn killResponse (self: *@This (), entry: [] const u8) !void
+  fn killResponse (self: *@This (), request: *Request) !void
   {
-    if (self.spins.len == 0) return;
-
-    var index: usize = 0;
-
-    while (index < self.spins.len)
-    {
-      if (std.mem.eql (u8, self.spins.get (index).id [0 .. self.spins.get (index).id_length], entry [1 ..])) break;
-      index = index + 1;
-    } else return error.UnknownSpinId;
-
-    _ = self.spins.orderedRemove (index);
+    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.kill);
+    std.debug.assert (request.kind.kill.len > 0);
+    std.debug.assert (self.spins.remove (request.kind.kill));
   }
 
-  fn bufferResponse (self: *@This (), entry: [] const u8) !void
+  fn bufferResponse (self: *@This (), request: *Request) !void
   {
-    if (self.buffers.len == @This ().buffers_size) return error.MaxRequestsBuffersReached;
-
-    var it = std.mem.tokenizeScalar (u8, entry [2 ..], @This ().separator);
-    var index: usize = 0;
-    var pair: [2][] const u8 = undefined;
-    while (it.next ()) |token|
-    {
-      switch (index)
-      {
-        0, 1 => pair [index] = token,
-        else => return error.SeparatorInRequestsBufferMessageOrRequestsBufferId,
-      }
-      index = index + 1;
-    }
-
-    index = 0;
-    while (index < self.buffers.len)
-    {
-      if (std.mem.eql (u8, self.buffers.get (index).id [0 .. self.buffers.get (index).id_length], pair [0])) break;
-      index = index + 1;
-    } else self.buffers.appendAssumeCapacity (try RequestsBuffer.init (pair [0]));
-
-    try self.addRequest (&self.buffers.slice ()[index], pair [1]);
+    std.debug.assert (self.buffers.count () < self.buffers.capacity ());
+    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.buffer);
+    std.debug.assert (request.kind.buffer.len > 0);
+    if (!self.buffers.contains (request.kind.buffer))
+      self.buffers.putAssumeCapacity (request.kind.buffer, std.DoublyLinkedList (Request));
+    try self.buffers.getPtr (request.kind.buffer).?.append (&self.allocator, request);
   }
 
-  fn flushResponse (self: *@This (), entry: [] const u8) !void
+  fn flushResponse (self: *@This (), request: *Request) !void
   {
-    if (self.buffers.len == 0) return;
-
-    var index: usize = 0;
-
-    while (index < self.buffers.len)
-    {
-      if (std.mem.eql (u8, self.buffers.get (index).id [0 .. self.buffers.get (index).id_length], entry [1 ..])) break;
-      index = index + 1;
-    } else return error.UnknownRequestsBufferId;
-
-    self.flush = index;
+    std.debug.assert (self.buffers.count () > 0);
+    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.flush);
+    std.debug.assert (request.kind.flush.len > 0);
+    std.debug.assert (self.buffers.contains (request.kind.flush));
+    while (self.buffers.getPtr (request.kind.flush).?.pop ()) |node| self.requests.prepend (node);
   }
 
-  fn barResponse (self: *@This (), entry: [] const u8) !void
+  fn barResponse (self: *@This (), request: *Request) !void
   {
-    self.bar = Bar.init (try std.fmt.parseInt (u32, entry [1 ..], 10));
+    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.bar);
+    std.debug.assert (request.data != null);
+    std.debug.assert (std.meta.activeTag (request.data.?) == Request.Data.max);
+    std.debug.assert (request.data.?.max > 0);
+    self.bar = Bar.init (request.data.max);
   }
 
   fn progressResponse (self: *@This ()) !void
   {
+    std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.progress);
     try self.bar.incr ();
   }
 
-  fn response (self: *@This (), request: [] const u8) !bool
+  fn response (self: *@This (), request: *Request) !bool
   {
     var log_rendered = false;
-    switch (request [0])
+    switch (request.kind)
     {
-      'B'  => try self.bufferResponse (request),
-      'F'  => {
-                try self.flushResponse (request);
-                self.allocator.free (request);
-                return error.Flushed;
-              },
-      'S'  => try self.spinResponse (request),
-      'K'  => try self.killResponse (request),
-      'P'  => try self.barResponse (request),
-      'p'  => try self.progressResponse (),
-      else => {
-                try self.logResponse (request);
-                log_rendered = true;
-              },
+      .buffer   => try self.bufferResponse (request),
+      .flush    => try self.flushResponse (request),
+      .spin     => try self.spinResponse (request),
+      .kill     => try self.killResponse (request),
+      .bar      => try self.barResponse (request),
+      .progress => try self.progressResponse (),
+      .log      => {
+                     try self.logResponse (request);
+                     log_rendered = true;
+                   },
     }
     self.allocator.free (request);
     return log_rendered;
@@ -734,31 +646,17 @@ const Logger = struct
 
 pub fn main () !void
 {
-  var logger = try Logger.init ();
-
-  const stdin_file = std.io.getStdIn ();
-  const stdin_reader = stdin_file.reader ();
-  var buffered_stdin = std.io.bufferedReader (stdin_reader);
-  const stdin = buffered_stdin.reader ();
-
-  var buffer_array: std.BoundedArray (u8, Logger.buffer_length) = undefined;
-  const buffer = buffer_array.writer ();
+  const nproc = try std.Thread.getCpuCount ();
+  var logger = try Logger.init (nproc);
 
   const thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
   defer thread.join ();
   defer logger.deinit ();
 
-  var looping = true;
+  logger.enqueue (.{ .kind = .{ .WARN, }, .data = .{ .message = "Test", }, });
 
-  while (looping)
-  {
-    buffer_array = try std.BoundedArray (u8, Logger.buffer_length).init (0);
-
-    stdin.streamUntilDelimiter (buffer, '\n', Logger.buffer_length) catch |err| {
-      if (err == error.EndOfStream) looping = false else return err;
-    };
-
-    if (looping or buffer_array.len > 0)
-      try logger.enqueue (&buffer_array);
-  }
+  //var looping = true;
+  //while (looping)
+  //{
+  //}
 }
