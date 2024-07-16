@@ -1,3 +1,4 @@
+const root = @This ();
 const std = @import ("std");
 
 const ansiterm = @import ("ansiterm");
@@ -454,12 +455,35 @@ const Logger = struct
     try self.requests.append (self.allocator, request);
   }
 
+  fn returnType (comptime name: [] const [] const u8) type
+  {
+    var ptr = root;
+    for (0 .. name.len - 1) |i| ptr = @field (ptr, name [i]);
+    return (@typeInfo (@TypeOf (@field (ptr, name [name.len - 1]))).Fn.return_type orelse void);
+  }
+
+  fn enqueueTrace (self: *@This (), comptime name: [] const [] const u8, args: anytype) !@This ().returnType (name)
+  {
+    comptime var ptr = root;
+    comptime var buf: [] const u8 = "";
+    inline for (0 .. name.len - 1) |i|
+    {
+      buf = buf ++ name [i] ++ ".";
+      ptr = @field (ptr, name [i]);
+    }
+    buf = buf ++ name [name.len - 1] ++ " (";
+    inline for (0 .. args.len - 1) |i| buf = buf ++ std.fmt.comptimePrint ("{any}, ", .{args[i]});
+    buf = buf ++ std.fmt.comptimePrint ("{any})", .{ args [args.len - 1], });
+    try self.enqueue (.{ .kind = .{ .log = .TRACE, }, .data = .{ .message = buf, }, });
+    return @call (.auto, @field (ptr, name [name.len - 1]), args);
+  }
+
   fn dequeue (self: *@This ()) !bool
   {
     if (!self.mutex.tryLock ()) return false;
     defer self.mutex.unlock ();
     var log_rendered = false;
-    while (self.requests.list.pop ()) |request|
+    while (self.requests.list.popFirst ()) |request|
     {
       log_rendered = try self.response (&request.data) or log_rendered;
       self.allocator.destroy (request);
@@ -643,16 +667,11 @@ const Logger = struct
   }
 };
 
-fn main_with (allocator: *const std.mem.Allocator) !void
+fn mainHandled (logger: *Logger) !void
 {
-  const nproc = try std.Thread.getCpuCount ();
-  var logger = try Logger.init (@intCast (nproc), allocator);
-
-  const thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
-  defer thread.join ();
-  defer logger.deinit ();
-
+  try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = .{ .message = "Test", }, });
   try logger.enqueue (.{ .kind = .{ .log = .WARN, }, .data = .{ .message = "Test", }, });
+  try logger.enqueueTrace (&[_][] const u8 { "std", "debug", "print", }, .{ "{s}\n", .{ "Test", } });
   try logger.enqueue (.{ .kind = .{ .spin = "cache", }, .data = .{ .message = "In progress ...", }, });
   std.time.sleep (5_000_000_000);
   try logger.enqueue (.{ .kind = .{ .kill = "cache", }, });
@@ -663,14 +682,33 @@ fn main_with (allocator: *const std.mem.Allocator) !void
   //}
 }
 
-pub fn main () !void
+fn mainWith (allocator: *const std.mem.Allocator) !void
+{
+  const nproc = try std.Thread.getCpuCount ();
+  var logger = try Logger.init (@intCast (nproc), allocator);
+
+  const thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
+  defer thread.join ();
+  defer logger.deinit ();
+
+  mainHandled (&logger) catch |err| try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = .{ .message = @errorName (err), }, });
+}
+
+fn fatal (err: [] const u8) void
+{
+  const now = datetime.Datetime.now ();
+  std.debug.print ("{d:0>2}:{d:0>2}:{d:0>2} \x1B[38;5;215m\x1B[1mFATAL\x1B[m {s}\n",
+    .{ now.time.hour, now.time.minute, now.time.second, err, });
+}
+
+pub fn main () void
 {
   const allocator = JdzGlobalAllocator.allocator ();
-  try main_with (&allocator);
+  mainWith (&allocator) catch |err| fatal (@errorName (err));
 }
 
 test "leak"
 {
   const allocator = std.testing.allocator;
-  try main_with (&allocator);
+  try mainWith (&allocator);
 }
