@@ -22,6 +22,12 @@ RUN <<END_OF_RUN
     rm -rf /build /colorized-logs
     apk del __install_ansi2txt
 
+    apk add --no-cache git make musl-dev go
+    GOROOT='/usr/lib/go'
+    #GOPATH='/go'
+    #PATH="/go/bin:${PATH}"
+    #mkdir -p "${GOPATH}/src" "${GOPATH}/bin"
+
     xz="zig-linux-$(arch)-0.13.0.tar.xz"
     tmp_xz="/tmp/${xz}"
     tmp_zig='/tmp/zig'

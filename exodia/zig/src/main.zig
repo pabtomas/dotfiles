@@ -12,7 +12,7 @@ fn mainHandled (logger: *Logger) !void
   try logger.enqueue (.{ .kind = .{ .log = .WARN, }, .data = .{ .message = "Test", }, });
   //try logger.enqueueTrace (&[_][] const u8 { "std", "debug", "print", }, .{ "{s}\n", .{ "Test", } });
   //try logger.enqueue (.{ .kind = .{ .spin = "cache", }, .data = .{ .message = "In progress ...", }, });
-  std.time.sleep (1_000_000_000);
+  //std.time.sleep (1_000_000_000);
   //try logger.enqueue (.{ .kind = .{ .kill = "cache", }, });
 
   //var looping = true;
@@ -27,10 +27,14 @@ fn mainWith (allocator: *const std.mem.Allocator) !void
   var logger = try Logger.init (@intCast (nproc), allocator);
 
   const thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
-  defer thread.join ();
-  defer logger.deinit ();
+  defer {
+    logger.deinit ();
+    thread.join ();
+  }
 
-  mainHandled (&logger) catch |err| try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = .{ .message = @errorName (err), }, });
+  mainHandled (&logger) catch |err|
+    try logger.enqueue (.{ .kind = .{ .log = .ERROR, },
+                           .data = .{ .message = @errorName (err), }, });
 }
 
 fn fatal (err: [] const u8) void
