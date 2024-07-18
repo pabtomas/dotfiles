@@ -1,3 +1,3 @@
-module github.com/tiawl/navy/logger/request/bar
+module github.com/tiawl/exodia/logger/request/bar
 
 go 1.22.5

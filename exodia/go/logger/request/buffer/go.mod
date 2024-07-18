@@ -1,3 +1,3 @@
-module github.com/tiawl/navy/logger/request/buffer
+module github.com/tiawl/exodia/logger/request/buffer
 
 go 1.22.5

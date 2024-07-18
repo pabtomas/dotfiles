@@ -1,54 +1,44 @@
-package logger_queue
+package LoggerQueue
 
 import (
   "container/list"
   "errors"
-  "github.com/tiawl/navy/logger/request/bar"
-  "github.com/tiawl/navy/logger/request/progress"
-  "github.com/tiawl/navy/logger/request/buffer"
-  "github.com/tiawl/navy/logger/request/flush"
-  "github.com/tiawl/navy/logger/request/spin"
-  "github.com/tiawl/navy/logger/request/kill"
-  "github.com/tiawl/navy/logger/request/log/debug"
-  "github.com/tiawl/navy/logger/request/log/error"
-  "github.com/tiawl/navy/logger/request/log/info"
-  "github.com/tiawl/navy/logger/request/log/note"
-  "github.com/tiawl/navy/logger/request/log/raw"
-  "github.com/tiawl/navy/logger/request/log/trace"
-  "github.com/tiawl/navy/logger/request/log/verb"
-  "github.com/tiawl/navy/logger/request/log/warn"
+  "github.com/tiawl/exodia/logger/request/bar"
+  "github.com/tiawl/exodia/logger/request/progress"
+  "github.com/tiawl/exodia/logger/request/buffer"
+  "github.com/tiawl/exodia/logger/request/flush"
+  "github.com/tiawl/exodia/logger/request/spin"
+  "github.com/tiawl/exodia/logger/request/kill"
+  "github.com/tiawl/exodia/logger/request/log"
 )
 
-type Queue struct {
+type Type struct {
   id string
   list *list.List
 }
 
-func New (id string) Queue {
-  return Queue {
+func New (id string) Type {
+  return Type {
     id: id,
     list: list.New (),
   }
 }
 
-func (self *Queue) Append (request interface {}) error {
+func (self *Type) Append (request interface {}) {
   switch request.(type) {
     case BarRequest.Type, BufferRequest.Type, FlushRequest.Type,
-         KillRequest.Type, DebugLogRequest.Type, ErrorLogRequest.Type,
-         InfoLogRequest.Type, NoteLogRequest.Type, RawLogRequest.Type,
-         TraceLogRequest.Type, VerbLogRequest.Type, WarnLogRequest.Type,
-         ProgressRequest.Type, SpinRequest.Type:
+         KillRequest.Type, LogRequest.Type, ProgressRequest.Type,
+         SpinRequest.Type:
       self.list.PushBack (request)
-      return nil
     default:
-      return errors.New ("Unknown Request type")
+      panic (errors.New ("Unknown Request type"))
   }
 }
 
-func (self Queue) Len () int {
+func (self Type) Len () int {
   return self.list.Len ()
 }
 
-func (self Queue) PopFront () interface {} {
+func (self Type) PopFront () interface {} {
   return self.list.Remove (self.list.Front ())
 }

@@ -1,106 +1,164 @@
-package logger
+package Logger
 
 import (
   "bufio"
   "errors"
   "os"
   "sync"
-  "github.com/tiawl/navy/logger/bar"
-  "github.com/tiawl/navy/logger/queue"
-  "github.com/tiawl/navy/logger/spin"
-  "github.com/tiawl/navy/logger/request/bar"
-  "github.com/tiawl/navy/logger/request/progress"
-  "github.com/tiawl/navy/logger/request/buffer"
-  "github.com/tiawl/navy/logger/request/flush"
-  "github.com/tiawl/navy/logger/request/spin"
-  "github.com/tiawl/navy/logger/request/kill"
-  "github.com/tiawl/navy/logger/request/log/debug"
-  "github.com/tiawl/navy/logger/request/log/error"
-  "github.com/tiawl/navy/logger/request/log/info"
-  "github.com/tiawl/navy/logger/request/log/note"
-  "github.com/tiawl/navy/logger/request/log/raw"
-  "github.com/tiawl/navy/logger/request/log/trace"
-  "github.com/tiawl/navy/logger/request/log/verb"
-  "github.com/tiawl/navy/logger/request/log/warn"
+  "github.com/muesli/termenv"
+  "github.com/tiawl/exodia/logger/bar"
+  "github.com/tiawl/exodia/logger/log"
+  "github.com/tiawl/exodia/logger/queue"
+  "github.com/tiawl/exodia/logger/spin"
+  "github.com/tiawl/exodia/logger/request/bar"
+  "github.com/tiawl/exodia/logger/request/progress"
+  "github.com/tiawl/exodia/logger/request/buffer"
+  "github.com/tiawl/exodia/logger/request/flush"
+  "github.com/tiawl/exodia/logger/request/spin"
+  "github.com/tiawl/exodia/logger/request/kill"
+  "github.com/tiawl/exodia/logger/request/log"
 )
 import "fmt"
 
-type Logger struct {
+type Type struct {
   mutex sync.Mutex
-  requests logger_queue.Queue
-  spins map [string] logger_spin.Spin
-  buffers map [string] logger_queue.Queue
-  bar logger_bar.Bar
+  requests LoggerQueue.Type
+  spins map [string] LoggerSpin.Type
+  buffers map [string] LoggerQueue.Type
+  bar LoggerBar.Type
   looping bool
   cols uint16
   writer *bufio.Writer
+  output *termenv.Output
+  restoreConsole func () error
 }
 
-func New (nproc int) Logger {
-  return Logger {
+func New (nproc int) Type {
+  var self Type = Type {
     mutex: sync.Mutex {},
-    requests: logger_queue.New ("root"),
-    spins: make (map [string] logger_spin.Spin, nproc),
-    buffers: make (map [string] logger_queue.Queue, nproc),
-    bar: logger_bar.New (0),
+    requests: LoggerQueue.New ("root"),
+    spins: make (map [string] LoggerSpin.Type, nproc),
+    buffers: make (map [string] LoggerQueue.Type, nproc),
+    bar: LoggerBar.New (0),
     looping: true,
     cols: 0,
     writer: bufio.NewWriter (os.Stderr),
   }
+  var err error
+  self.restoreConsole, err = termenv.EnableVirtualTerminalProcessing (termenv.DefaultOutput ())
+  if err != nil {
+    panic (err)
+  }
+  self.output = termenv.NewOutput (os.Stderr, termenv.WithProfile (termenv.ANSI256))
+  return self
 }
 
-func (self *Logger) Enqueue (request interface {}) {
+func (self *Type) Deinit () {
+  self.restoreConsole ()
+}
+
+func (self *Type) Enqueue (request interface {}) {
   self.mutex.Lock ()
   defer self.mutex.Unlock ()
   self.requests.Append (request)
 }
 
-func (self *Logger) Dequeue () (bool, error) {
+func (self *Type) Log (message string, level string, color string) {
+  var header termenv.Style = self.output.String (level)
+  if (len (color) > 0) {
+    header = header.Bold ().Foreground (self.output.Color (color))
+  }
+  self.Enqueue (LogRequest.New (header.String (), message))
+}
+
+func (self *Type) Error (message string) {
+  self.Log (message, "ERROR", "204")
+}
+
+func (self *Type) Warn (message string) {
+  self.Log (message, " WARN", "227")
+}
+
+func (self *Type) Info (message string) {
+  self.Log (message, " INFO", "119")
+}
+
+func (self *Type) Note (message string) {
+  self.Log (message, " NOTE", "81")
+}
+
+func (self *Type) Debug (message string) {
+  self.Log (message, "DEBUG", "69")
+}
+
+func (self *Type) Trace (message string) {
+  self.Log (message, "TRACE", "135")
+}
+
+func (self *Type) Verb (message string) {
+  self.Log (message, " VERB", "207")
+}
+
+func (self *Type) Raw (message string) {
+  self.Log (message, "", "")
+}
+
+func (self *Type) Dequeue () bool {
   if !self.mutex.TryLock () {
-    return false, nil
+    return false
   }
   defer self.mutex.Unlock ()
-  var log_rendered = false
+  var log_rendered bool = false
   for self.requests.Len () > 0 {
-    response, err := self.Response (self.requests.PopFront ())
-    if err != nil {
-      return false, err
-    }
-    log_rendered = response
+    log_rendered = self.Response (self.requests.PopFront ())
   }
-  return log_rendered, nil
+  return log_rendered
 }
 
-func (self *Logger) BarResponse (request *BarRequest.Type) {
+func (self *Type) BarResponse (request *BarRequest.Type) {
   fmt.Println ("TODO")
 }
 
-func (self *Logger) BufferResponse (request *BufferRequest.Type) {
+func (self *Type) BufferResponse (request *BufferRequest.Type) {
   fmt.Println ("TODO")
 }
 
-func (self *Logger) FlushResponse (request *FlushRequest.Type) {
+func (self *Type) FlushResponse (request *FlushRequest.Type) {
   fmt.Println ("TODO")
 }
 
-func (self *Logger) SpinResponse (request *SpinRequest.Type) {
+func (self *Type) SpinResponse (request *SpinRequest.Type) {
   fmt.Println ("TODO")
 }
 
-func (self *Logger) KillResponse (request *KillRequest.Type) {
+func (self *Type) KillResponse (request *KillRequest.Type) {
   fmt.Println ("TODO")
 }
 
-func (self *Logger) LogResponse (request interface {}) {
+func (self *Type) LogResponse (request *LogRequest.Type) {
+  var log Log.Type = Log.New (request)
+  var looping bool = true
+  var entry string
+
+  for looping {
+    entry, looping = log.Render ()
+    _, err := self.writer.WriteString (entry + "\n")
+    if err != nil {
+      panic (err)
+    }
+    err = self.writer.Flush ()
+    if err != nil {
+      panic (err)
+    }
+  }
+}
+
+func (self *Type) ProgressResponse (request *ProgressRequest.Type) {
   fmt.Println ("TODO")
 }
 
-func (self *Logger) ProgressResponse (request *ProgressRequest.Type) {
-  fmt.Println ("TODO")
-}
-
-func (self *Logger) Response (request interface {}) (bool, error) {
-  var log_rendered = false
+func (self *Type) Response (request interface {}) bool {
+  var log_rendered bool = false
   switch cast := request.(type) {
     case BufferRequest.Type:
       self.BufferResponse (&cast)
@@ -114,24 +172,11 @@ func (self *Logger) Response (request interface {}) (bool, error) {
       self.BarResponse (&cast)
     case ProgressRequest.Type:
       self.ProgressResponse (&cast)
-    case DebugLogRequest.Type, ErrorLogRequest.Type, InfoLogRequest.Type,
-         NoteLogRequest.Type, RawLogRequest.Type, TraceLogRequest.Type,
-         VerbLogRequest.Type, WarnLogRequest.Type:
-      self.LogResponse (request)
+    case LogRequest.Type:
+      self.LogResponse (&cast)
       log_rendered = true
     default:
-      return log_rendered, errors.New ("Unknown Request type")
+      panic (errors.New ("Unknown Request type"))
   }
-  return log_rendered, nil
+  return log_rendered
 }
-
-//  _, err := writer.WriteString ("Test\n")
-//  if err != nil {
-//    fmt.Printf ("writer.WriteString () failed with: %v\n", err)
-//    return
-//  }
-//  err = writer.Flush ()
-//  if err != nil {
-//    fmt.Printf ("writer.Flush () failed with: %v\n", err)
-//    return
-//  }

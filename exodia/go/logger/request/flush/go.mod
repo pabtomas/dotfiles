@@ -1,3 +1,3 @@
-module github.com/tiawl/navy/logger/request/flush
+module github.com/tiawl/exodia/logger/request/flush
 
 go 1.22.5

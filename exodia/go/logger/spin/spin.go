@@ -1,10 +1,10 @@
-package logger_spin
+package LoggerSpin
 
 import (
   "time"
 )
 
-type Spin struct {
+type Type struct {
   message string
   birth time.Time
 }

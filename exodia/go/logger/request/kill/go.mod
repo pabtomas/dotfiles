@@ -1,3 +1,3 @@
-module github.com/tiawl/navy/logger/request/kill
+module github.com/tiawl/exodia/logger/request/kill
 
 go 1.22.5

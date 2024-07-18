@@ -1,10 +1,10 @@
-package logger_bar
+package LoggerBar
 
 import (
   "time"
 )
 
-type Bar struct {
+type Type struct {
   max uint32
   progress uint32
   term_cursor uint32
@@ -12,8 +12,8 @@ type Bar struct {
   last time.Time
 }
 
-func New (max uint32) Bar {
-  return Bar {
+func New (max uint32) Type {
+  return Type {
     max: max,
     progress: 0,
     term_cursor: 0,

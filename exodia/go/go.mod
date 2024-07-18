@@ -1,60 +1,53 @@
-module github.com/tiawl/navy
+module github.com/tiawl/exodia
 
 go 1.22.5
 
-replace github.com/tiawl/navy/logger => ./logger
+replace github.com/tiawl/exodia/logger/request/spin => ./logger/request/spin
 
 require (
-	github.com/tiawl/navy/logger v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/bar v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/queue v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/bar v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/buffer v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/flush v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/kill v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/debug v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/error v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/info v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/note v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/raw v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/trace v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/verb v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/log/warn v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/progress v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/request/spin v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/navy/logger/spin v0.0.0-00010101000000-000000000000 // indirect
+	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
+	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/muesli/termenv v0.15.2 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/tiawl/exodia/logger v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/bar v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/const v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/log v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/queue v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/request/bar v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/request/buffer v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/request/flush v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/request/kill v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/request/log v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/request/progress v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/request/spin v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/spin v0.0.0-00010101000000-000000000000 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/term v0.22.0 // indirect
 )
 
-replace github.com/tiawl/navy/logger/bar => ./logger/bar
+replace github.com/tiawl/exodia/logger/request/progress => ./logger/request/progress
 
-replace github.com/tiawl/navy/logger/queue => ./logger/queue
+replace github.com/tiawl/exodia/logger/request/log => ./logger/request/log
 
-replace github.com/tiawl/navy/logger/spin => ./logger/spin
+replace github.com/tiawl/exodia/logger/request/kill => ./logger/request/kill
 
-replace github.com/tiawl/navy/logger/request/log/warn => ./logger/request/log/warn
+replace github.com/tiawl/exodia/logger/request/flush => ./logger/request/flush
 
-replace github.com/tiawl/navy/logger/request/log/verb => ./logger/request/log/verb
+replace github.com/tiawl/exodia/logger/request/buffer => ./logger/request/buffer
 
-replace github.com/tiawl/navy/logger/request/log/trace => ./logger/request/log/trace
+replace github.com/tiawl/exodia/logger/request/bar => ./logger/request/bar
 
-replace github.com/tiawl/navy/logger/request/log/raw => ./logger/request/log/raw
+replace github.com/tiawl/exodia/logger/spin => ./logger/spin
 
-replace github.com/tiawl/navy/logger/request/log/note => ./logger/request/log/note
+replace github.com/tiawl/exodia/logger/queue => ./logger/queue
 
-replace github.com/tiawl/navy/logger/request/log/info => ./logger/request/log/info
+replace github.com/tiawl/exodia/logger/log => ./logger/log
 
-replace github.com/tiawl/navy/logger/request/log/error => ./logger/request/log/error
+replace github.com/tiawl/exodia/logger/const => ./logger/const
 
-replace github.com/tiawl/navy/logger/request/log/debug => ./logger/request/log/debug
+replace github.com/tiawl/exodia/logger/bar => ./logger/bar
 
-replace github.com/tiawl/navy/logger/request/spin => ./logger/request/spin
-
-replace github.com/tiawl/navy/logger/request/progress => ./logger/request/progress
-
-replace github.com/tiawl/navy/logger/request/kill => ./logger/request/kill
-
-replace github.com/tiawl/navy/logger/request/flush => ./logger/request/flush
-
-replace github.com/tiawl/navy/logger/request/buffer => ./logger/request/buffer
-
-replace github.com/tiawl/navy/logger/request/bar => ./logger/request/bar
+replace github.com/tiawl/exodia/logger => ./logger

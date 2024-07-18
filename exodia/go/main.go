@@ -2,11 +2,14 @@ package main
 
 import (
   "runtime"
-  "github.com/tiawl/navy/logger"
-  "github.com/tiawl/navy/logger/request/log/warn"
+  "github.com/tiawl/exodia/logger"
 )
 
 func main () {
-  var l = logger.New (runtime.NumCPU ())
-  l.Enqueue (WarnLogRequest.New ("Test"))
+  var nproc int = runtime.NumCPU ()
+  var logger Logger.Type = Logger.New (nproc)
+  defer logger.Deinit ()
+  logger.Warn ("Test")
+  logger.Info ("TesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTesTestttttttttttttttttttttttttttttttttttttttttttttttTest")
+  _ = logger.Dequeue ()
 }

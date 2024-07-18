@@ -1,3 +1,3 @@
-module github.com/tiawl/navy/logger/queue
+module github.com/tiawl/exodia/logger/queue
 
 go 1.22.5
