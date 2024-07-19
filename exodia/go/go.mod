@@ -13,6 +13,7 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/tiawl/exodia/logger v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/bar v0.0.0-00010101000000-000000000000 // indirect
+	github.com/tiawl/exodia/logger/color v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/const v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/log v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/queue v0.0.0-00010101000000-000000000000 // indirect
@@ -51,3 +52,5 @@ replace github.com/tiawl/exodia/logger/const => ./logger/const
 replace github.com/tiawl/exodia/logger/bar => ./logger/bar
 
 replace github.com/tiawl/exodia/logger => ./logger
+
+replace github.com/tiawl/exodia/logger/color => ./logger/color

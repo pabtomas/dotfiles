@@ -1,4 +1,4 @@
-package LoggerQueue
+package Queue
 
 import (
   "container/list"
@@ -29,7 +29,7 @@ func (self *Type) Append (request interface {}) {
     case *BarRequest.Type, *BufferRequest.Type, *FlushRequest.Type,
          *KillRequest.Type, *LogRequest.Type, *ProgressRequest.Type,
          *SpinRequest.Type:
-      self.list.PushBack (request)
+      _ = self.list.PushBack (request)
     default:
       panic (errors.New ("Unknown Request type"))
   }

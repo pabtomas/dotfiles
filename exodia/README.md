@@ -29,39 +29,27 @@ GNU Make is a tool which controls the generation of executables and other non-so
 With other words: GNU `make` was not degined to be used with Docker.
 
 Exodia was designed with 5 priorities in mind to solve all problems I had with Compose without going for an heavy solution:
-1. Minimal process installation: Exodia was conceived to run with a minimal set of dependencies into a minimal container (no extra daemon, no extra library installation, no extra configuration),
+1. Minimal process installation: Exodia was conceived to run with a minimal set of dependencies,
 2. No controller-nodes architecture,
 3. Minimal abstraction to the Docker Engine API to offer a full control,
 4. Minimal specification: the Exodia specification contains less than 30 keywords (some of them are literally coming from Compose or Ansible),
-5. Docker Engine API version agnostic: It does not mean that your `exodia.yaml` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `exodia.yaml` file whatever the Docker Engine API version you are targetting.
+5. Docker Engine API version agnostic: It does not mean that your `exodia.toml` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `exodia.toml` file whatever the Docker Engine API version you are targetting.
 
 ## How to start a Exodia Project ?
 
-First of all, you need to describe your project with a `exodia.yaml` file. Here the links you need to fill it:
+First of all, you need to describe your project with a `exodia.toml` file. Here the links you need to fill it:
 - [the Exodia specification](https://github.com/tiawl/exodia/blob/trunk/doc/00_index.md)
 - [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
 - [the gomplate documentation](https://docs.gomplate.ca/) and [the Golang template documentation](https://pkg.go.dev/text/template)
 
 ## How to use it ?
 
-As stated above, Exodia was designed to be used in a container.
-
-### Why run Exodia into a container ?
-
-1. Exodia was written in Shell to keep it minimal: no compilation process, extra libraries or anything else a real programing language could need. The extra cost of this design decision is an environment sensitivity. Because Exodia does not manage harsh environments (because it could lead to unmaintable code), the solution was to write a dedicated image.
-2. Exodia needs access to your Docker socket to communicate with the Docker Engine. However the Docker socket can only be root accessed. So running Exodia on your laptop means running it as root. **And running scripts written by others as root on your system if the most unsafe thing you can do**. Again: the solution is to isolate the Exodia process on its container.
-3. You can use the Exodia dedicated image as a stage for your own images. It could be very useful if you want to extend Exodia features for your own needs or/and to share it with others.
-
-### How to run Exodia ?
-
-Here the command line you can use to run Exodia in a safe environment:
+In its container with this command:
 ```
-docker run --rm -t -v .:/workspace:ro -v ~/.cache/exodia:/var/cache/exodia:rw tiawl/exodia:0.1.0
+TODO
 ```
 
-### Can I run Exodia out of its dedicated box ?
-
-Even if it is not recommended, yes you can. If you are convinced that you need Exodia ouf of its container follow steps described in its [Dockerfile](https://github.com/tiawl/exodia/blob/trunk/Dockerfile).
+If you want to use it on your laptop, follow steps described in this [Dockerfile](https://github.com/tiawl/exodia/blob/trunk/Dockerfile).
 
 ### How to run Exodia with a remote docker socket ?
 
@@ -74,4 +62,25 @@ If not, export `DOCKER_HOST` in your environment.
 
 ### What did you plan for the next releases ? How can I contribute to this project ?
 
-You probably noticed that Exodia does not have a first major release. Why ? Because Exodia is ready to be used but is not mature. To go further, Exodia needs feedbacks for its implemented features. Expect breaking changes in the next releases. With time, Exodia will be more stable. If you want to contribute and see Exodia growing, use Exodia for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Exodia better. So do not hesitate to open an issue: this is currently the best way to contribute.
+You probably noticed that Exodia does not have a first major release. Why ? Because Exodia is ready to be used but is not mature. To go further, Exodia needs:
+- feedbacks for its implemented features,
+- to be rewritten with better tools,
+
+Expect big breaking changes in the next releases, among them:
+- Programming language shift: currently Exodia is written in Golang. This choice is only motivated by the fact that Golang is stable and has a large and complete APIs for Exodia needs. But for many reasons:
+    1. garbage collector or unsafe memory management (choose your sick horse),
+    2. the need to make Shell scripting around a Golang project,
+    3. no Union and Enumeration types without alternatives (or with some awkward workarounds that fails to emulate correctly these features),
+    4. functions with multi return values (it is a featurisis when a language has already pointers and structs),
+    5. modules privacy managed with letter case (can I suggest a `pub` keyword ?),
+    6. minimal error handling: no `try`, `catch` or `errdefer` keywords. Manage them with an `if` statement or ignore them.
+    7. no Optional type,
+    8. limited `const` keyword: not usable with Arrays, user types or something a little bit more complex than a primitive.
+    9. no need of explicit management for returned values (it is easy to skip them because the compiler does not complain)
+
+when a better alternative will be stable, Exodia will be rewritten with.
+- Template Engine shift (it will follow the programming language shift)
+- Markup language shift (again: this task will follow the programming language shift)
+- Removal of features made with bad design choices
+
+With time, Exodia will be more stable. If you want to contribute and see Exodia growing, use Exodia for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Exodia better. So do not hesitate to open an issue: this is currently the best way to contribute.

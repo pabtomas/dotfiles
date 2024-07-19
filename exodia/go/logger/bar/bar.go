@@ -1,4 +1,4 @@
-package LoggerBar
+package Bar
 
 import (
   "time"
