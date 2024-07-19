@@ -2,7 +2,6 @@ package Log
 
 import (
   "time"
-  "golang.org/x/term"
   "github.com/tiawl/exodia/logger/request/log"
   "github.com/tiawl/exodia/logger/const"
 )
@@ -12,22 +11,18 @@ type Type struct {
   message string
 }
 
-func New (request *LogRequest.Type) Type {
-  return Type {
+func New (request *LogRequest.Type) *Type {
+  return &Type {
     header: request.Header (),
     message: request.Message (),
   }
 }
 
-func (self *Type) Render () (string, bool) {
+func (self *Type) Render (cols int) (string, bool) {
   var max_size int = len (self.message)
   var entry string = ""
-  if term.IsTerminal (0) {
-    width, _, err := term.GetSize (0)
-    if err != nil {
-      panic (err)
-    }
-    max_size = min (max_size, width - constant.HeaderLength)
+  if cols > -1 {
+    max_size = min (max_size, cols - constant.HeaderLength)
   }
   if len (self.header) > 0 {
     entry = self.header + " "

@@ -2,6 +2,6 @@ package ProgressRequest
 
 type Type struct {}
 
-func New () Type {
-  return Type {}
+func New () *Type {
+  return &Type {}
 }

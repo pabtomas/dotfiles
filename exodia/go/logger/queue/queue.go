@@ -17,8 +17,8 @@ type Type struct {
   list *list.List
 }
 
-func New (id string) Type {
-  return Type {
+func New (id string) *Type {
+  return &Type {
     id: id,
     list: list.New (),
   }
@@ -26,9 +26,9 @@ func New (id string) Type {
 
 func (self *Type) Append (request interface {}) {
   switch request.(type) {
-    case BarRequest.Type, BufferRequest.Type, FlushRequest.Type,
-         KillRequest.Type, LogRequest.Type, ProgressRequest.Type,
-         SpinRequest.Type:
+    case *BarRequest.Type, *BufferRequest.Type, *FlushRequest.Type,
+         *KillRequest.Type, *LogRequest.Type, *ProgressRequest.Type,
+         *SpinRequest.Type:
       self.list.PushBack (request)
     default:
       panic (errors.New ("Unknown Request type"))

@@ -8,8 +8,8 @@ type Type struct {
   message string
 }
 
-func New (header string, message string) Type {
-  return Type {
+func New (header string, message string) *Type {
+  return &Type {
     header: header,
     message: message,
   }

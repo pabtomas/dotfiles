@@ -5,8 +5,8 @@ type Type struct {
   message string
 }
 
-func New (id string, message string) Type {
-  return Type {
+func New (id string, message string) *Type {
+  return &Type {
     id: id,
     message: message,
   }

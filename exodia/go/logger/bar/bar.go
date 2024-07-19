@@ -12,11 +12,15 @@ type Type struct {
   last time.Time
 }
 
-func New (max uint32) Type {
-  return Type {
+func New (max uint32) *Type {
+  return &Type {
     max: max,
     progress: 0,
     term_cursor: 0,
     running: false,
   }
+}
+
+func (self Type) Running () bool {
+  return self.running
 }

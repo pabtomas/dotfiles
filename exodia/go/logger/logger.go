@@ -5,6 +5,7 @@ import (
   "errors"
   "os"
   "sync"
+  "golang.org/x/term"
   "github.com/muesli/termenv"
   "github.com/tiawl/exodia/logger/bar"
   "github.com/tiawl/exodia/logger/log"
@@ -20,28 +21,32 @@ import (
 )
 import "fmt"
 
+const (
+  ClearCursorUntilScreenEndSeq = "J"
+)
+
 type Type struct {
   mutex sync.Mutex
-  requests LoggerQueue.Type
+  requests *LoggerQueue.Type
   spins map [string] LoggerSpin.Type
   buffers map [string] LoggerQueue.Type
-  bar LoggerBar.Type
+  bar *LoggerBar.Type
   looping bool
-  cols uint16
+  cols int
   writer *bufio.Writer
   output *termenv.Output
   restoreConsole func () error
 }
 
-func New (nproc int) Type {
-  var self Type = Type {
+func New (nproc int) *Type {
+  var self *Type = &Type {
     mutex: sync.Mutex {},
     requests: LoggerQueue.New ("root"),
     spins: make (map [string] LoggerSpin.Type, nproc),
     buffers: make (map [string] LoggerQueue.Type, nproc),
     bar: LoggerBar.New (0),
     looping: true,
-    cols: 0,
+    cols: -1,
     writer: bufio.NewWriter (os.Stderr),
   }
   var err error
@@ -49,12 +54,15 @@ func New (nproc int) Type {
   if err != nil {
     panic (err)
   }
-  self.output = termenv.NewOutput (os.Stderr, termenv.WithProfile (termenv.ANSI256))
+  if term.IsTerminal (0) {
+    self.cols = 0
+  }
+  self.output = termenv.NewOutput (self.writer, termenv.WithProfile (termenv.ANSI256))
   return self
 }
 
-func (self *Type) Deinit () {
-  self.restoreConsole ()
+func (self *Type) Stop () {
+  self.looping = false
 }
 
 func (self *Type) Enqueue (request interface {}) {
@@ -136,13 +144,14 @@ func (self *Type) KillResponse (request *KillRequest.Type) {
 }
 
 func (self *Type) LogResponse (request *LogRequest.Type) {
-  var log Log.Type = Log.New (request)
+  var log *Log.Type = Log.New (request)
   var looping bool = true
   var entry string
+  var err error
 
   for looping {
-    entry, looping = log.Render ()
-    _, err := self.writer.WriteString (entry + "\n")
+    entry, looping = log.Render (self.cols)
+    _, err = self.writer.WriteString (entry + "\n")
     if err != nil {
       panic (err)
     }
@@ -160,23 +169,65 @@ func (self *Type) ProgressResponse (request *ProgressRequest.Type) {
 func (self *Type) Response (request interface {}) bool {
   var log_rendered bool = false
   switch cast := request.(type) {
-    case BufferRequest.Type:
-      self.BufferResponse (&cast)
-    case FlushRequest.Type:
-      self.FlushResponse (&cast)
-    case SpinRequest.Type:
-      self.SpinResponse (&cast)
-    case KillRequest.Type:
-      self.KillResponse (&cast)
-    case BarRequest.Type:
-      self.BarResponse (&cast)
-    case ProgressRequest.Type:
-      self.ProgressResponse (&cast)
-    case LogRequest.Type:
-      self.LogResponse (&cast)
+    case *BufferRequest.Type:
+      self.BufferResponse (cast)
+    case *FlushRequest.Type:
+      self.FlushResponse (cast)
+    case *SpinRequest.Type:
+      self.SpinResponse (cast)
+    case *KillRequest.Type:
+      self.KillResponse (cast)
+    case *BarRequest.Type:
+      self.BarResponse (cast)
+    case *ProgressRequest.Type:
+      self.ProgressResponse (cast)
+    case *LogRequest.Type:
+      self.LogResponse (cast)
       log_rendered = true
     default:
       panic (errors.New ("Unknown Request type"))
   }
   return log_rendered
+}
+
+func (self *Type) UpdateCols () {
+  if self.cols > -1 {
+    var err error
+    self.cols, _, err = term.GetSize (0)
+    if err != nil {
+      panic (err)
+    }
+  }
+}
+
+func (self *Type) Animation () {
+  fmt.Println ("TODO")
+}
+
+func (self *Type) Deferred () {
+  var err error
+  _, err = self.writer.WriteString (termenv.CSI + ClearCursorUntilScreenEndSeq);
+  if err != nil {
+    panic (err)
+  }
+  self.output.ShowCursor ()
+  err = self.restoreConsole ()
+  if err != nil {
+    panic (err)
+  }
+  err = self.writer.Flush ()
+  if err != nil {
+    panic (err)
+  }
+}
+
+func (self *Type) Loop () {
+  self.output.HideCursor ()
+  defer self.Deferred ()
+  for self.looping || self.requests.Len () > 0 || self.bar.Running () || len (self.spins) > 0 || len (self.buffers) > 0 {
+    self.UpdateCols ()
+    if !self.Dequeue () {
+      self.Animation ()
+    }
+  }
 }
