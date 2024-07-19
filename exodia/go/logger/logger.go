@@ -4,8 +4,10 @@ import (
   "bufio"
   "container/list"
   "errors"
+  "math"
   "os"
   "sync"
+  "time"
   "golang.org/x/term"
   "github.com/muesli/termenv"
   "github.com/tiawl/exodia/logger/color"
@@ -121,10 +123,11 @@ func (self *Type) Dequeue () bool {
 }
 
 func (self *Type) BarResponse (request *BarRequest.Type) {
-  fmt.Println ("TODO")
+  self.bar = Bar.New (request.Max ())
 }
 
 func (self *Type) BufferResponse (request *BufferRequest.Type) {
+  // TODO: check Length before insert
   fmt.Println ("TODO")
 }
 
@@ -133,6 +136,7 @@ func (self *Type) FlushResponse (request *FlushRequest.Type) {
 }
 
 func (self *Type) SpinResponse (request *SpinRequest.Type) *list.Element {
+  // TODO: check Length before insert
   return self.spins.PushBack (Spin.New (request.Message ()))
 }
 
@@ -143,34 +147,58 @@ func (self *Type) KillResponse (request *KillRequest.Type) {
 
 func (self *Type) LogRender (log *Log.Type) bool {
   var entry string
-  var err error
   var looping bool
   entry, looping = log.Render (self.cols)
-  _, err = self.writer.WriteString (entry + "\n")
-  if err != nil { panic (err) }
+  self.WriteString (entry + "\n")
   return looping
 }
 
 func (self *Type) SpinRender (spin *Spin.Type, first bool) {
-  var err error
   if self.cols < 0 { return }
-  if !first {
-    err = self.writer.WriteByte ('\n')
-    if err != nil { panic (err) }
-  }
+  if !first { self.WriteByte ('\n') }
   var chrono, pattern, message string
   var elapsed int64
   chrono, elapsed = spin.Chrono ()
   chrono = self.output.String (chrono).Bold ().Foreground (self.output.Color (Color.White)).String ()
   pattern = self.output.String (spin.Pattern (elapsed)).Bold ().Foreground (self.output.Color (spin.Color (elapsed))).String ()
   message = self.output.String (spin.Message ()).Bold ().Foreground (self.output.Color (Color.White)).String ()
-  _, err = self.writer.WriteString (chrono + pattern + message)
-  if err != nil { panic (err) }
+  self.WriteString (chrono + pattern + message)
   self.output.ClearLineRight ()
 }
 
 func (self *Type) BarRender (first bool) bool {
-  return false
+  if self.cols < 0 { return false }
+  var term_max int = (self.cols - 6) * 8
+  self.bar.Update (term_max)
+  if !self.bar.Running () { return false }
+
+  var term_progress int = (self.bar.Progress () * term_max) / self.bar.Max ()
+
+  var now time.Time = time.Now ()
+  var ns int64 = int64 (now.Sub ((*self.bar.Last ())) % time.Second)
+  if self.bar.Cursor () < term_progress && ns > 10_000_000 {
+    var gap float64 = float64 ((term_progress - self.bar.Cursor ()) / 10)
+    var log float64 = math.Log2 (math.Max (gap, 2)) - 1
+    var shift int = int (math.Min (gap, log))
+    self.bar.SetCursor (self.bar.Cursor () + (1 << shift))
+    self.bar.SetLast (&now)
+  }
+
+  self.WriteString (self.output.String (self.bar.Top (self.cols, first)).Bold ().Foreground (self.output.Color (Color.White)).String ())
+  self.output.ClearLineRight ()
+
+  var percent int = (self.bar.Cursor () * 100) / term_max
+  var color termenv.Color = self.output.Color (self.bar.Color (percent))
+  self.WriteString (self.output.String (self.bar.MiddleStart ()).Bold ().Foreground (self.output.Color (Color.White)).String ())
+  self.WriteString (self.output.String (self.bar.MiddleFilled ()).Bold ().Background (color).String ())
+  self.WriteString (self.output.String (self.bar.MiddleEmpty (term_max)).Bold ().Foreground (color).String ())
+  self.WriteString (self.output.String (self.bar.MiddleEnd (percent)).Bold ().Foreground (self.output.Color (Color.White)).String ())
+  self.output.ClearLineRight ()
+
+  self.WriteString (self.output.String (self.bar.Bottom (self.cols)).Bold ().Foreground (self.output.Color (Color.White)).String ())
+  self.output.ClearLineRight ()
+
+  return true
 }
 
 func (self *Type) LogResponse (request *LogRequest.Type) {
@@ -186,7 +214,7 @@ func (self *Type) LogResponse (request *LogRequest.Type) {
 }
 
 func (self *Type) ProgressResponse (request *ProgressRequest.Type) {
-  fmt.Println ("TODO")
+  self.bar.Incr ()
 }
 
 func (self *Type) Response (request interface {}) bool {
@@ -221,16 +249,28 @@ func (self *Type) UpdateCols () {
   }
 }
 
-func (self *Type) CursorStartLine () {
-  var err error
-  _, err = self.writer.WriteString (termenv.CSI + "1" + CursorHorizontalSeq)
+func (self *Type) WriteByte (b byte) {
+  var err error = self.writer.WriteByte (b)
   if err != nil { panic (err) }
 }
 
-func (self *Type) ClearCursorUntilScreenEnd () {
+func (self *Type) WriteString (str string) {
   var err error
-  _, err = self.writer.WriteString (termenv.CSI + ClearCursorUntilScreenEndSeq)
+  _, err = self.writer.WriteString (str)
   if err != nil { panic (err) }
+}
+
+func (self *Type) CursorStartLine () {
+  self.WriteString (termenv.CSI + "1" + CursorHorizontalSeq)
+}
+
+func (self *Type) ClearCursorUntilScreenEnd () {
+  self.WriteString (termenv.CSI + ClearCursorUntilScreenEndSeq)
+}
+
+func (self *Type) GoUp (cond bool) {
+  if cond { self.CursorStartLine ()
+  } else { self.output.CursorPrevLine (1) }
 }
 
 func (self *Type) Animation () {
@@ -243,13 +283,11 @@ func (self *Type) Animation () {
   var bar_rendered bool = self.BarRender (!spin_rendered)
   self.ClearCursorUntilScreenEnd ()
   for e := self.spins.Front (); e != nil; e = e.Next () {
-    if e == self.spins.Front () { self.CursorStartLine ()
-    } else { self.output.CursorPrevLine (1) }
+    self.GoUp (e == self.spins.Front ())
   }
   if bar_rendered {
-    for index := range make ([] int, 3) {
-      if index == 0 && !spin_rendered { self.CursorStartLine ()
-      } else { self.output.CursorPrevLine (1) }
+    for i := 0; i < 3; i++ {
+      self.GoUp (i == 0 && !spin_rendered)
     }
   }
   err = self.writer.Flush ()

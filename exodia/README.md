@@ -67,18 +67,18 @@ You probably noticed that Exodia does not have a first major release. Why ? Beca
 - to be rewritten with better tools,
 
 Expect big breaking changes in the next releases, among them:
-- Programming language shift: currently Exodia is written in Golang. This choice is only motivated by the fact that Golang is stable and has a large and complete APIs for Exodia needs. But for many reasons:
+- Programming language shift: currently Exodia is written in Golang. This choice is only motivated by the fact that Golang is stable, compilated, imperative and has a large and complete APIs for Exodia needs. But for many reasons:
     1. garbage collector or unsafe memory management (choose your sick horse),
     2. the need to make Shell scripting around a Golang project,
     3. no Union and Enumeration types without alternatives (or with some awkward workarounds that fails to emulate correctly these features),
-    4. functions with multi return values (it is a featurisis when a language has already pointers and structs),
+    4. functions with multi return values (it is a featurisis when a language already has pointers and structs),
     5. modules privacy managed with letter case (can I suggest a `pub` keyword ?),
     6. minimal error handling: no `try`, `catch` or `errdefer` keywords. Manage them with an `if` statement or ignore them.
     7. no Optional type,
     8. limited `const` keyword: not usable with Arrays, user types or something a little bit more complex than a primitive.
     9. no need of explicit management for returned values (it is easy to skip them because the compiler does not complain)
 
-when a better alternative will be stable, Exodia will be rewritten with.
+    when a better alternative will be stable, Exodia will be rewritten with.
 - Template Engine shift (it will follow the programming language shift)
 - Markup language shift (again: this task will follow the programming language shift)
 - Removal of features made with bad design choices

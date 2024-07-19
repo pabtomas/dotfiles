@@ -1,11 +1,15 @@
 package BarRequest
 
 type Type struct {
-  max uint32
+  max int
 }
 
-func New (max uint32) *Type {
+func New (max int) *Type {
   return &Type {
     max: max,
   }
+}
+
+func (self Type) Max () int {
+  return self.max
 }
