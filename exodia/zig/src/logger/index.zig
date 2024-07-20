@@ -3,7 +3,9 @@ pub const datetime = @import ("datetime").datetime;
 pub const jdz = @import ("jdz");
 pub const termsize = @import ("termsize");
 
-pub const Logger = @import ("logger").Logger;
+pub const logger = @import ("logger");
+pub const Logger = logger.Logger;
+pub const StdErr = logger.StdErr;
 pub const Log = @import ("log").Log;
 pub const Queue = @import ("queue").Queue;
 pub const Request = @import ("request").Request;

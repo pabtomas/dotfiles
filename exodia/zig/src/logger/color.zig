@@ -1,14 +1,15 @@
 pub const Color = enum (u8)
 {
+  white = 15,
+
   // log colors
-  red    = 204,
-  yellow = 227,
-  green  = 119,
-  cyan   = 81,
-  blue   = 69,
-  purple = 135,
-  pink   = 207,
-  white  = 15,
+  @"204" = 204,
+  @"227" = 227,
+  @"119" = 119,
+  @"81" = 81,
+  @"69" = 69,
+  @"135" = 135,
+  @"207" = 207,
 
   // spin colors
   @"196" = 196,

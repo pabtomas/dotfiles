@@ -11,7 +11,7 @@ const colors: [10] u8 = .{ 204, 203, 209, 215, 221, 227, 191, 155, 119, 83, };
 const offsets: [7] *const [3:0] u8 = .{ "▏", "▎", "▍", "▌", "▋", "▊", "▉", };
 const coef = 10;
 
-fn top (logger: *const Logger, first: bool) !void
+fn top (logger: *Logger, first: bool) !void
 {
   if (!first) try logger.writeByte ('\n');
   try logger.writeByte (' ');
@@ -24,7 +24,7 @@ fn top (logger: *const Logger, first: bool) !void
   try logger.writeByte ('\n');
 }
 
-fn bottom (logger: *const Logger) !void
+fn bottom (logger: *Logger) !void
 {
   try logger.writeByte (' ');
   for (0 .. (logger.cols.? - 6)) |_| try logger.writeAll ("▔");
@@ -34,15 +34,21 @@ fn bottom (logger: *const Logger) !void
 
 pub const Bar = struct
 {
-  max: u32 = 0,
-  progress: u32 = 0,
-  term_cursor: u32 = 0,
-  running: bool = false,
-  last: datetime.Datetime = undefined,
+  max: u32,
+  progress: u32,
+  term_cursor: u32,
+  running: bool,
+  last: datetime.Datetime,
 
   pub fn init (max: u32) @This ()
   {
-    return .{ .max = max, .running = true, .last = datetime.Datetime.now (), };
+    return .{
+      .max = max,
+      .progress = 0,
+      .term_cursor = 0,
+      .running = (max > 0),
+      .last = datetime.Datetime.now (),
+    };
   }
 
   pub fn incr (self: *@This ()) void
@@ -51,7 +57,7 @@ pub const Bar = struct
     self.progress = self.progress + 1;
   }
 
-  fn middle (self: *@This (), logger: *const Logger, term_max: u32) !void
+  fn middle (self: *@This (), logger: *Logger, term_max: u32) !void
   {
     const offset_index = self.term_cursor % (offsets.len + 1);
     const percent = (self.term_cursor * 100) / term_max;
@@ -83,7 +89,7 @@ pub const Bar = struct
     try logger.writeByte ('\n');
   }
 
-  pub fn render (self: *@This (), logger: *const Logger, first: bool) !bool
+  pub fn render (self: *@This (), logger: *Logger, first: bool) !bool
   {
     if (logger.cols == null) return false;
     const term_max = (logger.cols.? - 6) * 8;

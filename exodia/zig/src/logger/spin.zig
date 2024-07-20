@@ -66,7 +66,7 @@ pub const Spin = struct
     };
   }
 
-  fn chrono (self: @This (), logger: *const Logger) !u64
+  fn chrono (self: @This (), logger: *Logger) !u64
   {
     var buffer: [8] u8 = undefined;
     var now = datetime.Datetime.now ();
@@ -100,7 +100,7 @@ pub const Spin = struct
     return (days * std.time.s_per_day + sec) * ds_per_s + ns / ns_per_ds;
   }
 
-  pub fn render (self: *@This (), logger: *const Logger, first: bool) !void
+  pub fn render (self: *@This (), logger: *Logger, first: bool) !void
   {
     if (logger.cols == null) return;
     if (!first) try logger.writeByte ('\n');

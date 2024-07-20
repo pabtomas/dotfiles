@@ -10,9 +10,11 @@ const Color = index.Color;
 
 pub const Log = struct
 {
-  pub const Header = enum
+  pub const Header = enum (usize)
   {
-    ERROR, WARN, INFO, NOTE, DEBUG, TRACE, VERB, RAW,
+    const colors = [7] Color { .@"204", .@"227", .@"119", .@"81", .@"69", .@"135", .@"207", };
+
+    ERROR = 0, WARN, INFO, NOTE, DEBUG, TRACE, VERB, RAW, EMPTY,
 
     fn tag (self: @This (), logger: *const Logger) !void
     {
@@ -22,7 +24,7 @@ pub const Log = struct
       try logger.writeByte (' ');
     }
 
-    fn timestamp (self: @This (), logger: *const Logger) !void
+    fn timestamp (self: @This (), logger: *Logger) !void
     {
       if (self == .RAW) return;
       var buffer: [9] u8 = undefined;
@@ -32,30 +34,23 @@ pub const Log = struct
           .{ now.time.hour, now.time.minute, now.time.second, }));
     }
 
-    fn render (self: @This (), logger: *const Logger, message: [] const u8, first: *bool) !void
+    fn render (self: @This (), logger: *Logger, message: [] const u8) !void
     {
       try self.timestamp (logger);
-      if (first.*)
+      if (self == .EMPTY)
       {
-        first.* = false;
+        try logger.writeAll (" " ** index.level_length);
+      } else if (self != .RAW) {
         try logger.updateStyle (.{
           .foreground = switch (self)
             {
-              .ERROR => .{ .Fixed = @intFromEnum (Color.red), },
-              .WARN  => .{ .Fixed = @intFromEnum (Color.yellow), },
-              .INFO  => .{ .Fixed = @intFromEnum (Color.green), },
-              .NOTE  => .{ .Fixed = @intFromEnum (Color.cyan), },
-              .DEBUG => .{ .Fixed = @intFromEnum (Color.blue), },
-              .TRACE => .{ .Fixed = @intFromEnum (Color.purple), },
-              .VERB  => .{ .Fixed = @intFromEnum (Color.pink), },
-              .RAW   => .Default,
+              .RAW, .EMPTY => .Default,
+              else => .{ .Fixed = @intFromEnum (@This ().colors [@intFromEnum (self)]), },
             },
           .font_style = .{ .bold = true, },
         });
         try self.tag (logger);
         try logger.resetStyle ();
-      } else if (self != .RAW) {
-        try logger.writeAll (" " ** index.level_length);
       }
       try logger.writeAll (message);
       try logger.clearFromCursorToLineEnd ();
@@ -64,24 +59,24 @@ pub const Log = struct
 
   header: @This ().Header,
   message: [] const u8,
-  first: bool = true,
 
   pub fn init (request: *Request) @This ()
   {
     return .{
       .header = request.kind.log,
-      .message = request.data.?.message,
+      .message = request.data.?,
     };
   }
 
-  pub fn render (self: *@This (), logger: *const Logger) !bool
+  pub fn render (self: *@This (), logger: *Logger) !bool
   {
     var max_entry_length: usize = undefined;
 
     max_entry_length = if (logger.cols == null) self.message.len
                        else @min (logger.cols.? - index.header_length, self.message.len);
-    try self.header.render (logger, self.message [0 .. max_entry_length], &self.first);
+    try self.header.render (logger, self.message [0 .. max_entry_length]);
     self.message = self.message [max_entry_length ..];
+    if (self.header != .EMPTY and self.header != .RAW) self.header = .EMPTY;
     try logger.writeByte ('\n');
     return (self.message.len > 0);
   }
