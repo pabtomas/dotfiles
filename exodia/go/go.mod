@@ -18,8 +18,6 @@ require (
 	github.com/tiawl/exodia/logger/log v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/queue v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/request/bar v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/exodia/logger/request/buffer v0.0.0-00010101000000-000000000000 // indirect
-	github.com/tiawl/exodia/logger/request/flush v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/request/kill v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/request/log v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tiawl/exodia/logger/request/progress v0.0.0-00010101000000-000000000000 // indirect
@@ -34,10 +32,6 @@ replace github.com/tiawl/exodia/logger/request/progress => ./logger/request/prog
 replace github.com/tiawl/exodia/logger/request/log => ./logger/request/log
 
 replace github.com/tiawl/exodia/logger/request/kill => ./logger/request/kill
-
-replace github.com/tiawl/exodia/logger/request/flush => ./logger/request/flush
-
-replace github.com/tiawl/exodia/logger/request/buffer => ./logger/request/buffer
 
 replace github.com/tiawl/exodia/logger/request/bar => ./logger/request/bar
 

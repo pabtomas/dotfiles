@@ -5,8 +5,6 @@ import (
   "errors"
   "github.com/tiawl/exodia/logger/request/bar"
   "github.com/tiawl/exodia/logger/request/progress"
-  "github.com/tiawl/exodia/logger/request/buffer"
-  "github.com/tiawl/exodia/logger/request/flush"
   "github.com/tiawl/exodia/logger/request/spin"
   "github.com/tiawl/exodia/logger/request/kill"
   "github.com/tiawl/exodia/logger/request/log"
@@ -26,9 +24,8 @@ func New (id string) *Type {
 
 func (self *Type) Append (request interface {}) {
   switch request.(type) {
-    case *BarRequest.Type, *BufferRequest.Type, *FlushRequest.Type,
-         *KillRequest.Type, *LogRequest.Type, *ProgressRequest.Type,
-         *SpinRequest.Type:
+    case *BarRequest.Type, *KillRequest.Type, *LogRequest.Type,
+         *ProgressRequest.Type, *SpinRequest.Type:
       _ = self.list.PushBack (request)
     default:
       panic (errors.New ("Unknown Request type"))

@@ -17,13 +17,10 @@ import (
   "github.com/tiawl/exodia/logger/spin"
   "github.com/tiawl/exodia/logger/request/bar"
   "github.com/tiawl/exodia/logger/request/progress"
-  "github.com/tiawl/exodia/logger/request/buffer"
-  "github.com/tiawl/exodia/logger/request/flush"
   "github.com/tiawl/exodia/logger/request/spin"
   "github.com/tiawl/exodia/logger/request/kill"
   "github.com/tiawl/exodia/logger/request/log"
 )
-import "fmt"
 
 const (
   ClearCursorUntilScreenEndSeq = "J"
@@ -36,7 +33,6 @@ type Type struct {
   requests *Queue.Type
   spins *list.List
   elements map [string] *list.Element
-  buffers *list.List
   bar *Bar.Type
   looping bool
   cols int
@@ -52,7 +48,6 @@ func New (nproc int) *Type {
     requests: Queue.New ("root"),
     elements: make (map [string] *list.Element, nproc),
     spins: list.New (),
-    buffers: list.New (),
     bar: Bar.New (0),
     looping: true,
     cols: -1,
@@ -124,15 +119,6 @@ func (self *Type) Dequeue () bool {
 
 func (self *Type) BarResponse (request *BarRequest.Type) {
   self.bar = Bar.New (request.Max ())
-}
-
-func (self *Type) BufferResponse (request *BufferRequest.Type) {
-  // TODO: check Length before insert
-  fmt.Println ("TODO")
-}
-
-func (self *Type) FlushResponse (request *FlushRequest.Type) {
-  fmt.Println ("TODO")
 }
 
 func (self *Type) SpinResponse (request *SpinRequest.Type) *list.Element {
@@ -220,10 +206,6 @@ func (self *Type) ProgressResponse (request *ProgressRequest.Type) {
 func (self *Type) Response (request interface {}) bool {
   var log_rendered bool = false
   switch cast := request.(type) {
-    case *BufferRequest.Type:
-      self.BufferResponse (cast)
-    case *FlushRequest.Type:
-      self.FlushResponse (cast)
     case *SpinRequest.Type:
       self.elements [cast.Id ()] = self.SpinResponse (cast)
     case *KillRequest.Type:
@@ -307,7 +289,7 @@ func (self *Type) Deferred () {
 func (self *Type) Loop () {
   self.output.HideCursor ()
   defer self.Deferred ()
-  for self.looping || self.requests.Len () > 0 || self.bar.Running () || self.spins.Len () > 0 || self.buffers.Len () > 0 {
+  for self.looping || self.requests.Len () > 0 || self.bar.Running () || self.spins.Len () > 0 {
     self.UpdateCols ()
     if !self.Dequeue () { self.Animation () }
   }
