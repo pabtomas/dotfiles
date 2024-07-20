@@ -25,28 +25,13 @@ fn mainHandled (logger: *Logger) !void
   try logger.enqueue (.{ .kind = .{ .kill = "cache3", }, .data = null, });
   std.time.sleep (1_000_000_000);
   try logger.enqueue (.{ .kind = .{ .kill = "cache2", }, .data = null, });
-  try logger.enqueue (.{ .kind = .{ .bar = 100, }, .data = null, });
+  try logger.enqueue (.{ .kind = .{ .bar = 10, }, .data = null, });
   var xoshiro = std.rand.DefaultPrng.init (0);
   var rand = xoshiro.random ();
-  for (0 .. 100) |_| {
+  for (0 .. 10) |_| {
     std.time.sleep (100_000_000 * (rand.uintAtMost (u32, 8) + 1));
     try logger.enqueue (.{ .kind = .{ .progress = {}, }, .data = null, });
   }
-}
-
-fn spawn (wg: *std.Thread.WaitGroup, comptime func: anytype, args: anytype) !void
-{
-  const Spawner = struct
-  {
-    fn run (wg_inner: *std.Thread.WaitGroup, args_inner: @TypeOf (args)) !void
-    {
-      defer wg_inner.finish ();
-      try @call (.auto, func, args_inner);
-    }
-  };
-
-  wg.start ();
-  _ = try std.Thread.spawn (.{}, Spawner.run, .{ wg, args, });
 }
 
 fn mainWith (allocator: *const std.mem.Allocator) !void
@@ -60,13 +45,23 @@ fn mainWith (allocator: *const std.mem.Allocator) !void
   var logger = try Logger.init (@intCast (nproc), allocator, &stderr);
 
   // TODO: parse options
-  // TODO: ThreadPool
 
-  var tasks = std.Thread.WaitGroup {};
-  try spawn (&tasks, Logger.loop, .{ &logger, });
+  var tasks: std.Thread.WaitGroup = .{};
+  tasks.reset ();
+
+  var pool: std.Thread.Pool = undefined;
+  try pool.init (std.Thread.Pool.Options {
+    .allocator = allocator.*,
+    .n_jobs = @intCast (nproc),
+  });
+  // pool.spawnWg (&tasks, Httpfunction, .{ arg1, arg2, });
+
+  const logger_thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
   defer {
     logger.deinit ();
-    tasks.wait ();
+    pool.waitAndWork (&tasks);
+    logger_thread.join ();
+    pool.deinit ();
   }
 
   mainHandled (&logger) catch |err|
