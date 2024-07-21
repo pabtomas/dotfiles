@@ -8,7 +8,7 @@ const jdz = index.jdz;
 const JdzGlobalAllocator = jdz.JdzGlobalAllocator (.{});
 const termsize = index.termsize;
 
-const Log = index.Log;
+pub const Log = index.Log;
 const Queue = index.Queue;
 const Request = index.Request;
 const Spin = index.Spin;
@@ -23,13 +23,22 @@ fn returnType (comptime name: [] const [] const u8) type
 
 pub const StdErr = struct
 {
-  buffer: std.io.BufferedWriter (4096, std.fs.File.Writer),
-  writer: std.io.BufferedWriter (4096, std.fs.File.Writer).Writer,
+  const size = 4096;
+  buffer: std.io.BufferedWriter (size, std.fs.File.Writer),
+  writer: std.io.BufferedWriter (size, std.fs.File.Writer).Writer,
+
+  pub fn format (_: @This (), comptime _: [] const u8, _: std.fmt.FormatOptions, writer: anytype) !void
+  {
+    try writer.print ("{s}{c} ", .{ @typeName (@This ()), '{', });
+    inline for (@typeInfo (@This ()).Struct.fields, 0 ..) |field, i|
+      try writer.print (".{s} = {s}{s} ", .{ field.name, @typeName (field.type),
+        if (i < @typeInfo (@This ()).Struct.fields.len - 1) "," else "", });
+    try writer.print ("{c}", .{ '}', });
+  }
 };
 
 pub const Logger = struct
 {
-
   mutex: std.Thread.Mutex = .{},
   requests: Queue,
   spins: std.StringHashMap (*std.DoublyLinkedList (Spin).Node),
@@ -38,9 +47,11 @@ pub const Logger = struct
   allocator: *const std.mem.Allocator,
   looping: bool,
   cols: ?u16,
+  log_level: Log.Header,
   stderr: *StdErr,
+  nproc: usize,
 
-  pub fn init (nproc: u32, allocator: *const std.mem.Allocator, stderr: *StdErr) !@This ()
+  pub fn init (nproc: usize, allocator: *const std.mem.Allocator, stderr: *StdErr) !@This ()
   {
     var self: @This () = .{
       .requests  = Queue.init ("root"),
@@ -49,15 +60,24 @@ pub const Logger = struct
       .allocator = allocator,
       .looping   = true,
       .cols      = if (std.io.getStdErr ().supportsAnsiEscapeCodes ()) 0 else null,
+      .log_level = .INFO,
       .stderr    = stderr,
+      .nproc     = nproc,
     };
-    try self.spins.ensureTotalCapacity (nproc);
+    try self.spins.ensureTotalCapacity (@intCast (nproc));
     return self;
   }
 
   pub fn deinit (self: *@This ()) void
   {
     self.looping = false;
+  }
+
+  pub fn setLogLevel (self: *@This (), log_level: Log.Header) void
+  {
+    self.mutex.lock ();
+    defer self.mutex.unlock ();
+    self.log_level = log_level;
   }
 
   pub fn enqueue (self: *@This (), request: Request) !void
@@ -83,6 +103,12 @@ pub const Logger = struct
     return @call (.auto, @field (ptr, name [name.len - 1]), args);
   }
 
+  pub fn enqueueObject (self: *@This (), comptime T: type, obj: *const T, obj_name: [] const u8, allocator: *const std.mem.Allocator) !void
+  {
+    inline for (@typeInfo (@TypeOf (obj.*)).Struct.fields) |field|
+      try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try std.fmt.allocPrint (allocator.*, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), }), });
+  }
+
   fn dequeue (self: *@This ()) !bool
   {
     if (!self.mutex.tryLock ()) return false;
@@ -96,10 +122,11 @@ pub const Logger = struct
     return log_rendered;
   }
 
-  fn logResponse (self: *@This (), request: *Request) !void
+  fn logResponse (self: *@This (), request: *Request) !bool
   {
     std.debug.assert (std.meta.activeTag (request.kind) == Request.Kind.log);
     std.debug.assert (request.data != null);
+    if (request.kind.log != .RAW and request.kind.log.gt (self.log_level)) return false;
     var log = Log.init (request);
     var looping = true;
 
@@ -108,6 +135,7 @@ pub const Logger = struct
       looping = try log.render (self);
       try self.animation ();
     }
+    return true;
   }
 
   fn spinResponse (self: *@This (), request: *Request) !void
@@ -156,10 +184,7 @@ pub const Logger = struct
       .kill     => self.killResponse (request),
       .bar      => self.barResponse (request),
       .progress => self.progressResponse (),
-      .log      => {
-                     try self.logResponse (request);
-                     log_rendered = true;
-                   },
+      .log      => log_rendered = try self.logResponse (request),
     }
     return log_rendered;
   }

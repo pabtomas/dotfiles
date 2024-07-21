@@ -24,6 +24,40 @@ pub const Log = struct
       try logger.writeByte (' ');
     }
 
+    pub fn incr (self: @This ()) @This ()
+    {
+      std.debug.assert (self != .VERB);
+      std.debug.assert (self != .EMPTY);
+      std.debug.assert (self != .RAW);
+      return @enumFromInt (@intFromEnum (self) + 1);
+    }
+
+    pub fn decr (self: @This ()) @This ()
+    {
+      std.debug.assert (self != .ERROR);
+      std.debug.assert (self != .EMPTY);
+      std.debug.assert (self != .RAW);
+      return @enumFromInt (@intFromEnum (self) - 1);
+    }
+
+    pub fn lt (self: @This (), other: @This ()) bool
+    {
+      std.debug.assert (self != .EMPTY);
+      std.debug.assert (self != .RAW);
+      std.debug.assert (other != .EMPTY);
+      std.debug.assert (other != .RAW);
+      return @intFromEnum (self) < @intFromEnum (other);
+    }
+
+    pub fn gt (self: @This (), other: @This ()) bool
+    {
+      std.debug.assert (self != .EMPTY);
+      std.debug.assert (self != .RAW);
+      std.debug.assert (other != .EMPTY);
+      std.debug.assert (other != .RAW);
+      return @intFromEnum (self) > @intFromEnum (other);
+    }
+
     fn timestamp (self: @This (), logger: *Logger) !void
     {
       if (self == .RAW) return;
