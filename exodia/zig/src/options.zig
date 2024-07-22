@@ -1,8 +1,8 @@
 const std = @import ("std");
 
-const logger_module = @import ("logger");
-const Logger = logger_module.Logger;
-const Log = logger_module.Log;
+const logger_zig = @import ("logger/logger.zig");
+const Logger = logger_zig.Logger;
+const Log = logger_zig.Log;
 
 pub const Options = struct
 {
@@ -145,10 +145,8 @@ pub const Options = struct
     arg.* = first.*.data;
   }
 
-  pub fn parse (allocator: *const std.mem.Allocator, logger: *Logger) !@This ()
+  pub fn parse (allocator: *const std.mem.Allocator, it: anytype, logger: *Logger) !@This ()
   {
-    var it = try std.process.argsWithAllocator (allocator.*);
-
     var list: std.DoublyLinkedList ([] const u8) = .{};
     var node: *std.DoublyLinkedList ([] const u8).Node = undefined;
 
@@ -184,3 +182,27 @@ pub const Options = struct
     return self;
   }
 };
+
+const TestIterator = struct
+{
+  sequence: [] const [:0] const u8,
+  index: usize = 0,
+
+  pub fn init (items: [] const [:0] const u8) @This ()
+  {
+    return .{ .sequence = items, };
+  }
+
+  pub fn next (self: *@This()) ?[:0] const u8
+  {
+    if (self.index >= self.sequence.len) return null;
+    const result = self.sequence [self.index];
+    self.index = self.index + 1;
+    return result;
+  }
+};
+
+test "unit:parse"
+{
+  std.debug.print ("TODO\n", .{});
+}

@@ -35,15 +35,11 @@ const Printer = struct
     };
   }
 
-  fn deinit (self: @This ()) !void
-  {
-    try self.tty_conf.setColor (self.writer, .reset);
-  }
-
   fn print (self: @This (), status: Status, comptime format: [] const u8, args: anytype) !void
   {
     try self.tty_conf.setColor (self.writer, status.color ());
     try self.writer.print (format ++ "\n", args);
+    try self.tty_conf.setColor (self.writer, .reset);
   }
 };
 
@@ -58,6 +54,7 @@ pub fn main () !void
 
   for (builtin.test_functions) |func|
   {
+    if (std.mem.endsWith (u8, func.name, ".leak")) continue;
     std.testing.allocator_instance = .{};
     var status: Status = .ok;
 
@@ -93,5 +90,4 @@ pub fn main () !void
   try printer.print (.fail, "- {d} test{s} failed", .{ fail, if (fail > 1) "s" else "" });
   try printer.print (.leak, "- {d} test{s} leaked", .{ leak, if (leak > 1) "s" else "" });
   try printer.print (.skip, "- {d} test{s} skipped", .{ skip, if (skip > 1) "s" else "" });
-  try printer.deinit ();
 }

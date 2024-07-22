@@ -1,10 +1,10 @@
 const std = @import ("std");
 
-const index = @import ("index");
+const index = @import ("index.zig");
 
-const datetime = index.datetime;
+const datetime = @import ("datetime").datetime;
 
-const Logger = index.Logger;
+const Stream = index.Stream;
 const Color = index.Color;
 
 const patterns: [34][] const u8 = .{
@@ -66,7 +66,7 @@ pub const Spin = struct
     };
   }
 
-  fn chrono (self: @This (), logger: *Logger) !u64
+  fn chrono (self: @This (), stream: *Stream) !u64
   {
     var buffer: [8] u8 = undefined;
     var now = datetime.Datetime.now ();
@@ -75,7 +75,7 @@ pub const Spin = struct
     const sec: u64 = @intCast (delta.seconds);
     const days: u64 = @intCast (delta.days);
 
-    try logger.writeAll (
+    try stream.writeAll (
       if (days == 0 and sec < 10)
         try std.fmt.bufPrint (&buffer, "    {d}.{d:0>2}",
           .{ sec, ns / ns_per_cs, })
@@ -100,27 +100,27 @@ pub const Spin = struct
     return (days * std.time.s_per_day + sec) * ds_per_s + ns / ns_per_ds;
   }
 
-  pub fn render (self: *@This (), logger: *Logger, first: bool) !void
+  pub fn render (self: *@This (), stream: *Stream, first: bool) !void
   {
-    if (logger.cols == null) return;
-    if (!first) try logger.writeByte ('\n');
-    try logger.updateStyle (.{
+    if (stream.cols == null) return;
+    if (!first) try stream.writeByte ('\n');
+    try stream.updateStyle (.{
       .foreground = .{ .Fixed = @intFromEnum (Color.white), },
       .font_style = .{ .bold = true, },
     });
-    const elapsed_ds = try self.chrono (logger);
-    try logger.updateStyle (.{
+    const elapsed_ds = try self.chrono (stream);
+    try stream.updateStyle (.{
       .foreground = .{ .Fixed = colors [(elapsed_ds / 5) % colors.len], },
       .font_style = .{ .bold = true, },
     });
-    try logger.writeAll (patterns [elapsed_ds % (patterns.len)]);
-    try logger.updateStyle (.{
+    try stream.writeAll (patterns [elapsed_ds % (patterns.len)]);
+    try stream.updateStyle (.{
       .foreground = .{ .Fixed = @intFromEnum (Color.white), },
       .font_style = .{ .bold = true, },
     });
-    const max_entry_length = logger.cols.? - index.header_length;
-    try logger.writeAll (self.message [0 .. @min (self.message.len, max_entry_length)]);
-    try logger.resetStyle ();
-    try logger.clearFromCursorToLineEnd ();
+    const max_entry_length = stream.cols.? - index.header_length;
+    try stream.writeAll (self.message [0 .. @min (self.message.len, max_entry_length)]);
+    try stream.resetStyle ();
+    try stream.clearFromCursorToLineEnd ();
   }
 };

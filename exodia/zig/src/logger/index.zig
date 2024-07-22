@@ -1,17 +1,16 @@
-pub const ansiterm = @import ("ansiterm");
-pub const datetime = @import ("datetime").datetime;
-pub const jdz = @import ("jdz");
-pub const termsize = @import ("termsize");
-
-pub const logger = @import ("logger");
-pub const Logger = logger.Logger;
-pub const StdErr = logger.StdErr;
-pub const Log = @import ("log").Log;
-pub const Queue = @import ("queue").Queue;
-pub const Request = @import ("request").Request;
-pub const Spin = @import ("spin").Spin;
-pub const Bar = @import ("bar").Bar;
-pub const Color = @import ("color").Color;
+pub const stream = @import ("stream.zig");
+pub const Stream = stream.Stream;
+pub const log = @import ("log.zig");
+pub const Log = log.Log;
+pub const queue = @import ("queue.zig");
+pub const Queue = queue.Queue;
+pub const request = @import ("request.zig");
+pub const Request = request.Request;
+pub const spin = @import ("spin.zig");
+pub const Spin = spin.Spin;
+pub const bar = @import ("bar.zig");
+pub const Bar = bar.Bar;
+pub const Color = @import ("color.zig").Color;
 
 pub const space: u16 = 1;
 pub const time_length: u16 = 8 + space;

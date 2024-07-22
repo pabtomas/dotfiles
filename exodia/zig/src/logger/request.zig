@@ -1,6 +1,6 @@
 const std = @import ("std");
 
-const index = @import ("index");
+const index = @import ("index.zig");
 const Log = index.Log;
 
 pub const Request = struct

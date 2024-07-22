@@ -1,10 +1,10 @@
 const std = @import ("std");
 
-const index = @import ("index");
+const index = @import ("index.zig");
 
-const datetime = index.datetime;
+const datetime = @import ("datetime").datetime;
 
-const Logger = index.Logger;
+const Stream = index.Stream;
 const Request = index.Request;
 const Color = index.Color;
 
@@ -16,12 +16,12 @@ pub const Log = struct
 
     ERROR = 0, WARN, INFO, NOTE, DEBUG, TRACE, VERB, RAW, EMPTY,
 
-    fn tag (self: @This (), logger: *const Logger) !void
+    fn tag (self: @This (), stream: *const Stream) !void
     {
       if (@tagName (self).len < 4) return;
-      if (@tagName (self).len < 5) try logger.writeByte (' ');
-      try logger.writeAll (@tagName (self));
-      try logger.writeByte (' ');
+      if (@tagName (self).len < 5) try stream.writeByte (' ');
+      try stream.writeAll (@tagName (self));
+      try stream.writeByte (' ');
     }
 
     pub fn incr (self: @This ()) @This ()
@@ -58,24 +58,24 @@ pub const Log = struct
       return @intFromEnum (self) > @intFromEnum (other);
     }
 
-    fn timestamp (self: @This (), logger: *Logger) !void
+    fn timestamp (self: @This (), stream: *Stream) !void
     {
       if (self == .RAW) return;
       var buffer: [9] u8 = undefined;
       const now = datetime.Datetime.now ();
-      try logger.writeAll (
+      try stream.writeAll (
         try std.fmt.bufPrint (&buffer, "{d:0>2}:{d:0>2}:{d:0>2} ",
           .{ now.time.hour, now.time.minute, now.time.second, }));
     }
 
-    fn render (self: @This (), logger: *Logger, message: [] const u8) !void
+    fn render (self: @This (), stream: *Stream, message: [] const u8) !void
     {
-      try self.timestamp (logger);
+      try self.timestamp (stream);
       if (self == .EMPTY)
       {
-        try logger.writeAll (" " ** index.level_length);
+        try stream.writeAll (" " ** index.level_length);
       } else if (self != .RAW) {
-        try logger.updateStyle (.{
+        try stream.updateStyle (.{
           .foreground = switch (self)
             {
               .RAW, .EMPTY => .Default,
@@ -83,11 +83,11 @@ pub const Log = struct
             },
           .font_style = .{ .bold = true, },
         });
-        try self.tag (logger);
-        try logger.resetStyle ();
+        try self.tag (stream);
+        try stream.resetStyle ();
       }
-      try logger.writeAll (message);
-      try logger.clearFromCursorToLineEnd ();
+      try stream.writeAll (message);
+      try stream.clearFromCursorToLineEnd ();
     }
   };
 
@@ -102,16 +102,16 @@ pub const Log = struct
     };
   }
 
-  pub fn render (self: *@This (), logger: *Logger) !bool
+  pub fn render (self: *@This (), stream: *Stream) !bool
   {
     var max_entry_length: usize = undefined;
 
-    max_entry_length = if (logger.cols == null) self.message.len
-                       else @min (logger.cols.? - index.header_length, self.message.len);
-    try self.header.render (logger, self.message [0 .. max_entry_length]);
+    max_entry_length = if (stream.cols == null) self.message.len
+                       else @min (stream.cols.? - index.header_length, self.message.len);
+    try self.header.render (stream, self.message [0 .. max_entry_length]);
     self.message = self.message [max_entry_length ..];
     if (self.header != .EMPTY and self.header != .RAW) self.header = .EMPTY;
-    try logger.writeByte ('\n');
+    try stream.writeByte ('\n');
     return (self.message.len > 0);
   }
 };

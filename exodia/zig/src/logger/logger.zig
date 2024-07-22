@@ -1,14 +1,12 @@
 const root = @This ();
 const std = @import ("std");
 
-const index = @import ("index");
-
-const ansiterm = index.ansiterm;
-const jdz = index.jdz;
+const jdz = @import ("jdz");
 const JdzGlobalAllocator = jdz.JdzGlobalAllocator (.{});
-const termsize = index.termsize;
 
+const index = @import ("index.zig");
 pub const Log = index.Log;
+pub const Stream = index.Stream;
 const Queue = index.Queue;
 const Request = index.Request;
 const Spin = index.Spin;
@@ -21,22 +19,6 @@ fn returnType (comptime name: [] const [] const u8) type
   return (@typeInfo (@TypeOf (@field (ptr, name [name.len - 1]))).Fn.return_type orelse void);
 }
 
-pub const StdErr = struct
-{
-  const size = 4096;
-  buffer: std.io.BufferedWriter (size, std.fs.File.Writer),
-  writer: std.io.BufferedWriter (size, std.fs.File.Writer).Writer,
-
-  pub fn format (_: @This (), comptime _: [] const u8, _: std.fmt.FormatOptions, writer: anytype) !void
-  {
-    try writer.print ("{s}{c} ", .{ @typeName (@This ()), '{', });
-    inline for (@typeInfo (@This ()).Struct.fields, 0 ..) |field, i|
-      try writer.print (".{s} = {s}{s} ", .{ field.name, @typeName (field.type),
-        if (i < @typeInfo (@This ()).Struct.fields.len - 1) "," else "", });
-    try writer.print ("{c}", .{ '}', });
-  }
-};
-
 pub const Logger = struct
 {
   mutex: std.Thread.Mutex = .{},
@@ -46,12 +28,11 @@ pub const Logger = struct
   bar: Bar,
   allocator: *const std.mem.Allocator,
   looping: bool,
-  cols: ?u16,
   log_level: Log.Header,
-  stderr: *StdErr,
+  stream: *Stream,
   nproc: usize,
 
-  pub fn init (nproc: usize, allocator: *const std.mem.Allocator, stderr: *StdErr) !@This ()
+  pub fn init (nproc: usize, allocator: *const std.mem.Allocator, stream: *Stream) !@This ()
   {
     var self: @This () = .{
       .requests  = Queue.init ("root"),
@@ -59,9 +40,8 @@ pub const Logger = struct
       .bar       = Bar.init (0),
       .allocator = allocator,
       .looping   = true,
-      .cols      = if (std.io.getStdErr ().supportsAnsiEscapeCodes ()) 0 else null,
       .log_level = .INFO,
-      .stderr    = stderr,
+      .stream    = stream,
       .nproc     = nproc,
     };
     try self.spins.ensureTotalCapacity (@intCast (nproc));
@@ -105,8 +85,14 @@ pub const Logger = struct
 
   pub fn enqueueObject (self: *@This (), comptime T: type, obj: *const T, obj_name: [] const u8, allocator: *const std.mem.Allocator) !void
   {
-    inline for (@typeInfo (@TypeOf (obj.*)).Struct.fields) |field|
-      try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try std.fmt.allocPrint (allocator.*, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), }), });
+    var buf: [4096 * 1024] u8 = undefined;
+    if (self.log_level == .VERB)
+    {
+      inline for (@typeInfo (@TypeOf (obj.*)).Struct.fields) |field|
+        try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try allocator.dupe (u8, try std.fmt.bufPrint (&buf, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), })), });
+        // This failed with unwrapped error.NoSpaceLeft:
+        // try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try std.fmt.allocPrint (allocator, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), }), });
+    }
   }
 
   fn dequeue (self: *@This ()) !bool
@@ -132,7 +118,7 @@ pub const Logger = struct
 
     while (looping)
     {
-      looping = try log.render (self);
+      looping = try log.render (self.stream);
       try self.animation ();
     }
     return true;
@@ -195,22 +181,17 @@ pub const Logger = struct
     var it = self.nodes.first;
     while (it) |node| : (it = node.next)
     {
-      try node.data.render (self, !spin_rendered);
+      try node.data.render (self.stream, !spin_rendered);
       spin_rendered = true;
     }
-    const bar_rendered = try self.bar.render (self, !spin_rendered);
-    try self.clearFromCursorToScreenEnd ();
+    const bar_rendered = try self.bar.render (self.stream, !spin_rendered);
+    try self.stream.clearFromCursorToScreenEnd ();
     for (0 .. self.spins.count ()) |i|
-      if (i == 0) try self.cursorStartLine () else try self.cursorPreviousLine ();
+      if (i == 0) try self.stream.cursorStartLine () else try self.stream.cursorPreviousLine ();
     if (bar_rendered) for (0 .. 3) |i|
-      if (!spin_rendered and i == 0) try self.cursorStartLine ()
-      else try self.cursorPreviousLine ();
-    try self.stderr.buffer.flush (); // don't forget to flush!
-  }
-
-  fn updateCols (self: *@This ()) !void
-  {
-    if (self.cols != null) self.cols = (try termsize.termSize (std.io.getStdErr ())).?.width;
+      if (!spin_rendered and i == 0) try self.stream.cursorStartLine ()
+      else try self.stream.cursorPreviousLine ();
+    try self.stream.flush (); // don't forget to flush!
   }
 
   pub fn loop (self: *@This ()) !void
@@ -220,64 +201,14 @@ pub const Logger = struct
       self.spins.deinit ();
       JdzGlobalAllocator.deinitThread ();
     }
-    try self.hideCursor ();
+    try self.stream.hideCursor ();
     while (self.looping or self.requests.list.len > 0 or self.bar.running or self.spins.count () > 0)
     {
-      try self.updateCols ();
+      try self.stream.updateCols ();
       if (!try self.dequeue ()) try self.animation ();
     }
-    try self.clearFromCursorToScreenEnd ();
-    try self.showCursor ();
-    try self.stderr.buffer.flush (); // don't forget to flush!
-  }
-
-  pub fn clearFromCursorToLineEnd (self: @This ()) !void
-  {
-    if (self.cols != null) try ansiterm.clear.clearFromCursorToLineEnd (self.stderr.writer);
-  }
-
-  fn clearFromCursorToScreenEnd (self: @This ()) !void
-  {
-    if (self.cols != null) try ansiterm.clear.clearFromCursorToScreenEnd (self.stderr.writer);
-  }
-
-  fn showCursor (self: @This ()) !void
-  {
-    if (self.cols != null) try ansiterm.cursor.showCursor (self.stderr.writer);
-  }
-
-  fn hideCursor (self: @This ()) !void
-  {
-    if (self.cols != null) try ansiterm.cursor.hideCursor (self.stderr.writer);
-  }
-
-  fn cursorStartLine (self: @This ()) !void
-  {
-    if (self.cols != null) try ansiterm.cursor.setCursorColumn (self.stderr.writer, 0);
-  }
-
-  fn cursorPreviousLine (self: @This ()) !void
-  {
-    if (self.cols != null) try ansiterm.cursor.cursorPreviousLine (self.stderr.writer, 1);
-  }
-
-  pub fn updateStyle (self: @This (), style: ansiterm.style.Style) !void
-  {
-    if (self.cols != null) try ansiterm.format.updateStyle (self.stderr.writer, style, null);
-  }
-
-  pub fn resetStyle (self: @This ()) !void
-  {
-    if (self.cols != null) try ansiterm.format.resetStyle (self.stderr.writer);
-  }
-
-  pub fn writeAll (self: @This (), str: [] const u8) !void
-  {
-    try self.stderr.writer.writeAll (str);
-  }
-
-  pub fn writeByte (self: @This (), byte: u8) !void
-  {
-    try self.stderr.writer.writeByte (byte);
+    try self.stream.clearFromCursorToScreenEnd ();
+    try self.stream.showCursor ();
+    try self.stream.flush (); // don't forget to flush!
   }
 };
