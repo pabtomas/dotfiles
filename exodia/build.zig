@@ -5,15 +5,15 @@ var datetime: *std.Build.Module = undefined;
 var jdz: *std.Build.Module = undefined;
 var termsize: *std.Build.Module = undefined;
 
-fn import (step: *std.Build.Step.Compile) void
+fn import (module: *std.Build.Module) void
 {
-  step.root_module.addImport ("ansiterm", ansiterm);
-  step.root_module.addImport ("datetime", datetime);
-  step.root_module.addImport ("jdz", jdz);
-  step.root_module.addImport ("termsize", termsize);
+  module.addImport ("ansiterm", ansiterm);
+  module.addImport ("datetime", datetime);
+  module.addImport ("jdz", jdz);
+  module.addImport ("termsize", termsize);
 }
 
-fn module (builder: *std.Build, target: *const std.Build.ResolvedTarget,
+fn getModule (builder: *std.Build, target: *const std.Build.ResolvedTarget,
   optimize: *const std.builtin.OptimizeMode, name: [] const u8) *std.Build.Module
 {
   return builder.dependency (name, .{
@@ -27,10 +27,10 @@ pub fn build (builder: *std.Build) !void
   const target = builder.standardTargetOptions (.{});
   const optimize = std.builtin.OptimizeMode.Debug;
 
-  ansiterm = module (builder, &target, &optimize, "ansi-term");
-  termsize = module (builder, &target, &optimize, "termsize");
-  datetime = module (builder, &target, &optimize, "zig-datetime");
-  jdz = module (builder, &target, &optimize, "jdz_allocator");
+  ansiterm = getModule (builder, &target, &optimize, "ansi-term");
+  termsize = getModule (builder, &target, &optimize, "termsize");
+  datetime = getModule (builder, &target, &optimize, "zig-datetime");
+  jdz = getModule (builder, &target, &optimize, "jdz_allocator");
 
   const exodia = builder.addExecutable (.{
     .name = "exodia",
@@ -40,13 +40,13 @@ pub fn build (builder: *std.Build) !void
     .optimize = optimize,
   });
 
-  import (exodia);
+  import (&exodia.root_module);
 
   const leak_tests = builder.addTest (.{
     .target = target,
     .optimize = optimize,
     .test_runner = .{ .cwd_relative = try builder.build_root.join (builder.allocator,
-      &.{ "src", "runners", "leak.zig", }), },
+      &.{ "src", "runner.zig", }), },
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
       builder.allocator, &.{ "src", "main.zig", }), },
   });
@@ -58,15 +58,23 @@ pub fn build (builder: *std.Build) !void
   const leak_step = builder.step ("leak", "Run memory checker");
   leak_step.dependOn (&run_leak_tests.step);
 
-  import (leak_tests);
+  import (&leak_tests.root_module);
+
+  const unit_module = builder.createModule (.{
+    .target = target,
+    .optimize = optimize,
+    .root_source_file = .{ .cwd_relative = try builder.build_root.join (
+      builder.allocator, &.{ "src", "unit.index.zig", }), },
+  });
+  import (unit_module);
 
   const unit_tests = builder.addTest (.{
     .target = target,
     .optimize = optimize,
     .test_runner = .{ .cwd_relative = try builder.build_root.join (builder.allocator,
-      &.{ "src", "runners", "unit.zig", }), },
+      &.{ "src", "runner.zig", }), },
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
-      builder.allocator, &.{ "src", "main.zig", }), },
+      builder.allocator, &.{ "src", "unit.zig", }), },
   });
   unit_tests.step.dependOn (builder.getInstallStep ());
 
@@ -75,7 +83,7 @@ pub fn build (builder: *std.Build) !void
   const unit_step = builder.step ("unit", "Run unit tests");
   unit_step.dependOn (&run_unit_tests.step);
 
-  import (unit_tests);
+  unit_tests.root_module.addImport ("index", unit_module);
 
   builder.installArtifact (exodia);
 }

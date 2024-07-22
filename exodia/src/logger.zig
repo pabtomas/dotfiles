@@ -4,13 +4,13 @@ const std = @import ("std");
 const jdz = @import ("jdz");
 const JdzGlobalAllocator = jdz.JdzGlobalAllocator (.{});
 
-const index = @import ("index.zig");
-pub const Log = index.Log;
-pub const Stream = index.Stream;
-const Queue = index.Queue;
-const Request = index.Request;
-const Spin = index.Spin;
-const Bar = index.Bar;
+const index_zig = @import ("logger/index.zig");
+pub const Log = index_zig.Log;
+pub const Stream = index_zig.Stream;
+const Queue = index_zig.Queue;
+const Request = index_zig.Request;
+const Spin = index_zig.Spin;
+const Bar = index_zig.Bar;
 
 fn returnType (comptime name: [] const [] const u8) type
 {
@@ -216,8 +216,3 @@ pub const Logger = struct
     try self.stream.flush (); // don't forget to flush!
   }
 };
-
-test "unit:TODO"
-{
-  _ = 0;
-}

@@ -54,7 +54,6 @@ pub fn main () !void
 
   for (builtin.test_functions) |func|
   {
-    if (std.mem.endsWith (u8, func.name, ".leak")) continue;
     std.testing.allocator_instance = .{};
     var status: Status = .ok;
 

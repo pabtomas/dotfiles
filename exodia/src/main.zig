@@ -4,7 +4,7 @@ const datetime = @import ("datetime").datetime;
 const jdz = @import ("jdz");
 const JdzGlobalAllocator = jdz.JdzGlobalAllocator (.{});
 
-const logger_zig = @import ("logger/logger.zig");
+const logger_zig = @import ("logger.zig");
 const Logger = logger_zig.Logger;
 const Stream = logger_zig.Stream;
 const Options = @import ("options.zig").Options;
@@ -126,15 +126,4 @@ test "leak"
 {
   const allocator = std.testing.allocator;
   try init (&allocator);
-}
-
-const unit = struct
-{
-  pub const logger = @import ("logger/logger.zig");
-  pub const options = @import ("options.zig");
-};
-
-comptime
-{
-  std.testing.refAllDeclsRecursive (unit);
 }
