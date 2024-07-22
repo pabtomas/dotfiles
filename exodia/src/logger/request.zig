@@ -17,4 +17,5 @@ pub const Request = struct
 
   kind: @This ().Kind,
   data: ?[] const u8,
+  allocated: bool,
 };

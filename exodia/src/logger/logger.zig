@@ -50,6 +50,13 @@ pub const Logger = struct
 
   pub fn deinit (self: *@This ()) void
   {
+    self.requests.deinit (self.allocator);
+    self.spins.deinit ();
+    JdzGlobalAllocator.deinitThread ();
+  }
+
+  pub fn stop (self: *@This ()) void
+  {
     self.looping = false;
   }
 
@@ -67,7 +74,7 @@ pub const Logger = struct
     try self.requests.append (self.allocator, request);
   }
 
-  pub fn enqueueTrace (self: *@This (), comptime name: [] const [] const u8, args: anytype, comptime src: std.builtin.SourceLocation) !returnType (name)
+  pub fn call (self: *@This (), comptime name: [] const [] const u8, args: anytype, comptime src: std.builtin.SourceLocation) !returnType (name)
   {
     comptime var ptr = root;
     comptime var buf: [] const u8 = std.fmt.comptimePrint ("[{s}:{d} in \"{s}\"] ", .{ src.file, src.line, src.fn_name, });
@@ -79,19 +86,19 @@ pub const Logger = struct
     buf = buf ++ name [name.len - 1] ++ " (";
     inline for (0 .. args.len - 1) |i| buf = buf ++ std.fmt.comptimePrint ("{any}, ", .{args[i]});
     buf = buf ++ std.fmt.comptimePrint ("{any})", .{ args [args.len - 1], });
-    try self.enqueue (.{ .kind = .{ .log = .TRACE, }, .data = buf, });
+    try self.enqueue (.{ .kind = .{ .log = .TRACE, }, .data = buf, .allocated = false, });
     return @call (.auto, @field (ptr, name [name.len - 1]), args);
   }
 
-  pub fn enqueueObject (self: *@This (), comptime T: type, obj: *const T, obj_name: [] const u8, allocator: *const std.mem.Allocator) !void
+  pub fn enqueueObject (self: *@This (), comptime T: type, obj: *const T, obj_name: [] const u8) !void
   {
     var buf: [4096 * 1024] u8 = undefined;
     if (self.log_level == .VERB)
     {
       inline for (@typeInfo (@TypeOf (obj.*)).Struct.fields) |field|
-        try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try allocator.dupe (u8, try std.fmt.bufPrint (&buf, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), })), });
+        try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try self.allocator.dupe (u8, try std.fmt.bufPrint (&buf, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), })), .allocated = true, });
         // This failed with unwrapped error.NoSpaceLeft:
-        // try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try std.fmt.allocPrint (allocator, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), }), });
+        // try self.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try std.fmt.allocPrint (self.allocator.*, "{s}.{s} = {any}", .{ obj_name, field.name, @field (obj.*, field.name), }), .allocated = true, });
     }
   }
 
@@ -100,9 +107,10 @@ pub const Logger = struct
     if (!self.mutex.tryLock ()) return false;
     defer self.mutex.unlock ();
     var log_rendered = false;
-    while (self.requests.list.popFirst ()) |request|
+    while (self.requests.popFirst ()) |request|
     {
       log_rendered = try self.response (&request.data) or log_rendered;
+      if (request.data.allocated) self.allocator.free (request.data.data.?);
       self.allocator.destroy (request);
     }
     return log_rendered;
@@ -196,11 +204,7 @@ pub const Logger = struct
 
   pub fn loop (self: *@This ()) !void
   {
-    defer
-    {
-      self.spins.deinit ();
-      JdzGlobalAllocator.deinitThread ();
-    }
+    defer self.deinit ();
     try self.stream.hideCursor ();
     while (self.looping or self.requests.list.len > 0 or self.bar.running or self.spins.count () > 0)
     {
@@ -212,3 +216,8 @@ pub const Logger = struct
     try self.stream.flush (); // don't forget to flush!
   }
 };
+
+test "unit:TODO"
+{
+  _ = 0;
+}

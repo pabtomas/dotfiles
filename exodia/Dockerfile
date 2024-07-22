@@ -11,8 +11,6 @@ RUN <<END_OF_RUN
     https_proxy="${HTTPS_PROXY:-}"
     export http_proxy https_proxy
 
-    apk add --no-cache git make findutils musl-dev go
-
     xz="zig-linux-$(arch)-0.13.0.tar.xz"
     tmp_xz="/tmp/${xz}"
     tmp_zig='/tmp/zig'
