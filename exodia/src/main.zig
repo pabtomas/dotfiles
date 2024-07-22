@@ -43,7 +43,7 @@ fn run (allocator: *const std.mem.Allocator, logger: *Logger, opts: *const Optio
     pool.deinit ();
   }
 
-  try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = "A error message", .allocated = false, });
+  try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = "An error message", .allocated = false, });
   try logger.enqueue (.{ .kind = .{ .log = .WARN, }, .data = "A warning message", .allocated = false, });
   try logger.enqueue (.{ .kind = .{ .log = .RAW, }, .data = "A raw message", .allocated = false, });
   try logger.enqueue (.{ .kind = .{ .log = .INFO, }, .data = "A very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long info message", .allocated = false, });

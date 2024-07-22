@@ -8,11 +8,12 @@ pub const Options = @import ("options.zig").Options;
 
 pub fn prepare (logger: *Logger, stderr: *Stream, allocator: *const std.mem.Allocator) !void
 {
+  const devnull = try std.fs.openFileAbsolute ("/dev/null", .{ .mode = .write_only, });
   stderr.* = .{
     .cols   = null,
-    .buffer = std.io.bufferedWriter (std.io.getStdErr ().writer ()),
+    .buffer = std.io.bufferedWriter (devnull.writer ()),
     .writer = undefined,
   };
   stderr.writer = stderr.buffer.writer ();
-  logger.* = try Logger.init (1, allocator, stderr);
+  logger.* = try Logger.init (8, allocator, stderr);
 }

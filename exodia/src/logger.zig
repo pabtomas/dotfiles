@@ -51,6 +51,7 @@ pub const Logger = struct
   pub fn deinit (self: *@This ()) void
   {
     self.requests.deinit (self.allocator);
+    while (self.nodes.pop ()) |node| self.allocator.destroy (node);
     self.spins.deinit ();
     JdzGlobalAllocator.deinitThread ();
   }
@@ -102,7 +103,7 @@ pub const Logger = struct
     }
   }
 
-  fn dequeue (self: *@This ()) !bool
+  pub fn dequeue (self: *@This ()) !bool
   {
     if (!self.mutex.tryLock ()) return false;
     defer self.mutex.unlock ();
