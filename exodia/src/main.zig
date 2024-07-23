@@ -89,7 +89,7 @@ fn init (allocator: *const std.mem.Allocator) !void
       else => return err,
     }
   };
-  if (!std.meta.isError (opts)) logger.setLogLevel ((try opts).log_level);
+  logger.setLogLevel ((try opts).log_level);
 
   const logger_thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
 

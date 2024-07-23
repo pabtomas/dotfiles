@@ -24,7 +24,6 @@ pub const Options = struct
   help: bool = false,
   version: bool = false,
   log_level: Log.Header,
-  reset_cache: bool = false,
   file: ?[] const u8 = null,
   rules: std.DoublyLinkedList ([] const u8) = .{},
   allocator: *const std.mem.Allocator,
@@ -110,7 +109,6 @@ pub const Options = struct
 
     help = 'h',
     quiet = 'q',
-    @"reset-cache" = 'r',
     verbose = 'v',
     version = 'V',
   };
@@ -210,7 +208,6 @@ pub const Options = struct
 
       if (std.mem.eql (u8, arg, NoArg.help.short ()) or std.mem.eql (u8, arg, NoArg.help.long ())) self.help = true
       else if (std.mem.eql (u8, arg, NoArg.version.short ()) or std.mem.eql (u8, arg, NoArg.version.long ())) self.version = true
-      else if (std.mem.eql (u8, arg, NoArg.@"reset-cache".short ()) or std.mem.eql (u8, arg, NoArg.@"reset-cache".long ())) self.reset_cache = true
       else if (std.mem.eql (u8, arg, NoArg.quiet.short ()) or std.mem.eql (u8, arg, NoArg.quiet.long ())) try self.decrLogLevel (logger)
       else if (std.mem.eql (u8, arg, NoArg.verbose.short ()) or std.mem.eql (u8, arg, NoArg.verbose.long ())) try self.incrLogLevel (logger)
       else if (std.mem.eql (u8, arg, Arg.file.short ()) or std.mem.eql (u8, arg, Arg.file.long ())) {

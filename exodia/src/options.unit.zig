@@ -38,10 +38,10 @@ test "parse: exodia"
   logger.deinit ();
   try std.testing.expect (!opts.help);
   try std.testing.expect (!opts.version);
-  try std.testing.expect (!opts.reset_cache);
   try std.testing.expect (!opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .INFO);
-  try std.testing.expect (opts.file == null);
+  try std.testing.expectEqual (.INFO, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (null, opts.file);
 }
 
 test "parse: exodia -v -q"
@@ -81,10 +81,10 @@ test "parse: exodia -vv -vv"
   logger.deinit ();
   try std.testing.expect (!opts.help);
   try std.testing.expect (!opts.version);
-  try std.testing.expect (!opts.reset_cache);
   try std.testing.expect (!opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .VERB);
-  try std.testing.expect (opts.file == null);
+  try std.testing.expectEqual (.VERB, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (null, opts.file);
 }
 
 test "parse: exodia -vvvv --verbose --verbose"
@@ -100,10 +100,10 @@ test "parse: exodia -vvvv --verbose --verbose"
   logger.deinit ();
   try std.testing.expect (!opts.help);
   try std.testing.expect (!opts.version);
-  try std.testing.expect (!opts.reset_cache);
   try std.testing.expect (opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .VERB);
-  try std.testing.expect (opts.file == null);
+  try std.testing.expectEqual (.VERB, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (null, opts.file);
 }
 
 test "parse: exodia --quiet -qqq"
@@ -119,10 +119,10 @@ test "parse: exodia --quiet -qqq"
   logger.deinit ();
   try std.testing.expect (!opts.help);
   try std.testing.expect (!opts.version);
-  try std.testing.expect (!opts.reset_cache);
   try std.testing.expect (!opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .ERROR);
-  try std.testing.expect (opts.file == null);
+  try std.testing.expectEqual (.ERROR, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (null, opts.file);
 }
 
 test "parse: exodia --verbose --verbose -hVv"
@@ -138,10 +138,10 @@ test "parse: exodia --verbose --verbose -hVv"
   logger.deinit ();
   try std.testing.expect (opts.help);
   try std.testing.expect (opts.version);
-  try std.testing.expect (!opts.reset_cache);
   try std.testing.expect (!opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .TRACE);
-  try std.testing.expect (opts.file == null);
+  try std.testing.expectEqual (.TRACE, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (null, opts.file);
 }
 
 test "parse: exodia --version --version --help -hVhVhV"
@@ -157,48 +157,67 @@ test "parse: exodia --version --version --help -hVhVhV"
   logger.deinit ();
   try std.testing.expect (opts.help);
   try std.testing.expect (opts.version);
-  try std.testing.expect (!opts.reset_cache);
   try std.testing.expect (!opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .INFO);
-  try std.testing.expect (opts.file == null);
+  try std.testing.expectEqual (.INFO, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (null, opts.file);
 }
 
-test "parse: exodia -vfqvvvhVv --reset-cache"
+test "parse: exodia -vfqvvvhVv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "exodia", "-vfqvvvhVv", "--reset-cache", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "exodia", "-vfqvvvhVv", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
   try std.testing.expect (!opts.help);
   try std.testing.expect (!opts.version);
-  try std.testing.expect (opts.reset_cache);
   try std.testing.expect (!opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .NOTE);
+  try std.testing.expectEqual (.NOTE, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqualStrings ("qvvvhVv", opts.file.?);
 }
 
-test "parse: exodia -rrrfrrr -fvqvqvqvvvq --reset-cache --file=awesome.zon"
+test "parse: exodia -hhhfhhh -fvqvqvqvvvq --file=awesome.zon"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "exodia", "-rrrfrrr", "-fvqvqvqvvvq", "--reset-cache", "--file=awesome.zon", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "exodia", "-hhhfhhr", "-fvqvqvqvvvq", "--file=awesome.zon", });
+  var opts = try Options.parse (&allocator, &it, &logger);
+  defer opts.deinit ();
+  logger.deinit ();
+  try std.testing.expect (opts.help);
+  try std.testing.expect (!opts.version);
+  try std.testing.expect (!opts.incr_warning);
+  try std.testing.expectEqual (.INFO, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqualStrings ("awesome.zon", opts.file.?);
+}
+
+test "parse: exodia --unknown-opt"
+{
+  const allocator = std.testing.allocator;
+  var stderr: Stream = undefined;
+  var logger: Logger = undefined;
+  try prepare (&logger, &stderr, &allocator);
+
+  var it = ArgIterator.init (&[_][:0] const u8 { "exodia", "--unknown-opt", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
   try std.testing.expect (!opts.help);
   try std.testing.expect (!opts.version);
-  try std.testing.expect (opts.reset_cache);
   try std.testing.expect (!opts.incr_warning);
-  try std.testing.expectEqual (opts.log_level, .INFO);
-  try std.testing.expectEqualStrings ("awesome.zon", opts.file.?);
+  try std.testing.expectEqual (.INFO, opts.log_level);
+  try std.testing.expectEqual (1, opts.rules.len);
+  try std.testing.expectEqual (null, opts.file);
 }
 
 test "parse: exodia -f"
