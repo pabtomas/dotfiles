@@ -8,6 +8,7 @@ const logger_zig = @import ("logger.zig");
 const Logger = logger_zig.Logger;
 const Stream = logger_zig.Stream;
 const Options = @import ("options.zig").Options;
+const Client = @import ("client.zig").Client;
 
 fn help (logger: *Logger) !void
 {
@@ -19,7 +20,7 @@ fn version (logger: *Logger) !void
   try logger.enqueue (.{ .kind = .{ .log = .RAW, }, .data = "VERSION", .allocated = false, });
 }
 
-fn run (allocator: *const std.mem.Allocator, logger: *Logger, opts: *const Options) !void
+fn preprocess (allocator: *const std.mem.Allocator, logger: *Logger, opts: *const Options) !void
 {
   try logger.enqueueObject (@TypeOf (opts.*), opts, "opts");
   try logger.enqueueObject (@TypeOf (logger.*), logger, "logger");
@@ -42,6 +43,9 @@ fn run (allocator: *const std.mem.Allocator, logger: *Logger, opts: *const Optio
     pool.waitAndWork (&tasks);
     pool.deinit ();
   }
+
+  var client = try Client.init (allocator, logger, opts);
+  defer client.deinit ();
 
   try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = "An error message", .allocated = false, });
   try logger.enqueue (.{ .kind = .{ .log = .WARN, }, .data = "A warning message", .allocated = false, });
@@ -68,7 +72,7 @@ fn run (allocator: *const std.mem.Allocator, logger: *Logger, opts: *const Optio
   }
 }
 
-fn init (allocator: *const std.mem.Allocator) !void
+fn prepare (allocator: *const std.mem.Allocator) !void
 {
   var stderr: Stream = .{
     .cols   = if (std.io.getStdErr ().supportsAnsiEscapeCodes ()) 0 else null,
@@ -100,7 +104,7 @@ fn init (allocator: *const std.mem.Allocator) !void
   }
 
   if (!std.meta.isError (opts))
-    run (allocator, &logger, &(try opts)) catch |err|
+    preprocess (allocator, &logger, &(try opts)) catch |err|
     {
       try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = @errorName (err), .allocated = false, });
       if (@errorReturnTrace ()) |trace| std.debug.dumpStackTrace (trace.*);
@@ -119,11 +123,11 @@ pub fn main () void
 {
   const allocator = JdzGlobalAllocator.allocator ();
   defer JdzGlobalAllocator.deinit ();
-  init (&allocator) catch |err| fatal (@errorName (err));
+  prepare (&allocator) catch |err| fatal (@errorName (err));
 }
 
 test "leak"
 {
   const allocator = std.testing.allocator;
-  try init (&allocator);
+  try prepare (&allocator);
 }
