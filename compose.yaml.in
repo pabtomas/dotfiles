@@ -102,6 +102,9 @@ services:
       - <<: *volume
         source: ${MYWHALEFLEET_VOLUME}
         target: ${MYWHALEFLEET_PATH}
+      - <<: *readonly-bind
+        source: ${_DOCKER_SOCKET_PATH}
+        target: ${_DOCKER_SOCKET_PATH}
   ${EDITOR_SERVICE}:
     container_name: ${EDITOR_HOST}
     depends_on:
