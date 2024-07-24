@@ -1,0 +1,12 @@
+{
+  "id": "nginx",
+  "image": "{{ $registry.prefix.layer }}{{ $nginx.id }}",
+  "path": {
+    "etc": "/etc/nginx",
+    "confd": "{{ $nginx.path.etc }}/conf.d",
+    "httpd": "{{ $nginx.path.etc }}/http.d",
+    "var": {
+      "log": "/var/log/nginx"
+    }
+  }
+}

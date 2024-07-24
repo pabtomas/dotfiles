@@ -1,0 +1,200 @@
+{
+  "rules": [
+    {
+      "id": "{{ $rules.up }}",
+      "run": [
+        {
+          "endpoint": "/volumes",
+          "method": "GET",
+          "register": {
+            "id": "volumes.json",
+            "as": {
+              "id": "registervolumes"
+            }
+          }
+        },
+        {
+          "if": "{{ $volumes := coll.Slice }}{{ range $registervolumes }}{{ $volumes = $volumes | append .Name }}{{ end }} {{ or (not (has $net $carpenterrelay.volume)) (not (has $net $listener.volume.opt.data)) (not (has $net $listener.volume.opt.scripts)) (not (has $net $listener.volume.var.log)) (not (has $net $project.volume)) (not (has $net $socketproxy.volume.etc.nginx)) (not (has $net $socketproxy.volume.opt.scripts)) (not (has $net $socketproxy.volume.var.log.nginx)) (not (has $net $registry.volume)) (not (has $net $relay.volume.var.log)) (not (has $net $safedeposit.volume)) (not (has $net $spacepornrelay.volume)) (not (has $net $sshd.volume)) (not (has $net $spaceporn.volume)) (not (has $net $bash.volume.theme)) (not (has $net $xserver.volume.etc.nginx)) (not (has $net $xserver.volume.opt.scripts)) (not (has $net $xserver.volume.var.log.nginx)) }}",
+          "endpoint": "/volumes/create",
+          "method": "POST",
+          "loop": [
+            {
+              "id": "{{ $dependencies.volumes.create.virtual }}",
+              "virtual": true,
+              "query": {
+                "Labels": {
+                  "exodia": "{{ $project.id }}"
+                }
+              },
+              "depends_on": [
+                "volumes.json"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.carpenterrelay }}",
+              "query": {
+                "Name": "{{ $carpenterrelay.volume }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.listener.opt.data }}",
+              "query": {
+                "Name": "{{ $listener.volume.opt.data }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.listener.opt.scripts }}",
+              "query": {
+                "Name": "{{ $listener.volume.opt.scripts }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.listener.var.log }}",
+              "query": {
+                "Name": "{{ $listener.volume.var.log }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.project }}",
+              "query": {
+                "Name": "{{ $project.volume }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.socketproxy.etc.nginx }}",
+              "query": {
+                "Name": "{{ $socketproxy.volume.etc.nginx }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.socketproxy.opt.scripts }}",
+              "query": {
+                "Name": "{{ $socketproxy.volume.opt.scripts }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.socketproxy.var.log.nginx }}",
+              "query": {
+                "Name": "{{ $socketproxy.volume.var.log.nginx }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.registry }}",
+              "query": {
+                "Name": "{{ $registry.volume }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.relay.var.log }}",
+              "query": {
+                "Name": "{{ $relay.volume.var.log }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.safedeposit }}",
+              "query": {
+                "Name": "{{ $safedeposit.volume }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.spacepornrelay }}",
+              "query": {
+                "Name": "{{ $spacepornrelay.volume }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.sshd }}",
+              "query": {
+                "Name": "{{ $sshd.volume }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.spaceporn }}",
+              "query": {
+                "Name": "{{ $spaceporn.volume }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.bash.theme }}",
+              "query": {
+                "Name": "{{ $bash.volume.theme }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.xserver.etc.nginx }}",
+              "query": {
+                "Name": "{{ $xserver.volume.etc.nginx }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.xserver.opt.scripts }}",
+              "query": {
+                "Name": "{{ $xserver.volume.opt.scripts }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.volumes.create.xserver.var.log.nginx }}",
+              "query": {
+                "Name": "{{ $xserver.volume.var.log.nginx }}"
+              },
+              "extends": [
+                "{{ $dependencies.volumes.create.virtual }}"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

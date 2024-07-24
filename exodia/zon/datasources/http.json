@@ -1,0 +1,4 @@
+{
+  "id": "http",
+  "image": "{{ $registry.prefix.layer }}{{ $http.id }}"
+}

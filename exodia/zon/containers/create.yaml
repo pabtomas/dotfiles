@@ -42,12 +42,8 @@ rules:
               Image: '{{ $carpenterrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    Source: '{{ $carpenterrelay.volume }}'
-                    Target: '{{ $xserver.path.sockets }}'
-                  - <<: *volume
-                    Source: '{{ $relay.volume.var.log }}'
-                    Target: '{{ $all.path.var.log }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $carpenterrelay.volume }}\", .Target = \"{{ $xserver.path.sockets }}\" }{{/generic}}"
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $relay.volume.var.log }}\", .Target = \"{{ $all.path.var.log }}\" }{{/generic}}"
                 ReadonlyRootfs: true
               NetworkConfig:
                 EndpointsConfig:
@@ -67,9 +63,7 @@ rules:
               Image: '{{ $carpenterrunner.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
               HostConfig:
                 Mounts:
-                  - <<: *readonly-volume
-                    Source: '{{ $carpenterrelay.volume }}'
-                    Target: '{{ $xserver.path.sockets }}'
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $carpenterrelay.volume }}\", .Target = \"{{ $xserver.path.sockets }}\" }{{/generic}}"
             depends_on:
               - '{{ $dependencies.images.build.carpenter.runner }}'
               - '{{ $dependencies.volumes.create.carpenterrelay }}'
@@ -81,9 +75,7 @@ rules:
               Hostname: '{{ $controller.host }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    Source: '{{ $project.volume }}'
-                    Target: '{{ $workspaces.path.project }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $project.volume }}\", .Target = \"{{ $workspaces.path.project }}\" }{{/generic}}"
               NetworkConfig:
                 EndpointsConfig:
                   '{{ $networks.docker_utils.name }}':
@@ -100,12 +92,8 @@ rules:
               Hostname: '{{ $editor.host }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    Source: '{{ $project.volume }}'
-                    Target: '{{ $workspaces.path.project }}'
-                  - <<: *volume
-                    Source: '{{ $spaceporn.volume }}'
-                    Target: '{{ $workspaces.path.spaceporn }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $project.volume }}\", .Target = \"{{ $workspaces.path.project }}\" }{{/generic}}"
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $spaceporn.volume }}\", .Target = \"{{ $workspaces.path.spaceporn }}\" }{{/generic}}"
             depends_on:
               - '{{ $dependencies.volumes.create.project }}'
               - '{{ $dependencies.volumes.create.spaceporn }}'
@@ -117,9 +105,7 @@ rules:
               Hostname: '{{ $explorershell.host }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    Source: '{{ $project.volume }}'
-                    Target: '{{ $workspaces.path.project }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $project.volume }}\", .Target = \"{{ $workspaces.path.project }}\" }{{/generic}}"
             depends_on:
               - '{{ $dependencies.volumes.create.project }}'
             extends:
@@ -130,9 +116,7 @@ rules:
               Hostname: '{{ $explorerzig.host }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    Source: '{{ $spaceporn.volume }}'
-                    Target: '{{ $workspaces.path.spaceporn }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $spaceporn.volume }}\", .Target = \"{{ $workspaces.path.spaceporn }}\" }{{/generic}}"
             depends_on:
               - '{{ $dependencies.volumes.create.spaceporn }}'
             extends:
@@ -150,42 +134,18 @@ rules:
                   '{{ $networks.jump_area.name }}': {}
               HostConfig:
                 Mounts:
-                  - <<: *readonly-volume
-                    Source: '{{ $listener.volume.opt.data }}'
-                    Target: '{{ $jumper.path.listener.opt.data }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $listener.volume.opt.scripts }}'
-                    Target: '{{ $jumper.path.listener.opt.scripts }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $listener.volume.var.log }}'
-                    Target: '{{ $jumper.path.listener.var.log }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $socketproxy.volume.etc.nginx }}'
-                    Target: '{{ $jumper.path.proxy.etc }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $socketproxy.volume.opt.scripts }}'
-                    Target: '{{ $jumper.path.proxy.opt.scripts }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $socketproxy.volume.var.log.nginx }}'
-                    Target: '{{ $jumper.path.proxy.var.log }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $relay.volume.var.log }}'
-                    Target: '{{ $jumper.path.relay.var.log }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $sshd.volume }}'
-                    Target: '{{ $all.path.opt.ssh }}'
-                  - <<: *volume
-                    Source: '{{ $bash.volume.theme }}'
-                    Target: '{{ $bash.path.theme }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $xserver.volume.etc.nginx }}'
-                    Target: '{{ $jumper.path.xserver.etc }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $xserver.volume.opt.scripts }}'
-                    Target: '{{ $jumper.path.xserver.opt.scripts }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $xserver.volume.var.log.nginx }}'
-                    Target: '{{ $jumper.path.xserver.var.log }}'
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $listener.volume.opt.data }}\", .Target = \"{{ $jumper.path.listener.opt.data }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $listener.volume.opt.scripts }}\", .Target = \"{{ $jumper.path.listener.opt.scripts }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $listener.volume.var.log }}\", .Target = \"{{ $jumper.path.listener.var.log }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $socketproxy.volume.etc.nginx }}\", .Target = \"{{ $jumper.path.proxy.etc }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $socketproxy.volume.opt.scripts }}\", .Target = \"{{ $jumper.path.proxy.opt.scripts }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $socketproxy.volume.var.log.nginx }}\", .Target = \"{{ $jumper.path.proxy.var.log }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $relay.volume.var.log }}\", .Target = \"{{ $jumper.path.relay.var.log }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $sshd.volume }}\", .Target = \"{{ $all.path.opt.ssh }}\" }{{/generic}}"
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $bash.volume.theme }}\", .Target = \"{{ $bash.path.theme }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $xserver.volume.etc.nginx }}\", .Target = \"{{ $jumper.path.xserver.etc }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $xserver.volume.opt.scripts }}\", .Target = \"{{ $jumper.path.xserver.opt.scripts }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $xserver.volume.var.log.nginx }}\", .Target = \"{{ $jumper.path.xserver.var.log }}\" }{{/generic}}"
             depends_on:
               - '{{ $dependencies.images.build.jumper }}'
               - '{{ $dependencies.networks.create.jump_area }}'
@@ -213,15 +173,9 @@ rules:
                     IPv4Address: '{{ $listener.ip }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    Source: '{{ $listener.volume.opt.data }}'
-                    Target: '{{ $all.path.opt.data }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $listener.volume.opt.scripts }}'
-                    Target: '{{ $all.path.opt.scripts }}'
-                  - <<: *volume
-                    Source: '{{ $listener.volume.var.log }}'
-                    Target: '{{ $all.path.var.log }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $listener.volume.opt.data }}\", .Target = \"{{ $all.path.opt.data }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $listener.volume.opt.scripts }}\", .Target = \"{{ $all.path.opt.scripts }}\" }{{/generic}}"
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $listener.volume.var.log }}\", .Target = \"{{ $all.path.var.log }}\" }{{/generic}}"
                 ReadonlyRootfs: true
             depends_on:
               - '{{ $dependencies.images.build.listener }}'
@@ -244,18 +198,10 @@ rules:
                     IPv4Address: '{{ $socketproxy.ip }}'
               HostConfig:
                 Mounts:
-                  - <<: *readonly-bind
-                    Source: '{{ $docker.path.socket }}'
-                    Target: '{{ $docker.path.socket }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $socketproxy.volume.etc.nginx }}'
-                    Target: '{{ $nginx.path.etc }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $socketproxy.volume.opt.scripts }}'
-                    Target: '{{ $nginx.path.opt.scripts }}'
-                  - <<: *volume
-                    Source: '{{ $socketproxy.volume.var.log.nginx }}'
-                    Target: '{{ $nginx.path.var.log }}'
+                  - "{{#generic}}{{readonly-bind}}.{ .Source = \"{{ $docker.path.socket }}\", .Target = \"{{ $docker.path.socket }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $socketproxy.volume.etc.nginx }}\", .Target = \"{{ $nginx.path.etc }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $socketproxy.volume.opt.scripts }}\", .Target = \"{{ $nginx.path.opt.scripts }}\" }{{/generic}}"
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $socketproxy.volume.var.log.nginx }}\", .Target = \"{{ $nginx.path.var.log }}\" }{{/generic}}"
                 ReadonlyRootfs: true
                 Tmpfs:
                   /run: ""
@@ -284,9 +230,7 @@ rules:
               Hostname: '{{ $safedeposit.host }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    Source: '{{ $safedeposit.volume }}'
-                    Target: '{{ $all.path.root.passwd }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $safedeposit.volume }}\", .Target = \"{{ $all.path.root.passwd }}\" }{{/generic}}"
             depends_on:
               - '{{ $dependencies.images.build.pass }}'
               - '{{ $dependencies.volumes.create.safedeposit }}'
@@ -306,12 +250,8 @@ rules:
               HostConfig:
                 ReadonlyRootfs: true
                 Mounts:
-                  - <<: *volume
-                    source: '{{ $spacepornrelay.volume }}'
-                    target: '{{ $xserver.path.sockets }}'
-                  - <<: *volume
-                    source: '{{ $relay.volume.var.log }}'
-                    target: '{{ $all.path.var.log }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $spacepornrelay.volume }}\", .Target = \"{{ $xserver.path.sockets }}\" }{{/generic}}"
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $relay.volume.var.log }}\", .Target = \"{{ $all.path.var.log }}\" }{{/generic}}"
               NetworkConfig:
                 EndpointsConfig:
                   '{{ $networks.proxified_xserver_socket.name }}':
@@ -331,12 +271,8 @@ rules:
                 - '{{ $workspaces.path.spaceporn }}/{{ $spaceporn.id }}/zig-out/bin/{{ $spaceporn.id }}'
               HostConfig:
                 Mounts:
-                  - <<: *readonly-volume
-                    source: '{{ $spacepornrelay.volume }}'
-                    target: '{{ $xserver.path.sockets }}'
-                  - <<: *readonly-volume
-                    source: '{{ $spaceporn.volume }}'
-                    target: '{{ $workspaces.path.spaceporn }}'
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $spacepornrelay.volume }}\", .Target = \"{{ $xserver.path.sockets }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $spaceporn.volume }}\", .Target = \"{{ $workspaces.path.spaceporn }}\" }{{/generic}}"
             depends_on:
               - '{{ $dependencies.volumes.create.spacepornrelay }}'
               - '{{ $dependencies.volumes.create.spaceporn }}'
@@ -359,18 +295,10 @@ rules:
                 SecurityOpt:
                   - no-new-privileges:true
                 Mounts:
-                  - <<: *readonly-bind
-                    source: '{{ $xserver.path.display }}'
-                    target: '{{ $xserver.path.display }}'
-                  - <<: *readonly-volume
-                    source: '{{ $xserver.volume.etc.nginx }}'
-                    target: '{{ $nginx.path.etc }}'
-                  - <<: *readonly-volume
-                    source: '{{ $xserver.volume.opt.scripts }}'
-                    target: '{{ $all.path.opt.scripts }}'
-                  - <<: *volume
-                    source: '{{ $xserver.volume.var.log.nginx }}'
-                    target: '{{ $all.path.var.log }}'
+                  - "{{#generic}}{{readonly-bind}}.{ .Source = \"{{ $xserver.path.display }}\", .Target = \"{{ $xserver.path.display }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $xserver.volume.etc.nginx }}\", .Target = \"{{ $nginx.path.etc }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $xserver.volume.opt.scripts }}\", .Target = \"{{ $all.path.opt.scripts }}\" }{{/generic}}"
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $xserver.volume.var.log.nginx }}\", .Target = \"{{ $all.path.var.log }}\" }{{/generic}}"
                 Tmpfs:
                   /run: ""
             depends_on:

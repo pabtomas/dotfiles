@@ -1,0 +1,15 @@
+{
+  "id": "buildkit",
+  "image": {
+    "source": "docker.io{{ $all.sep.registry }}moby{{ $all.sep.registry }}{{ $buildkit.id }}",
+    "local": "{{ $registry.prefix.local }}{{ $buildkit.id }}"
+  },
+  "tag": "buildx-stable-1-rootless",
+  "path": {
+    "conf": "/etc/buildkit/buildkitd.toml"
+  },
+  "target": {
+    "suffix": "{{ $builder.host }}{{ $all.sep.target }}{{ $builder.port }}",
+    "tcp": "tcp://{{ $buildkit.target.suffix }}"
+  }
+}

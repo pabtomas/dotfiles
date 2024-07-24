@@ -19,8 +19,7 @@
             .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
         },
         .curl = .{
-            .url = "https://github.com/tiawl/zig-curl/archive/f9f6c1c54f67e43b2d00f440a064f6feedc65b6b.tar.gz",
-            .hash = "1220f170847ba9122d5c39c21dab8fc2d2fcb1fb277dd4c350c7f4b9ca4451913954",
+            .url = "https://github.com/jiacai2050/zig-curl/archive/1eaf73544e4c5c47fa7517ff77d7e33d98166391.tar.gz",
         },
         .mustache = .{
             .url = "https://github.com/batiati/mustache-zig/archive/4913f1ff3b5400da604258e9c40825c91d139889.tar.gz",

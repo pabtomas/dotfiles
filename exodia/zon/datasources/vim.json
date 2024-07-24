@@ -1,0 +1,12 @@
+{
+  "id": "vim",
+  "image": "{{ $registry.prefix.layer }}{{ $vim.id }}",
+  "url": {
+    "plugin": {
+      "nerdtree": "https://github.com/preservim/nerdtree",
+      "polyglot": "https://github.com/sheerun/vim-polyglot",
+      "rainbow": "https://github.com/luochen1990/rainbow",
+      "undotree": "https://github.com/mbbill/undotree"
+    }
+  }
+}

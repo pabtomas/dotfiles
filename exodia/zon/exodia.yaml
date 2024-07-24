@@ -112,15 +112,21 @@ datasources:
   - source: datasources/zig.yaml
     id: zig
 
-explode:
-  - anchors:
-      - anchors/volumes.yaml
-      - anchors/binds.yaml
-    in: containers/create/virtual.yaml
-  - anchors:
-      - anchors/volumes.yaml
-      - anchors/binds.yaml
-    in: containers/create.yaml
+generics:
+  bind:
+    Type: bind
+    BindOptions: {}
+  bind-ro:
+    Type: bind
+    BindOptions: {}
+    ReadOnly: true
+  volume:
+    Type: volume
+    VolumeOptions: {}
+  volume-ro:
+    Type: volume
+    VolumeOptions: {}
+    ReadOnly: true
 
 include:
   - networks/create.yaml

@@ -1,0 +1,47 @@
+{
+  "rules": [
+    {
+      "id": "{{ $rules.down }}",
+      "run": [
+        {
+          "endpoint": "/containers/json",
+          "method": "GET",
+          "register": {
+            "id": "down.containers.json",
+            "query": {
+              "filters": "{\"label\":{\"exodia\":{{ $project.id }}}}"
+            },
+            "errexit": false,
+            "as": {
+              "id": "registerdowncontainers"
+            }
+          }
+        },
+        {
+          "endpoint": "/containers/{id}/stop",
+          "method": "POST",
+          "from": {
+            "id": "stop.from.down.containers.json",
+            "filter": "{{ $array := \"\" }}{{ range $registerdowncontainers }}{{ $array = print $array \"{\\\"id\\\":\\\"containers.stop.\" .Id \"\\\",\\\"path\\\":{\\\"id\\\":\\\"\" .Id \"\\\"},\\\"query\\\":{\\\"t\\\":0}},\" }}{{ end }}{{ print \"[\" $array \"]\" | data.YAMLArray }}",
+            "errexit": false,
+            "depends_on": [
+              "down.containers.json"
+            ]
+          }
+        },
+        {
+          "endpoint": "/containers/{id}",
+          "method": "DELETE",
+          "from": {
+            "id": "remove.from.down.containers.json",
+            "filter": "{{ $array := \"\" }}{{ range $registerdowncontainers }}{{ $array = print $array \"{\\\"depends_on\\\":[\\\"containers.stop.\" .Id \"\\\"],\\\"path\\\":{\\\"id\\\":\\\"\" .Id \"\\\"},\\\"query\\\":{\\\"force\\\":true}},\" }}{{ end }}{{ print \"[\" $array \"]\" | data.YAMLArray }}",
+            "errexit": false,
+            "depends_on": [
+              "stop.from.down.containers.json"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

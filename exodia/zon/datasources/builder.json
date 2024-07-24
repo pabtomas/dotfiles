@@ -1,0 +1,7 @@
+{
+  "id": "builder",
+  "host": "{{ $builder.id }}",
+  "image": "{{ $registry.prefix.owner }}{{ $builder.id }}",
+  "ip": "{{ $networks.docker_utils.prefix }}.4",
+  "port": 2364
+}

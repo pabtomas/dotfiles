@@ -1,0 +1,113 @@
+{
+  "rules": [
+    {
+      "id": "{{ $rules.up }}",
+      "run": [
+        {
+          "endpoint": "/build",
+          "method": "POST",
+          "loop": [
+            {
+              "id": "{{ $dependencies.images.build.builder }}",
+              "query": {
+                "buildargs": "{\n  \"_BUILDKIT_CONF_PATH\":\"{{ $buildkit.path.conf }}\",\n  \"_BUILDKIT_LOCAL_IMG\":\"{{ $buildkit.image.local }}{{ $all.sep.tag }}{{ $buildkit.tag }}\",\n  \"REGISTRY_TARGET\":\"{{ $registry.target }}\"\n}\n",
+                "t": "{{ $builder.yaml\").image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "context": "{{ $all.path.dockerfiles }}/{{ $builder.id }}",
+              "depends_on": [
+                "{{ $dependencies.images.tag.buildkit }}"
+              ],
+              "extends": [
+                "{{ $dependencies.images.build.virtual._ }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.images.build.carpenter.relay }}",
+              "query": {
+                "buildargs": "{\n  \"LOG_ID\":\"{{ $carpenter.id }}\"\n}\n",
+                "t": "{{ $carpenterrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "extends": [
+                "{{ $dependencies.images.build.virtual.relay }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.images.build.carpenter.runner }}",
+              "query": {
+                "buildargs": "{\n  \"ENTRYPOINTD_PATH\":\"{{ $entrypoint.path.entrypoint.d }}\",\n  \"SPECTRWM_LAYER_IMG\":\"{{ $spectrwm.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}\"\n}\n",
+                "t": "{{ $carpenterrunner.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "context": "{{ $all.path.dockerfiles }}/{{ $carpenter.id }}",
+              "depends_on": [
+                "{{ $dependencies.images.build.spectrwm }}"
+              ],
+              "extends": [
+                "{{ $dependencies.images.build.virtual._ }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.images.build.jumper }}",
+              "query": {
+                "buildargs": "{\n  \"BASH_COMPLETION_PATH\":\"{{ $bash.path.completion }}\",\n  \"BASH_THEME_PATH\":\"{{ $bash.path.theme }}\",\n  \"CHECK_ENTRYPOINT_PATH\":\"{{ $entrypoint.path.check.d }}/99{{ $jumper.id }}.sh\",\n  \"COMPLETION_PATH\":\"/opt/{{ $listener.id }}{{ $listener.path.completion }}\",\n  \"CONTROLLER_ID\":\"{{ $controller.id }}\",\n  \"ENTRYPOINTD_PATH\":\"{{ $entrypoint.path.entrypoint.d }}\",\n  \"NET_PFX\":\"{{ $networks.jump_area.prefix }}\",\n  \"OPT_SCRIPTS_PATH\":\"{{ $all.path.opt.scripts }}\",\n  \"OPT_SSH_PATH\":\"{{ $all.path.opt.ssh }}\",\n  \"SSH_PORT\":\"{{ $sshd.port }}\",\n  \"SSH_ROOT_PATH\":\"{{ $all.path.root.ssh }}\",\n  \"TCP_DOCKER_TARGET\":\"{{ $docker.target.tcp }}\",\n  \"TMUX_LAYER_IMG\":\"{{ $tmux.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}\"\n}\n",
+                "t": "{{ $jumper.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "context": "{{ $all.path.dockerfiles }}/{{ $jumper.id }}",
+              "depends_on": [
+                "{{ $dependencies.images.build.tmux }}"
+              ],
+              "extends": [
+                "{{ $dependencies.images.build.virtual._ }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.images.build.listener }}",
+              "query": {
+                "buildargs": "{\n  \"_DOCKER_SOCKET_PATH\":\"{{ $docker.path.socket }}\",\n  \"CHECK_ENTRYPOINT_PATH\":\"{{ $entrypoint.path.check.d }}/99{{ $listener.id }}.sh\",\n  \"COMPLETION_PATH\":\"{{ $listener.path.completion }}\",\n  \"DATA_PATH\":\"{{ $all.path.opt.data }}\",\n  \"ENTRYPOINTD_PATH\":\"{{ $entrypoint.path.entrypoint.d }}\",\n  \"HTTP_DOCKER_TARGET\":\"{{ $docker.target.http }}\",\n  \"NET\":\"{{ $networks.jump_area.name }}\",\n  \"OPT_SCRIPTS_PATH\":\"{{ $all.path.opt.scripts }}\",\n  \"VAR_LOG_PATH\":\"{{ $all.path.var.log }}\"\n}\n",
+                "t": "{{ $listener.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "context": "{{ $all.path.dockerfiles }}/{{ $listener.id }}",
+              "extends": [
+                "{{ $dependencies.images.build.virtual.alpine.entrypoint }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.images.build.socketproxy }}",
+              "query": {
+                "buildargs": "{\n  \"_DOCKER_SOCKET_PATH\":\"{{ $docker.path.socket }}\",\n  \"{{ $api.prefix }}_PING\":\"true\",\n  \"{{ $api.prefix }}BUILD\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_CREATE\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_ARCHIVE\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_ATTACH\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_EXEC\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_JSON\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_KILL\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_LOGS\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_START\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_STOP\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_ID_WAIT\":\"true\",\n  \"{{ $api.prefix }}CONTAINERS_JSON\":\"true\",\n  \"{{ $api.prefix }}EVENTS\":\"true\",\n  \"{{ $api.prefix }}IMAGES_CREATE\":\"true\",\n  \"{{ $api.prefix }}IMAGES_JSON\":\"true\",\n  \"{{ $api.prefix }}IMAGES_NAME\":\"true\",\n  \"{{ $api.prefix }}INFO\":\"true\",\n  \"{{ $api.prefix }}NETWORKS\":\"true\",\n  \"{{ $api.prefix }}VERSION\":\"true\",\n  \"{{ $api.prefix }}VOLUMES\":\"true\",\n  \"API_PFX\":\"{{ $api.prefix }}\",\n  \"API_TAG\":\"{{ $api.tag }}\",\n  \"API_URL\":\"{{ $api.url.spec }}\",\n  \"CHECK_ENTRYPOINT_PATH\":\"{{ $entrypoint.path.check.d }}/99{{ $proxy.id }}.sh\",\n  \"CONTROLLER_IP\":\"{{ $controller.ip }}\",\n  \"ENTRYPOINTD_PATH\":\"{{ $entrypoint.path.entrypoint.d }}\",\n  \"ETC_NGINX_HTTPD_PATH\":\"{{ $nginx.path.httpd }}\",\n  \"HTTP_LAYER_IMG\":\"{{ $http.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}\",\n  \"LISTENER_IP\":\"{{ $listener.ip }}\",\n  \"OPT_SCRIPTS_PATH\":\"{{ $all.path.opt.scripts }}\",\n  \"PROXY_PORT\":\"{{ $socketproxy.port }}\"\n}\n",
+                "t": "{{ $socketproxy.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "context": "{{ $all.path.dockerfiles }}/{{ $proxy.id }}",
+              "depends_on": [
+                "{{ $dependencies.images.build.http }}"
+              ],
+              "extends": [
+                "{{ $dependencies.images.build.virtual._ }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.images.build.spaceporn.relay }}",
+              "query": {
+                "buildargs": "{\n  \"LOG_ID\":\"{{ $spaceporn.id }}\"\n}\n",
+                "t": "{{ $spacepornrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "extends": [
+                "{{ $dependencies.images.build.virtual.relay }}"
+              ]
+            },
+            {
+              "id": "{{ $dependencies.images.build.xserver }}",
+              "query": {
+                "buildargs": "{\n  \"CARPENTER_RELAY_IP\":\"{{ $carpenterrelay.ip }}\",\n  \"CHECK_ENTRYPOINT_PATH\":\"{{ $entrypoint.path.check.d }}/99{{ $xserver.id }}.sh\",\n  \"ETC_NGINX_CONFD_PATH\":\"{{ $nginx.path.confd }}\",\n  \"ETC_NGINX_PATH\":\"{{ $nginx.path.etc }}\",\n  \"SPACEPORN_RELAY_IP\":\"{{ $spacepornrelay.ip }}\",\n  \"VAR_LOG_NGINX_PATH\":\"{{ $nginx.path.var.log }}\",\n  \"XSERVER_PORT\":\"{{ $xserver.port }}\",\n  \"XSERVER_SOCKET_PATH\":\"{{ $xserver.path.display }}\"\n}\n",
+                "t": "{{ $xserver.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}"
+              },
+              "context": "{{ $all.path.dockerfiles }}/{{ $xserver.id }}",
+              "extends": [
+                "{{ $dependencies.images.build.virtual.nginx }}"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

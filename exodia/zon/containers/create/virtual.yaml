@@ -79,9 +79,7 @@ rules:
                 - 'REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY={{ $all.path.opt.data }}'
               HostConfig:
                 Mounts:
-                  - <<: *volume
-                    source: '{{ $registry.volume }}'
-                    target: '{{ $all.path.opt.data }}'
+                  - "{{#generic}}{{volume}}.{ .Source = \"{{ $registry.volume }}\", .Target = \"{{ $all.path.opt.data }}\" }{{/generic}}"
                 ReadonlyRootfs: true
               NetworkingConfig:
                 EndpointsConfig:
@@ -100,12 +98,8 @@ rules:
                 - '{{ $sshd.port }}/tcp'
               HostConfig:
                 Mounts:
-                  - <<: *readonly-volume
-                    Source: '{{ $sshd.volume }}'
-                    Target: '{{ $all.path.root.ssh }}'
-                  - <<: *readonly-volume
-                    Source: '{{ $bash.volume.theme }}'
-                    Target: '{{ $bash.path.theme }}'
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $sshd.volume }}\", .Target = \"{{ $all.path.root.ssh }}\" }{{/generic}}"
+                  - "{{#generic}}{{readonly-volume}}.{ .Source = \"{{ $bash.volume.theme }}\", .Target = \"{{ $bash.path.theme }}\" }{{/generic}}"
               NetworkingConfig:
                 EndpointsConfig:
                   '{{ $networks.jump_area.name }}': {}

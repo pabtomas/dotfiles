@@ -1,0 +1,5 @@
+{
+  "id": "{{ $spaceporn.id }}{{ $all.sep.id }}{{ $runner.id }}",
+  "host": "{{ $spacepornrunner.id }}",
+  "image": "{{ $registry.prefix.runner }}{{ $spaceporn.id }}"
+}
