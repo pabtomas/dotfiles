@@ -12,22 +12,20 @@ const Client = @import ("client.zig").Client;
 
 fn help (logger: *Logger) !void
 {
-  try logger.enqueue (.{ .kind = .{ .log = .RAW, }, .data = "HELP", .allocated = false, });
+  try logger.enqueue (.{ .kind = .{ .log = .RAW, }, .data = "HELP: TODO", .allocated = false, });
 }
 
 fn version (logger: *Logger) !void
 {
-  try logger.enqueue (.{ .kind = .{ .log = .RAW, }, .data = "VERSION", .allocated = false, });
+  try logger.enqueue (.{ .kind = .{ .log = .RAW, }, .data = "VERSION: TODO", .allocated = false, });
 }
+
+// TODO: use logger.call
 
 fn preprocess (allocator: *const std.mem.Allocator, logger: *Logger, opts: *const Options) !void
 {
   try logger.enqueueObject (@TypeOf (opts.*), opts, "opts");
   try logger.enqueueObject (@TypeOf (logger.*), logger, "logger");
-
-  if (opts.help) try help (logger);
-  if (opts.version) try version (logger);
-  if (opts.help or opts.version) return;
 
   var tasks: std.Thread.WaitGroup = .{};
   tasks.reset ();
@@ -44,8 +42,16 @@ fn preprocess (allocator: *const std.mem.Allocator, logger: *Logger, opts: *cons
     pool.deinit ();
   }
 
-  var client = try Client.init (allocator, logger, opts);
+  var client = try Client.init (allocator);
   defer client.deinit ();
+
+  try client.preprocess (logger, opts);
+
+  if (opts.help) try help (logger);
+  if (opts.version) try version (logger);
+  if (opts.help or opts.version) return;
+
+  client.run (logger, opts);
 
   try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = "An error message", .allocated = false, });
   try logger.enqueue (.{ .kind = .{ .log = .WARN, }, .data = "A warning message", .allocated = false, });

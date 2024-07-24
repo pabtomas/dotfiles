@@ -26,7 +26,7 @@ pub const Client = struct
   easy: libcurl.Easy,
   api_version: [] const u8 = "1.25",
 
-  pub fn init (allocator: *const std.mem.Allocator, logger: *Logger, opts: *const Options) !@This ()
+  pub fn init (allocator: *const std.mem.Allocator) !@This ()
   {
     var self: @This () = .{
       .inventory = .{ .object = std.json.ObjectMap.init (allocator.*), },
@@ -35,8 +35,6 @@ pub const Client = struct
       .easy      = undefined,
     };
     self.easy = try libcurl.Easy.init (self.allocator.*, .{ .ca_bundle = self.ca_bundle, });
-    errdefer self.deinit ();
-    try self.addContextVars (logger, opts);
     return self;
   }
 
@@ -46,6 +44,23 @@ pub const Client = struct
     self.inventory.object.deinit ();
     self.ca_bundle.deinit ();
     self.easy.deinit ();
+  }
+
+  pub fn preprocess (self: *@This (), logger: *Logger, opts: *const Options) !void
+  {
+    try self.addContextVars (logger, opts);
+    //client.expandTemplatesIntoInv ();
+    //client.expandTemplatesIntoMain ();
+    //client.resolveIncludes ();
+    //client.castArraysToObjects ();
+    //client.expandExtends ();
+    //client.sortTasks ();
+  }
+
+  pub fn run (self: *@This (), logger: *Logger, opts: *const Options) void
+  {
+    _ = self; _ = logger; _ = opts;
+    std.debug.print ("TODO", .{});
   }
 
   fn requestGet (self: @This (), uri: [:0] const u8, logger: *Logger) !libcurl.Easy.Response
@@ -118,5 +133,51 @@ pub const Client = struct
     try self.inventory.object.put ("INFO", parsed.value);
 
     try self.printRequestBody (&self.inventory.object.get ("INFO").?, logger);
+
+    try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
+  }
+
+
+  fn expandTemplatesIntoInv (self: @This ()) void
+  {
+    // TODO: write_datasources_header
+    // TODO: expand_datasources_into_datasources
+    _ = self;
+    std.debug.print ("TODO", .{});
+  }
+
+  fn expandTemplatesIntoMain (self: @This ()) void
+  {
+    // TODO: expand_datasources_into_main
+    _ = self;
+    std.debug.print ("TODO", .{});
+  }
+
+  fn resolveIncludes (self: @This ()) void
+  {
+    // TODO: resolve_includes
+    _ = self;
+    std.debug.print ("TODO", .{});
+  }
+
+  fn castArraysToObjects (self: @This ()) void
+  {
+    // TODO: convert_to_objects
+    _ = self;
+    std.debug.print ("TODO", .{});
+  }
+
+  fn expandExtends (self: @This ()) void
+  {
+    // TODO: expand_extends
+    _ = self;
+    std.debug.print ("TODO", .{});
+  }
+
+  fn sortTasks (self: @This ()) void
+  {
+    // TODO: topological_sort
+    _ = self;
+    std.debug.print ("TODO", .{});
   }
 };
