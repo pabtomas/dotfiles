@@ -20,11 +20,13 @@ fn emptyArg (logger: *Logger) !void
 pub const Options = struct
 {
   const DEFAULT_FILE = "exodia.zon";
+  const DEFAULT_DOCKER_HOST = "/var/run/docker.sock";
 
   help: bool = false,
   version: bool = false,
   log_level: Log.Header,
   file: ?[] const u8 = null,
+  docker_host: ?[:0] const u8 = null,
   rules: std.DoublyLinkedList ([] const u8) = .{},
   allocator: *const std.mem.Allocator,
 
@@ -32,8 +34,19 @@ pub const Options = struct
 
   pub fn deinit (self: *@This ()) void
   {
+    if (self.docker_host) |host| self.allocator.free (host);
     if (self.file) |path| self.allocator.free (path);
     while (self.rules.pop ()) |node| self.allocator.destroy (node);
+  }
+
+  pub fn getFile (self: @This ()) [] const u8
+  {
+    return if (self.file) |file| file else DEFAULT_FILE;
+  }
+
+  pub fn getDockerHost (self: @This ()) [:0] const u8
+  {
+    return if (self.docker_host) |host| host else DEFAULT_DOCKER_HOST;
   }
 
   fn decrLogLevel (self: *@This (), logger: *Logger) !void
@@ -173,6 +186,20 @@ pub const Options = struct
     }
   }
 
+  fn prefillWithEnv (allocator: *const std.mem.Allocator, logger: *Logger) !@This ()
+  {
+    var env_map = try std.process.getEnvMap (allocator.*);
+    defer env_map.deinit ();
+    const host = env_map.get ("DOCKER_HOST");
+
+    return .{
+      .log_level = logger.log_level,
+      .docker_host = if (host != null and host.?.len > 0) try allocator.dupeZ (u8, host.?)
+                     else null,
+      .allocator = allocator,
+    };
+  }
+
   pub fn parse (allocator: *const std.mem.Allocator, it: anytype, logger: *Logger) !@This ()
   {
     var arena_instance = std.heap.ArenaAllocator.init (allocator.*);
@@ -190,10 +217,7 @@ pub const Options = struct
       list.append (node);
     }
 
-    var self: @This () = .{
-      .log_level = logger.log_level,
-      .allocator = allocator,
-    };
+    var self: @This () = try prefillWithEnv (allocator, logger);
     var first: *std.DoublyLinkedList ([] const u8).Node = undefined;
     var arg: [] const u8 = undefined;
 

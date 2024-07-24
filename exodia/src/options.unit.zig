@@ -42,6 +42,7 @@ test "parse: exodia"
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia -v -q"
@@ -85,6 +86,7 @@ test "parse: exodia -vv -vv"
   try std.testing.expectEqual (.VERB, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia -vvvv --verbose --verbose"
@@ -104,6 +106,7 @@ test "parse: exodia -vvvv --verbose --verbose"
   try std.testing.expectEqual (.VERB, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia --quiet -qqq"
@@ -123,6 +126,7 @@ test "parse: exodia --quiet -qqq"
   try std.testing.expectEqual (.ERROR, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia --verbose --verbose -hVv"
@@ -142,6 +146,7 @@ test "parse: exodia --verbose --verbose -hVv"
   try std.testing.expectEqual (.TRACE, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia --version --version --help -hVhVhV"
@@ -161,6 +166,7 @@ test "parse: exodia --version --version --help -hVhVhV"
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia -vfqvvvhVv"
@@ -180,6 +186,7 @@ test "parse: exodia -vfqvvvhVv"
   try std.testing.expectEqual (.NOTE, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqualStrings ("qvvvhVv", opts.file.?);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia -hhhfhhh -fvqvqvqvvvq --file=awesome.zon"
@@ -199,6 +206,7 @@ test "parse: exodia -hhhfhhh -fvqvqvqvvvq --file=awesome.zon"
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
   try std.testing.expectEqualStrings ("awesome.zon", opts.file.?);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia --unknown-opt"
@@ -218,6 +226,7 @@ test "parse: exodia --unknown-opt"
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (1, opts.rules.len);
   try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
 }
 
 test "parse: exodia -f"
