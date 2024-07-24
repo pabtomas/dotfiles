@@ -93,6 +93,8 @@ pub fn build (builder: *std.Build) !void
       builder.allocator, &.{ "src", "unit.zig", }), },
   });
   unit_tests.linkLibC ();
+  import (&unit_tests.root_module);
+
   unit_tests.step.dependOn (builder.getInstallStep ());
 
   const run_unit_tests = builder.addRunArtifact (unit_tests);

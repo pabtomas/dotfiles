@@ -1,10 +1,11 @@
 const std = @import ("std");
 
 const libcurl = @import ("libcurl");
-const mustache = @import ("mustache");
 
 const Logger = @import ("logger.zig").Logger;
 const Options = @import ("options.zig").Options;
+
+const Templater = @import ("templater.zig").Templater;
 
 const ApiVersionResponse = struct
 {
@@ -20,7 +21,7 @@ const ApiVersionResponse = struct
 
 pub const Client = struct
 {
-  inventory: std.json.Value,
+  templater: Templater,
   allocator: *const std.mem.Allocator,
   ca_bundle: libcurl.Buffer,
   easy: libcurl.Easy,
@@ -29,7 +30,7 @@ pub const Client = struct
   pub fn init (allocator: *const std.mem.Allocator) !@This ()
   {
     var self: @This () = .{
-      .inventory = .{ .object = std.json.ObjectMap.init (allocator.*), },
+      .templater = Templater.init (allocator),
       .allocator = allocator,
       .ca_bundle = try libcurl.allocCABundle (allocator.*),
       .easy      = undefined,
@@ -41,7 +42,7 @@ pub const Client = struct
   pub fn deinit (self: *@This ()) void
   {
     self.allocator.free (self.api_version);
-    self.inventory.object.deinit ();
+    self.templater.deinit ();
     self.ca_bundle.deinit ();
     self.easy.deinit ();
   }
@@ -49,6 +50,7 @@ pub const Client = struct
   pub fn preprocess (self: *@This (), logger: *Logger, opts: *const Options) !void
   {
     try self.addContextVars (logger, opts);
+
     //client.expandTemplatesIntoInv ();
     //client.expandTemplatesIntoMain ();
     //client.resolveIncludes ();
@@ -71,7 +73,7 @@ pub const Client = struct
     return resp;
   }
 
-  fn printRequestBody (self: @This (), value: *const std.json.Value, logger: *Logger) !void
+  fn printResponseBody (self: @This (), value: *const std.json.Value, logger: *Logger) !void
   {
     var buf = std.ArrayList (u8).init (self.allocator.*);
     defer buf.deinit ();
@@ -103,7 +105,7 @@ pub const Client = struct
       resp.body.?.items, .{ .ignore_unknown_fields = true, });
     defer body.deinit ();
 
-    try self.printRequestBody (&body.value, logger);
+    try self.printResponseBody (&body.value, logger);
 
     for (0 .. api_version_parsed.value.Components.len) |i|
     {
@@ -120,9 +122,9 @@ pub const Client = struct
     var parsed = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
       resp.body.?.items, .{ .ignore_unknown_fields = true, });
     defer parsed.deinit ();
-    try self.inventory.object.put ("VERSION", parsed.value);
+    try self.templater.put ("VERSION", &parsed.value);
 
-    try self.printRequestBody (&self.inventory.object.get ("VERSION").?, logger);
+    try self.printResponseBody (self.templater.getPtr ("VERSION").?, logger);
 
     resp.deinit ();
     resp = try self.requestGet (try std.fmt.bufPrintZ (&buf, "http://v{s}/info", .{ self.api_version, }), logger);
@@ -130,13 +132,12 @@ pub const Client = struct
     parsed.deinit ();
     parsed = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
       resp.body.?.items, .{ .ignore_unknown_fields = true, });
-    try self.inventory.object.put ("INFO", parsed.value);
+    try self.templater.put ("INFO", &parsed.value);
 
-    try self.printRequestBody (&self.inventory.object.get ("INFO").?, logger);
+    try self.printResponseBody (self.templater.getPtr ("INFO").?, logger);
 
     try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
   }
-
 
   fn expandTemplatesIntoInv (self: @This ()) void
   {
