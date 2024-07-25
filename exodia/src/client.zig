@@ -1,11 +1,10 @@
 const std = @import ("std");
-
 const libcurl = @import ("libcurl");
+const mustache = @import ("mustache");
 
 const Logger = @import ("logger.zig").Logger;
 const Options = @import ("options.zig").Options;
-
-const Templater = @import ("templater.zig").Templater;
+const Lambdas = @import ("lambdas.zig").Lambdas;
 
 const ApiVersionResponse = struct
 {
@@ -21,7 +20,7 @@ const ApiVersionResponse = struct
 
 pub const Client = struct
 {
-  templater: Templater,
+  inventory: std.json.Value,
   allocator: *const std.mem.Allocator,
   ca_bundle: libcurl.Buffer,
   easy: libcurl.Easy,
@@ -30,7 +29,7 @@ pub const Client = struct
   pub fn init (allocator: *const std.mem.Allocator) !@This ()
   {
     var self: @This () = .{
-      .templater = Templater.init (allocator),
+      .inventory = .{ .object = std.json.ObjectMap.init (allocator.*), },
       .allocator = allocator,
       .ca_bundle = try libcurl.allocCABundle (allocator.*),
       .easy      = undefined,
@@ -42,7 +41,7 @@ pub const Client = struct
   pub fn deinit (self: *@This ()) void
   {
     self.allocator.free (self.api_version);
-    self.templater.deinit ();
+    self.inventory.object.deinit ();
     self.ca_bundle.deinit ();
     self.easy.deinit ();
   }
@@ -122,9 +121,9 @@ pub const Client = struct
     var parsed = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
       resp.body.?.items, .{ .ignore_unknown_fields = true, });
     defer parsed.deinit ();
-    try self.templater.put ("VERSION", &parsed.value);
+    try self.inventory.object.put ("VERSION", parsed.value);
 
-    try self.printResponseBody (self.templater.getPtr ("VERSION").?, logger);
+    try self.printResponseBody (self.inventory.object.getPtr ("VERSION").?, logger);
 
     resp.deinit ();
     resp = try self.requestGet (try std.fmt.bufPrintZ (&buf, "http://v{s}/info", .{ self.api_version, }), logger);
@@ -132,9 +131,9 @@ pub const Client = struct
     parsed.deinit ();
     parsed = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
       resp.body.?.items, .{ .ignore_unknown_fields = true, });
-    try self.templater.put ("INFO", &parsed.value);
+    try self.inventory.object.put ("INFO", parsed.value);
 
-    try self.printResponseBody (self.templater.getPtr ("INFO").?, logger);
+    try self.printResponseBody (self.inventory.object.getPtr ("INFO").?, logger);
 
     try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
   }

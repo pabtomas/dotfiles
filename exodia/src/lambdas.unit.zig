@@ -2,15 +2,14 @@ const std = @import ("std");
 
 const mustache = @import ("mustache");
 
-const Templater = @import ("templater.zig").Templater;
+const index = @import ("index");
+const Lambdas = index.Lambdas;
 
 test "index"
 {
   const allocator = std.testing.allocator;
-  var templater = Templater.init (&allocator);
-  defer templater.deinit ();
 
-  // TODO: const template = "list[5] = {{#index}}.{ .i = 4, .list = {{inventory.list}}, }{{/index}}";
+  // TODO: const template = "list[4] = {{#index}}.{ .i = 4, .list = {{inventory.list}}, }{{/index}}";
   const template = "list[4] = {{#index}}{ \"i\" = 4, \"list\" = {{inventory.list}}, }{{/index}}";
 
   var array = std.ArrayList (std.json.Value).init (allocator);
@@ -24,8 +23,9 @@ test "index"
     std.json.Value { .string = "Y", },
   });
   const list = std.json.Value { .array = array, };
-  try templater.put ("list", &list);
-  const result = try mustache.allocRenderText (allocator, template, templater);
+  var data = std.json.Value { .object = std.json.ObjectMap.init (allocator), };
+  try data.object.put ("list", list);
+  const result = try mustache.allocRenderTextWithOptions (allocator, template, data, .{ .global_lambdas = Lambdas, });
   defer allocator.free (result);
 
   try std.testing.expectEqualStrings ("list[4] = T" , result);
