@@ -11,6 +11,6 @@ pub fn index (context: mustache.LambdaContext) !void
   defer params.deinit ();
 
   const list = params.object.get ("list").?.array.items;
-  const i = params.object.get ("i").?.array.items;
+  const i = params.object.get ("i").?.integer;
   try context.writeFormat ("{s}", .{ list [i], });
 }

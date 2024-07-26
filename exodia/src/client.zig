@@ -50,6 +50,7 @@ pub const Client = struct
   {
     try self.addContextVars (logger, opts);
 
+    //client.buildGenerics ()
     //client.expandTemplatesIntoInv ();
     //client.expandTemplatesIntoMain ();
     //client.resolveIncludes ();
@@ -136,6 +137,13 @@ pub const Client = struct
     try self.printResponseBody (self.inventory.object.getPtr ("INFO").?, logger);
 
     try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
+  }
+
+  fn buildGenerics (self: @This ()) void
+  {
+    // TODO: search generics into exodia.zon and build a struct for generic lambda ??
+    _ = self;
+    std.debug.print ("TODO", .{});
   }
 
   fn expandTemplatesIntoInv (self: @This ()) void
