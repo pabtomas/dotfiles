@@ -10,7 +10,7 @@
 
 ### Keywords:
 
-1. [datasources](https://github.com/tiawl/exodia/blob/trunk/doc/02_keywords.md#datasources)
+1. [inventory](https://github.com/tiawl/exodia/blob/trunk/doc/02_keywords.md#inventory)
 2. [explode](https://github.com/tiawl/exodia/blob/trunk/doc/02_keywords.md#explode)
 3. [include](https://github.com/tiawl/exodia/blob/trunk/doc/02_keywords.md#include)
 4. [versions](https://github.com/tiawl/exodia/blob/trunk/doc/02_keywords.md#versions)
@@ -24,7 +24,7 @@
 4. [Register](https://github.com/tiawl/exodia/blob/trunk/doc/06_register.md#register-object)
 5. [From](https://github.com/tiawl/exodia/blob/trunk/doc/07_from.md#from-object)
 6. [Command](https://github.com/tiawl/exodia/blob/trunk/doc/08_command.md#command-object)
-7. [Datasource](https://github.com/tiawl/exodia/blob/trunk/doc/09_datasource.md#datasource-object)
+7. [Inventory](https://github.com/tiawl/exodia/blob/trunk/doc/09_inventory.md#inventory-object)
 8. [Explode](https://github.com/tiawl/exodia/blob/trunk/doc/10_explode.md#explode-object)
 
 ## Debugging

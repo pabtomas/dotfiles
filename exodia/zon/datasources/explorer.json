@@ -1,4 +1,0 @@
-{
-  "id": "explorer",
-  "image": "{{ $registry.prefix.layer }}{{ $explorer.id }}"
-}

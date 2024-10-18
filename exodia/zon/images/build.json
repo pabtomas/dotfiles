@@ -1,7 +1,0 @@
-{
-  "include": [
-    "build/virtuals.yaml",
-    "build/layers.yaml",
-    "build/finals.yaml"
-  ]
-}

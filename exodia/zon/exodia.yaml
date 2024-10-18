@@ -6,127 +6,113 @@ versions:
   - 1.44
   - 1.43
 
-datasources:
-  - source: datasources/all.yaml
+inventory:
+  - source: inventory/all.yaml
     id: all
-  - source: datasources/alpine.yaml
+  - source: inventory/alpine.yaml
     id: alpine
-  - source: datasources/api.yaml
+  - source: inventory/api.yaml
     id: api
-  - source: datasources/bash.yaml
+  - source: inventory/bash.yaml
     id: bash
-  - source: datasources/builder.yaml
+  - source: inventory/builder.yaml
     id: builder
-  - source: datasources/buildkit.yaml
+  - source: inventory/buildkit.yaml
     id: buildkit
-  - source: datasources/carpenter.yaml
+  - source: inventory/carpenter.yaml
     id: carpenter
-  - source: datasources/carpenter/relay.yaml
+  - source: inventory/carpenter/relay.yaml
     id: carpenterrelay
-  - source: datasources/carpenter/runner.yaml
+  - source: inventory/carpenter/runner.yaml
     id: carpenterrunner
-  - source: datasources/controller.yaml
+  - source: inventory/controller.yaml
     id: controller
-  - source: datasources/dependencies.yaml
+  - source: inventory/dependencies.yaml
     id: dependencies
-  - source: datasources/docker.yaml
+  - source: inventory/docker.yaml
     id: docker
-  - source: datasources/dockle.yaml
+  - source: inventory/dockle.yaml
     id: dockle
-  - source: datasources/editor.yaml
+  - source: inventory/editor.yaml
     id: editor
-  - source: datasources/entrypoint.yaml
+  - source: inventory/entrypoint.yaml
     id: entrypoint
-  - source: datasources/entrypoint/alpine.yaml
+  - source: inventory/entrypoint/alpine.yaml
     id: entrypointalpine
-  - source: datasources/entrypoint/bash.yaml
+  - source: inventory/entrypoint/bash.yaml
     id: entrypointbash
-  - source: datasources/explorer.yaml
+  - source: inventory/explorer.yaml
     id: explorer
-  - source: datasources/explorers/shell.yaml
+  - source: inventory/explorers/shell.yaml
     id: explorershell
-  - source: datasources/explorers/zig.yaml
+  - source: inventory/explorers/zig.yaml
     id: explorerzig
-  - source: datasources/figlet.yaml
+  - source: inventory/figlet.yaml
     id: figlet
-  - source: datasources/git.yaml
+  - source: inventory/generics.yaml
+    id: generics
+  - source: inventory/git.yaml
     id: git
-  - source: datasources/gpu.yaml
+  - source: inventory/gpu.yaml
     id: gpu
-  - source: datasources/http.yaml
+  - source: inventory/http.yaml
     id: http
-  - source: datasources/jumper.yaml
+  - source: inventory/jumper.yaml
     id: jumper
-  - source: datasources/linguist.yaml
+  - source: inventory/linguist.yaml
     id: linguist
-  - source: datasources/listener.yaml
+  - source: inventory/listener.yaml
     id: listener
-  - source: datasources/man.yaml
+  - source: inventory/man.yaml
     id: man
-  - source: datasources/networks.yaml
+  - source: inventory/networks.yaml
     id: networks
-  - source: datasources/nginx.yaml
+  - source: inventory/nginx.yaml
     id: nginx
-  - source: datasources/pass.yaml
+  - source: inventory/pass.yaml
     id: pass
-  - source: datasources/project.yaml
+  - source: inventory/project.yaml
     id: project
-  - source: datasources/registry.yaml
+  - source: inventory/registry.yaml
     id: registry
-  - source: datasources/relay.yaml
+  - source: inventory/relay.yaml
     id: relay
-  - source: datasources/rules.yaml
+  - source: inventory/rules.yaml
     id: rules
-  - source: datasources/runner.yaml
+  - source: inventory/runner.yaml
     id: runner
-  - source: datasources/safedeposit.yaml
+  - source: inventory/safedeposit.yaml
     id: safedeposit
-  - source: datasources/scholar.yaml
+  - source: inventory/scholar.yaml
     id: scholar
-  - source: datasources/shell.yaml
+  - source: inventory/shell.yaml
     id: shell
-  - source: datasources/socat.yaml
+  - source: inventory/socat.yaml
     id: socat
-  - source: datasources/socket-proxy.yaml
+  - source: inventory/socket-proxy.yaml
     id: socketproxy
-  - source: datasources/spaceporn.yaml
+  - source: inventory/spaceporn.yaml
     id: spaceporn
-  - source: datasources/spaceporn/relay.yaml
+  - source: inventory/spaceporn/relay.yaml
     id: spacepornrelay
-  - source: datasources/spaceporn/runner.yaml
+  - source: inventory/spaceporn/runner.yaml
     id: spacepornrunner
-  - source: datasources/spectrwm.yaml
+  - source: inventory/spectrwm.yaml
     id: spectrwm
-  - source: datasources/sshd.yaml
+  - source: inventory/sshd.yaml
     id: sshd
-  - source: datasources/tmux.yaml
+  - source: inventory/tmux.yaml
     id: tmux
-  - source: datasources/vim.yaml
+  - source: inventory/vim.yaml
     id: vim
-  - source: datasources/volumes.yaml
+  - source: inventory/volumes.yaml
     id: volumes
-  - source: datasources/workspaces.yaml
+  - source: inventory/workspaces.yaml
     id: workspaces
-  - source: datasources/xserver.yaml
+  - source: inventory/xserver.yaml
     id: xserver
-  - source: datasources/zig.yaml
+  - source: inventory/zig.yaml
     id: zig
-
-generics:
-  bind:
-    Type: bind
-    BindOptions: {}
-  bind-ro:
-    Type: bind
-    BindOptions: {}
-    ReadOnly: true
-  volume:
-    Type: volume
-    VolumeOptions: {}
-  volume-ro:
-    Type: volume
-    VolumeOptions: {}
-    ReadOnly: true
 
 include:
   - networks/create.yaml

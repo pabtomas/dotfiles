@@ -1,4 +1,0 @@
-{
-  "id": "{{ $entrypoint.id }}{{ $all.sep.id }}{{ $alpine.id }}",
-  "image": "{{ $registry.prefix.layer }}{{ $entrypointalpine.id }}"
-}

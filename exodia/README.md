@@ -59,7 +59,6 @@ First of all, you need to describe your project with a `exodia.zon` file. Here t
 - [the Exodia specification](https://github.com/tiawl/exodia/blob/trunk/doc/00_index.md)
 - [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
 - [the Zig Object Notation specification]()
-- [the Mustache specification]() and [the list of available lambdas]()
 
 ### How to run Exodia with a remote Docker socket ?
 
@@ -78,5 +77,5 @@ With time, Exodia will be more stable. If you want to contribute and see Exodia 
 
 Roadmap:
 - Windows OS support,
-- More lambdas,
+- More operators,
 - Remove C backend.

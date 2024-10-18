@@ -1,5 +1,0 @@
-{
-  "id": "safedeposit",
-  "host": "{{ $safedeposit.id }}",
-  "volume": "{{ $safedeposit.id }}"
-}

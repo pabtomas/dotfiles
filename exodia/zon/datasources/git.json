@@ -1,9 +1,0 @@
-{
-  "id": "git",
-  "image": "{{ $registry.prefix.layer }}{{ $git.id }}",
-  "url": {
-    "tig": {
-      "completion": "https://raw.githubusercontent.com/jonas/tig/master/contrib/tig-completion.bash"
-    }
-  }
-}

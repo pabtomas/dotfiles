@@ -1,4 +1,0 @@
-{
-  "id": "{{ $entrypoint.id }}{{ $all.sep.id }}{{ $bash.id }}",
-  "image": "{{ $registry.prefix.layer }}{{ $entrypointbash.id }}"
-}

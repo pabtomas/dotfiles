@@ -1,4 +1,0 @@
-{
-  "id": "editor",
-  "host": "{{ $editor.id }}"
-}

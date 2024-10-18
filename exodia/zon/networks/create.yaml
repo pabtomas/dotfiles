@@ -7,8 +7,7 @@ rules:
         method: GET
         register:
           id: networks.json
-          as:
-            id: registernetworks
+          as: registernetworks
       - if: '{{ $net := coll.Slice }}{{ range $registernetworks }}{{ $net = $net | append .Name }}{{ end }}
           {{ or (not (has $net $networks.docker_utils.name))
                 (not (has $net $networks.proxified_docker_socket.name))

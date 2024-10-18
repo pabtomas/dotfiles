@@ -1,10 +1,8 @@
 const std = @import ("std");
 const libcurl = @import ("libcurl");
-const mustache = @import ("mustache");
 
 const Logger = @import ("logger.zig").Logger;
 const Options = @import ("options.zig").Options;
-const Lambdas = @import ("lambdas.zig").Lambdas;
 
 const ApiVersionResponse = struct
 {

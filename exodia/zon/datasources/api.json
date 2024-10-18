@@ -1,7 +1,0 @@
-{
-  "prefix": "API_ENDPOINT_",
-  "tag": "{{ $VERSION.ApiVersion }}",
-  "url": {
-    "spec": "https://raw.githubusercontent.com/moby/moby/master/docs/api/v{{ $VERSION.ApiVersion }}.yaml"
-  }
-}

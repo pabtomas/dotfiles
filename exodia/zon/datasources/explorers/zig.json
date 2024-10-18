@@ -1,4 +1,0 @@
-{
-  "id": "{{ $explorer.id }}{{ $all.sep.id }}{{ $zig.id }}",
-  "host": "{{ $explorerzig.id }}"
-}

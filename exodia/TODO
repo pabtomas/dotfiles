@@ -1,0 +1,15 @@
+doc:
+- datasources -> inventory
+- operator:
+  - args (list)
+  - register
+- YAML --> ZON
+- if: ???
+- explode ???
+- filter ???
+
+zon:
+- replace generic
+- remove mustache templating
+- add operators
+- YAML --> JSON

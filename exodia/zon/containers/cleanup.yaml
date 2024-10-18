@@ -10,8 +10,7 @@ rules:
           query:
             filters: '{"label":{"exodia":{{ $project.id }}}}'
           errexit: false
-          as:
-            id: registerdowncontainers
+          as: registerdowncontainers
       - endpoint: /containers/{id}/stop
         method: POST
         from:

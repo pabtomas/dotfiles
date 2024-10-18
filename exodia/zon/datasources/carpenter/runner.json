@@ -1,5 +1,0 @@
-{
-  "id": "{{ $carpenter.id }}{{ $all.sep.id }}{{ $runner.id }}",
-  "host": "{{ $carpenterrunner.id }}",
-  "image": "{{ $registry.prefix.runner }}{{ $carpenter.id }}"
-}

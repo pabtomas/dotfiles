@@ -1,8 +1,0 @@
-{
-  "id": "relay",
-  "volume": {
-    "var": {
-      "log": "{{ $relay.id }}-var-log-fs{{ $volumes.suffix.delme }}"
-    }
-  }
-}

@@ -1,4 +1,0 @@
-{
-  "id": "spaceporn",
-  "volume": "{{ $spaceporn.id }}"
-}

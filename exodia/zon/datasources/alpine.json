@@ -1,8 +1,0 @@
-{
-  "id": "alpine",
-  "image": {
-    "source": "docker.io{{ $all.sep.registry }}library{{ $all.sep.registry }}{{ $alpine.id }}",
-    "local": "{{ $registry.prefix.local }}{{ $alpine.id }}"
-  },
-  "tag": "3.20"
-}

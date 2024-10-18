@@ -10,8 +10,7 @@ rules:
           query:
             filters: '{"label":{"exodia":{{ $project.id }}}}'
           errexit: false
-          as:
-            id: registerdownnetworks
+          as: registerdownnetworks
       - endpoint: /networks/{id}
         method: DELETE
         from:
