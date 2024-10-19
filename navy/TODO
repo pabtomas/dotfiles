@@ -1,0 +1,16 @@
+doc:
+- datasources -> inventory
+- YAML --> JSON
+- Golang --> Mustache
+- objects:
+  - rule
+  - register
+  - processor
+  - loop
+  - command
+- filter ???
+- reread it totally
+
+mwf:
+- YAML --> JSON
+- remove $ prefix into templates

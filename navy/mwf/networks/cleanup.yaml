@@ -1,0 +1,33 @@
+---
+
+# TODO:
+# - variabilize ids
+# - variabilize depends_on
+# - use JQ filter instead of Golang template
+
+rule:
+  id: '{{ $rules.down }}'
+  run:
+    - register:
+        id: get.networks
+        as: listed_networks
+        endpoint: /networks
+        method: GET
+        query:
+          filters: '{"label":{"navy":{{ $project.id }}}}'
+        errexit: false
+    - processor:
+        id: process.remove.networks
+        as: networks_to_remove
+        data: '{{ listed_networks }}'
+        filter: '{{ $array := "" }}{{ range $listed_networks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+        depends_on:
+          - get.networks
+    - loop:
+        endpoint: /networks/{id}
+        method: DELETE
+        from: '{{ networks_to_remove }}'
+        depends_on:
+          - process.remove.networks
+
+...

@@ -1,0 +1,134 @@
+---
+
+versions:
+  - 1.46
+  - 1.45
+  - 1.44
+  - 1.43
+
+inventory:
+  - source: inventory/all.yaml
+    as: all
+  - source: inventory/alpine.yaml
+    as: alpine
+  - source: inventory/api.yaml
+    as: api
+  - source: inventory/bash.yaml
+    as: bash
+  - source: inventory/builder.yaml
+    as: builder
+  - source: inventory/buildkit.yaml
+    as: buildkit
+  - source: inventory/carpenter.yaml
+    as: carpenter
+  - source: inventory/carpenter/relay.yaml
+    as: carpenterrelay
+  - source: inventory/carpenter/runner.yaml
+    as: carpenterrunner
+  - source: inventory/controller.yaml
+    as: controller
+  - source: inventory/dependencies.yaml
+    as: dependencies
+  - source: inventory/docker.yaml
+    as: docker
+  - source: inventory/dockle.yaml
+    as: dockle
+  - source: inventory/editor.yaml
+    as: editor
+  - source: inventory/entrypoint.yaml
+    as: entrypoint
+  - source: inventory/entrypoint/alpine.yaml
+    as: entrypointalpine
+  - source: inventory/entrypoint/bash.yaml
+    as: entrypointbash
+  - source: inventory/explorer.yaml
+    as: explorer
+  - source: inventory/explorers/shell.yaml
+    as: explorershell
+  - source: inventory/explorers/zig.yaml
+    as: explorerzig
+  - source: inventory/figlet.yaml
+    as: figlet
+  - source: inventory/git.yaml
+    as: git
+  - source: inventory/gpu.yaml
+    as: gpu
+  - source: inventory/http.yaml
+    as: http
+  - source: inventory/jumper.yaml
+    as: jumper
+  - source: inventory/linguist.yaml
+    as: linguist
+  - source: inventory/listener.yaml
+    as: listener
+  - source: inventory/man.yaml
+    as: man
+  - source: inventory/networks.yaml
+    as: networks
+  - source: inventory/nginx.yaml
+    as: nginx
+  - source: inventory/pass.yaml
+    as: pass
+  - source: inventory/project.yaml
+    as: project
+  - source: inventory/registry.yaml
+    as: registry
+  - source: inventory/relay.yaml
+    as: relay
+  - source: inventory/rules.yaml
+    as: rules
+  - source: inventory/runner.yaml
+    as: runner
+  - source: inventory/safedeposit.yaml
+    as: safedeposit
+  - source: inventory/scholar.yaml
+    as: scholar
+  - source: inventory/shell.yaml
+    as: shell
+  - source: inventory/socat.yaml
+    as: socat
+  - source: inventory/socket-proxy.yaml
+    as: socketproxy
+  - source: inventory/spaceporn.yaml
+    as: spaceporn
+  - source: inventory/spaceporn/relay.yaml
+    as: spacepornrelay
+  - source: inventory/spaceporn/runner.yaml
+    as: spacepornrunner
+  - source: inventory/spectrwm.yaml
+    as: spectrwm
+  - source: inventory/sshd.yaml
+    as: sshd
+  - source: inventory/tmux.yaml
+    as: tmux
+  - source: inventory/vim.yaml
+    as: vim
+  - source: inventory/volumes.yaml
+    as: volumes
+  - source: inventory/workspaces.yaml
+    as: workspaces
+  - source: inventory/xserver.yaml
+    as: xserver
+  - source: inventory/zig.yaml
+    as: zig
+
+include:
+  - networks/create.yaml
+  - volumes/create.yaml
+  - images/pull.yaml
+  - images/tag.yaml
+  - images/build.yaml
+  - containers/create.yaml
+  - containers/start.yaml
+  - containers/attach.yaml
+  - containers/cleanup.yaml
+  - volumes/cleanup.yaml
+  - networks/cleanup.yaml
+
+rules:
+  - id: '{{ $rules.up }}'
+    description: 'Create and start containers, volumes and networks'
+  - id: '{{ $rules.down }}'
+    description: 'Stop and remove containers, volumes and networks'
+
+...

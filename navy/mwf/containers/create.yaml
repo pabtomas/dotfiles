@@ -1,0 +1,441 @@
+---
+
+include:
+  - create/virtual.yaml
+
+rule:
+  id: '{{ $rules.up }}'
+  run:
+    - loop:
+        endpoint: /containers/create
+        method: POST
+        from:
+          - id: '{{ $dependencies.containers.create.builder }}'
+            query:
+              name: '{{ $builder.host }}'
+              Hostname: '{{ $builder.host }}'
+              Image: '{{ $builder.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              Cmd:
+                - --addr
+                - 'tcp://0.0.0.0:{{ $builder.port }}'
+                - --config
+                - '{{ $buildkit.path.conf }}'
+                - --oci-worker-no-process-sandbox
+              ExposedPorts:
+                - '{{ $builder.port }}/tcp'
+              HostConfig:
+                SecurityOpt:
+                  - apparmor:unconfined
+                  - seccomp:unconfined
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.docker_utils.name }}':
+                    IPv4Address: '{{ $builder.ip }}'
+            depends_on:
+              - '{{ $dependencies.images.build.builder }}'
+              - '{{ $dependencies.networks.create.docker_utils }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual._ }}'
+          - id: '{{ $dependencies.containers.create.carpenter.relay }}'
+            query:
+              name: '{{ $carpenterrelay.host }}'
+              Hostname: '{{ $carpenterrelay.host }}'
+              Image: '{{ $carpenterrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $carpenterrelay.volume }}'
+                    Target: '{{ $xserver.path.sockets }}'
+                    Type: volume
+                    VolumeOptions: {}
+                  - Source: '{{ $relay.volume.var.log }}'
+                    Target: '{{ $all.path.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                ReadonlyRootfs: true
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.proxified_xserver_socket.name }}':
+                    IPv4Address: '{{ $carpenterrelay.ip }}'
+            depends_on:
+              - '{{ $dependencies.images.build.carpenter.relay }}'
+              - '{{ $dependencies.networks.create.proxified_xserver_socket }}'
+              - '{{ $dependencies.volumes.create.carpenterrelay }}'
+              - '{{ $dependencies.volumes.create.relay.var.log }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual._ }}'
+          - id: '{{ $dependencies.containers.create.carpenter.runner }}'
+            query:
+              name: '{{ $carpenterrunner.host }}'
+              Hostname: '{{ $carpenterrunner.host }}'
+              Image: '{{ $carpenterrunner.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $carpenterrelay.volume }}'
+                    Target: '{{ $xserver.path.sockets }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+            depends_on:
+              - '{{ $dependencies.images.build.carpenter.runner }}'
+              - '{{ $dependencies.volumes.create.carpenterrelay }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.isolated }}'
+          - id: '{{ $dependencies.containers.create.controller }}'
+            query:
+              name: '{{ $controller.host }}'
+              Hostname: '{{ $controller.host }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $project.volume }}'
+                    Target: '{{ $workspaces.path.project }}'
+                    Type: volume
+                    VolumeOptions: {}
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.docker_utils.name }}':
+                    IPv4Address: '{{ $controller.ip.docker_utils }}'
+                  '{{ $networks.proxified_docker_socket.name }}':
+                    IPv4Address: '{{ $controller.ip.proxified_docker_socket }}'
+            depends_on:
+              - '{{ $dependencies.volumes.create.project }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.docker }}'
+          - id: '{{ $dependencies.containers.create.editor }}'
+            query:
+              name: '{{ $editor.host }}'
+              Hostname: '{{ $editor.host }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $project.volume }}'
+                    Target: '{{ $workspaces.path.project }}'
+                    Type: volume
+                    VolumeOptions: {}
+                  - Source: '{{ $spaceporn.volume }}'
+                    Target: '{{ $workspaces.path.spaceporn }}'
+                    Type: volume
+                    VolumeOptions: {}
+            depends_on:
+              - '{{ $dependencies.volumes.create.project }}'
+              - '{{ $dependencies.volumes.create.spaceporn }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.vim }}'
+          - id: '{{ $dependencies.containers.create.explorer.shell }}'
+            query:
+              name: '{{ $explorershell.host }}'
+              Hostname: '{{ $explorershell.host }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $project.volume }}'
+                    Target: '{{ $workspaces.path.project }}'
+                    Type: volume
+                    VolumeOptions: {}
+            depends_on:
+              - '{{ $dependencies.volumes.create.project }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.shell }}'
+          - id: '{{ $dependencies.containers.create.explorer.zig }}'
+            query:
+              name: '{{ $explorerzig.host }}'
+              Hostname: '{{ $explorerzig.host }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $spaceporn.volume }}'
+                    Target: '{{ $workspaces.path.spaceporn }}'
+                    Type: volume
+                    VolumeOptions: {}
+            depends_on:
+              - '{{ $dependencies.volumes.create.spaceporn }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.zig }}'
+          - id: '{{ $dependencies.containers.create.jumper }}'
+            query:
+              name: '{{ $jumper.host }}'
+              Hostname: '{{ $jumper.host }}'
+              Image: '{{ $jumper.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              Tty: true
+              AttachStdout: true
+              AttachStderr: true
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.jump_area.name }}': {}
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $listener.volume.opt.data }}'
+                    Target: '{{ $jumper.path.listener.opt.data }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $listener.volume.opt.scripts }}'
+                    Target: '{{ $jumper.path.listener.opt.scripts }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $listener.volume.var.log }}'
+                    Target: '{{ $jumper.path.listener.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $socketproxy.volume.etc.nginx }}'
+                    Target: '{{ $jumper.path.proxy.etc }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $socketproxy.volume.opt.scripts }}'
+                    Target: '{{ $jumper.path.proxy.opt.scripts }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $socketproxy.volume.var.log.nginx }}'
+                    Target: '{{ $jumper.path.proxy.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $relay.volume.var.log }}'
+                    Target: '{{ $jumper.path.relay.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $sshd.volume }}'
+                    Target: '{{ $all.path.opt.ssh }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $bash.volume.theme }}'
+                    Target: '{{ $bash.path.theme }}'
+                    Type: volume
+                    VolumeOptions: {}
+                  - Source: '{{ $xserver.volume.etc.nginx }}'
+                    Target: '{{ $jumper.path.xserver.etc }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $xserver.volume.opt.scripts }}'
+                    Target: '{{ $jumper.path.xserver.opt.scripts }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $xserver.volume.var.log.nginx }}'
+                    Target: '{{ $jumper.path.xserver.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+            depends_on:
+              - '{{ $dependencies.images.build.jumper }}'
+              - '{{ $dependencies.networks.create.jump_area }}'
+              - '{{ $dependencies.volumes.create.listener.opt.data }}'
+              - '{{ $dependencies.volumes.create.listener.opt.scripts }}'
+              - '{{ $dependencies.volumes.create.listener.var.log }}'
+              - '{{ $dependencies.volumes.create.socketproxy.etc.nginx }}'
+              - '{{ $dependencies.volumes.create.socketproxy.opt.scripts }}'
+              - '{{ $dependencies.volumes.create.socketproxy.var.log.nginx }}'
+              - '{{ $dependencies.volumes.create.relay.var.log }}'
+              - '{{ $dependencies.volumes.create.sshd }}'
+              - '{{ $dependencies.volumes.create.xserver.etc.nginx }}'
+              - '{{ $dependencies.volumes.create.xserver.opt.scripts }}'
+              - '{{ $dependencies.volumes.create.xserver.var.log.nginx }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual._ }}'
+          - id: '{{ $dependencies.containers.create.listener }}'
+            query:
+              name: '{{ $listener.host }}'
+              Hostname: '{{ $listener.host }}'
+              Image: '{{ $listener.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.proxified_docker_socket.name }}':
+                    IPv4Address: '{{ $listener.ip }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $listener.volume.opt.data }}'
+                    Target: '{{ $all.path.opt.data }}'
+                    Type: volume
+                    VolumeOptions: {}
+                  - Source: '{{ $listener.volume.opt.scripts }}'
+                    Target: '{{ $all.path.opt.scripts }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $listener.volume.var.log }}'
+                    Target: '{{ $all.path.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                ReadonlyRootfs: true
+            depends_on:
+              - '{{ $dependencies.images.build.listener }}'
+              - '{{ $dependencies.networks.create.proxified_docker_socket }}'
+              - '{{ $dependencies.volumes.create.listener.opt.data }}'
+              - '{{ $dependencies.volumes.create.listener.opt.scripts }}'
+              - '{{ $dependencies.volumes.create.listener.var.log }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual._ }}'
+          - id: '{{ $dependencies.containers.create.socketproxy }}'
+            query:
+              name: '{{ $socketproxy.host }}'
+              Hostname: '{{ $socketproxy.host }}'
+              Image: '{{ $socketproxy.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              ExposedPorts:
+                - '{{ $socketproxy.port }}/tcp'
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.proxified_docker_socket.name }}':
+                    IPv4Address: '{{ $socketproxy.ip }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $docker.path.socket }}'
+                    Target: '{{ $docker.path.socket }}'
+                    Type: bind
+                    BindOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $socketproxy.volume.etc.nginx }}'
+                    Target: '{{ $nginx.path.etc }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $socketproxy.volume.opt.scripts }}'
+                    Target: '{{ $nginx.path.opt.scripts }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $socketproxy.volume.var.log.nginx }}'
+                    Target: '{{ $nginx.path.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                ReadonlyRootfs: true
+                Tmpfs:
+                  /run: ""
+                  /tmp: ""
+            depends_on:
+              - '{{ $dependencies.images.build.socketproxy }}'
+              - '{{ $dependencies.networks.create.proxified_docker_socket }}'
+              - '{{ $dependencies.volumes.create.socketproxy.etc.nginx }}'
+              - '{{ $dependencies.volumes.create.socketproxy.opt.scripts }}'
+              - '{{ $dependencies.volumes.create.socketproxy.var.log.nginx }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual._ }}'
+          - id: '{{ $dependencies.containers.create.registry }}'
+            query:
+              name: '{{ $registry.host }}'
+              Hostname: '{{ $registry.host }}'
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.docker_utils.name }}':
+                    IPv4Address: '{{ $registry.ip }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.registry }}'
+          - id: '{{ $dependencies.containers.create.safedeposit }}'
+            query:
+              name: '{{ $safedeposit.host }}'
+              Hostname: '{{ $safedeposit.host }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $safedeposit.volume }}'
+                    Target: '{{ $all.path.root.passwd }}'
+                    Type: volume
+                    VolumeOptions: {}
+            depends_on:
+              - '{{ $dependencies.images.build.pass }}'
+              - '{{ $dependencies.volumes.create.safedeposit }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.pass }}'
+          - id: '{{ $dependencies.containers.create.scholar }}'
+            query:
+              name: '{{ $scholar.host }}'
+              Hostname: '{{ $scholar.host }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.man }}'
+          - id: '{{ $dependencies.containers.create.spaceporn.relay }}'
+            query:
+              name: '{{ $spacepornrelay.host }}'
+              Hostname: '{{ $spacepornrelay.host }}'
+              Image: '{{ $spacepornrelay.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              HostConfig:
+                ReadonlyRootfs: true
+                Mounts:
+                  - Source: '{{ $spacepornrelay.volume }}'
+                    Target: '{{ $xserver.path.sockets }}'
+                    Type: volume
+                    VolumeOptions: {}
+                  - Source: '{{ $relay.volume.var.log }}'
+                    Target: '{{ $all.path.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.proxified_xserver_socket.name }}':
+                    IPv4Address: '{{ $spacepornrelay.ip }}'
+            depends_on:
+              - '{{ $dependencies.images.build.spaceporn.relay }}'
+              - '{{ $dependencies.networks.create.proxified_xserver_socket }}'
+              - '{{ $dependencies.volumes.create.spacepornrelay }}'
+              - '{{ $dependencies.volumes.create.relay.var.log }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual._ }}'
+          - id: '{{ $dependencies.containers.create.spaceporn.runner }}'
+            query:
+              name: '{{ $spacepornrunner.host }}'
+              Hostname: '{{ $spacepornrunner.host }}'
+              Entrypoint:
+                - '{{ $workspaces.path.spaceporn }}/{{ $spaceporn.id }}/zig-out/bin/{{ $spaceporn.id }}'
+              HostConfig:
+                Mounts:
+                  - Source: '{{ $spacepornrelay.volume }}'
+                    Target: '{{ $xserver.path.sockets }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $spaceporn.volume }}'
+                    Target: '{{ $workspaces.path.spaceporn }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+            depends_on:
+              - '{{ $dependencies.volumes.create.spacepornrelay }}'
+              - '{{ $dependencies.volumes.create.spaceporn }}'
+            extends:
+              - '{{ $dependencies.containers.create.virtual.gpu }}'
+              - '{{ $dependencies.containers.create.virtual.isolated }}'
+          - id: '{{ $dependencies.containers.create.xserver }}'
+            query:
+              name: '{{ $xserver.host }}'
+              Hostname: '{{ $xserver.host }}'
+              Image: '{{ xserver.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              ExposedPorts:
+                - '{{ $xserver.port }}/tcp'
+              NetworkConfig:
+                EndpointsConfig:
+                  '{{ $networks.proxified_xserver_socket.name }}':
+                    IPv4Address: '{{ $xserver.ip }}'
+              HostConfig:
+                ReadonlyRootfs: true
+                SecurityOpt:
+                  - no-new-privileges:true
+                Mounts:
+                  - Source: '{{ $xserver.path.display }}'
+                    Target: '{{ $xserver.path.display }}'
+                    Type: bind
+                    BindOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $xserver.volume.etc.nginx }}'
+                    Target: '{{ $nginx.path.etc }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $xserver.volume.opt.scripts }}'
+                    Target: '{{ $all.path.opt.scripts }}'
+                    Type: volume
+                    VolumeOptions: {}
+                    ReadOnly: true
+                  - Source: '{{ $xserver.volume.var.log.nginx }}'
+                    Target: '{{ $all.path.var.log }}'
+                    Type: volume
+                    VolumeOptions: {}
+                Tmpfs:
+                  /run: ""
+            depends_on:
+              - '{{ $dependencies.images.build.xserver }}'
+              - '{{ $dependencies.networks.create.proxified_xserver_socket }}'
+              - '{{ $dependencies.volumes.create.xserver.etc.nginx }}'
+              - '{{ $dependencies.volumes.create.xserver.opt.scripts }}'
+              - '{{ $dependencies.volumes.create.xserver.var.log.nginx }}'
+
+...

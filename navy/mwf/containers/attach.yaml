@@ -1,0 +1,24 @@
+---
+
+rule:
+  id: '{{ $rules.up }}'
+  run:
+    - command:
+        id: '{{ $dependencies.commands.install }}'
+        argv:
+          - 'apk'
+          - 'add'
+          - '--no-cache'
+          - 'docker-cli'
+        depends_on:
+          - '{{ $dependencies.containers.start.jumper }}'
+    - command:
+        id: '{{ $dependencies.commands.attach }}'
+        argv:
+          - 'docker'
+          - 'attach'
+          - '{{ $jumper.host }}'
+        depends_on:
+          - '{{ $dependencies.commands.install }}'
+
+...

@@ -1,0 +1,46 @@
+---
+
+# TODO:
+# - variabilize ids
+# - variabilize depends_on
+# - use JQ filter instead of Golang template
+
+rule:
+  id: '{{ $rules.down }}'
+  run:
+    - register:
+        id: get.containers
+        as: ruuning_containers
+        endpoint: /containers/json
+        method: GET
+        query:
+          filters: '{"label":{"navy":{{ $project.id }}}}'
+        errexit: false
+    - processor:
+        id: process.stop.running_containers
+        as: containers_to_stop
+        data: '{{ running_containers }}'
+        filter: '{{ $array := "" }}{{ range $running_containers }}{{ $array = print $array "{\"id\":\"containers.stop." .Id "\",\"path\":{\"id\":\"" .Id "\"},\"query\":{\"t\":0}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+        depends_on:
+          - get.containers
+    - processor:
+        id: process.remove.containers
+        as: containers_to_remove
+        data: '{{ ruuning_containers }}'
+        filter: '{{ $array := "" }}{{ range $running_containers }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
+        depends_on:
+          - get.containers
+    - loop:
+        endpoint: /containers/{id}/stop
+        method: POST
+        from: '{{ containers_to_stop }}'
+        depends_on:
+          - process.stop.containers
+    - loop:
+        endpoint: /containers/{id}
+        method: DELETE
+        from: '{{ containers_to_remove }}'
+        depends_on:
+          - process.remove.containers
+
+...

@@ -1,0 +1,162 @@
+---
+
+# TODO:
+# - variabilize ids
+# - variabilize depends_on
+# - use JQ filter instead of Golang template
+
+rule:
+  id: '{{ $rules.up }}'
+  run:
+    - register:
+        id: get.local.alpine.image
+        as: localalpineimage
+        endpoint: /images/json
+        method: GET
+        query:
+          filters: '{"reference":{"{{ $alpine.image.source }}":true}}'
+    - processor:
+        id: process.conditional.local.alpine.image
+        as: not_local_alpine_image
+        data: '{{ localalpineimage }}'
+        filter: '{{ ne 1 (len $localalpineimage) }}'
+        depends_on:
+          - get.local.alpine.image
+    - loop:
+        if: '{{ not_local_alpine_image }}'
+        endpoint: /images/create
+        method: POST
+        from:
+          - id: '{{ $dependencies.images.pull.alpine }}'
+            query:
+              fromImage: '{{ $alpine.image.source }}'
+              tag: '{{ $alpine.tag }}'
+        depends_on:
+          - process.conditional.local.alpine.image
+    - register:
+        id: get.local.bash.image
+        as: localbashimage
+        endpoint: /images/json
+        method: GET
+        query:
+          filters: '{"reference":{"{{ $bash.image.source }}":true}}'
+    - processor:
+        id: process.conditional.local.bash.image
+        as: not_local_bash_image
+        data: '{{ localbashimage }}'
+        filter: '{{ ne 1 (len $localbashimage) }}'
+        depends_on:
+          - get.local.bash.image
+    - loop:
+        if: '{{ not_local_bash_image }}'
+        endpoint: /images/create
+        method: POST
+        from:
+          - id: '{{ $dependencies.images.pull.bash }}'
+            query:
+              fromImage: '{{ $bash.image.source }}'
+              tag: '{{ $bash.tag }}'
+        depends_on:
+          - process.conditional.local.bash.image
+    - register:
+        id: get.local.buildkit.image
+        as: localbuildkitimage
+        endpoint: /images/json
+        method: GET
+        query:
+          filters: '{"reference":{"{{ $buildkit.image.source }}":true}}'
+    - processor:
+        id: process.conditional.local.buildkit.image
+        as: not_local_buildkit_image
+        data: '{{ localbuildkitimage }}'
+        filter: '{{ ne 1 (len $localbuildkitimage) }}'
+        depends_on:
+          - get.local.buildkit.image
+    - loop:
+        if: '{{ not_local_buildkit_image }}'
+        endpoint: /images/create
+        method: POST
+        from:
+          - id: '{{ $dependencies.images.pull.buildkit }}'
+            query:
+              fromImage: '{{ $buildkit.image.source }}'
+              tag: '{{ $buildkit.tag }}'
+        depends_on:
+          - process.conditional.local.buildkit.image
+    - register:
+        id: get.local.docker.image
+        as: localdockerimage
+        endpoint: /images/json
+        method: GET
+        query:
+          filters: '{"reference":{"{{ $docker.image.source }}":true}}'
+    - processor:
+        id: process.conditional.local.docker.image
+        as: not_local_docker_image
+        data: '{{ localdockerimage }}'
+        filter: '{{ ne 1 (len $localdockerimage) }}'
+        depends_on:
+          - get.local.docker.image
+    - loop:
+        if: '{{ not_local_docker_image }}'
+        endpoint: /images/create
+        method: POST
+        from:
+          - id: '{{ $dependencies.images.pull.docker }}'
+            query:
+              fromImage: '{{ $docker.image.source }}'
+              tag: '{{ $docker.tag }}'
+        depends_on:
+          - process.conditional.local.docker.image
+    - register:
+        id: get.local.registry.image
+        as: localregistryimage
+        endpoint: /images/json
+        method: GET
+        query:
+          filters: '{"reference":{"{{ $registry.image.source }}":true}}'
+    - processor:
+        id: process.conditional.local.registry.image
+        as: not_local_registry_image
+        data: '{{ localregistryimage }}'
+        filter: '{{ ne 1 (len $localregistryimage) }}'
+        depends_on:
+          - get.local.registry.image
+    - loop:
+        if: '{{ not_local_registry_image }}'
+        endpoint: /images/create
+        method: POST
+        from:
+          - id: '{{ $dependencies.images.pull.registry }}'
+            query:
+              fromImage: '{{ $registry.image.source }}'
+              tag: '{{ $registry.tag }}'
+        depends_on:
+          - process.conditional.local.registry.image
+    - register:
+        id: get.local.socketproxy.image
+        as: localsocketproxyimage
+        endpoint: /images/json
+        method: GET
+        query:
+          filters: '{"reference":{"{{ $socketproxy.linuxserver.image.source }}":true}}'
+    - processor:
+        id: process.conditional.local.socketproxy.image
+        as: not_local_socketproxy_image
+        data: '{{ localsocketproxyimage }}'
+        filter: '{{ ne 1 (len $localsocketproxyimage) }}'
+        depends_on:
+          - get.local.socketproxy.image
+    - loop:
+        if: '{{ not_local_socketproxy_image }}'
+        endpoint: /images/create
+        method: POST
+        from:
+          - id: '{{ $dependencies.images.pull.socketproxy }}'
+            query:
+              fromImage: '{{ $socketproxy.linuxserver.image.source }}'
+              tag: '{{ $socketproxy.linuxserver.tag }}'
+        depends_on:
+          - process.conditional.local.socketproxy.image
+
+...
