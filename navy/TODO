@@ -3,10 +3,8 @@ doc:
 - YAML --> JSON
 - Golang --> Mustache
 - objects:
-  - rule
-  - register
+  - body
   - processor
-  - loop
   - command
 - filter ???
 - reread it totally
@@ -14,3 +12,7 @@ doc:
 mwf:
 - YAML --> JSON
 - remove $ prefix into templates
+
+zig:
+- libjq.zig
+- mustache ????

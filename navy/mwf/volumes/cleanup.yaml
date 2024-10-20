@@ -8,14 +8,16 @@
 rule:
   id: '{{ $rules.down }}'
   run:
-    - register:
-        id: get.volumes
-        as: listed_volumes
+    - requests:
         endpoint: /volumes
         method: GET
-        query:
-          filters: '{"label":{"navy":{{ $project.id }}}}'
-        errexit: false
+        with:
+          - body:
+              id: get.volumes
+              query:
+                filters: '{"label":{"navy":{{ $project.id }}}}'
+              register: listed_volumes
+              errexit: false
     - processor:
         id: process.remove.volumes
         as: volumes_to_remove
@@ -23,10 +25,10 @@ rule:
         filter: '{{ $array := "" }}{{ range $listed_volumes }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
         depends_on:
           - get.volumes
-    - loop:
+    - requests:
         endpoint: /volumes/{name}
         method: DELETE
-        from: '{{ volumes_to_remove }}'
+        with: '{{ volumes_to_remove }}'
         depends_on:
           - process.remove.volumes
 

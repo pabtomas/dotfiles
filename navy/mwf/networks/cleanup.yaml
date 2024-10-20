@@ -8,14 +8,16 @@
 rule:
   id: '{{ $rules.down }}'
   run:
-    - register:
-        id: get.networks
-        as: listed_networks
+    - requests:
         endpoint: /networks
         method: GET
-        query:
-          filters: '{"label":{"navy":{{ $project.id }}}}'
-        errexit: false
+        with:
+          - body:
+              id: get.networks
+              query:
+                filters: '{"label":{"navy":{{ $project.id }}}}'
+              errexit: false
+              register: listed_networks
     - processor:
         id: process.remove.networks
         as: networks_to_remove
@@ -23,10 +25,10 @@ rule:
         filter: '{{ $array := "" }}{{ range $listed_networks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
         depends_on:
           - get.networks
-    - loop:
+    - requests:
         endpoint: /networks/{id}
         method: DELETE
-        from: '{{ networks_to_remove }}'
+        with: '{{ networks_to_remove }}'
         depends_on:
           - process.remove.networks
 

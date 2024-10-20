@@ -8,14 +8,16 @@
 rule:
   id: '{{ $rules.down }}'
   run:
-    - register:
-        id: get.containers
-        as: ruuning_containers
+    - requests:
         endpoint: /containers/json
         method: GET
-        query:
-          filters: '{"label":{"navy":{{ $project.id }}}}'
-        errexit: false
+        with:
+          - body:
+              id: get.containers
+              query:
+                filters: '{"label":{"navy":{{ $project.id }}}}'
+              errexit: false
+              register: running_containers
     - processor:
         id: process.stop.running_containers
         as: containers_to_stop
@@ -26,20 +28,20 @@ rule:
     - processor:
         id: process.remove.containers
         as: containers_to_remove
-        data: '{{ ruuning_containers }}'
+        data: '{{ running_containers }}'
         filter: '{{ $array := "" }}{{ range $running_containers }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
         depends_on:
           - get.containers
-    - loop:
+    - requests:
         endpoint: /containers/{id}/stop
         method: POST
-        from: '{{ containers_to_stop }}'
+        with: '{{ containers_to_stop }}'
         depends_on:
           - process.stop.containers
-    - loop:
+    - requests:
         endpoint: /containers/{id}
         method: DELETE
-        from: '{{ containers_to_remove }}'
+        with: '{{ containers_to_remove }}'
         depends_on:
           - process.remove.containers
 

@@ -18,14 +18,12 @@
 ### Objects:
 
 1. [Rule](https://github.com/tiawl/navy/blob/trunk/doc/03_rule.md#rule-object)
-2. [Request](https://github.com/tiawl/navy/blob/trunk/doc/04_request.md#request-object)
+2. [Requests](https://github.com/tiawl/navy/blob/trunk/doc/04_requests.md#requests-object)
 3. [Body](https://github.com/tiawl/navy/blob/trunk/doc/05_body.md#body-object)
-4. [Register](https://github.com/tiawl/navy/blob/trunk/doc/06_register.md#register-object)
-5. [From](https://github.com/tiawl/navy/blob/trunk/doc/07_from.md#from-object)
-6. [Command](https://github.com/tiawl/navy/blob/trunk/doc/08_command.md#command-object)
-7. [Inventory](https://github.com/tiawl/navy/blob/trunk/doc/09_inventory.md#inventory-object)
+4. [Processor](https://github.com/tiawl/navy/blob/trunk/doc/06_processor.md#processor-object)
+5. [Command](https://github.com/tiawl/navy/blob/trunk/doc/07_command.md#command-object)
 
 ## Debugging
 
-1. [known common mistakes](https://github.com/tiawl/navy/blob/trunk/doc/11_debugging.md#known-common-mistakes)
-2. [log levels](https://github.com/tiawl/navy/blob/trunk/doc/11_debugging.md#log-levels)
+1. [known common mistakes](https://github.com/tiawl/navy/blob/trunk/doc/08_debugging.md#known-common-mistakes)
+2. [log levels](https://github.com/tiawl/navy/blob/trunk/doc/08_debugging.md#log-levels)

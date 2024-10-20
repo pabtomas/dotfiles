@@ -62,7 +62,7 @@ versions:
 - **type**: list
 - **required**: true
 - **default**: `[]`
-- **description**: A list of user defined Rules.
+- **description**: A list of user defined rules.
 - **exemple**:
 ```json
 rules:

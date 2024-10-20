@@ -3,270 +3,290 @@
 rule:
   id: '{{ $rules.up }}'
   run:
-    - loop:
+    - requests:
         endpoint: /build
         method: POST
-        from:
-          - id: '{{ $dependencies.images.build.alpine.entrypoint }}'
-            query:
-              buildargs: |
-                {
-                  "BASE_IMG":"{{ $all.os.image.local }}{{ $all.sep.tag }}{{ $all.os.tag }}"
-                }
-              t: '{{ $entrypointalpine.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            depends_on:
-              - '{{ $dependencies.images.tag.alpine }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.entrypoint }}'
-          - id: '{{ $dependencies.images.build.bash.entrypoint }}'
-            query:
-              buildargs: |
-                {
-                  "BASE_IMG":"{{ $bash.image.local }}{{ $all.sep.tag }}{{ $bash.tag }}"
-                }
-              t: '{{ $entrypointbash.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            depends_on:
-              - '{{ $dependencies.images.tag.bash }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.entrypoint }}'
-          - id: '{{ $dependencies.images.build.gpu }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $gpu.id }}.sh"
-                }
-              t: '{{ $gpu.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $gpu.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
-          - id: '{{ $dependencies.images.build.linguist }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $linguist.id }}.sh"
-                }
-              t: '{{ $linguist.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $linguist.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
-          - id: '{{ $dependencies.images.build.nginx }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $nginx.id }}.sh",
-                  "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
-                  "ETC_NGINX_CONFD_PATH":"{{ $nginx.path.confd }}",
-                  "ETC_NGINX_HTTPD_PATH":"{{ $nginx.path.httpd }}",
-                  "VAR_LOG_NGINX_PATH":"{{ $nginx.path.var.log }}"
-                }
-              t: '{{ $nginx.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $nginx.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
-          - id: '{{ $dependencies.images.build.socat }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $socat.id }}.sh"
-                }
-              t: '{{ $socat.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $socat.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
-          - id: '{{ $dependencies.images.build.spectrwm }}'
-            query:
-              buildargs: |
-                {
-                  "BIN_PATH":"{{ $all.path.bin }}",
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $spectrwm.id }}.sh"
-                }
-              t: '{{ $spectrwm.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $spectrwm.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
-          - id: '{{ $dependencies.images.build.http }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $http.id }}.sh",
-                  "ETC_NGINX_HTTPD_PATH":"{{ $nginx.path.httpd }}",
-                  "ETC_NGINX_PATH":"{{ $nginx.path.etc }}",
-                  "LINUXSERVER_PROXY_LOCAL_IMG":"{{ $socketproxy.linuxserver.image.local }}{{ all.sep.tag }}{{ $socketproxy.linuxserver.tag }}"
-                }
-              t: '{{ $http.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $http.id }}'
-            depends_on:
-              - '{{ $dependencies.images.tag.socketproxy }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.nginx }}'
-          - id: '{{ $dependencies.images.build.bash._ }}'
-            query:
-              buildargs: |
-                {
-                  "BASH_ALIASES_PATH":"{{ $bash.path.aliases }}",
-                  "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
-                  "BASH_ENTRYPOINT_LAYER_IMG":"{{ $entrypointbash.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
-                  "BASH_LOCAL_IMG":"{{ $bash.image.local }}{{ $all.sep.tag }}{{ $bash.tag }}",
-                  "BASH_THEME_PATH":"{{ $bash.path.theme }}",
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $bash.id }}.sh",
-                  "ENTRYPOINT_PATH":"{{ $entrypoint.path.entrypoint.sh }}"
-                }
-              t: '{{ $bash.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $bash.id }}'
-            depends_on:
-              - '{{ $dependencies.images.build.bash.entrypoint }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual._ }}'
-          - id: '{{ $dependencies.images.build.tmux }}'
-            query:
-              buildargs: |
-                {
-                  "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $tmux.id }}.sh",
-                  "TMUX_COMPLETION_URL":"{{ $tmux.url.completion }}",
-                  "TPM_PATH":"{{ $tmux.path.tpm }}",
-                  "TPM_URL":"{{ $tmux.url.tpm }}"
-                }
-              t: '{{ $tmux.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $tmux.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.bash }}'
-          - id: '{{ $dependencies.images.build.sshd }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $sshd.id }}.sh",
-                  "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
-                  "SSH_PORT":"{{ $sshd.port }}"
-                }
-              t: '{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $sshd.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.bash }}'
-          - id: '{{ $dependencies.images.build.docker }}'
-            query:
-              buildargs: |
-                {
-                  "_DOCKER_LOCAL_IMG":"{{ $docker.image.local }}{{ $all.sep.tag }}{{ $docker.tag }}",
-                  "_DOCKER_PLUGINS_PATH":"{{ docker.path.plugins }}",
-                  "BIN_PATH":"{{ $all.path.bin }}",
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $docker.id }}.sh",
-                  "DOCKLE_DOWNLOAD_URL":"{{ $dockle.url.download }}",
-                  "DOCKLE_TAG":"{{ $dockle.tag }}",
-                  "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
-                  "HTTP_DOCKER_TARGET":"{{ $docker.target.http }}",
-                  "NET":"{{ $networks.jump_area.name }}",
-                  "REGBOT_URL":"{{ $docker.url.regbot }}",
-                  "REGCTL_URL":"{{ $docker.url.regctl }}",
-                  "REGISTRY_TARGET":"{{ $registry.target }}",
-                  "REGSYNC_URL":"{{ $docker.url.regsync }}",
-                  "TCP_BUILDKIT_TARGET":"{{ $buildkit.target.tcp }}",
-                  "TCP_DOCKER_TARGET":"{{ $docker.target.tcp }}",
-                  "XEPHYR_DISPLAY":"{{ .Env.XEPHYR_DISPLAY }}"
-                }
-              t: '{{ $docker.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $docker.id }}'
-            depends_on:
-              - '{{ $dependencies.images.tag.docker }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.sshd }}'
-          - id: '{{ $dependencies.images.build.man }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $man.id }}.sh"
-                }
-              t: '{{ $man.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $man.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.sshd }}'
-          - id: '{{ $dependencies.images.build.pass }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $pass.id }}.sh"
-                }
-              t: '{{ $pass.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $pass.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.sshd }}'
-          - id: '{{ $dependencies.images.build.workspaces }}'
-            query:
-              buildargs: |
-                {
-                  "OPT_SCRIPTS_PATH":"{{ $all.path.opt.scripts }}",
-                  "OWNER_URL":"{{ $all.owner.url }}",
-                  "SPACEPORN_ID":"{{ $spaceporn.id }}",
-                  "SSHD_LAYER_IMG":"{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
-                  "WORKSPACES_PATH":"{{ $workspaces.path.root }}"
-                }
-              t: '{{ $workspaces.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $workspaces.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.sshd }}'
-          - id: '{{ $dependencies.images.build.vim }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $vim.id }}.sh",
-                  "NERDTREE_URL":"{{ $vim.url.plugin.nerdtree }}",
-                  "POLYGLOT_URL":"{{ $vim.url.plugin.polyglot }}",
-                  "RAINBOW_URL":"{{ $vim.url.plugin.rainbow }}",
-                  "UNDOTREE_URL":"{{ $vim.url.plugin.undotree }}"
-                }
-              t: '{{ $vim.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $vim.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.workspaces }}'
-          - id: '{{ $dependencies.images.build.explorer }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $explorer.id }}.sh"
-                }
-              t: '{{ $explorer.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $explorer.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.workspaces }}'
-          - id: '{{ $dependencies.images.build.git }}'
-            query:
-              buildargs: |
-                {
-                  "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $git.id }}.sh",
-                  "EXPLORER_LAYER_IMG":"{{ $explorer.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
-                  "TIG_COMPLETION_URL":"{{ $git.url.tig.completion }}"
-                }
-              t: '{{ $git.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $git.id }}'
-            depends_on:
-              - '{{ $dependencies.images.build.explorer }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual._ }}'
-          - id: '{{ $dependencies.images.build.shell }}'
-            query:
-              buildargs: |
-                {
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $shell.id }}.sh"
-                }
-              t: '{{ $shell.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $shell.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.git }}'
-          - id: '{{ $dependencies.images.build.zig }}'
-            query:
-              buildargs: |
-                {
-                  "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
-                  "BIN_PATH":"{{ $all.path.bin }}",
-                  "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $zig.id }}.sh",
-                  "ZIG_BUILDS_URL":"{{ $zig.url.builds }}",
-                  "ZIG_COMPLETION_URL":"{{ $zig.url.completion }}",
-                  "ZIG_TAG":"{{ $zig.tag }}"
-                }
-              t: '{{ $zig.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
-            context: '{{ $all.path.dockerfiles }}/{{ $zig.id }}'
-            extends:
-              - '{{ $dependencies.images.build.virtual.git }}'
+        with:
+          - body:
+              id: '{{ $dependencies.images.build.alpine.entrypoint }}'
+              query:
+                buildargs: |
+                  {
+                    "BASE_IMG":"{{ $all.os.image.local }}{{ $all.sep.tag }}{{ $all.os.tag }}"
+                  }
+                t: '{{ $entrypointalpine.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              depends_on:
+                - '{{ $dependencies.images.tag.alpine }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.entrypoint }}'
+          - body:
+              id: '{{ $dependencies.images.build.bash.entrypoint }}'
+              query:
+                buildargs: |
+                  {
+                    "BASE_IMG":"{{ $bash.image.local }}{{ $all.sep.tag }}{{ $bash.tag }}"
+                  }
+                t: '{{ $entrypointbash.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              depends_on:
+                - '{{ $dependencies.images.tag.bash }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.entrypoint }}'
+          - body:
+              id: '{{ $dependencies.images.build.gpu }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $gpu.id }}.sh"
+                  }
+                t: '{{ $gpu.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $gpu.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
+          - body:
+              id: '{{ $dependencies.images.build.linguist }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $linguist.id }}.sh"
+                  }
+                t: '{{ $linguist.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $linguist.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
+          - body:
+              id: '{{ $dependencies.images.build.nginx }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $nginx.id }}.sh",
+                    "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
+                    "ETC_NGINX_CONFD_PATH":"{{ $nginx.path.confd }}",
+                    "ETC_NGINX_HTTPD_PATH":"{{ $nginx.path.httpd }}",
+                    "VAR_LOG_NGINX_PATH":"{{ $nginx.path.var.log }}"
+                  }
+                t: '{{ $nginx.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $nginx.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
+          - body:
+              id: '{{ $dependencies.images.build.socat }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $socat.id }}.sh"
+                  }
+                t: '{{ $socat.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $socat.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
+          - body:
+              id: '{{ $dependencies.images.build.spectrwm }}'
+              query:
+                buildargs: |
+                  {
+                    "BIN_PATH":"{{ $all.path.bin }}",
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $spectrwm.id }}.sh"
+                  }
+                t: '{{ $spectrwm.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $spectrwm.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.alpine.entrypoint }}'
+          - body:
+              id: '{{ $dependencies.images.build.http }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $http.id }}.sh",
+                    "ETC_NGINX_HTTPD_PATH":"{{ $nginx.path.httpd }}",
+                    "ETC_NGINX_PATH":"{{ $nginx.path.etc }}",
+                    "LINUXSERVER_PROXY_LOCAL_IMG":"{{ $socketproxy.linuxserver.image.local }}{{ all.sep.tag }}{{ $socketproxy.linuxserver.tag }}"
+                  }
+                t: '{{ $http.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $http.id }}'
+              depends_on:
+                - '{{ $dependencies.images.tag.socketproxy }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.nginx }}'
+          - body:
+              id: '{{ $dependencies.images.build.bash._ }}'
+              query:
+                buildargs: |
+                  {
+                    "BASH_ALIASES_PATH":"{{ $bash.path.aliases }}",
+                    "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
+                    "BASH_ENTRYPOINT_LAYER_IMG":"{{ $entrypointbash.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
+                    "BASH_LOCAL_IMG":"{{ $bash.image.local }}{{ $all.sep.tag }}{{ $bash.tag }}",
+                    "BASH_THEME_PATH":"{{ $bash.path.theme }}",
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $bash.id }}.sh",
+                    "ENTRYPOINT_PATH":"{{ $entrypoint.path.entrypoint.sh }}"
+                  }
+                t: '{{ $bash.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $bash.id }}'
+              depends_on:
+                - '{{ $dependencies.images.build.bash.entrypoint }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual._ }}'
+          - body:
+              id: '{{ $dependencies.images.build.tmux }}'
+              query:
+                buildargs: |
+                  {
+                    "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $tmux.id }}.sh",
+                    "TMUX_COMPLETION_URL":"{{ $tmux.url.completion }}",
+                    "TPM_PATH":"{{ $tmux.path.tpm }}",
+                    "TPM_URL":"{{ $tmux.url.tpm }}"
+                  }
+                t: '{{ $tmux.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $tmux.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.bash }}'
+          - body:
+              id: '{{ $dependencies.images.build.sshd }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $sshd.id }}.sh",
+                    "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
+                    "SSH_PORT":"{{ $sshd.port }}"
+                  }
+                t: '{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $sshd.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.bash }}'
+          - body:
+              id: '{{ $dependencies.images.build.docker }}'
+              query:
+                buildargs: |
+                  {
+                    "_DOCKER_LOCAL_IMG":"{{ $docker.image.local }}{{ $all.sep.tag }}{{ $docker.tag }}",
+                    "_DOCKER_PLUGINS_PATH":"{{ docker.path.plugins }}",
+                    "BIN_PATH":"{{ $all.path.bin }}",
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $docker.id }}.sh",
+                    "DOCKLE_DOWNLOAD_URL":"{{ $dockle.url.download }}",
+                    "DOCKLE_TAG":"{{ $dockle.tag }}",
+                    "ENTRYPOINTD_PATH":"{{ $entrypoint.path.entrypoint.d }}",
+                    "HTTP_DOCKER_TARGET":"{{ $docker.target.http }}",
+                    "NET":"{{ $networks.jump_area.name }}",
+                    "REGBOT_URL":"{{ $docker.url.regbot }}",
+                    "REGCTL_URL":"{{ $docker.url.regctl }}",
+                    "REGISTRY_TARGET":"{{ $registry.target }}",
+                    "REGSYNC_URL":"{{ $docker.url.regsync }}",
+                    "TCP_BUILDKIT_TARGET":"{{ $buildkit.target.tcp }}",
+                    "TCP_DOCKER_TARGET":"{{ $docker.target.tcp }}",
+                    "XEPHYR_DISPLAY":"{{ .Env.XEPHYR_DISPLAY }}"
+                  }
+                t: '{{ $docker.image.layer }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $docker.id }}'
+              depends_on:
+                - '{{ $dependencies.images.tag.docker }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.sshd }}'
+          - body:
+              id: '{{ $dependencies.images.build.man }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $man.id }}.sh"
+                  }
+                t: '{{ $man.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $man.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.sshd }}'
+          - body:
+              id: '{{ $dependencies.images.build.pass }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $pass.id }}.sh"
+                  }
+                t: '{{ $pass.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $pass.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.sshd }}'
+          - body:
+              id: '{{ $dependencies.images.build.workspaces }}'
+              query:
+                buildargs: |
+                  {
+                    "OPT_SCRIPTS_PATH":"{{ $all.path.opt.scripts }}",
+                    "OWNER_URL":"{{ $all.owner.url }}",
+                    "SPACEPORN_ID":"{{ $spaceporn.id }}",
+                    "SSHD_LAYER_IMG":"{{ $sshd.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
+                    "WORKSPACES_PATH":"{{ $workspaces.path.root }}"
+                  }
+                t: '{{ $workspaces.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $workspaces.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.sshd }}'
+          - body:
+              id: '{{ $dependencies.images.build.vim }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $vim.id }}.sh",
+                    "NERDTREE_URL":"{{ $vim.url.plugin.nerdtree }}",
+                    "POLYGLOT_URL":"{{ $vim.url.plugin.polyglot }}",
+                    "RAINBOW_URL":"{{ $vim.url.plugin.rainbow }}",
+                    "UNDOTREE_URL":"{{ $vim.url.plugin.undotree }}"
+                  }
+                t: '{{ $vim.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $vim.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.workspaces }}'
+          - body:
+              id: '{{ $dependencies.images.build.explorer }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $explorer.id }}.sh"
+                  }
+                t: '{{ $explorer.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $explorer.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.workspaces }}'
+          - body:
+              id: '{{ $dependencies.images.build.git }}'
+              query:
+                buildargs: |
+                  {
+                    "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $git.id }}.sh",
+                    "EXPLORER_LAYER_IMG":"{{ $explorer.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}",
+                    "TIG_COMPLETION_URL":"{{ $git.url.tig.completion }}"
+                  }
+                t: '{{ $git.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $git.id }}'
+              depends_on:
+                - '{{ $dependencies.images.build.explorer }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual._ }}'
+          - body:
+              id: '{{ $dependencies.images.build.shell }}'
+              query:
+                buildargs: |
+                  {
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $shell.id }}.sh"
+                  }
+                t: '{{ $shell.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $shell.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.git }}'
+          - body:
+              id: '{{ $dependencies.images.build.zig }}'
+              query:
+                buildargs: |
+                  {
+                    "BASH_COMPLETION_PATH":"{{ $bash.path.completion }}",
+                    "BIN_PATH":"{{ $all.path.bin }}",
+                    "CHECK_ENTRYPOINT_PATH":"{{ $entrypoint.path.check.d }}/99{{ $zig.id }}.sh",
+                    "ZIG_BUILDS_URL":"{{ $zig.url.builds }}",
+                    "ZIG_COMPLETION_URL":"{{ $zig.url.completion }}",
+                    "ZIG_TAG":"{{ $zig.tag }}"
+                  }
+                t: '{{ $zig.image }}{{ $all.sep.tag }}{{ $all.owner.tag }}'
+              context: '{{ $all.path.dockerfiles }}/{{ $zig.id }}'
+              extends:
+                - '{{ $dependencies.images.build.virtual.git }}'
 
 ...
