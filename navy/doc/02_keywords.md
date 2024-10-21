@@ -14,7 +14,7 @@ inventory:
   - source: inventory/message.json
     register: message
 ```
-The `inventory/message.json` file will be parsed and loaded. You can refer this inventory as the `message` variable into your templates and filters. It will be visible into all your requests and commands.
+The `inventory/message.json` file will be parsed and loaded. You can refer this inventory as the `message` variable into your templates and filters. It will be visible into all your tasks.
 - Here an exemple of the JSON file content used by the Inventory object shown above:
 ```json
 # inventory/message.json

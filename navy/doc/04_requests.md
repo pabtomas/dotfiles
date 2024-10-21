@@ -56,11 +56,11 @@ You can run these requests conditionally with the `if` attribute. You will see e
 
 - **type**: boolean
 - **required**: false
-- **description**: It the content is true, the matching Request will be executed. Otherwise, it will not.
+- **description**: It the content is true, the matching task will be executed. Otherwise, it will not.
 
 ### `Requests.depends_on`
 
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Navy uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the variables used into the Requests attributes are evaluated first. This attribute takes a list of ID. Navy will evaluate content of the Requests attributes after the other objects listed here will end their execution.
+- **description**: Navy uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the variables used into the Requests attributes are evaluated first. This attribute takes a list of ID. Navy will evaluate content of the Requests attributes after the other objects listed here will end their execution.

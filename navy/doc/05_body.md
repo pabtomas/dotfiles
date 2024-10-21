@@ -39,7 +39,7 @@ rule:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Navy uses as many process as possible and runs a request (or command) as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching request or command runs first. This attribute takes a list of ID. Navy will run the request after the requests and commands listed here will end their execution.
+- **description**: Navy uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching request runs first. This attribute takes a list of ID. Navy will run the request after the tasks listed here will end their execution.
 
 ### `Body.errexit`
 

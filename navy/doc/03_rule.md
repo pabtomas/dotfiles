@@ -2,7 +2,7 @@
 
 You can start to use a Rule object with the `rule` keyword.
 
-- **description**: A set of interdependant Requests and/or Commands you want to run by invoking a simple command. You can thing a Navy rule as a GNU Make target. 
+- **description**: A set of interdependant tasks you want to run by invoking a simple command. You can thing a Navy rule as a GNU Make target. 
 - **exemple**:
 ```json
 rules:
@@ -48,7 +48,10 @@ Now each time you are using `navy alpine` it will pull the latest alpine image a
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: A list of Requests and Commands.
+- **description**: This is where you are describing the whole execution of a rule. It contains a list of tasks. A tasks is one of this 3 possibilities:
+    - a request,
+    - a command,
+    - or a processor.
 - **exemple**:
 ```json
 rule:

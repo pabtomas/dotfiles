@@ -1,12 +1,15 @@
 # Command object
 
+You can start to use a Command object with the `command` keyword.
+
 - **description**: A custom command for specific need or to compensate Navy's lacks.
 - **exemples**:
-```yaml
-rules:
-  - id: 'up'
-    run:
-      - id: commands.install.docker-cli
+```json
+rule:
+  id: 'up'
+  run:
+    - command:
+        id: commands.install.docker-cli
         argv:
           - 'apk'
           - 'add'
@@ -14,7 +17,8 @@ rules:
           - 'docker-cli'
         depends_on:
           - containers.start.my-container
-      - id: commands.attach
+    - command:
+        id: commands.attach
         argv:
           - 'docker'
           - 'attach'
@@ -34,21 +38,21 @@ rules:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Navy uses as many process as possible and runs a Request (or Command) as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching Request or Command runs first. This attribute takes a list of ID. Navy will run the Request after the Requests and Commands listed here will end their execution.
+- **description**: Navy uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching task runs first. This attribute takes a list of ID. Navy will run this task after the tasks listed here will end their execution.
 
 ### `Command.errexit`
 
 - **type**: boolean
 - **required**: false
 - **default**: `true`
-- **description**: If the Request failed, Navy stops its execution in failure.
+- **description**: If the command failed, Navy stops its execution in failure.
 
 ### `Command.if`
 
 - **type**: boolean
 - **required**: false
 - **default**: true
-- **description**: The result of this expression must a boolean. It this expression is evaluated as true, the matching Request will be executed. Otherwise, it will not.
+- **description**: It the content is true, the matching task will be executed. Otherwise, it will not.
 
 ### `Command.argv`
 
