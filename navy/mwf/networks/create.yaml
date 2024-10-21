@@ -17,8 +17,8 @@ rule:
               register: listed_networks
     - processor:
         id: process.conditional.networks
-        as: not_has_all_networks
-        data: '{{ listed_networks }}'
+        register: not_has_all_networks
+        input: '{{ listed_networks }}'
         filter: '{{ $net := coll.Slice }}{{ range $listed_networks }}{{ $net = $net | append .Name }}{{ end }}
           {{ or (not (has $net $networks.docker_utils.name))
                 (not (has $net $networks.proxified_docker_socket.name))

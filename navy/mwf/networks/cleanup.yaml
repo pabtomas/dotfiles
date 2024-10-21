@@ -20,8 +20,8 @@ rule:
               register: listed_networks
     - processor:
         id: process.remove.networks
-        as: networks_to_remove
-        data: '{{ listed_networks }}'
+        register: networks_to_remove
+        input: '{{ listed_networks }}'
         filter: '{{ $array := "" }}{{ range $listed_networks }}{{ $array = print $array "{\"path\":{\"id\":\"" .Name "\"}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
         depends_on:
           - get.networks

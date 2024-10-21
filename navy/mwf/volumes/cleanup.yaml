@@ -20,8 +20,8 @@ rule:
               errexit: false
     - processor:
         id: process.remove.volumes
-        as: volumes_to_remove
-        data: '{{ listed_volumes }}'
+        register: volumes_to_remove
+        input: '{{ listed_volumes }}'
         filter: '{{ $array := "" }}{{ range $listed_volumes }}{{ $array = print $array "{\"path\":{\"name\":\"" .Name "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
         depends_on:
           - get.volumes

@@ -20,15 +20,15 @@ rule:
               register: running_containers
     - processor:
         id: process.stop.running_containers
-        as: containers_to_stop
-        data: '{{ running_containers }}'
+        register: containers_to_stop
+        input: '{{ running_containers }}'
         filter: '{{ $array := "" }}{{ range $running_containers }}{{ $array = print $array "{\"id\":\"containers.stop." .Id "\",\"path\":{\"id\":\"" .Id "\"},\"query\":{\"t\":0}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
         depends_on:
           - get.containers
     - processor:
         id: process.remove.containers
-        as: containers_to_remove
-        data: '{{ running_containers }}'
+        register: containers_to_remove
+        input: '{{ running_containers }}'
         filter: '{{ $array := "" }}{{ range $running_containers }}{{ $array = print $array "{\"depends_on\":[\"containers.stop." .Id "\"],\"path\":{\"id\":\"" .Id "\"},\"query\":{\"force\":true}}," }}{{ end }}{{ print "[" $array "]" | data.YAMLArray }}'
         depends_on:
           - get.containers

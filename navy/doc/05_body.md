@@ -152,4 +152,4 @@ requests:
 
 - **type**: string 
 - **required**: false
-- **description**: When this attribute is not empty, that means that you want to store the response of the Docker Engine in a variable to use it later in your templates. The response will be stored in the variable with the name you write. If the variable is not empty, the content will be erased.
+- **description**: When this attribute is not empty, that means that you want to store the response of the Docker Engine in a variable to use it later in your templates. The response will be stored in the variable with the name you wrote. If the variable is not empty, the content will be erased.

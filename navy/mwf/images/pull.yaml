@@ -19,8 +19,8 @@ rule:
               register: localalpineimage
     - processor:
         id: process.conditional.local.alpine.image
-        as: not_local_alpine_image
-        data: '{{ localalpineimage }}'
+        register: not_local_alpine_image
+        input: '{{ localalpineimage }}'
         filter: '{{ ne 1 (len $localalpineimage) }}'
         depends_on:
           - get.local.alpine.image
@@ -47,8 +47,8 @@ rule:
               register: localbashimage
     - processor:
         id: process.conditional.local.bash.image
-        as: not_local_bash_image
-        data: '{{ localbashimage }}'
+        register: not_local_bash_image
+        input: '{{ localbashimage }}'
         filter: '{{ ne 1 (len $localbashimage) }}'
         depends_on:
           - get.local.bash.image
@@ -75,8 +75,8 @@ rule:
               register: localbuildkitimage
     - processor:
         id: process.conditional.local.buildkit.image
-        as: not_local_buildkit_image
-        data: '{{ localbuildkitimage }}'
+        register: not_local_buildkit_image
+        input: '{{ localbuildkitimage }}'
         filter: '{{ ne 1 (len $localbuildkitimage) }}'
         depends_on:
           - get.local.buildkit.image
@@ -103,8 +103,8 @@ rule:
               register: localdockerimage
     - processor:
         id: process.conditional.local.docker.image
-        as: not_local_docker_image
-        data: '{{ localdockerimage }}'
+        register: not_local_docker_image
+        input: '{{ localdockerimage }}'
         filter: '{{ ne 1 (len $localdockerimage) }}'
         depends_on:
           - get.local.docker.image
@@ -131,8 +131,8 @@ rule:
               register: localregistryimage
     - processor:
         id: process.conditional.local.registry.image
-        as: not_local_registry_image
-        data: '{{ localregistryimage }}'
+        register: not_local_registry_image
+        input: '{{ localregistryimage }}'
         filter: '{{ ne 1 (len $localregistryimage) }}'
         depends_on:
           - get.local.registry.image
@@ -159,8 +159,8 @@ rule:
               register: localsocketproxyimage
     - processor:
         id: process.conditional.local.socketproxy.image
-        as: not_local_socketproxy_image
-        data: '{{ localsocketproxyimage }}'
+        register: not_local_socketproxy_image
+        input: '{{ localsocketproxyimage }}'
         filter: '{{ ne 1 (len $localsocketproxyimage) }}'
         depends_on:
           - get.local.socketproxy.image

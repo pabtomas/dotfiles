@@ -17,8 +17,8 @@ rule:
               register: listed_volumes
     - processor:
         id: process.conditional.volumes
-        as: not_has_all_volumes
-        data: '{{ listed_volumes }}'
+        register: not_has_all_volumes
+        input: '{{ listed_volumes }}'
         filter: '{{ $volumes := coll.Slice }}{{ range $listed_volumes }}{{ $volumes = $volumes | append .Name }}{{ end }}
           {{ or (not (has $net $carpenterrelay.volume))
                 (not (has $net $listener.volume.opt.data))

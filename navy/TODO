@@ -1,12 +1,6 @@
 doc:
-- datasources -> inventory
-- YAML --> JSON
-- Golang --> Mustache
-- objects:
-  - processor
-  - command
-- reread it totally
 - translate exemples into JSON
+- complete 08_debugging.md
 
 mwf:
 - YAML --> JSON
