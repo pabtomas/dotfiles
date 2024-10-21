@@ -3,11 +3,10 @@ doc:
 - YAML --> JSON
 - Golang --> Mustache
 - objects:
-  - body
   - processor
   - command
-- filter ???
 - reread it totally
+- translate exemples into JSON
 
 mwf:
 - YAML --> JSON
@@ -15,4 +14,3 @@ mwf:
 
 zig:
 - libjq.zig
-- mustache ????

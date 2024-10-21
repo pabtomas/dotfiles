@@ -12,19 +12,19 @@ rules:
 rule:
   id: 'alpine'
   run:
-    - loop:
+    - requests:
         endpoint: /images/create
         method: POST
-        from:
+        with:
           - body:
               id: 'pull'
               query:
                 fromImage: 'docker.io/library/alpine'
                 tag: 'latest'
-    - loop:
+    - requests:
         endpoint: /containers/create
         method: POST
-        from:
+        with:
           - body:
               id: 'create'
               query:
@@ -54,10 +54,10 @@ Now each time you are using `navy alpine` it will pull the latest alpine image a
 rule:
   id: 'up'
   run:
-    - loop:
+    - requests:
         endpoint: /volumes/create
         method: POST
-        from:
+        with:
           - body:
               id: create.my-volume
               query:

@@ -5,16 +5,28 @@
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of files containing variables available in Mustache templates. In this list, **An inventory have to be a JSON file to be correctly processed by Navy**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
+- **description**: List of files containing variables available in Mustache templates and JQ filters. In this list, **An inventory have to be a JSON file to be correctly processed by Navy**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
 - **good to know**:
     - The `inventory` keyword is the first thing Navy will processed when executed, its location can not be outside your main Navy file.
 - **exemple**:
 ```json
 inventory:
-  - source: inventory/first.json
-    as: my-first-inventory
-  - source: inventory/second.json
-    as: my-second-inventory
+  - source: inventory/message.json
+    register: message
+```
+The `inventory/message.json` file will be parsed and loaded. You can refer this inventory as the `message` variable into your templates and filters. It will be visible into all your requests and commands.
+- Here an exemple of the JSON file content used by the Inventory object shown above:
+```json
+# inventory/message.json
+
+sender: Alice
+receiver: Bob
+
+# You can use content from other Inventory files
+message: 'Hello {{ message.receiver }}, you received a message from {{ message.sender }}'
+
+# You can use the special VERSION/INFO Inventory in your Inventory files
+message2: 'Your Docker Engine is using the {{ VERSION.ApiVersion }} version of the API and is already running {{ INFO.Containers }} container(s) !'
 ```
 
 ## `include`

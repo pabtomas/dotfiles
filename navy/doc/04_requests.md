@@ -18,18 +18,18 @@ This Requests object will send 2 networks creation to the Docker Engine:
 rule:
   id: create_my_networks
   run:
-    requests:
-      endpoint: /networks/create
-      method: POST
-      with:
-        - body:
-            id: create.my-net
-            query:
-              Name: my-net
-        - body:
-            id: create.my-net-2
-            query:
-              Name: my-net-2
+    - requests:
+        endpoint: /networks/create
+        method: POST
+        with:
+          - body:
+              id: create.my-net
+              query:
+                Name: my-net
+          - body:
+              id: create.my-net-2
+              query:
+                Name: my-net-2
 ```
 
 You can run these requests conditionally with the `if` attribute. You will see exemples later for this because it is not really interesting to use without Processor objects. The same reasoning is applyable for the `depends_on` attribute. This attribute is useful when you want to evaluate the content of a variable after you use a Processor object. If this sentence is not clear now, it is not a big deal. You will understand when the Processor object will be introduced.
