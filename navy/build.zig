@@ -17,7 +17,7 @@ fn import (module: *std.Build.Module) void
   module.addImport ("libcurl", libcurl);
   module.addImport ("mustache", mustache);
   module.addImport ("termsize", termsize);
-  module.linkLibrary ("libjq", libjq);
+  module.linkLibrary (libjq);
 }
 
 fn getModule (builder: *std.Build, target: *const std.Build.ResolvedTarget,

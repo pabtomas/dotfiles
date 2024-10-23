@@ -7,18 +7,21 @@ mwf:
 - remove $ prefix into templates
 - replace mustache templates with jq filters ?
 
+zig:
+- fix unit tests leak
+
 NOTE for later:
   libjq.zig:
   - add new job into ci.yml for this repo
   - add ping.yml to ping this repo
   - update README.md for CI/CD Reminder
-  
+
   spaceporn-action-cd-ping:
-  - update ping.yml to add libjq.zig 
-  - update ci.yml to add libjq.zig 
-  - update dump.yml to add libjq.zig 
+  - update ping.yml to add libjq.zig
+  - update ci.yml to add libjq.zig
+  - update dump.yml to add libjq.zig
   - update README.md for CI/CD Reminder
-  
+
   spaceporn-action-cd-pong:
   - update ping job into ci.yml to trigger libjq.zig
   - add libjq.zig job into ci.yml to trigger this repo
