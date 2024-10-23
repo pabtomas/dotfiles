@@ -3,7 +3,7 @@
 You can start to use a Processor object with the `processor` keyword.
 
 - **description**: A Processor object allows you to process JSON data contained in a variable and define new variables with.
-- **exemples**: Here 2 exemples: one with the `Requests.depends_on` attribute and another one with the `Requests.depends_on` and `Request.if` attributes introduced earlier in this documentation.
+- **examples**: Here 2 examples: one with the `Requests.depends_on` attribute and another one with the `Requests.depends_on` and `Request.if` attributes introduced earlier in this documentation.
     1.
     ```json
     rule:
@@ -60,7 +60,7 @@ You can start to use a Processor object with the `processor` keyword.
             depends_on:
               - process.remove.networks
     ```
-    This rule follows the same execution than the previous exemple but we added a conditionnal: it will remove the volume named `big_volume` if there are more than 5 created volumes.
+    This rule follows the same execution than the previous example but we added a conditionnal: it will remove the volume named `big_volume` if there are more than 5 created volumes.
 
 ### `Processor.id`
 
@@ -84,7 +84,7 @@ You can start to use a Processor object with the `processor` keyword.
 
 - **type**: string
 - **required**: true
-- **description**: The JQ filter. It takes `Processor.input` as input and outputs a JSON data. See the `jq` manpage for more details and this [link](https://github.com/fiatjaf/awesome-jq) to see the possibilities this functionnal language offers.
+- **description**: The JQ filter. It takes `Processor.input` as input. See the `jq` manpage for more details and this [link](https://github.com/fiatjaf/awesome-jq) to see the possibilities this functionnal language offers.
 
 ### `Processor.if`
 

@@ -11,7 +11,7 @@ TODO
 Navy instructions are expressed in JSON format. I know better human readable and writable formats exist, so why ? There are multiple reasons for this:
 * Popular Markup Languages are not well suited for this project:
     * YAML is too complex, 
-    * TOML is not easily readable and I did not find a robust Zig parser for this format when the Navy development process started
+    * TOML is not easily readable for complex projects and the goal of Navy is to support complex projects that Compose can not,
 * ZON was too young when the Navy development process started:
     * No support for parsing in the Zig standard library
     * No available processor 

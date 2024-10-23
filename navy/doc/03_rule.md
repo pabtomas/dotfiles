@@ -3,7 +3,7 @@
 You can start to use a Rule object with the `rule` keyword.
 
 - **description**: A set of interdependant tasks you want to run by invoking a simple command. You can thing a Navy rule as a GNU Make target. 
-- **exemple**:
+- **example**:
 ```json
 rules:
   - id: 'alpine'
@@ -52,7 +52,7 @@ Now each time you are using `navy alpine` it will pull the latest alpine image a
     - a request,
     - a command,
     - or a processor.
-- **exemple**:
+- **example**:
 ```json
 rule:
   id: 'up'

@@ -3,7 +3,7 @@
 You can start to use a Command object with the `command` keyword.
 
 - **description**: A custom command for specific need or to compensate Navy's lacks.
-- **exemples**:
+- **examples**:
 ```json
 rule:
   id: 'up'

@@ -7,6 +7,7 @@ var jdz: *std.Build.Module = undefined;
 var libcurl: *std.Build.Module = undefined;
 var mustache: *std.Build.Module = undefined;
 var termsize: *std.Build.Module = undefined;
+var libjq: *std.Build.Step.Compile = undefined;
 
 fn import (module: *std.Build.Module) void
 {
@@ -16,6 +17,7 @@ fn import (module: *std.Build.Module) void
   module.addImport ("libcurl", libcurl);
   module.addImport ("mustache", mustache);
   module.addImport ("termsize", termsize);
+  module.linkLibrary ("libjq", libjq);
 }
 
 fn getModule (builder: *std.Build, target: *const std.Build.ResolvedTarget,
@@ -38,6 +40,11 @@ pub fn build (builder: *std.Build) !void
   libcurl = getModule (builder, &target, &optimize, "curl");
   mustache = getModule (builder, &target, &optimize, "mustache");
   termsize = getModule (builder, &target, &optimize, "termsize");
+
+  libjq = builder.dependency ("libjq.zig", .{
+    .target = target,
+    .optimize = optimize,
+  }).artifact ("jq");
 
   //libcurl = builder.createModule (.{
   //  .root_source_file = .{ .cwd_relative = try builder.build_root.join (

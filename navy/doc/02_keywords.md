@@ -8,14 +8,14 @@
 - **description**: List of files containing variables available in Mustache templates and JQ filters. In this list, **An inventory have to be a JSON file to be correctly processed by Navy**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
 - **good to know**:
     - The `inventory` keyword is the first thing Navy will processed when executed, its location can not be outside your main Navy file.
-- **exemple**:
+- **example**:
 ```json
 inventory:
   - source: inventory/message.json
     register: message
 ```
 The `inventory/message.json` file will be parsed and loaded. You can refer this inventory as the `message` variable into your templates and filters. It will be visible into all your tasks.
-- Here an exemple of the JSON file content used by the Inventory object shown above:
+- Here an example of the JSON file content used by the Inventory object shown above:
 ```json
 # inventory/message.json
 
@@ -37,7 +37,7 @@ message2: 'Your Docker Engine is using the {{ VERSION.ApiVersion }} version of t
 - **description**: List of files to include into the current file. Including files in another will merge their contents. Each file can contain its own `include` list.
 - **good to know**:
     - The `include` keyword is processed after the `inventory` keyword when Navy is executed
-- **exemple**:
+- **example**:
 ```json
 include:
   - networks/create.json
@@ -60,7 +60,7 @@ include:
     ```
     docker version --format '{{ .Server.APIVersion }}'
     ```
-- **exemple**:
+- **example**:
 ```json
 versions:
   - 1.45
@@ -75,7 +75,7 @@ versions:
 - **required**: true
 - **default**: `[]`
 - **description**: A list of user defined rules.
-- **exemple**:
+- **example**:
 ```json
 rules:
   - id: 'pull_alpine'

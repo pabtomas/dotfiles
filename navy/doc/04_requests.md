@@ -12,7 +12,7 @@ and 2 other optional attributes:
 
 The Requests object is your main way to send requests to the Docker Engine. It takes an API endpoint, an HTTP method and for each request body into the `with` attribute, it will send a matching request.
 
-**exemple**:
+**example**:
 This Requests object will send 2 networks creation to the Docker Engine:
 ```json
 rule:
@@ -32,7 +32,7 @@ rule:
                 Name: my-net-2
 ```
 
-You can run these requests conditionally with the `if` attribute. You will see exemples later for this because it is not really interesting to use without Processor objects. The same reasoning is applyable for the `depends_on` attribute. This attribute is useful when you want to evaluate the content of a variable after you use a Processor object. If this sentence is not clear now, it is not a big deal. You will understand when the Processor object will be introduced.
+You can run these requests conditionally with the `if` attribute. You will see examples later for this because it is not really interesting to use without Processor objects. The same reasoning is applyable for the `depends_on` attribute. This attribute is useful when you want to evaluate the content of a variable after you use a Processor object. If this sentence is not clear now, it is not a big deal. You will understand when the Processor object will be introduced.
 
 ### `Requests.endpoint`
 

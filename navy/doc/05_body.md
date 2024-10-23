@@ -3,7 +3,7 @@
 You can start to use a Body object with the `body` keyword.
 
 - **description**: Body of a request. The only use case of this object is in the `Requests.with` attribute.
-- **exemple**:
+- **example**:
 ```json
 rule:
   id: 'up'
@@ -78,7 +78,7 @@ rule:
 - **default**: `[]`
 - **description**: This attribute lets you share common attributes among different Bodies.
     - order in this list is not trivial: if 2 Bodies share a common attribute, the last one prevails. If a Body in this list shares a common attribute with the Body you are extending, the attribute of the Body you are extending prevails:
-    **exemple**:
+    **example**:
     ```json
     endpoint: /build
     method: POST
@@ -132,7 +132,7 @@ rule:
 - **required**: false
 - **default**: `"."` for a `/build` request and empty for other endpoints.
 - **description**: This attribute is only useful when you are making a `/build` request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Navy file. 
-- **exemple**:
+- **example**:
 ```json
 endpoint: /build
 method: POST
