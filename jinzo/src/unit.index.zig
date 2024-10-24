@@ -16,7 +16,7 @@ pub fn prepare (logger: *Logger, stderr: *Stream, allocator: *const std.mem.Allo
 {
   stderr.* = .{
     .cols   = null,
-    .buffer = std.io.bufferedWriter ((try std.fs.openFileAbsolute ("/dev/null", .{})).writer ()),
+    .buffer = std.io.bufferedWriter ((try std.fs.openFileAbsolute ("/dev/null", .{ .mode = .write_only, })).writer ()),
     .writer = undefined,
   };
   stderr.writer = stderr.buffer.writer ();

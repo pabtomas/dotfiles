@@ -3,7 +3,9 @@ doc:
 - complete debugging.md
 
 zig:
-- fix unit tests leak
+- add logger.call () when finished
+- add ENV inventory
+- add functions to translate std.Json.Value to c.jv types ??
 
 NOTE for later:
   libjq.zig:

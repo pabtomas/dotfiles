@@ -48,9 +48,8 @@ pub const Client = struct
   {
     try self.addContextVars (logger, opts);
 
-    //client.buildGenerics ()
-    //client.expandTemplatesIntoInv ();
-    //client.expandTemplatesIntoMain ();
+    //client.expandJqIntoInventory ();
+    //client.expandJqIntoMain ();
     //client.resolveIncludes ();
     //client.castArraysToObjects ();
     //client.expandExtends ();
@@ -135,16 +134,11 @@ pub const Client = struct
     try self.printResponseBody (self.inventory.object.getPtr ("INFO").?, logger);
 
     try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
+
+    // TODO: add ENV into inventory
   }
 
-  fn buildGenerics (self: @This ()) void
-  {
-    // TODO: search generics into jinzo.json and build a struct for generic lambda ??
-    _ = self;
-    std.debug.print ("TODO", .{});
-  }
-
-  fn expandTemplatesIntoInv (self: @This ()) void
+  fn expandJqIntoInventory (self: @This ()) void
   {
     // TODO: write_datasources_header
     // TODO: expand_datasources_into_datasources
@@ -152,7 +146,7 @@ pub const Client = struct
     std.debug.print ("TODO", .{});
   }
 
-  fn expandTemplatesIntoMain (self: @This ()) void
+  fn expandJqIntoMain (self: @This ()) void
   {
     // TODO: expand_datasources_into_main
     _ = self;

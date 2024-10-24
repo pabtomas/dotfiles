@@ -110,9 +110,12 @@ pub const Logger = struct
     var log_rendered = false;
     while (self.requests.popFirst ()) |request|
     {
+      defer
+      {
+        if (request.data.allocated) self.allocator.free (request.data.data.?);
+        self.allocator.destroy (request);
+      }
       log_rendered = try self.response (&request.data) or log_rendered;
-      if (request.data.allocated) self.allocator.free (request.data.data.?);
-      self.allocator.destroy (request);
     }
     return log_rendered;
   }

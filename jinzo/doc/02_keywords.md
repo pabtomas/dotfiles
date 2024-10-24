@@ -25,8 +25,8 @@ receiver: Bob
 # You can use content from other Inventory files
 message: 'Hello {{ message.receiver }}, you received a message from {{ message.sender }}'
 
-# You can use the special VERSION/INFO Inventory in your Inventory files
-message2: 'Your Docker Engine is using the {{ VERSION.ApiVersion }} version of the API and is already running {{ INFO.Containers }} container(s) !'
+# You can use the special VERSION/INFO/ENV Inventory in your Inventory files
+message2: '{{ "Your Docker Engine is using the " + .VERSION.ApiVersion + " version of the API and is already running " + .INFO.Containers + " container(s) !" }}'
 ```
 
 ## `include`
