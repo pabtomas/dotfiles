@@ -1,4 +1,4 @@
-# Navy
+# Jinzo
 
 A Docker Engine orchestrator
 
@@ -11,11 +11,11 @@ A Docker Engine orchestrator
 - Zero-fuss installation
 - Asynchronous execution
 
-** It does not mean that your `navy.json` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `navy.json` file whatever the Docker Engine API version you are targetting.
+** It does not mean that your `jinzo.json` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `jinzo.json` file whatever the Docker Engine API version you are targetting.
 
-## Why Navy ?
+## Why Jinzo ?
 
-Navy was written because I faced a recurrent scenario when dealing with Docker:
+Jinzo was written because I faced a recurrent scenario when dealing with Docker:
 - Starting a Compose project to make a simple stack of containers working quickly,
 - With time this stack is growing and I spend more time to maintain things around Compose to compensate its lacks,
 - I switch to another solution (Ansible, Kubernetes, Swarm, ...) because the project is now unmaintainable.
@@ -42,29 +42,29 @@ GNU Make is a tool which controls the generation of executables and other non-so
 
 If you want to run it on your laptop, install [Zig 0.13.0](https://ziglang.org/download/), and then execute these commands:
 ```sh
-git clone https://github.com/tiawl/navy.git
+git clone https://github.com/tiawl/jinzo.git
 
 # ${my_install_path} is usually /usr/local for linux OS but feel free to change it for a more suitable location for your usecase
-env -C navy zig build -p "${my_install_path:-/usr/local}"
+env -C jinzo zig build -p "${my_install_path:-/usr/local}"
 ```
 
-If you prefer to use Navy in its container run this command instead:
+If you prefer to use Jinzo in its container run this command instead:
 ```
 TODO
 ```
 
-## How to start a Navy Project ?
+## How to start a Jinzo Project ?
 
-First of all, you need to describe your project with a `navy.json` file. Here the links you need to fill it:
-- [the Navy specification](https://github.com/tiawl/navy/blob/trunk/doc/00_index.md)
+First of all, you need to describe your project with a `jinzo.json` file. Here the links you need to fill it:
+- [the Jinzo specification](https://github.com/tiawl/jinzo/blob/trunk/doc/00_index.md)
 - [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
 - [the JSON specification]()
 - [the Mustache specification]()
 - [the JQ specification]()()
 
-### How to run Navy with a remote Docker socket ?
+### How to run Jinzo with a remote Docker socket ?
 
-If you use Navy in its container, add this option to the `docker run` command:
+If you use Jinzo in its container, add this option to the `docker run` command:
 ```
 -e DOCKER_HOST=${DOCKER_HOST}
 ```
@@ -73,6 +73,6 @@ If not, export `DOCKER_HOST` in your environment.
 
 ### What did you plan for the next releases ? How can I contribute to this project ?
 
-You probably noticed that Navy does not have a first major release. Why ? Because Navy is young: it is ready to be used but is not mature. To go further, Navy needs feedbacks for its implemented features. So expect breaking changes in the next releases.
+You probably noticed that Jinzo does not have a first major release. Why ? Because Jinzo is young: it is ready to be used but is not mature. To go further, Jinzo needs feedbacks for its implemented features. So expect breaking changes in the next releases.
 
-With time, Navy will be more stable. If you want to contribute and see Navy growing, use Navy for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Navy better. So do not hesitate to open an issue: this is currently the best way to contribute.
+With time, Jinzo will be more stable. If you want to contribute and see Jinzo growing, use Jinzo for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Jinzo better. So do not hesitate to open an issue: this is currently the best way to contribute.

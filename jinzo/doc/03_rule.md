@@ -2,7 +2,7 @@
 
 You can start to use a Rule object with the `rule` keyword.
 
-- **description**: A set of interdependant tasks you want to run by invoking a simple command. You can thing a Navy rule as a GNU Make target. 
+- **description**: A set of interdependant tasks you want to run by invoking a simple command. You can thing a Jinzo rule as a GNU Make target. 
 - **example**:
 ```json
 rules:
@@ -31,7 +31,7 @@ rule:
                 Image: 'docker.io/library/alpine:latest'
 ```
 
-Now each time you are using `navy alpine` it will pull the latest alpine image and create a container based on this image.
+Now each time you are using `jinzo alpine` it will pull the latest alpine image and create a container based on this image.
 
 **important note**: `rules` and `rule` are linked but different:
 - `rules` allows you to describe with text the set of rules you want to use in your project. `rules` is a List.
@@ -48,10 +48,9 @@ Now each time you are using `navy alpine` it will pull the latest alpine image a
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: This is where you are describing the whole execution of a rule. It contains a list of tasks. A tasks is one of this 3 possibilities:
+- **description**: This is where you are describing the whole execution of a rule. It contains a list of tasks. A tasks is one of this 2 possibilities:
     - a request,
-    - a command,
-    - or a processor.
+    - or a command,
 - **example**:
 ```json
 rule:

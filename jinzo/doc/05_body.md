@@ -39,14 +39,14 @@ rule:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Navy uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching request runs first. This attribute takes a list of ID. Navy will run the request after the tasks listed here will end their execution.
+- **description**: Jinzo uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Jinzo execution. You can let this list empty but that means that you do not mind that the matching request runs first. This attribute takes a list of ID. Jinzo will run the request after the tasks listed here will end their execution.
 
 ### `Body.errexit`
 
 - **type**: boolean
 - **required**: false
 - **default**: `true`
-- **description**: By default, if the request failed, Navy stops its execution in failure. If you want to change this behavior for a request, set this attribute to `false`.
+- **description**: By default, if the request failed, Jinzo stops its execution in failure. If you want to change this behavior for a request, set this attribute to `false`.
 
 ### `Body.query`
 
@@ -69,7 +69,7 @@ rule:
 - **type**: boolean
 - **required**: false
 - **default**: false
-- **description**: A virtual Body will not result as a request execution by Navy. It is particularly useful when you want to reuse common attributes between Bodies.
+- **description**: A virtual Body will not result as a request execution by Jinzo. It is particularly useful when you want to reuse common attributes between Bodies.
 
 ### `Body.extends`
 
@@ -131,7 +131,7 @@ rule:
 - **type**: string
 - **required**: false
 - **default**: `"."` for a `/build` request and empty for other endpoints.
-- **description**: This attribute is only useful when you are making a `/build` request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Navy file. 
+- **description**: This attribute is only useful when you are making a `/build` request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Jinzo file. 
 - **example**:
 ```json
 endpoint: /build

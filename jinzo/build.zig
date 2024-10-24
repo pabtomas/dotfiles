@@ -55,15 +55,15 @@ pub fn build (builder: *std.Build) !void
   //});
   //libcurl.linkLibrary (try getLibcurl (builder, &target, &optimize));
 
-  const navy = builder.addExecutable (.{
-    .name = "navy",
+  const jinzo = builder.addExecutable (.{
+    .name = "jinzo",
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
       builder.allocator, &.{ "src", "main.zig", }), },
     .target = target,
     .optimize = optimize,
   });
 
-  import (&navy.root_module);
+  import (&jinzo.root_module);
 
   const leak_tests = builder.addTest (.{
     .target = target,
@@ -111,7 +111,7 @@ pub fn build (builder: *std.Build) !void
 
   unit_tests.root_module.addImport ("index", unit_module);
 
-  builder.installArtifact (navy);
+  builder.installArtifact (jinzo);
 }
 
 // const Paths = struct

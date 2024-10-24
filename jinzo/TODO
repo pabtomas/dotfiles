@@ -1,11 +1,6 @@
 doc:
 - translate examples into JSON
-- complete 08_debugging.md
-
-mwf:
-- YAML --> JSON
-- remove $ prefix into templates
-- replace mustache templates with jq filters ?
+- complete debugging.md
 
 zig:
 - fix unit tests leak

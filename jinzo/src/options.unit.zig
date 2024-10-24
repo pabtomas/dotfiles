@@ -25,14 +25,14 @@ const ArgIterator = struct
   }
 };
 
-test "parse: navy"
+test "parse: jinzo"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -45,38 +45,38 @@ test "parse: navy"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy -v -q"
+test "parse: jinzo -v -q"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-v", "-q", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-v", "-q", });
   try std.testing.expectError (error.UncompatibleOpts, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: navy -qv"
+test "parse: jinzo -qv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-qv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-qv", });
   try std.testing.expectError (error.UncompatibleOpts, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: navy -vv -vv"
+test "parse: jinzo -vv -vv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-vv", "-vv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-vv", "-vv", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -89,14 +89,14 @@ test "parse: navy -vv -vv"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy -vvvv --verbose --verbose"
+test "parse: jinzo -vvvv --verbose --verbose"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-vvvv", "--verbose", "--verbose", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-vvvv", "--verbose", "--verbose", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -109,14 +109,14 @@ test "parse: navy -vvvv --verbose --verbose"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy --quiet -qqq"
+test "parse: jinzo --quiet -qqq"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "--quiet", "-qqq", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "--quiet", "-qqq", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -129,14 +129,14 @@ test "parse: navy --quiet -qqq"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy --verbose --verbose -hVv"
+test "parse: jinzo --verbose --verbose -hVv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "--verbose", "--verbose", "-hVv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "--verbose", "--verbose", "-hVv", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -149,14 +149,14 @@ test "parse: navy --verbose --verbose -hVv"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy --version --version --help -hVhVhV"
+test "parse: jinzo --version --version --help -hVhVhV"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "--version", "--version", "--help", "-hVhVhV", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "--version", "--version", "--help", "-hVhVhV", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -169,14 +169,14 @@ test "parse: navy --version --version --help -hVhVhV"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy -vfqvvvhVv"
+test "parse: jinzo -vfqvvvhVv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-vfqvvvhVv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-vfqvvvhVv", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -189,14 +189,14 @@ test "parse: navy -vfqvvvhVv"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy -hhhfhhh -fvqvqvqvvvq --file=awesome.json"
+test "parse: jinzo -hhhfhhh -fvqvqvqvvvq --file=awesome.json"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-hhhfhhr", "-fvqvqvqvvvq", "--file=awesome.json", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-hhhfhhr", "-fvqvqvqvvvq", "--file=awesome.json", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -209,14 +209,14 @@ test "parse: navy -hhhfhhh -fvqvqvqvvvq --file=awesome.json"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy --unknown-opt"
+test "parse: jinzo --unknown-opt"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "--unknown-opt", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "--unknown-opt", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -229,50 +229,50 @@ test "parse: navy --unknown-opt"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: navy -f"
+test "parse: jinzo -f"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-f", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-f", });
   try std.testing.expectError (error.MissingArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: navy --file="
+test "parse: jinzo --file="
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "--file=", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "--file=", });
   try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: navy -f ''"
+test "parse: jinzo -f ''"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "-f", "", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "-f", "", });
   try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: navy ''"
+test "parse: jinzo ''"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "navy", "", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "jinzo", "", });
   try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }

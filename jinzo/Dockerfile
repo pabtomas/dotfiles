@@ -19,12 +19,12 @@ RUN <<END_OF_RUN
     tar -xvf "${tmp_xz}" --strip-component 1 -C "${tmp_zig}"
     mv -t /usr/local/bin "${tmp_zig}/lib/" "${tmp_zig}/zig"
 
-    mkdir -p /navy
+    mkdir -p /jinzo
     unset http_proxy https_proxy
 END_OF_RUN
 
-COPY ./navy /usr/local/bin/
+COPY ./jinzo /usr/local/bin/
 
-WORKDIR /navy
+WORKDIR /jinzo
 
-ENTRYPOINT ["/usr/local/bin/navy"]
+ENTRYPOINT ["/usr/local/bin/jinzo"]

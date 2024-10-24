@@ -32,7 +32,6 @@ rule:
                 Name: my-net-2
 ```
 
-You can run these requests conditionally with the `if` attribute. You will see examples later for this because it is not really interesting to use without Processor objects. The same reasoning is applyable for the `depends_on` attribute. This attribute is useful when you want to evaluate the content of a variable after you use a Processor object. If this sentence is not clear now, it is not a big deal. You will understand when the Processor object will be introduced.
 
 ### `Requests.endpoint`
 
@@ -63,4 +62,4 @@ You can run these requests conditionally with the `if` attribute. You will see e
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Navy uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the variables used into the Requests attributes are evaluated first. This attribute takes a list of ID. Navy will evaluate content of the Requests attributes after the other objects listed here will end their execution.
+- **description**: Jinzo uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Jinzo execution. You can let this list empty but that means that you do not mind that the variables used into the Requests attributes are evaluated first. This attribute takes a list of ID. Jinzo will evaluate content of the Requests attributes after the other objects listed here will end their execution. This attribute is useful when you want to evaluate the content of a variable after another task execution.

@@ -2,7 +2,7 @@
 
 You can start to use a Command object with the `command` keyword.
 
-- **description**: A custom command for specific need or to compensate Navy's lacks.
+- **description**: A custom command for specific need or to compensate Jinzo's lacks.
 - **examples**:
 ```json
 rule:
@@ -38,14 +38,14 @@ rule:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Navy uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Navy execution. You can let this list empty but that means that you do not mind that the matching task runs first. This attribute takes a list of ID. Navy will run this task after the tasks listed here will end their execution.
+- **description**: Jinzo uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Jinzo execution. You can let this list empty but that means that you do not mind that the matching task runs first. This attribute takes a list of ID. Jinzo will run this task after the tasks listed here will end their execution.
 
 ### `Command.errexit`
 
 - **type**: boolean
 - **required**: false
 - **default**: `true`
-- **description**: If the command failed, Navy stops its execution in failure.
+- **description**: If the command failed, Jinzo stops its execution in failure.
 
 ### `Command.if`
 

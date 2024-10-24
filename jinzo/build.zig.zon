@@ -1,5 +1,5 @@
 .{
-    .name = "navy-logger",
+    .name = "jinzo-logger",
     .version = "0.0.0",
     .dependencies = .{
         .termsize = .{

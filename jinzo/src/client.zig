@@ -139,7 +139,7 @@ pub const Client = struct
 
   fn buildGenerics (self: @This ()) void
   {
-    // TODO: search generics into navy.json and build a struct for generic lambda ??
+    // TODO: search generics into jinzo.json and build a struct for generic lambda ??
     _ = self;
     std.debug.print ("TODO", .{});
   }
