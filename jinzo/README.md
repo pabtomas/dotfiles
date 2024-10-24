@@ -6,12 +6,10 @@ A Docker Engine orchestrator
 
 - Minimal abstraction to the Docker Engine API
 - Minimal specification: less than 30 keywords
-- Docker Engine API version agnostic **
+- Docker Engine API version agnostic
 - No controller-nodes architecture
 - Zero-fuss installation
 - Asynchronous execution
-
-** It does not mean that your `jinzo.json` file will work on 2 different hosts with two different versions of the Docker Engine API. It means that you can write a `jinzo.json` file whatever the Docker Engine API version you are targetting.
 
 ## Why Jinzo ?
 
@@ -58,9 +56,7 @@ TODO
 First of all, you need to describe your project with a `jinzo.json` file. Here the links you need to fill it:
 - [the Jinzo specification](https://github.com/tiawl/jinzo/blob/trunk/doc/00_index.md)
 - [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
-- [the JSON specification]()
-- [the Mustache specification]()
-- [the JQ specification]()()
+- [the JQ manual](https://jqlang.github.io/jq/manual/)
 
 ### How to run Jinzo with a remote Docker socket ?
 
@@ -76,3 +72,10 @@ If not, export `DOCKER_HOST` in your environment.
 You probably noticed that Jinzo does not have a first major release. Why ? Because Jinzo is young: it is ready to be used but is not mature. To go further, Jinzo needs feedbacks for its implemented features. So expect breaking changes in the next releases.
 
 With time, Jinzo will be more stable. If you want to contribute and see Jinzo growing, use Jinzo for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Jinzo better. So do not hesitate to open an issue: this is currently the best way to contribute.
+
+Roadmap:
+- Make it works for Windows OS
+- Remove C backend:
+  - Replace libcurl with a Zig Http API
+  - Replace JSON format with ZON format
+  - Replace libjq with a ZON processor API
