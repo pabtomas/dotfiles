@@ -3,9 +3,10 @@ doc:
 - complete debugging.md
 
 zig:
-- add logger.call () when finished
+- fix libcurl debug callback
 - add ENV inventory
 - add functions to translate std.Json.Value to c.jv types ??
+- add logger.call () when finished
 
 NOTE for later:
   libjq.zig:

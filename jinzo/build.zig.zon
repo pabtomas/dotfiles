@@ -1,5 +1,5 @@
 .{
-    .name = "jinzo-logger",
+    .name = "jinzo",
     .version = "0.0.0",
     .dependencies = .{
         .termsize = .{
@@ -19,12 +19,8 @@
             .hash = "12205353c7f550b1aadf245d70a30d5a0a92eb151f735e15358ff35fcfe53343c93f",
         },
         .curl = .{
-            .url = "https://github.com/jiacai2050/zig-curl/archive/1eaf73544e4c5c47fa7517ff77d7e33d98166391.tar.gz",
-            .hash = "1220afa5881188c0e6b0283bbb23921204e00713c37c062bf6566b33471b5ccffe93",
-        },
-        .mustache = .{
-            .url = "https://github.com/batiati/mustache-zig/archive/4913f1ff3b5400da604258e9c40825c91d139889.tar.gz",
-            .hash = "12208145597ddc7b619f332397b15e8b64c1963d7f2c7ca6fd72f07d91367edcc731",
+            .url = "https://github.com/tiawl/zig-curl/archive/6a87ac87d500e955b5388994159bff5eb8dca7d8.tar.gz",
+            .hash = "122017a5d50ca01a93fe67928cd7a80a408ff4d1a567f4e1dd06dcc2779c01761df6",
         },
         .@"libjq.zig" = .{
             .url = "https://github.com/tiawl/libjq.zig/archive/9b1ee19968ca41289ee24156b733e98892b676f7.tar.gz",

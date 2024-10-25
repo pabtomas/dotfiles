@@ -5,7 +5,6 @@ var ansiterm: *std.Build.Module = undefined;
 var datetime: *std.Build.Module = undefined;
 var jdz: *std.Build.Module = undefined;
 var libcurl: *std.Build.Module = undefined;
-var mustache: *std.Build.Module = undefined;
 var termsize: *std.Build.Module = undefined;
 var libjq: *std.Build.Step.Compile = undefined;
 
@@ -15,7 +14,6 @@ fn import (module: *std.Build.Module) void
   module.addImport ("datetime", datetime);
   module.addImport ("jdz", jdz);
   module.addImport ("libcurl", libcurl);
-  module.addImport ("mustache", mustache);
   module.addImport ("termsize", termsize);
   module.linkLibrary (libjq);
 }
@@ -38,7 +36,6 @@ pub fn build (builder: *std.Build) !void
   datetime = getModule (builder, &target, &optimize, "zig-datetime");
   jdz = getModule (builder, &target, &optimize, "jdz_allocator");
   libcurl = getModule (builder, &target, &optimize, "curl");
-  mustache = getModule (builder, &target, &optimize, "mustache");
   termsize = getModule (builder, &target, &optimize, "termsize");
 
   libjq = builder.dependency ("libjq.zig", .{
