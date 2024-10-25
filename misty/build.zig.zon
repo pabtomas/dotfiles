@@ -1,5 +1,5 @@
 .{
-    .name = "jinzo",
+    .name = "misty",
     .version = "0.0.0",
     .dependencies = .{
         .termsize = .{

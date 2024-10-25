@@ -19,7 +19,7 @@ fn emptyArg (logger: *Logger) !void
 
 pub const Options = struct
 {
-  const DEFAULT_FILE = "jinzo.json";
+  const DEFAULT_FILE = "misty.json";
   const DEFAULT_DOCKER_HOST = "/var/run/docker.sock";
 
   help: bool = false,

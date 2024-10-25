@@ -1,4 +1,4 @@
-# Jinzo
+# Misty
 
 A Docker Engine orchestrator
 
@@ -11,9 +11,9 @@ A Docker Engine orchestrator
 - Zero-fuss installation
 - Asynchronous execution
 
-## Why Jinzo ?
+## Why Misty ?
 
-Jinzo was written because I faced a recurrent scenario when dealing with Docker:
+Misty was written because I faced a recurrent scenario when dealing with Docker:
 - Starting a Compose project to make a simple stack of containers working quickly,
 - With time this stack is growing and I spend more time to maintain things around Compose to compensate its lacks,
 - I switch to another solution (Ansible, Kubernetes, Swarm, ...) because the project is now unmaintainable.
@@ -40,27 +40,27 @@ GNU Make is a tool which controls the generation of executables and other non-so
 
 If you want to run it on your laptop, install [Zig 0.13.0](https://ziglang.org/download/), and then execute these commands:
 ```sh
-git clone https://github.com/tiawl/jinzo.git
+git clone https://github.com/tiawl/misty.git
 
 # ${my_install_path} is usually /usr/local for linux OS but feel free to change it for a more suitable location for your usecase
-env -C jinzo zig build -p "${my_install_path:-/usr/local}"
+env -C misty zig build -p "${my_install_path:-/usr/local}"
 ```
 
-If you prefer to use Jinzo in its container run this command instead:
+If you prefer to use Misty in its container run this command instead:
 ```
 TODO
 ```
 
-## How to start a Jinzo Project ?
+## How to start a Misty Project ?
 
-First of all, you need to describe your project with a `jinzo.json` file. Here the links you need to fill it:
-- [the Jinzo specification](https://github.com/tiawl/jinzo/blob/trunk/doc/00_index.md)
+First of all, you need to describe your project with a `misty.json` file. Here the links you need to fill it:
+- [the Misty specification](https://github.com/tiawl/misty/blob/trunk/doc/00_index.md)
 - [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
 - [the JQ manual](https://jqlang.github.io/jq/manual/)
 
-### How to run Jinzo with a remote Docker socket ?
+### How to run Misty with a remote Docker socket ?
 
-If you use Jinzo in its container, add this option to the `docker run` command:
+If you use Misty in its container, add this option to the `docker run` command:
 ```
 -e DOCKER_HOST=${DOCKER_HOST}
 ```
@@ -69,9 +69,9 @@ If not, export `DOCKER_HOST` in your environment.
 
 ### What did you plan for the next releases ? How can I contribute to this project ?
 
-You probably noticed that Jinzo does not have a first major release. Why ? Because Jinzo is young: it is ready to be used but is not mature. To go further, Jinzo needs feedbacks for its implemented features. So expect breaking changes in the next releases.
+You probably noticed that Misty does not have a first major release. Why ? Because Misty is in early stage development: it is ready to be used but is not mature. To go further, Misty needs feedbacks for its implemented features. So expect breaking changes in the next releases.
 
-With time, Jinzo will be more stable. If you want to contribute and see Jinzo growing, use Jinzo for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Jinzo better. So do not hesitate to open an issue: this is currently the best way to contribute.
+With time, Misty will be more stable. If you want to contribute and see Misty growing, use Misty for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Misty better. So do not hesitate to open an issue: this is currently the best way to contribute.
 
 Roadmap:
 - Make it works for Windows OS

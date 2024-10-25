@@ -62,4 +62,4 @@ rule:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Jinzo uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Jinzo execution. You can let this list empty but that means that you do not mind that the variables used into the Requests attributes are evaluated first. This attribute takes a list of ID. Jinzo will evaluate content of the Requests attributes after the other objects listed here will end their execution. This attribute is useful when you want to evaluate the content of a variable after another task execution.
+- **description**: Misty uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Misty execution. You can let this list empty but that means that you do not mind that the variables used into the Requests attributes are evaluated first. This attribute takes a list of ID. Misty will evaluate content of the Requests attributes after the other objects listed here will end their execution. This attribute is useful when you want to evaluate the content of a variable after another task execution.

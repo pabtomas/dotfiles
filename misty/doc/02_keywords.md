@@ -5,9 +5,9 @@
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of files containing variables available in Mustache templates and JQ filters. In this list, **An inventory have to be a JSON file to be correctly processed by Jinzo**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
+- **description**: List of files containing variables available in Mustache templates and JQ filters. In this list, **An inventory have to be a JSON file to be correctly processed by Misty**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
 - **good to know**:
-    - The `inventory` keyword is the first thing Jinzo will processed when executed, its location can not be outside your main Jinzo file.
+    - The `inventory` keyword is the first thing Misty will processed when executed, its location can not be outside your main Misty file.
 - **example**:
 ```json
 inventory:
@@ -36,7 +36,7 @@ message2: '{{ "Your Docker Engine is using the " + .VERSION.ApiVersion + " versi
 - **default**: `[]`
 - **description**: List of files to include into the current file. Including files in another will merge their contents. Each file can contain its own `include` list.
 - **good to know**:
-    - The `include` keyword is processed after the `inventory` keyword when Jinzo is executed
+    - The `include` keyword is processed after the `inventory` keyword when Misty is executed
 - **example**:
 ```json
 include:
@@ -50,7 +50,7 @@ include:
 
 - **type**: list
 - **required**: true
-- **description**: List of Docker Engine API versions targetted by your project. Jinzo will run with the first available version. Jinzo will fail if the Docker Engine does not support any targetted version.
+- **description**: List of Docker Engine API versions targetted by your project. Misty will run with the first available version. Misty will fail if the Docker Engine does not support any targetted version.
 - **good to know**:
     - For the Docker Engine API versions after 1.25 (included), the documentation specify this:
     ```
