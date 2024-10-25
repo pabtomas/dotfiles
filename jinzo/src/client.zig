@@ -16,39 +16,46 @@ const ApiVersionResponse = struct
   },
 };
 
-const start = [_][] const u8 { "* ", "< ", "> ", "{ ", "} ", "{ ", "} ", };
+const start = [_] u8 { '*', '<', '>', '{', '}', '{', '}', };
 
-fn debugCallback (handle: *libcurl.libcurl.CURL,
+fn debugCallback (_: *libcurl.libcurl.CURL,
   @"type": libcurl.libcurl.curl_infotype, data: [*c] c_char, size: c_uint,
   clientp: *anyopaque) callconv (.C) c_int
 {
-  _ = handle;
-
-  var logger: *Logger = @alignCast (@ptrCast (clientp));
+  const logger: *Logger = @alignCast (@ptrCast (clientp));
   const slice = @as ([*] u8, @ptrCast (data))[0 .. size];
 
   var buf = std.ArrayList (u8).init (logger.allocator.*);
   defer buf.deinit ();
   var writer = buf.writer ();
 
-  if ((@"type" == libcurl.libcurl.CURLINFO_DATA_IN or
-       @"type" == libcurl.libcurl.CURLINFO_DATA_OUT or
-       @"type" == libcurl.libcurl.CURLINFO_SSL_DATA_IN or
-       @"type" == libcurl.libcurl.CURLINFO_SSL_DATA_OUT) and
-      std.json.validate (logger.allocator.*, slice) catch return 1)
-  {
-    var parsed = std.json.parseFromSlice (std.json.Value, logger.allocator.*,
-      slice, .{ .ignore_unknown_fields = true, }) catch return 1;
-    defer parsed.deinit ();
+  // Keep '\x0D' here: libcurl places weird carriage return in its output
+  var any_it = std.mem.tokenizeAny (u8, slice, "\n\x0D");
 
-    std.json.stringify (parsed.value, .{ .whitespace = .indent_2, }, writer) catch return 1;
-  } else {
-    writer.writeAll (start [@"type"]) catch return 1;
-    writer.writeAll (slice) catch return 1;
+  while (any_it.next ()) |token|
+  {
+    if ((@"type" == libcurl.libcurl.CURLINFO_DATA_IN or
+         @"type" == libcurl.libcurl.CURLINFO_DATA_OUT or
+         @"type" == libcurl.libcurl.CURLINFO_SSL_DATA_IN or
+         @"type" == libcurl.libcurl.CURLINFO_SSL_DATA_OUT) and
+        std.json.validate (logger.allocator.*, token) catch return 1)
+    {
+      var parsed = std.json.parseFromSlice (std.json.Value, logger.allocator.*,
+        token, .{ .ignore_unknown_fields = true, }) catch return 1;
+      defer parsed.deinit ();
+
+      if (std.meta.activeTag (parsed.value) == .array or
+        std.meta.activeTag (parsed.value) == .object)
+      {
+        std.json.stringify (parsed.value, .{ .whitespace = .indent_2, }, writer) catch return 1;
+        continue;
+      }
+    }
+    writer.print ("\n{c} {s}\n", .{ start [@"type"], token, }) catch return 1;
   }
-  var it = std.mem.tokenizeScalar (u8, buf.items, '\n');
-  while (it.next ()) |entry|
-    logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = logger.allocator.dupe (u8, entry) catch return 1, .allocated = true, }) catch return 1;
+  var scalar_it = std.mem.tokenizeScalar (u8, buf.items, '\n');
+  while (scalar_it.next ()) |token|
+    logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = logger.allocator.dupe (u8, token) catch return 1, .allocated = true, }) catch return 1;
   return 0;
 }
 
