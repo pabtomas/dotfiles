@@ -82,6 +82,7 @@ pub const Client = struct
   pub fn deinit (self: *@This ()) void
   {
     self.allocator.free (self.api_version);
+    @constCast (&self.inventory.object.get ("ENV").?.object).deinit ();
     self.inventory.object.deinit ();
     self.ca_bundle.deinit ();
     self.easy.deinit ();
@@ -114,7 +115,7 @@ pub const Client = struct
 
   fn addContextVars (self: *@This (), logger: *Logger, opts: *const Options) !void
   {
-    var buf: [32] u8 = undefined;
+    var url_buf: [32] u8 = undefined;
 
     try self.easy.setDebugdata (logger);
     try self.easy.setDebugfunction (debugCallback);
@@ -122,7 +123,7 @@ pub const Client = struct
 
     try self.easy.setUnixSocketPath (opts.getDockerHost ());
 
-    var resp = try self.requestGet (try std.fmt.bufPrintZ (&buf, "http://v{s}/version", .{ self.api_version, }));
+    var resp = try self.requestGet (try std.fmt.bufPrintZ (&url_buf, "http://v{s}/version", .{ self.api_version, }));
     defer resp.deinit ();
 
     const api_version_parsed = try std.json.parseFromSlice (ApiVersionResponse,
@@ -139,7 +140,7 @@ pub const Client = struct
     }
 
     resp.deinit ();
-    resp = try self.requestGet (try std.fmt.bufPrintZ (&buf, "http://v{s}/version", .{ self.api_version, }));
+    resp = try self.requestGet (try std.fmt.bufPrintZ (&url_buf, "http://v{s}/version", .{ self.api_version, }));
 
     var parsed = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
       resp.body.?.items, .{ .ignore_unknown_fields = true, });
@@ -147,14 +148,34 @@ pub const Client = struct
     try self.inventory.object.put ("VERSION", parsed.value);
 
     resp.deinit ();
-    resp = try self.requestGet (try std.fmt.bufPrintZ (&buf, "http://v{s}/info", .{ self.api_version, }));
+    resp = try self.requestGet (try std.fmt.bufPrintZ (&url_buf, "http://v{s}/info", .{ self.api_version, }));
 
     parsed.deinit ();
     parsed = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
       resp.body.?.items, .{ .ignore_unknown_fields = true, });
     try self.inventory.object.put ("INFO", parsed.value);
 
-    // TODO: add ENV into inventory
+    var env_map = try std.process.getEnvMap (self.allocator.*);
+    defer env_map.deinit ();
+
+    var env_value = std.json.Value { .object = std.json.ObjectMap.init (self.allocator.*), };
+
+    var it = env_map.iterator ();
+    while (it.next ()) |env_var|
+      try env_value.object.put (env_var.key_ptr.*, std.json.Value { .string = env_var.value_ptr.*, });
+
+    try self.inventory.object.put ("ENV", env_value);
+
+    var env_buf = std.ArrayList (u8).init (logger.allocator.*);
+    defer env_buf.deinit ();
+
+    try std.json.stringify (env_value, .{ .whitespace = .indent_2, }, env_buf.writer ());
+
+    try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "ENV map:", .allocated = false, });
+
+    var scalar_it = std.mem.tokenizeScalar (u8, env_buf.items, '\n');
+    while (scalar_it.next ()) |token|
+      try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = try self.allocator.dupe (u8, token), .allocated = true, });
 
     try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
   }

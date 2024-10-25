@@ -3,7 +3,6 @@ doc:
 - complete debugging.md
 
 zig:
-- add ENV inventory
 - add functions to translate std.Json.Value to c.jv types ??
 - add logger.call () when finished
 
