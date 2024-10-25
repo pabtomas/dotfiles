@@ -19,12 +19,12 @@ RUN <<END_OF_RUN
     tar -xvf "${tmp_xz}" --strip-component 1 -C "${tmp_zig}"
     mv -t /usr/local/bin "${tmp_zig}/lib/" "${tmp_zig}/zig"
 
-    mkdir -p /misty
+    mkdir -p /rodeo
     unset http_proxy https_proxy
 END_OF_RUN
 
-COPY ./misty /usr/local/bin/
+COPY ./rodeo /usr/local/bin/
 
-WORKDIR /misty
+WORKDIR /rodeo
 
-ENTRYPOINT ["/usr/local/bin/misty"]
+ENTRYPOINT ["/usr/local/bin/rodeo"]

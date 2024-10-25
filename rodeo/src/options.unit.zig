@@ -25,14 +25,14 @@ const ArgIterator = struct
   }
 };
 
-test "parse: misty"
+test "parse: rodeo"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -45,38 +45,38 @@ test "parse: misty"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty -v -q"
+test "parse: rodeo -v -q"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-v", "-q", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-v", "-q", });
   try std.testing.expectError (error.UncompatibleOpts, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: misty -qv"
+test "parse: rodeo -qv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-qv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-qv", });
   try std.testing.expectError (error.UncompatibleOpts, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: misty -vv -vv"
+test "parse: rodeo -vv -vv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-vv", "-vv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-vv", "-vv", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -89,14 +89,14 @@ test "parse: misty -vv -vv"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty -vvvv --verbose --verbose"
+test "parse: rodeo -vvvv --verbose --verbose"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-vvvv", "--verbose", "--verbose", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-vvvv", "--verbose", "--verbose", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -109,14 +109,14 @@ test "parse: misty -vvvv --verbose --verbose"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty --quiet -qqq"
+test "parse: rodeo --quiet -qqq"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "--quiet", "-qqq", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "--quiet", "-qqq", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -129,14 +129,14 @@ test "parse: misty --quiet -qqq"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty --verbose --verbose -hVv"
+test "parse: rodeo --verbose --verbose -hVv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "--verbose", "--verbose", "-hVv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "--verbose", "--verbose", "-hVv", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -149,14 +149,14 @@ test "parse: misty --verbose --verbose -hVv"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty --version --version --help -hVhVhV"
+test "parse: rodeo --version --version --help -hVhVhV"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "--version", "--version", "--help", "-hVhVhV", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "--version", "--version", "--help", "-hVhVhV", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -169,14 +169,14 @@ test "parse: misty --version --version --help -hVhVhV"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty -vfqvvvhVv"
+test "parse: rodeo -vfqvvvhVv"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-vfqvvvhVv", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-vfqvvvhVv", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -189,14 +189,14 @@ test "parse: misty -vfqvvvhVv"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty -hhhfhhh -fvqvqvqvvvq --file=awesome.json"
+test "parse: rodeo -hhhfhhh -fvqvqvqvvvq --file=awesome.json"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-hhhfhhr", "-fvqvqvqvvvq", "--file=awesome.json", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-hhhfhhr", "-fvqvqvqvvvq", "--file=awesome.json", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -209,14 +209,14 @@ test "parse: misty -hhhfhhh -fvqvqvqvvvq --file=awesome.json"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty --unknown-opt"
+test "parse: rodeo --unknown-opt"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "--unknown-opt", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "--unknown-opt", });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -229,50 +229,50 @@ test "parse: misty --unknown-opt"
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: misty -f"
+test "parse: rodeo -f"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-f", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-f", });
   try std.testing.expectError (error.MissingArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: misty --file="
+test "parse: rodeo --file="
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "--file=", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "--file=", });
   try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: misty -f ''"
+test "parse: rodeo -f ''"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "-f", "", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "-f", "", });
   try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }
 
-test "parse: misty ''"
+test "parse: rodeo ''"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "misty", "", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "rodeo", "", });
   try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }

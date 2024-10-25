@@ -2,7 +2,7 @@
 
 You can start to use a Rule object with the `rule` keyword.
 
-- **description**: A set of interdependant tasks you want to run by invoking a simple command. You can thing a Misty rule as a GNU Make target. 
+- **description**: A rule tells Rodeo how to execute a serie of tasks by invoking a simple command. You can thing a Rodeo rule as a GNU Make rule. 
 - **example**:
 ```json
 rules:
@@ -31,7 +31,7 @@ rule:
                 Image: 'docker.io/library/alpine:latest'
 ```
 
-Now each time you are using `misty alpine` it will pull the latest alpine image and create a container based on this image.
+Now each time you are using `rodeo alpine` it will pull the latest alpine image and create a container based on this image.
 
 **important note**: `rules` and `rule` are linked but different:
 - `rules` allows you to describe with text the set of rules you want to use in your project. `rules` is a List.
