@@ -5,6 +5,57 @@ doc:
 zig:
 - add functions to translate std.Json.Value to c.jv types ??
 - add logger.call () when finished
+- [ ] keywords:
+    - [ ] inventory
+        - [ ] user:
+            - [ ] detect dep cycle
+            - [ ] recursive filters
+        - [ ] inventory.VERSION
+        - [ ] inventory.INFO
+        - [ ] inventory.ENV
+    - [ ] include
+        - [ ] main file
+        - [ ] other files
+        - [ ] include[].source
+        - [ ] include[].register
+    - [ ] versions
+    - [ ] rules
+        - [ ] rules[].id
+        - [ ] rules[].description
+        - [ ] rules[].virtual
+    - [ ] filters
+- [ ] objects:
+    - [ ] rule
+        - [ ] rule.id
+        - [ ] rule.run
+            - [ ] run requests
+            - [ ] run command
+            - [ ] run other rules
+    - [ ] requests
+        - [ ] requests.endpoint
+            - [ ] /build
+            - [ ] /attach
+            - [ ] other endpoints
+        - [ ] requests.method
+        - [ ] requests.with
+        - [ ] requests.if
+        - [ ] requests.depends_on
+    - [ ] body
+        - [ ] body.id
+        - [ ] body.depends_on
+        - [ ] body.errexit
+        - [ ] body.query
+        - [ ] body.path
+        - [ ] body.virtual
+        - [ ] body.extends
+        - [ ] body.context
+        - [ ] body.register
+    - [ ] command
+        - [ ] command.id
+        - [ ] command.depends_on
+        - [ ] command.errexit
+        - [ ] command.if
+        - [ ] command.argv
 
 NOTE for later:
   libjq.zig:

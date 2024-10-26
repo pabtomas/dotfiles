@@ -92,3 +92,16 @@ versions:
         description: 'pull the latest official Dockerhub Alpine image and create a container from'
     ```
     We added the `virtual` attribute. By default this attribute is `false`. When `true`, it means this rule can not be executed directly and its description will not be visible in the help Rodeo message. It can be very useful when you want to reuse a tasks between other rules without the possibility of direct execution.
+
+# `filters`
+
+- **type**: list
+- **required**: false
+- **default**: `[]`
+- **description**: A list of common jq filters you want to reuse. Each file will be loaded and added before each of your jq filter.
+- **examples**:
+```json
+filters:
+  - filters/first.jq
+  - filters/second.jq
+```
