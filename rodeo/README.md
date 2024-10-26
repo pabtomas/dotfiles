@@ -15,14 +15,14 @@ Rule Oriented Docker Engine Orchestrator
 
 Rodeo was written because I faced a recurrent scenario when dealing with Docker:
 - Starting a Compose project to make a simple stack of containers working quickly. I know this project will not stay simple but I do not find a better alternative because it is a local project and most of popular alternatives are overkilled controller-nodes architectured solutions,
-- With time this stack is growing, Compose has some lacks and I add other tools (even tools not designed to work with Docker) to compensate that,
+- As expected, with time this stack is growing. Compose has some lacks and I add other tools (even tools not designed to work with Docker) to compensate that,
 - Quickly I spend more time to maintain things around Compose than spending time on my application,
-- I abandoned this project because now it is difficult to maintain and to make evolve.
+- I abandoned the project because at this point, it is difficult to maintain and to make evolve.
 
 Here a non exhaustive list of problems that made my Compose projects messy:
 1. Extra usage of templating tools. The Compose envfile is quickly limited:
-  - Unusable interpolation for services definition name,
-  - Less useful than most of templating tools
+    - Unusable interpolation for services definition name,
+    - Less useful than most of templating tools
 2. No thin control of dependencies between services. The `depends_on` keyword is applied to the all service process (building, creation and starting).
 3. No way to specify a service purpose in a Compose file. It leads to a dedicated Compose file to build and tag images used later by the main Compose file services.
 4. No `extends` list: https://github.com/docker/compose/issues/3167
@@ -61,7 +61,7 @@ First of all, you need to describe your project with a `rodeo.json` file. Here t
 - [the Docker Engine API documentation](https://docs.docker.com/engine/api/)
 - [the JQ manual](https://jqlang.github.io/jq/manual/)
 
-### How to run Rodeo with a remote Docker socket ?
+## How to run Rodeo with a remote Docker socket ?
 
 If you use Rodeo in its container, add this option to the `docker run` command:
 ```
@@ -70,7 +70,7 @@ If you use Rodeo in its container, add this option to the `docker run` command:
 
 If not, export `DOCKER_HOST` in your environment.
 
-### What did you plan for the next releases ? How can I contribute to this project ?
+## What did you plan for the next releases ? How can I contribute to this project ?
 
 You probably noticed that Rodeo does not have a first major release. Why ? Because Rodeo is young: it is ready to be used but is not mature. To go further, Rodeo needs feedbacks for its implemented features. So expect breaking changes in the next releases.
 
