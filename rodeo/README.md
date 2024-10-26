@@ -14,9 +14,10 @@ Rule Oriented Docker Engine Orchestrator
 ## Why Rodeo ?
 
 Rodeo was written because I faced a recurrent scenario when dealing with Docker:
-- Starting a Compose project to make a simple stack of containers working quickly,
-- With time this stack is growing and I spend more time to maintain things around Compose to compensate its lacks,
-- I switch to another solution (Ansible, Kubernetes, Swarm, ...) because the project is now unmaintainable.
+- Starting a Compose project to make a simple stack of containers working quickly. I know this project will not stay simple but I do not find a better alternative because it is a local project and most of popular alternatives are overkilled controller-nodes architectured solutions,
+- With time this stack is growing, Compose has some lacks and I add other tools (even tools not designed to work with Docker) to compensate that,
+- Quickly I spend more time to maintain things around Compose than spending time on my application,
+- I abandoned this project because now it is difficult to maintain and to make evolve.
 
 Here a non exhaustive list of problems that made my Compose projects messy:
 1. Extra usage of templating tools. The Compose envfile is quickly limited:
@@ -29,12 +30,14 @@ Here a non exhaustive list of problems that made my Compose projects messy:
 6. No scoped variables
 
 In most cases, this is how things should go: Compose is not the right tool for the project I am working on.
-But sometimes, I feel like my project is not complex and going for Ansible, Swarm or another solution is overkilled.
+But sometimes, I feel like going for Ansible, Swarm or another solution is overkilled.
 
-Another popular solution is to use GNU `make` with the Docker client (or even Compose). Even if this option solves some issues I described, I think this is the starting point for many other troubles. Because this introduction is long enough I am not going to talk about all the fun I had with GNU `make` during my Docker projects. GNU `make` was not designed to work with Docker. The first line of the GNU `make` documentation states it better than everything else:
+Rodeo, like GNU `make`, has a rule system. GNU `make` is a popular solution to use with the Docker official client (or even Compose) when building an application. I personnaly think adding GNU `make` over Docker is the starting point of many other troubles. GNU `make` was not designed to work with Docker. The first line of the GNU `make` documentation states it better than everything else:
 ```
 GNU Make is a tool which controls the generation of executables and other non-source files of a program from the program's source files.
 ```
+
+This is where Rodeo stands out: Rodeo is designed to work with Docker.
 
 ## How to install it ?
 
@@ -69,13 +72,16 @@ If not, export `DOCKER_HOST` in your environment.
 
 ### What did you plan for the next releases ? How can I contribute to this project ?
 
-You probably noticed that Rodeo does not have a first major release. Why ? Because Rodeo is in early stage development: it is ready to be used but is not mature. To go further, Rodeo needs feedbacks for its implemented features. So expect breaking changes in the next releases.
+You probably noticed that Rodeo does not have a first major release. Why ? Because Rodeo is young: it is ready to be used but is not mature. To go further, Rodeo needs feedbacks for its implemented features. So expect breaking changes in the next releases.
 
 With time, Rodeo will be more stable. If you want to contribute and see Rodeo growing, use Rodeo for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Rodeo better. So do not hesitate to open an issue: this is currently the best way to contribute.
 
-Roadmap:
+**Long-term Roadmap:**
 - Make it works for Windows OS
 - Remove C backend:
-  - Replace libcurl with a Zig Http API
-  - Replace JSON format with ZON format
-  - Replace libjq with a ZON processor API
+    - Replace libcurl with a pure-Zig thread-safe HTTP/HTTPS lib,
+    - Implement one of these 2 solutions:
+        1. Replace libjq with a pure-Zig JSON processor lib,
+        2. Use ZON:
+            - Replace JSON format with ZON format,
+            - Replace libjq with a ZON processor lib
