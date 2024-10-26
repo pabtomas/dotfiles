@@ -1,5 +1,6 @@
 const std = @import ("std");
 const libcurl = @import ("libcurl");
+const libjq = @import ("libjq");
 
 const Logger = @import ("logger.zig").Logger;
 const Options = @import ("options.zig").Options;
@@ -65,6 +66,7 @@ pub const Client = struct
   allocator: *const std.mem.Allocator,
   ca_bundle: libcurl.Buffer,
   easy: libcurl.Easy,
+  jq: libjq.Jq,
   api_version: [] const u8 = "1.25",
 
   pub fn init (allocator: *const std.mem.Allocator) !@This ()
@@ -74,6 +76,7 @@ pub const Client = struct
       .allocator = allocator,
       .ca_bundle = try libcurl.allocCABundle (allocator.*),
       .easy      = undefined,
+      .jq        = try libjq.Jq.init (),
     };
     self.easy = try libcurl.Easy.init (self.allocator.*, .{ .ca_bundle = self.ca_bundle, });
     return self;
