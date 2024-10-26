@@ -75,9 +75,20 @@ versions:
 - **required**: true
 - **default**: `[]`
 - **description**: A list of user defined rules.
-- **example**:
-```json
-rules:
-  - id: 'pull_alpine'
-    description: 'pull the latest official Dockerhub Alpine image'
-```
+- **examples**:
+    1. Here a minimal example:
+    ```json
+    rules:
+      - id: 'pull_alpine'
+        description: 'pull the latest official Dockerhub Alpine image'
+    ```
+    2. Here another one:
+    ```json
+    rules:
+      - id: 'pull_alpine'
+        description: 'pull the latest official Dockerhub Alpine image'
+        virtual: true
+      - id: 'create_alpine'
+        description: 'pull the latest official Dockerhub Alpine image and create a container from'
+    ```
+    We added the `virtual` attribute. By default this attribute is `false`. When `true`, it means this rule can not be executed directly and its description will not be visible in the help Rodeo message. It can be very useful when you want to reuse a tasks between other rules without the possibility of direct execution.
