@@ -1,0 +1,241 @@
+{
+  "versions": [
+    1.46,
+    1.45,
+    1.44,
+    1.43
+  ],
+  "inventory": [
+    {
+      "source": "inventory/all.yaml",
+      "register": "all"
+    },
+    {
+      "source": "inventory/alpine.yaml",
+      "register": "alpine"
+    },
+    {
+      "source": "inventory/api.yaml",
+      "register": "api"
+    },
+    {
+      "source": "inventory/bash.yaml",
+      "register": "bash"
+    },
+    {
+      "source": "inventory/builder.yaml",
+      "register": "builder"
+    },
+    {
+      "source": "inventory/buildkit.yaml",
+      "register": "buildkit"
+    },
+    {
+      "source": "inventory/carpenter.yaml",
+      "register": "carpenter"
+    },
+    {
+      "source": "inventory/carpenter/relay.yaml",
+      "register": "carpenterrelay"
+    },
+    {
+      "source": "inventory/carpenter/runner.yaml",
+      "register": "carpenterrunner"
+    },
+    {
+      "source": "inventory/controller.yaml",
+      "register": "controller"
+    },
+    {
+      "source": "inventory/dependencies.yaml",
+      "register": "dependencies"
+    },
+    {
+      "source": "inventory/docker.yaml",
+      "register": "docker"
+    },
+    {
+      "source": "inventory/dockle.yaml",
+      "register": "dockle"
+    },
+    {
+      "source": "inventory/editor.yaml",
+      "register": "editor"
+    },
+    {
+      "source": "inventory/entrypoint.yaml",
+      "register": "entrypoint"
+    },
+    {
+      "source": "inventory/entrypoint/alpine.yaml",
+      "register": "entrypointalpine"
+    },
+    {
+      "source": "inventory/entrypoint/bash.yaml",
+      "register": "entrypointbash"
+    },
+    {
+      "source": "inventory/explorer.yaml",
+      "register": "explorer"
+    },
+    {
+      "source": "inventory/explorers/shell.yaml",
+      "register": "explorershell"
+    },
+    {
+      "source": "inventory/explorers/zig.yaml",
+      "register": "explorerzig"
+    },
+    {
+      "source": "inventory/figlet.yaml",
+      "register": "figlet"
+    },
+    {
+      "source": "inventory/git.yaml",
+      "register": "git"
+    },
+    {
+      "source": "inventory/gpu.yaml",
+      "register": "gpu"
+    },
+    {
+      "source": "inventory/http.yaml",
+      "register": "http"
+    },
+    {
+      "source": "inventory/jumper.yaml",
+      "register": "jumper"
+    },
+    {
+      "source": "inventory/linguist.yaml",
+      "register": "linguist"
+    },
+    {
+      "source": "inventory/listener.yaml",
+      "register": "listener"
+    },
+    {
+      "source": "inventory/man.yaml",
+      "register": "man"
+    },
+    {
+      "source": "inventory/networks.yaml",
+      "register": "networks"
+    },
+    {
+      "source": "inventory/nginx.yaml",
+      "register": "nginx"
+    },
+    {
+      "source": "inventory/pass.yaml",
+      "register": "pass"
+    },
+    {
+      "source": "inventory/project.yaml",
+      "register": "project"
+    },
+    {
+      "source": "inventory/registry.yaml",
+      "register": "registry"
+    },
+    {
+      "source": "inventory/relay.yaml",
+      "register": "relay"
+    },
+    {
+      "source": "inventory/rules.yaml",
+      "register": "rules"
+    },
+    {
+      "source": "inventory/runner.yaml",
+      "register": "runner"
+    },
+    {
+      "source": "inventory/safedeposit.yaml",
+      "register": "safedeposit"
+    },
+    {
+      "source": "inventory/scholar.yaml",
+      "register": "scholar"
+    },
+    {
+      "source": "inventory/shell.yaml",
+      "register": "shell"
+    },
+    {
+      "source": "inventory/socat.yaml",
+      "register": "socat"
+    },
+    {
+      "source": "inventory/socket-proxy.yaml",
+      "register": "socketproxy"
+    },
+    {
+      "source": "inventory/spaceporn.yaml",
+      "register": "spaceporn"
+    },
+    {
+      "source": "inventory/spaceporn/relay.yaml",
+      "register": "spacepornrelay"
+    },
+    {
+      "source": "inventory/spaceporn/runner.yaml",
+      "register": "spacepornrunner"
+    },
+    {
+      "source": "inventory/spectrwm.yaml",
+      "register": "spectrwm"
+    },
+    {
+      "source": "inventory/sshd.yaml",
+      "register": "sshd"
+    },
+    {
+      "source": "inventory/tmux.yaml",
+      "register": "tmux"
+    },
+    {
+      "source": "inventory/vim.yaml",
+      "register": "vim"
+    },
+    {
+      "source": "inventory/volumes.yaml",
+      "register": "volumes"
+    },
+    {
+      "source": "inventory/workspaces.yaml",
+      "register": "workspaces"
+    },
+    {
+      "source": "inventory/xserver.yaml",
+      "register": "xserver"
+    },
+    {
+      "source": "inventory/zig.yaml",
+      "register": "zig"
+    }
+  ],
+  "include": [
+    "networks/create.yaml",
+    "volumes/create.yaml",
+    "images/pull.yaml",
+    "images/tag.yaml",
+    "images/build.yaml",
+    "containers/create.yaml",
+    "containers/start.yaml",
+    "containers/attach.yaml",
+    "containers/cleanup.yaml",
+    "volumes/cleanup.yaml",
+    "networks/cleanup.yaml"
+  ],
+  "rules": [
+    {
+      "id": "{{ $rules.up }}",
+      "description": "Create and start containers, volumes and networks"
+    },
+    {
+      "id": "{{ $rules.down }}",
+      "description": "Stop and remove containers, volumes and networks"
+    }
+  ]
+}

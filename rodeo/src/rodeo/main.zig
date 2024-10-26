@@ -89,28 +89,30 @@ fn prepare (allocator: *const std.mem.Allocator) !void
   var logger = try Logger.init (try std.Thread.getCpuCount (),
     allocator, &stderr);
 
+  // keep args outside of opts => needed for tests
   var args = try std.process.argsWithAllocator (allocator.*);
-  const opts = Options.parse (allocator, &args, &logger) catch |err| blk: {
+  var opts = Options.parse (allocator, &args, &logger) catch |err| blk: {
     switch (err)
     {
       error.MissingArg, error.EmptyArg, error.UncompatibleOpts => {
-        break :blk err;
+        break :blk null;
       },
       else => return err,
     }
   };
-  logger.setLogLevel ((try opts).log_level);
+  if (opts) |unwrapped| logger.setLogLevel (unwrapped.log_level);
 
   const logger_thread = try std.Thread.spawn (.{}, Logger.loop, .{ &logger, });
 
   defer {
     args.deinit ();
+    if (opts) |*unwrapped| unwrapped.deinit ();
     logger.stop ();
     logger_thread.join ();
   }
 
-  if (!std.meta.isError (opts))
-    preprocess (allocator, &logger, &(try opts)) catch |err|
+  if (opts) |unwrapped|
+    preprocess (allocator, &logger, &unwrapped) catch |err|
     {
       try logger.enqueue (.{ .kind = .{ .log = .ERROR, }, .data = @errorName (err), .allocated = false, });
       if (@errorReturnTrace ()) |trace| std.debug.dumpStackTrace (trace.*);

@@ -68,15 +68,17 @@ pub const Client = struct
   easy: libcurl.Easy,
   jq: libjq.Jq,
   api_version: [] const u8 = "1.25",
+  parsed_main: ?std.json.Parsed (std.json.Value),
 
   pub fn init (allocator: *const std.mem.Allocator) !@This ()
   {
     var self: @This () = .{
-      .inventory = .{ .object = std.json.ObjectMap.init (allocator.*), },
-      .allocator = allocator,
-      .ca_bundle = try libcurl.allocCABundle (allocator.*),
-      .easy      = undefined,
-      .jq        = try libjq.Jq.init (),
+      .inventory   = .{ .object = std.json.ObjectMap.init (allocator.*), },
+      .allocator   = allocator,
+      .ca_bundle   = try libcurl.allocCABundle (allocator.*),
+      .easy        = undefined,
+      .jq          = try libjq.Jq.init (),
+      .parsed_main = null,
     };
     self.easy = try libcurl.Easy.init (self.allocator.*, .{ .ca_bundle = self.ca_bundle, });
     return self;
@@ -85,6 +87,7 @@ pub const Client = struct
   pub fn deinit (self: *@This ()) void
   {
     self.allocator.free (self.api_version);
+    if (self.parsed_main) |unwrapped| unwrapped.deinit ();
     @constCast (&self.inventory.object.get ("ENV").?.object).deinit ();
     self.inventory.object.deinit ();
     self.ca_bundle.deinit ();
@@ -94,13 +97,15 @@ pub const Client = struct
   pub fn preprocess (self: *@This (), logger: *Logger, opts: *const Options) !void
   {
     try self.addContextVars (logger, opts);
+    try self.openMainFile (logger, opts);
 
-    //client.expandJqIntoInventory ();
-    //client.expandJqIntoMain ();
-    //client.resolveIncludes ();
-    //client.castArraysToObjects ();
-    //client.expandExtends ();
-    //client.sortTasks ();
+    //self.storeInventory ();
+    //self.expandJqIntoInventory ();
+    //self.expandJqIntoMain ();
+    //self.resolveIncludes ();
+    //self.castArraysToObjects ();
+    //self.expandExtends ();
+    //self.sortTasks ();
   }
 
   pub fn run (self: *@This (), logger: *Logger, opts: *const Options) void
@@ -181,6 +186,26 @@ pub const Client = struct
       try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = try self.allocator.dupe (u8, token), .allocated = true, });
 
     try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
+  }
+
+  fn openMainFile (self: *@This (), logger: *Logger, opts: *const Options) !void
+  {
+    const cwd = std.fs.cwd ();
+    const main = try cwd.readFileAlloc (self.allocator.*, opts.getFile (), std.math.maxInt (usize));
+    defer self.allocator.free (main);
+
+    if (main.len > 0)
+      self.parsed_main = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
+        main, .{ .ignore_unknown_fields = true, });
+
+    // TODO: log something
+    _ = logger;
+  }
+
+  fn storeInventory (self: @This ()) void
+  {
+    _ = self;
+    std.debug.print ("TODO", .{});
   }
 
   fn expandJqIntoInventory (self: @This ()) void
