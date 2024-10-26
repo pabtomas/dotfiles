@@ -13,6 +13,10 @@ Rule Oriented Docker Engine Orchestrator
 
 ## Why Rodeo ?
 
+For 2 main reasons:
+
+### 1. Because my daily DevOps life with Compose is only anger and tears
+
 Rodeo was written because I faced a recurrent scenario when dealing with Docker:
 - Starting a Compose project to make a simple stack of containers working quickly. I know this project will not stay simple but I do not find a better alternative because it is a local project and most of popular alternatives are overkilled controller-nodes architectured solutions,
 - As expected, with time this stack is growing. Compose has some lacks and I add other tools (even tools not designed to work with Docker) to compensate that,
@@ -32,12 +36,16 @@ Here a non exhaustive list of problems that made my Compose projects messy:
 In most cases, this is how things should go: Compose is not the right tool for the project I am working on.
 But sometimes, I feel like going for Ansible, Swarm or another solution is overkilled.
 
-Rodeo, like GNU `make`, has a rule system. GNU `make` is a popular solution to use with the Docker official client (or even Compose) when building an application. I personnaly think adding GNU `make` over Docker is the starting point of many other troubles. GNU `make` was not designed to work with Docker. The first line of the GNU `make` documentation states it better than everything else:
+Rodeo, like GNU `make`, has a rule-oriented system. GNU `make` is a popular solution to use with the Docker official client (or even Compose) when building an application. I personnaly think adding GNU `make` over Docker is the starting point of many troubles. GNU `make` was not designed to work with Docker. The first line of the GNU `make` documentation states it better than everything else:
 ```
 GNU Make is a tool which controls the generation of executables and other non-source files of a program from the program's source files.
 ```
 
 This is where Rodeo stands out: Rodeo is designed to work with Docker.
+
+### 2. Because I think Zig could bring a lot new things to the DevOps community
+
+Here the scoop of the day: Rodeo does not have the ambition to compete with other Open Source containers orchestrators you can already find. But that is not the Rodeo point. I started this project with Zig because I did not find any DevOps tools written with. And I believe that Zig can. So this project is here to erase this mistake: Zig can also do great things for the DevOps community.
 
 ## How to install it ?
 
@@ -74,9 +82,12 @@ If not, export `DOCKER_HOST` in your environment.
 
 You probably noticed that Rodeo does not have a first major release. Why ? Because Rodeo is young: it is ready to be used but is not mature. To go further, Rodeo needs feedbacks for its implemented features. So expect breaking changes in the next releases.
 
-With time, Rodeo will be more stable. If you want to contribute and see Rodeo growing, use Rodeo for your project and open an issue later to see how we could improve it together. Any elaborated feedback will make Rodeo better. So do not hesitate to open an issue: this is currently the best way to contribute.
+With time, Rodeo will be more stable. If you want to contribute and see Rodeo growing, you can do 2 things:
+1. use Rodeo for your projects and open an issue later to see how we could improve it together. Any elaborated feedback will make Rodeo better. So do not hesitate to open an issue: this is currently one of the best way to contribute.
+2. use Zig in your projects. Rodeo is written with Zig and currently, some roadmap goals you can read below are stucked because Zig is not mature enough. So if you want to contribute, use Zig in your projects, whatever you are doing with.
 
-**Long-term Roadmap:**
+### Long-term Roadmap
+
 - Make it works for Windows OS
 - Remove C backend:
     - Replace libcurl with a pure-Zig thread-safe HTTP/HTTPS lib,
@@ -85,3 +96,7 @@ With time, Rodeo will be more stable. If you want to contribute and see Rodeo gr
         2. Use ZON:
             - Replace JSON format with ZON format,
             - Replace libjq with a ZON processor lib
+
+## License
+
+This repository is dedicated to the public domain. See the LICENSE file for more details.
