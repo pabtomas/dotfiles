@@ -265,7 +265,7 @@ pub const Client = struct
 
           if (self.inventory.object.get (register)) |_|
             try logger.enqueue (.{ .kind = .{ .log = .WARN, },
-              .data = try std.fmt.allocPrint (self.allocator.*, "{s} was already used in your inventory. Rodeo replaced its content.", .{ register, }), .allocated = true, });
+              .data = try std.fmt.allocPrint (self.allocator.*, "{s} was already used in your inventory. Mana replaced its content.", .{ register, }), .allocated = true, });
 
           try self.inventory.object.put (try self.allocator.dupe (u8, register), value);
 

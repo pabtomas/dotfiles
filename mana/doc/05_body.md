@@ -39,14 +39,14 @@ rule:
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: Rodeo uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Rodeo execution. You can let this list empty but that means that you do not mind that the matching request runs first. This attribute takes a list of ID. Rodeo will run the request after the tasks listed here will end their execution.
+- **description**: Mana uses as many process as possible and runs a task as soon as possible. So this is here that you can schedule the Mana execution. You can let this list empty but that means that you do not mind that the matching request runs first. This attribute takes a list of ID. Mana will run the request after the tasks listed here will end their execution.
 
 ### `Body.errexit`
 
 - **type**: boolean
 - **required**: false
 - **default**: `true`
-- **description**: By default, if the request failed, Rodeo stops its execution in failure. If you want to change this behavior for a request, set this attribute to `false`.
+- **description**: By default, if the request failed, Mana stops its execution in failure. If you want to change this behavior for a request, set this attribute to `false`.
 
 ### `Body.query`
 
@@ -69,7 +69,7 @@ rule:
 - **type**: boolean
 - **required**: false
 - **default**: false
-- **description**: A virtual Body will not result as a request execution by Rodeo. It is particularly useful when you want to reuse common attributes between Bodies.
+- **description**: A virtual Body will not result as a request execution by Mana. It is particularly useful when you want to reuse common attributes between Bodies.
 
 ### `Body.extends`
 
@@ -131,7 +131,7 @@ rule:
 - **type**: string
 - **required**: false
 - **default**: `"."` for a `/build` request and empty for other endpoints.
-- **description**: This attribute is only useful when you are making a `/build` request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Rodeo file. 
+- **description**: This attribute is only useful when you are making a `/build` request to the Docker Engine. It defines either a path to a directory containing a Dockerfile, or a URL to a git repository. When the value supplied is a relative path, it is interpreted as relative to the location of your main Mana file. 
 - **example**:
 ```json
 endpoint: /build

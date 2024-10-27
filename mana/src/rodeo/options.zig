@@ -19,7 +19,7 @@ fn emptyArg (logger: *Logger) !void
 
 pub const Options = struct
 {
-  const DEFAULT_FILE = "rodeo.json";
+  const DEFAULT_FILE = "mana.json";
   const DEFAULT_DOCKER_HOST = "/var/run/docker.sock";
 
   help: bool = false,

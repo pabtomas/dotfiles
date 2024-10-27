@@ -49,23 +49,23 @@ pub fn build (builder: *std.Build) !void
     .optimize = optimize,
   }).artifact ("jq"));
 
-  const rodeo = builder.addExecutable (.{
-    .name = "rodeo",
+  const mana = builder.addExecutable (.{
+    .name = "mana",
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
-      builder.allocator, &.{ "src", "rodeo", "main.zig", }), },
+      builder.allocator, &.{ "src", "mana", "main.zig", }), },
     .target = target,
     .optimize = optimize,
   });
 
-  import (&rodeo.root_module);
+  import (&mana.root_module);
 
   const leak_tests = builder.addTest (.{
     .target = target,
     .optimize = optimize,
     .test_runner = .{ .cwd_relative = try builder.build_root.join (builder.allocator,
-      &.{ "src", "rodeo", "runner.zig", }), },
+      &.{ "src", "mana", "runner.zig", }), },
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
-      builder.allocator, &.{ "src", "rodeo", "main.zig", }), },
+      builder.allocator, &.{ "src", "mana", "main.zig", }), },
   });
   leak_tests.step.dependOn (builder.getInstallStep ());
 
@@ -81,7 +81,7 @@ pub fn build (builder: *std.Build) !void
     .target = target,
     .optimize = optimize,
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
-      builder.allocator, &.{ "src", "rodeo", "unit.index.zig", }), },
+      builder.allocator, &.{ "src", "mana", "unit.index.zig", }), },
   });
   import (unit_module);
 
@@ -89,9 +89,9 @@ pub fn build (builder: *std.Build) !void
     .target = target,
     .optimize = optimize,
     .test_runner = .{ .cwd_relative = try builder.build_root.join (builder.allocator,
-      &.{ "src", "rodeo", "runner.zig", }), },
+      &.{ "src", "mana", "runner.zig", }), },
     .root_source_file = .{ .cwd_relative = try builder.build_root.join (
-      builder.allocator, &.{ "src", "rodeo", "unit.zig", }), },
+      builder.allocator, &.{ "src", "mana", "unit.zig", }), },
   });
   unit_tests.linkLibC ();
   import (&unit_tests.root_module);
@@ -105,5 +105,5 @@ pub fn build (builder: *std.Build) !void
 
   unit_tests.root_module.addImport ("index", unit_module);
 
-  builder.installArtifact (rodeo);
+  builder.installArtifact (mana);
 }

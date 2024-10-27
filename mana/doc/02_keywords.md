@@ -5,9 +5,9 @@
 - **type**: list
 - **required**: false
 - **default**: `[]`
-- **description**: List of files containing variables available in Mustache templates and JQ filters. In this list, **An inventory have to be a JSON file to be correctly processed by Rodeo**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
+- **description**: List of files containing variables available in Mustache templates and JQ filters. In this list, **An inventory have to be a JSON file to be correctly processed by Mana**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
 - **good to know**:
-    - The `inventory` keyword is the first thing Rodeo will processed when executed, its location can not be outside your main Rodeo file.
+    - The `inventory` keyword is the first thing Mana will processed when executed, its location can not be outside your main Mana file.
 - **example**:
 ```json
 inventory:
@@ -36,7 +36,7 @@ message2: '{{ "Your Docker Engine is using the " + .VERSION.ApiVersion + " versi
 - **default**: `[]`
 - **description**: List of files to include into the current file. Including files in another will merge their contents. Each file can contain its own `include` list.
 - **good to know**:
-    - The `include` keyword is processed after the `inventory` keyword when Rodeo is executed
+    - The `include` keyword is processed after the `inventory` keyword when Mana is executed
 - **example**:
 ```json
 include:
@@ -50,7 +50,7 @@ include:
 
 - **type**: list
 - **required**: true
-- **description**: List of Docker Engine API versions targetted by your project. Rodeo will run with the first available version. Rodeo will fail if the Docker Engine does not support any targetted version.
+- **description**: List of Docker Engine API versions targetted by your project. Mana will run with the first available version. Mana will fail if the Docker Engine does not support any targetted version.
 - **good to know**:
     - For the Docker Engine API versions after 1.25 (included), the documentation specify this:
     ```
@@ -91,7 +91,7 @@ versions:
       - id: 'create_alpine'
         description: 'pull the latest official Dockerhub Alpine image and create a container from'
     ```
-    We added the `virtual` attribute. By default this attribute is `false`. When `true`, it means this rule can not be executed directly and its description will not be visible in the help Rodeo message. It can be very useful when you want to reuse a tasks between other rules without the possibility of direct execution.
+    We added the `virtual` attribute. By default this attribute is `false`. When `true`, it means this rule can not be executed directly and its description will not be visible in the help Mana message. It can be very useful when you want to reuse a tasks between other rules without the possibility of direct execution.
 
 # `filters`
 

@@ -2,7 +2,7 @@
 
 You can start to use a Rule object with the `rule` keyword. You can describe only one (or part of one) rule by file.
 
-- **description**: A rule tells Rodeo how to execute a serie of tasks by invoking a simple command. You can thing a Rodeo rule as a GNU Make rule. 
+- **description**: A rule tells Mana how to execute a serie of tasks by invoking a simple command. You can thing a Mana rule as a GNU Make rule. 
 - **example**:
 ```json
 rules:
@@ -31,7 +31,7 @@ rule:
                 Image: 'docker.io/library/alpine:latest'
 ```
 
-Now each time you are using `rodeo alpine` it will pull the latest alpine image and create a container based on this image.
+Now each time you are using `mana alpine` it will pull the latest alpine image and create a container based on this image.
 
 **important note**: `rules` and `rule` are linked but different:
 - `rules` allows you to describe with text the set of rules you want to use in your project. `rules` is a List.
@@ -81,7 +81,7 @@ Now each time you are using `rodeo alpine` it will pull the latest alpine image 
         description: 'create a volume'
         virtual: true
     ```
-    In this file, `volume` rule is virtual and `up` rule is not. So you can execute `rodeo up` but not `rodeo volume`.
+    In this file, `volume` rule is virtual and `up` rule is not. So you can execute `mana up` but not `mana volume`.
     *a second file for the* `volume` *rule:*
     ```json
     rule:
@@ -121,4 +121,4 @@ Now each time you are using `rodeo alpine` it will pull the latest alpine image 
                   depends_on:
                     - 'create.my-volume'
     ```
-    Finally Rodeo will run the `volume` rule when the `up` rule is executed. This is why, we needed to make the `create.my-container` task depends on the `create.my-volume` task. Even if those tasks are not coming from the same rule. With this, we ensure that `create.my-containers` will only be executed when `create.my-volume` finished.
+    Finally Mana will run the `volume` rule when the `up` rule is executed. This is why, we needed to make the `create.my-container` task depends on the `create.my-volume` task. Even if those tasks are not coming from the same rule. With this, we ensure that `create.my-containers` will only be executed when `create.my-volume` finished.
