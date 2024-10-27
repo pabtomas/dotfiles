@@ -1,0 +1,27 @@
+{
+  "id": "socket-proxy",
+  "host": "{{ $socketproxy.id }}",
+  "image": "{{ $registry.prefix.owner }}{{ $socketproxy.id }}",
+  "ip": "{{ $networks.proxified_docker_socket.prefix }}.2",
+  "linuxserver": {
+    "image": {
+      "source": "lscr.io{{ $all.sep.registry }}linuxserver{{ $all.sep.registry }}{{ $socketproxy.id }}",
+      "local": "{{ $registry.prefix.local }}{{ $socketproxy.id }}"
+    },
+    "tag": "latest"
+  },
+  "port": 2363,
+  "volume": {
+    "etc": {
+      "nginx": "{{ $socketproxy.id }}-etc-nginx-fs{{ $volumes.suffix.delme }}"
+    },
+    "opt": {
+      "scripts": "{{ $socketproxy.id }}-opt-scripts-fs{{ $volumes.suffix.delme }}"
+    },
+    "var": {
+      "log": {
+        "nginx": "{{ $socketproxy.id }}-var-log-nginx-fs{{ $volumes.suffix.delme }}"
+      }
+    }
+  }
+}

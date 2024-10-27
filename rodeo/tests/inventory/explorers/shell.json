@@ -1,0 +1,4 @@
+{
+  "id": "{{ $explorer.id }}{{ $all.sep.id }}{{ $shell.id }}",
+  "host": "{{ $explorershell.id }}"
+}

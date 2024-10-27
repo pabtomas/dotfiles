@@ -1,0 +1,42 @@
+{
+  "user": {
+    "unprivileged": "visitor"
+  },
+  "os": {
+    "id": "{{ $alpine.id }}",
+    "image": {
+      "local": "{{ $alpine.image.local }}"
+    },
+    "tag": "{{ $alpine.tag }}"
+  },
+  "sep": {
+    "id": ".",
+    "host": ".",
+    "registry": "/",
+    "image": ".",
+    "tag": ":",
+    "target": ":"
+  },
+  "owner": {
+    "name": "tiawl",
+    "tag": "latest",
+    "url": "https://github.com/{{ $all.owner.name }}"
+  },
+  "path": {
+    "bin": "/usr/local/bin",
+    "opt": {
+      "data": "/opt/data",
+      "scripts": "/opt/scripts",
+      "ssh": "/opt/ssh"
+    },
+    "root": {
+      "ssh": "/root/.ssh",
+      "passwd": "/root/.password-store"
+    },
+    "var": {
+      "log": "/var/log"
+    },
+    "cwd": "{{ .Env.CWD }}",
+    "dockerfiles": "{{ .Env.CWD }}/dockerfiles"
+  }
+}

@@ -49,6 +49,11 @@ pub const Log = struct
       return @intFromEnum (self) < @intFromEnum (other);
     }
 
+    pub fn le (self: @This (), other: @This ()) bool
+    {
+      return !(self.gt (other));
+    }
+
     pub fn gt (self: @This (), other: @This ()) bool
     {
       std.debug.assert (self != .EMPTY);
@@ -56,6 +61,11 @@ pub const Log = struct
       std.debug.assert (other != .EMPTY);
       std.debug.assert (other != .RAW);
       return @intFromEnum (self) > @intFromEnum (other);
+    }
+
+    pub fn ge (self: @This (), other: @This ()) bool
+    {
+      return !(self.lt (other));
     }
 
     fn timestamp (self: @This (), stream: *Stream) !void

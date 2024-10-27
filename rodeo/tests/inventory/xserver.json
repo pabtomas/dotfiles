@@ -1,0 +1,24 @@
+{
+  "id": "xserver",
+  "host": "{{ $xserver.id }}",
+  "image": "{{ $registry.prefix.owner }}{{ $xserver.id }}",
+  "ip": "{{ $networks.proxified_xserver_socket.prefix }}.2",
+  "path": {
+    "sockets": "/tmp/.X11-unix",
+    "display": "{{ $xserver.path.sockets }}/X{{ .Env.XEPHYR_DISPLAY }}"
+  },
+  "port": 2365,
+  "volume": {
+    "etc": {
+      "nginx": "{{ $xserver.id }}-etc-nginx-fs{{ $volumes.suffix.delme }}"
+    },
+    "opt": {
+      "scripts": "{{ $xserver.id }}-opt-scripts-fs{{ $volumes.suffix.delme }}"
+    },
+    "var": {
+      "log": {
+        "nginx": "{{ $xserver.id }}-var-log-nginx-fs{{ $volumes.suffix.delme }}"
+      }
+    }
+  }
+}

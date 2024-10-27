@@ -64,6 +64,7 @@ pub const Client = struct
 {
   inventory: std.json.Value,
   allocator: *const std.mem.Allocator,
+  arena: std.heap.ArenaAllocator,
   ca_bundle: libcurl.Buffer,
   easy: libcurl.Easy,
   jq: libjq.Jq,
@@ -75,6 +76,7 @@ pub const Client = struct
     var self: @This () = .{
       .inventory   = .{ .object = std.json.ObjectMap.init (allocator.*), },
       .allocator   = allocator,
+      .arena       = std.heap.ArenaAllocator.init (allocator.*),
       .ca_bundle   = try libcurl.allocCABundle (allocator.*),
       .easy        = undefined,
       .jq          = try libjq.Jq.init (),
@@ -89,6 +91,12 @@ pub const Client = struct
     self.allocator.free (self.api_version);
     if (self.parsed_main) |unwrapped| unwrapped.deinit ();
     @constCast (&self.inventory.object.get ("ENV").?.object).deinit ();
+    for (self.inventory.object.keys ()) |key|
+    {
+      if (std.mem.eql (u8, key, "ENV") or std.mem.eql (u8, key, "INFO") or std.mem.eql (u8, key, "VERSION")) continue;
+      self.allocator.free (key);
+    }
+    self.arena.deinit ();
     self.inventory.object.deinit ();
     self.ca_bundle.deinit ();
     self.easy.deinit ();
@@ -98,8 +106,8 @@ pub const Client = struct
   {
     try self.addContextVars (logger, opts);
     try self.openMainFile (logger, opts);
+    try self.storeInventory (logger, opts);
 
-    //self.storeInventory ();
     //self.expandJqIntoInventory ();
     //self.expandJqIntoMain ();
     //self.resolveIncludes ();
@@ -125,9 +133,12 @@ pub const Client = struct
   {
     var url_buf: [32] u8 = undefined;
 
-    try self.easy.setDebugdata (logger);
-    try self.easy.setDebugfunction (debugCallback);
-    try self.easy.setVerbose (true);
+    if (opts.log_level.ge (.DEBUG))
+    {
+      try self.easy.setDebugdata (logger);
+      try self.easy.setDebugfunction (debugCallback);
+      try self.easy.setVerbose (true);
+    }
 
     try self.easy.setUnixSocketPath (opts.getDockerHost ());
 
@@ -179,11 +190,14 @@ pub const Client = struct
 
     try std.json.stringify (env_value, .{ .whitespace = .indent_2, }, env_buf.writer ());
 
-    try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "ENV map:", .allocated = false, });
+    if (opts.log_level.ge (.DEBUG))
+    {
+      try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "ENV map:", .allocated = false, });
 
-    var scalar_it = std.mem.tokenizeScalar (u8, env_buf.items, '\n');
-    while (scalar_it.next ()) |token|
-      try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = try self.allocator.dupe (u8, token), .allocated = true, });
+      var scalar_it = std.mem.tokenizeScalar (u8, env_buf.items, '\n');
+      while (scalar_it.next ()) |token|
+        try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = try self.allocator.dupe (u8, token), .allocated = true, });
+    }
 
     try logger.enqueue (.{ .kind = .{ .log = .DEBUG, }, .data = "Preprocessing: Context defined", .allocated = false, });
   }
@@ -191,21 +205,85 @@ pub const Client = struct
   fn openMainFile (self: *@This (), logger: *Logger, opts: *const Options) !void
   {
     const cwd = std.fs.cwd ();
-    const main = try cwd.readFileAlloc (self.allocator.*, opts.getFile (), std.math.maxInt (usize));
-    defer self.allocator.free (main);
+    const read = try cwd.readFileAlloc (self.allocator.*, opts.getFile (), std.math.maxInt (usize));
+    defer self.allocator.free (read);
 
-    if (main.len > 0)
+    if (read.len > 0)
+    {
       self.parsed_main = try std.json.parseFromSlice (std.json.Value, self.allocator.*,
-        main, .{ .ignore_unknown_fields = true, });
+        read, .{ .ignore_unknown_fields = true, });
 
-    // TODO: log something
-    _ = logger;
+      if (std.meta.activeTag (self.parsed_main.?.value) != .object) return error.MainFileMustBeJSONObject;
+    }
+
+    if (opts.log_level == .VERB)
+    {
+      var buf = std.ArrayList (u8).init (logger.allocator.*);
+      defer buf.deinit ();
+
+      if (self.parsed_main) |unwrapped| try std.json.stringify (unwrapped.value, .{ .whitespace = .indent_2, }, buf.writer ());
+
+      try logger.enqueue (.{ .kind = .{ .log = .VERB, },
+        .data = try std.fmt.allocPrint (logger.allocator.*, "Main file '{s}' parsed:", .{ opts.getFile (), }), .allocated = true, });
+
+      var scalar_it = std.mem.tokenizeScalar (u8, buf.items, '\n');
+      while (scalar_it.next ()) |token|
+        try logger.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try self.allocator.dupe (u8, token), .allocated = true, });
+    }
   }
 
-  fn storeInventory (self: @This ()) void
+  fn storeInventory (self: *@This (), logger: *Logger, opts: *const Options) !void
   {
-    _ = self;
-    std.debug.print ("TODO", .{});
+    if (self.parsed_main) |unwrapped|
+    {
+      if (unwrapped.value.object.get ("inventory")) |inventory|
+      {
+        const cwd = std.fs.cwd ();
+        var read: [] u8 = undefined;
+        var value: std.json.Value = undefined;
+        var buf = std.ArrayList (u8).init (self.allocator.*);
+        defer buf.deinit ();
+        const arena_allocator = self.arena.allocator ();
+        for (inventory.array.items) |*entry|
+        {
+          const source = entry.object.get ("source").?.string;
+          const register = entry.object.get ("register").?.string;
+
+          try logger.enqueue (.{ .kind = .{ .log = .VERB, },
+            .data = try std.fmt.allocPrint (self.allocator.*, "Parsing \"{s}\"", .{ source, }), .allocated = true, });
+
+          read = try cwd.readFileAlloc (self.allocator.*, source, std.math.maxInt (usize));
+          defer self.allocator.free (read);
+
+          if (read.len > 0)
+          {
+            value = try std.json.parseFromSliceLeaky (std.json.Value, arena_allocator,
+              read, .{ .ignore_unknown_fields = true, });
+
+            if (std.meta.activeTag (value) != .object) return error.InventoryFileMustBeJSONObject;
+          }
+
+          if (self.inventory.object.get (register)) |_|
+            try logger.enqueue (.{ .kind = .{ .log = .WARN, },
+              .data = try std.fmt.allocPrint (self.allocator.*, "{s} was already used in your inventory. Rodeo replaced its content.", .{ register, }), .allocated = true, });
+
+          try self.inventory.object.put (try self.allocator.dupe (u8, register), value);
+
+          if (opts.log_level == .VERB)
+          {
+            buf.clearRetainingCapacity ();
+            try std.json.stringify (self.inventory.object.get (register), .{ .whitespace = .indent_2, }, buf.writer ());
+
+            try logger.enqueue (.{ .kind = .{ .log = .VERB, },
+              .data = try std.fmt.allocPrint (self.allocator.*, "\"{s}\":", .{ register, }), .allocated = true, });
+
+            var scalar_it = std.mem.tokenizeScalar (u8, buf.items, '\n');
+            while (scalar_it.next ()) |token|
+              try logger.enqueue (.{ .kind = .{ .log = .VERB, }, .data = try self.allocator.dupe (u8, token), .allocated = true, });
+          }
+        }
+      }
+    }
   }
 
   fn expandJqIntoInventory (self: @This ()) void

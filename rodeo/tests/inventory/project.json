@@ -1,0 +1,4 @@
+{
+  "id": "mywhalefleet",
+  "volume": "{{ $project.id }}"
+}

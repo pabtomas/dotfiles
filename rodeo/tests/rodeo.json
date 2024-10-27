@@ -7,211 +7,211 @@
   ],
   "inventory": [
     {
-      "source": "inventory/all.yaml",
+      "source": "tests/inventory/all.json",
       "register": "all"
     },
     {
-      "source": "inventory/alpine.yaml",
+      "source": "tests/inventory/alpine.json",
       "register": "alpine"
     },
     {
-      "source": "inventory/api.yaml",
+      "source": "tests/inventory/api.json",
       "register": "api"
     },
     {
-      "source": "inventory/bash.yaml",
+      "source": "tests/inventory/bash.json",
       "register": "bash"
     },
     {
-      "source": "inventory/builder.yaml",
+      "source": "tests/inventory/builder.json",
       "register": "builder"
     },
     {
-      "source": "inventory/buildkit.yaml",
+      "source": "tests/inventory/buildkit.json",
       "register": "buildkit"
     },
     {
-      "source": "inventory/carpenter.yaml",
+      "source": "tests/inventory/carpenter.json",
       "register": "carpenter"
     },
     {
-      "source": "inventory/carpenter/relay.yaml",
+      "source": "tests/inventory/carpenter/relay.json",
       "register": "carpenterrelay"
     },
     {
-      "source": "inventory/carpenter/runner.yaml",
+      "source": "tests/inventory/carpenter/runner.json",
       "register": "carpenterrunner"
     },
     {
-      "source": "inventory/controller.yaml",
+      "source": "tests/inventory/controller.json",
       "register": "controller"
     },
     {
-      "source": "inventory/dependencies.yaml",
+      "source": "tests/inventory/dependencies.json",
       "register": "dependencies"
     },
     {
-      "source": "inventory/docker.yaml",
+      "source": "tests/inventory/docker.json",
       "register": "docker"
     },
     {
-      "source": "inventory/dockle.yaml",
+      "source": "tests/inventory/dockle.json",
       "register": "dockle"
     },
     {
-      "source": "inventory/editor.yaml",
+      "source": "tests/inventory/editor.json",
       "register": "editor"
     },
     {
-      "source": "inventory/entrypoint.yaml",
+      "source": "tests/inventory/entrypoint.json",
       "register": "entrypoint"
     },
     {
-      "source": "inventory/entrypoint/alpine.yaml",
+      "source": "tests/inventory/entrypoint/alpine.json",
       "register": "entrypointalpine"
     },
     {
-      "source": "inventory/entrypoint/bash.yaml",
+      "source": "tests/inventory/entrypoint/bash.json",
       "register": "entrypointbash"
     },
     {
-      "source": "inventory/explorer.yaml",
+      "source": "tests/inventory/explorer.json",
       "register": "explorer"
     },
     {
-      "source": "inventory/explorers/shell.yaml",
+      "source": "tests/inventory/explorers/shell.json",
       "register": "explorershell"
     },
     {
-      "source": "inventory/explorers/zig.yaml",
+      "source": "tests/inventory/explorers/zig.json",
       "register": "explorerzig"
     },
     {
-      "source": "inventory/figlet.yaml",
+      "source": "tests/inventory/figlet.json",
       "register": "figlet"
     },
     {
-      "source": "inventory/git.yaml",
+      "source": "tests/inventory/git.json",
       "register": "git"
     },
     {
-      "source": "inventory/gpu.yaml",
+      "source": "tests/inventory/gpu.json",
       "register": "gpu"
     },
     {
-      "source": "inventory/http.yaml",
+      "source": "tests/inventory/http.json",
       "register": "http"
     },
     {
-      "source": "inventory/jumper.yaml",
+      "source": "tests/inventory/jumper.json",
       "register": "jumper"
     },
     {
-      "source": "inventory/linguist.yaml",
+      "source": "tests/inventory/linguist.json",
       "register": "linguist"
     },
     {
-      "source": "inventory/listener.yaml",
+      "source": "tests/inventory/listener.json",
       "register": "listener"
     },
     {
-      "source": "inventory/man.yaml",
+      "source": "tests/inventory/man.json",
       "register": "man"
     },
     {
-      "source": "inventory/networks.yaml",
+      "source": "tests/inventory/networks.json",
       "register": "networks"
     },
     {
-      "source": "inventory/nginx.yaml",
+      "source": "tests/inventory/nginx.json",
       "register": "nginx"
     },
     {
-      "source": "inventory/pass.yaml",
+      "source": "tests/inventory/pass.json",
       "register": "pass"
     },
     {
-      "source": "inventory/project.yaml",
+      "source": "tests/inventory/project.json",
       "register": "project"
     },
     {
-      "source": "inventory/registry.yaml",
+      "source": "tests/inventory/registry.json",
       "register": "registry"
     },
     {
-      "source": "inventory/relay.yaml",
+      "source": "tests/inventory/relay.json",
       "register": "relay"
     },
     {
-      "source": "inventory/rules.yaml",
+      "source": "tests/inventory/rules.json",
       "register": "rules"
     },
     {
-      "source": "inventory/runner.yaml",
+      "source": "tests/inventory/runner.json",
       "register": "runner"
     },
     {
-      "source": "inventory/safedeposit.yaml",
+      "source": "tests/inventory/safedeposit.json",
       "register": "safedeposit"
     },
     {
-      "source": "inventory/scholar.yaml",
+      "source": "tests/inventory/scholar.json",
       "register": "scholar"
     },
     {
-      "source": "inventory/shell.yaml",
+      "source": "tests/inventory/shell.json",
       "register": "shell"
     },
     {
-      "source": "inventory/socat.yaml",
+      "source": "tests/inventory/socat.json",
       "register": "socat"
     },
     {
-      "source": "inventory/socket-proxy.yaml",
+      "source": "tests/inventory/socket-proxy.json",
       "register": "socketproxy"
     },
     {
-      "source": "inventory/spaceporn.yaml",
+      "source": "tests/inventory/spaceporn.json",
       "register": "spaceporn"
     },
     {
-      "source": "inventory/spaceporn/relay.yaml",
+      "source": "tests/inventory/spaceporn/relay.json",
       "register": "spacepornrelay"
     },
     {
-      "source": "inventory/spaceporn/runner.yaml",
+      "source": "tests/inventory/spaceporn/runner.json",
       "register": "spacepornrunner"
     },
     {
-      "source": "inventory/spectrwm.yaml",
+      "source": "tests/inventory/spectrwm.json",
       "register": "spectrwm"
     },
     {
-      "source": "inventory/sshd.yaml",
+      "source": "tests/inventory/sshd.json",
       "register": "sshd"
     },
     {
-      "source": "inventory/tmux.yaml",
+      "source": "tests/inventory/tmux.json",
       "register": "tmux"
     },
     {
-      "source": "inventory/vim.yaml",
+      "source": "tests/inventory/vim.json",
       "register": "vim"
     },
     {
-      "source": "inventory/volumes.yaml",
+      "source": "tests/inventory/volumes.json",
       "register": "volumes"
     },
     {
-      "source": "inventory/workspaces.yaml",
+      "source": "tests/inventory/workspaces.json",
       "register": "workspaces"
     },
     {
-      "source": "inventory/xserver.yaml",
+      "source": "tests/inventory/xserver.json",
       "register": "xserver"
     },
     {
-      "source": "inventory/zig.yaml",
+      "source": "tests/inventory/zig.json",
       "register": "zig"
     }
   ],

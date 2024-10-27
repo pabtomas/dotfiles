@@ -1,0 +1,22 @@
+{
+  "id": "bash",
+  "image": {
+    "source": "docker.io{{ $all.sep.registry }}library{{ $all.sep.registry }}{{ $bash.id }}",
+    "local": "{{ $registry.prefix.local }}{{ $bash.id }}",
+    "layer": "{{ $registry.prefix.layer }}{{ $bash.id }}"
+  },
+  "tag": "5.2-{{ $all.os.id }}{{ $all.os.tag }}",
+  "path": {
+    "etc": {
+      "profile": {
+        "d": "/etc/profile.d"
+      }
+    },
+    "aliases": "{{ $bash.path.etc.profile.d }}/99aliases.d",
+    "completion": "{{ $bash.path.etc.profile.d }}/99completion.d",
+    "theme": "{{ $bash.path.etc.profile.d }}/10theme.d"
+  },
+  "volume": {
+    "theme": "theme{{ $volumes.suffix.delme }}"
+  }
+}

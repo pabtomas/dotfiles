@@ -1,0 +1,9 @@
+{
+  "id": "controller",
+  "host": "{{ $controller.id }}",
+  "image": "{{ $registry.prefix.owner }}{{ $controller.id }}",
+  "ip": {
+    "docker_utils": "{{ $networks.docker_utils.prefix }}.2",
+    "proxified_docker_socket": "{{ $networks.proxified_docker_socket.prefix }}.4"
+  }
+}

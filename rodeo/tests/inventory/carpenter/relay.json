@@ -1,0 +1,7 @@
+{
+  "id": "{{ $carpenter.id }}{{ $all.sep.id }}{{ $relay.id }}",
+  "host": "{{ $carpenterrelay.id }}",
+  "image": "{{ $registry.prefix.relay }}{{ $carpenter.id }}",
+  "ip": "{{ $networks.proxified_xserver_socket.prefix }}.3",
+  "volume": "{{ $carpenterrelay.id }}-{{ $xserver.id }}-socket{{ $volumes.suffix.delme }}"
+}

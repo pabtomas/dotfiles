@@ -45,7 +45,7 @@ This is where Rodeo stands out: Rodeo is designed to work with Docker.
 
 ### 2. Because I think Zig could bring a lot new things to the DevOps community
 
-Here the scoop of the day: Rodeo does not have the ambition to compete with other Open Source containers orchestrators you can already find. But that is not the Rodeo point. I started this project with Zig because I did not find any DevOps tools written with. And I believe that Zig can. So this project is here to erase this mistake: Zig can also do great things for the DevOps community.
+Here the scoop of the day: Rodeo does not have the ambition to compete with other Open Source containers orchestrators you can already find. But that is not the Rodeo point. I started this project with Zig because I did not find any DevOps tools written with. And I believe that Zig can. So this project is here to fix this mistake: Zig can also do great things for the DevOps community.
 
 ## How to install it ?
 

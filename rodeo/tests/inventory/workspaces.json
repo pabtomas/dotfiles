@@ -1,0 +1,9 @@
+{
+  "id": "workspaces",
+  "image": "{{ $registry.prefix.layer }}{{ $workspaces.id }}",
+  "path": {
+    "root": "/{{ $workspaces.id }}",
+    "spaceporn": "{{ $workspaces.path.root }}/{{ $spaceporn.id }}",
+    "project": "{{ $workspaces.path.root }}/{{ $project.id }}"
+  }
+}

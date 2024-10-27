@@ -1,0 +1,7 @@
+{
+  "id": "{{ $spaceporn.id }}{{ $all.sep.id }}{{ $relay.id }}",
+  "host": "{{ $spacepornrelay.id }}",
+  "image": "{{ $registry.prefix.relay }}{{ $spaceporn.id }}",
+  "ip": "{{ $networks.proxified_xserver_socket.prefix }}.4",
+  "volume": "{{ $spacepornrelay.id }}-{{ $xserver.id }}-socket{{ $volumes.suffix.delme }}"
+}

@@ -1,0 +1,4 @@
+{
+  "id": "socat",
+  "image": "{{ $registry.prefix.layer }}{{ $socat.id }}"
+}
