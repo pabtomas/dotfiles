@@ -7,7 +7,7 @@
 - **default**: `[]`
 - **description**: List of files containing variables available in Mustache templates and JQ filters. In this list, **An inventory have to be a JSON file to be correctly processed by Mana**. More details on the Inventory object available attributes into the [dedicated section](#inventory-object).
 - **good to know**:
-    - The `inventory` keyword is the first thing Mana will processed when executed, its location can not be outside your main Mana file.
+    - The `inventory` keyword is processed after the `filters` keyword when Mana is executed, its location can not be outside your main Mana file.
 - **example**:
 ```json
 inventory:
@@ -92,16 +92,3 @@ versions:
         description: 'pull the latest official Dockerhub Alpine image and create a container from'
     ```
     We added the `virtual` attribute. By default this attribute is `false`. When `true`, it means this rule can not be executed directly and its description will not be visible in the help Mana message. It can be very useful when you want to reuse a tasks between other rules without the possibility of direct execution.
-
-# `filters`
-
-- **type**: list
-- **required**: false
-- **default**: `[]`
-- **description**: A list of common jq filters you want to reuse. Each file will be loaded and added before each of your jq filter.
-- **examples**:
-```json
-filters:
-  - filters/first.jq
-  - filters/second.jq
-```

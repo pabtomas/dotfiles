@@ -28,6 +28,7 @@ pub const Options = struct
   file: ?[] const u8 = null,
   docker_host: ?[:0] const u8 = null,
   rules: std.DoublyLinkedList ([] const u8) = .{},
+  modules: std.ArrayList ([] const u8),
   allocator: *const std.mem.Allocator,
 
   incr_warning: bool = false,
@@ -37,6 +38,7 @@ pub const Options = struct
     if (self.docker_host) |host| self.allocator.free (host);
     if (self.file) |path| self.allocator.free (path);
     while (self.rules.pop ()) |node| self.allocator.destroy (node);
+    self.modules.deinit ();
   }
 
   pub fn getFile (self: @This ()) [] const u8
@@ -76,6 +78,12 @@ pub const Options = struct
     self.file = try self.allocator.dupe (u8, arg);
   }
 
+  fn addModule (self: *@This (), arg: [] const u8) !void
+  {
+    std.debug.assert (arg.len > 0);
+    try self.modules.append (arg);
+  }
+
   fn addRule (self: *@This (), arg: [] const u8) !void
   {
     std.debug.assert (arg.len > 0);
@@ -111,6 +119,7 @@ pub const Options = struct
     fn long (comptime self: @This ()) [] const u8 { return Options.long (@This (), self); }
 
     file = 'f',
+    module = 'M',
   };
 
   const NoArg = enum (u8)
@@ -196,6 +205,7 @@ pub const Options = struct
       .log_level = logger.log_level,
       .docker_host = if (host != null and host.?.len > 0) try allocator.dupeZ (u8, host.?)
                      else null,
+      .modules = std.ArrayList ([] const u8).init (allocator.*),
       .allocator = allocator,
     };
   }
@@ -237,6 +247,9 @@ pub const Options = struct
       else if (std.mem.eql (u8, arg, Arg.file.short ()) or std.mem.eql (u8, arg, Arg.file.long ())) {
         try shift (&list, &first, &arg, logger);
         try self.setFile (arg);
+      } else if (std.mem.eql (u8, arg, Arg.module.short ()) or std.mem.eql (u8, arg, Arg.module.long ())) {
+        try shift (&list, &first, &arg, logger);
+        try self.addModule (arg);
       } else if (arg.len > 0) try self.addRule (arg)
       else try emptyArg (logger);
     }

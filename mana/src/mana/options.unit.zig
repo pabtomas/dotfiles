@@ -41,6 +41,7 @@ test "parse: mana"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqual (null, opts.file);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -85,6 +86,7 @@ test "parse: mana -vv -vv"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.VERB, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqual (null, opts.file);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -105,6 +107,7 @@ test "parse: mana -vvvv --verbose --verbose"
   try std.testing.expect (opts.incr_warning);
   try std.testing.expectEqual (.VERB, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqual (null, opts.file);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -125,6 +128,7 @@ test "parse: mana --quiet -qqq"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.ERROR, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqual (null, opts.file);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -145,18 +149,19 @@ test "parse: mana --verbose --verbose -hVv"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.TRACE, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqual (null, opts.file);
   try std.testing.expectEqual (null, opts.docker_host);
 }
 
-test "parse: mana --version --version --help -hVhVhV"
+test "parse: mana --version --version --help -hVhVhVM first.jq"
 {
   const allocator = std.testing.allocator;
   var stderr: Stream = undefined;
   var logger: Logger = undefined;
   try prepare (&logger, &stderr, &allocator);
 
-  var it = ArgIterator.init (&[_][:0] const u8 { "mana", "--version", "--version", "--help", "-hVhVhV", });
+  var it = ArgIterator.init (&[_][:0] const u8 { "mana", "--version", "--version", "--help", "-hVhVhV", "-M", "first.jq" });
   var opts = try Options.parse (&allocator, &it, &logger);
   defer opts.deinit ();
   logger.deinit ();
@@ -165,6 +170,32 @@ test "parse: mana --version --version --help -hVhVhV"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (1, opts.modules.items.len);
+  try std.testing.expectEqualStrings ("first.jq", opts.modules.items [0]);
+  try std.testing.expectEqual (null, opts.file);
+  try std.testing.expectEqual (null, opts.docker_host);
+}
+
+test "parse: mana --module=--version -M --module --module first.jq"
+{
+  const allocator = std.testing.allocator;
+  var stderr: Stream = undefined;
+  var logger: Logger = undefined;
+  try prepare (&logger, &stderr, &allocator);
+
+  var it = ArgIterator.init (&[_][:0] const u8 { "mana", "--module=--version", "-M", "--module", "--module", "first.jq", });
+  var opts = try Options.parse (&allocator, &it, &logger);
+  defer opts.deinit ();
+  logger.deinit ();
+  try std.testing.expect (!opts.help);
+  try std.testing.expect (!opts.version);
+  try std.testing.expect (!opts.incr_warning);
+  try std.testing.expectEqual (.INFO, opts.log_level);
+  try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (3, opts.modules.items.len);
+  try std.testing.expectEqualStrings ("--version", opts.modules.items [0]);
+  try std.testing.expectEqualStrings ("--module", opts.modules.items [1]);
+  try std.testing.expectEqualStrings ("first.jq", opts.modules.items [2]);
   try std.testing.expectEqual (null, opts.file);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -185,6 +216,7 @@ test "parse: mana -vfqvvvhVv"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.NOTE, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqualStrings ("qvvvhVv", opts.file.?);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -205,6 +237,7 @@ test "parse: mana -hhhfhhh -fvqvqvqvvvq --file=awesome.json"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (0, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqualStrings ("awesome.json", opts.file.?);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -225,6 +258,7 @@ test "parse: mana --unknown-opt"
   try std.testing.expect (!opts.incr_warning);
   try std.testing.expectEqual (.INFO, opts.log_level);
   try std.testing.expectEqual (1, opts.rules.len);
+  try std.testing.expectEqual (0, opts.modules.items.len);
   try std.testing.expectEqual (null, opts.file);
   try std.testing.expectEqual (null, opts.docker_host);
 }
@@ -261,6 +295,42 @@ test "parse: mana -f ''"
   try prepare (&logger, &stderr, &allocator);
 
   var it = ArgIterator.init (&[_][:0] const u8 { "mana", "-f", "", });
+  try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
+  logger.deinit ();
+}
+
+test "parse: mana -M"
+{
+  const allocator = std.testing.allocator;
+  var stderr: Stream = undefined;
+  var logger: Logger = undefined;
+  try prepare (&logger, &stderr, &allocator);
+
+  var it = ArgIterator.init (&[_][:0] const u8 { "mana", "-M", });
+  try std.testing.expectError (error.MissingArg, Options.parse (&allocator, &it, &logger));
+  logger.deinit ();
+}
+
+test "parse: mana --module="
+{
+  const allocator = std.testing.allocator;
+  var stderr: Stream = undefined;
+  var logger: Logger = undefined;
+  try prepare (&logger, &stderr, &allocator);
+
+  var it = ArgIterator.init (&[_][:0] const u8 { "mana", "--module=", });
+  try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
+  logger.deinit ();
+}
+
+test "parse: mana -M ''"
+{
+  const allocator = std.testing.allocator;
+  var stderr: Stream = undefined;
+  var logger: Logger = undefined;
+  try prepare (&logger, &stderr, &allocator);
+
+  var it = ArgIterator.init (&[_][:0] const u8 { "mana", "-M", "", });
   try std.testing.expectError (error.EmptyArg, Options.parse (&allocator, &it, &logger));
   logger.deinit ();
 }

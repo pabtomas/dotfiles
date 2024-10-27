@@ -68,6 +68,7 @@ pub const Client = struct
   ca_bundle: libcurl.Buffer,
   easy: libcurl.Easy,
   jq: libjq.Jq,
+  filters: std.ArrayList (u8),
   api_version: [] const u8 = "1.25",
   parsed_main: ?std.json.Parsed (std.json.Value),
 
@@ -79,7 +80,8 @@ pub const Client = struct
       .arena       = std.heap.ArenaAllocator.init (allocator.*),
       .ca_bundle   = try libcurl.allocCABundle (allocator.*),
       .easy        = undefined,
-      .jq          = try libjq.Jq.init (),
+      .jq          = try libjq.Jq.init (allocator.*),
+      .filters     = std.ArrayList (u8).init (allocator.*),
       .parsed_main = null,
     };
     self.easy = try libcurl.Easy.init (self.allocator.*, .{ .ca_bundle = self.ca_bundle, });
@@ -100,11 +102,14 @@ pub const Client = struct
     self.inventory.object.deinit ();
     self.ca_bundle.deinit ();
     self.easy.deinit ();
+    self.jq.deinit ();
+    self.filters.deinit ();
   }
 
   pub fn preprocess (self: *@This (), logger: *Logger, opts: *const Options) !void
   {
     try self.addContextVars (logger, opts);
+    try self.jq.setLibraryPaths (&opts.modules);
     try self.openMainFile (logger, opts);
     try self.storeInventory (logger, opts);
 
